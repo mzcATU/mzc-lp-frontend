@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { CourseListPage, CourseDetailPage, CourseCreatePage } from '@/pages/courses';
 import { ContentPoolPage, ContentUploadPage } from '@/pages/content';
 import { LearningObjectsPage } from '@/pages/learning';
+import { MyCoursesPage, MyContentPage, CourseCreatePage as TuCourseCreatePage } from '@/pages/tu';
 import {
   SuperAdminLayout,
   TenantAdminLayout,
@@ -95,7 +96,10 @@ function App() {
         <Route path="/tu" element={<TenantUserWrapper />}>
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="courses" element={<DashboardPage />} />
+          <Route path="teaching/courses" element={<MyCoursesPage />} />
+          <Route path="teaching/courses/create" element={<TuCourseCreatePage />} />
+          <Route path="teaching/content" element={<MyContentPage />} />
+          <Route path="catalog" element={<DashboardPage />} />
           <Route path="certifications" element={<DashboardPage />} />
           <Route path="settings" element={<DashboardPage />} />
         </Route>
