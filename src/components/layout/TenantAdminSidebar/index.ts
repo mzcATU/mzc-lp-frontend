@@ -1,0 +1,1 @@
+export { TenantAdminSidebar } from './TenantAdminSidebar';
