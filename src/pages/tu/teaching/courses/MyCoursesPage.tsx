@@ -1,48 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  BookOpen,
-  Clock,
-  Users,
-  TrendingUp,
-  Award,
-  Plus,
-  Filter,
-} from 'lucide-react';
-import { designTokens } from '@/styles/design-tokens';
-
-interface Course {
-  id: string;
-  title: string;
-  instructor: string;
-  progress: number;
-  totalLessons: number;
-  completedLessons: number;
-  thumbnail: string;
-  category: string;
-  deadline?: string;
-  lastAccessed?: string;
-  students?: number;
-  status?: 'active' | 'completed' | 'draft';
-}
+import { BookOpen, Clock, Users, TrendingUp, Award, Plus, Filter } from 'lucide-react';
+import { cn } from '@/utils/cn';
+import { Button, CategoryBadge } from '@/components/common';
+import type { Course, CourseStatus } from '@/types';
 
 interface MyCoursesPageProps {
   language?: 'ko' | 'en';
 }
-
-// 카테고리별 뱃지 색상
-const categoryColors: Record<string, { bg: string; text: string }> = {
-  프로그래밍: { bg: '#E3F2FD', text: '#1565C0' },
-  백엔드: { bg: '#E8F5E9', text: '#2E7D32' },
-  '개발 도구': { bg: '#FFF3E0', text: '#E65100' },
-  프론트엔드: { bg: '#F3E5F5', text: '#7B1FA2' },
-  데이터베이스: { bg: '#FFEBEE', text: '#C62828' },
-  default: { bg: '#F5F5F5', text: '#616161' },
-};
-
-const getCategoryColor = (category: string) => {
-  return categoryColors[category] || categoryColors.default;
-};
 
 const TEACHING_COURSES: Course[] = [
   {
@@ -52,8 +17,7 @@ const TEACHING_COURSES: Course[] = [
     progress: 100,
     totalLessons: 30,
     completedLessons: 30,
-    thumbnail:
-      'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=400&h=250&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=400&h=250&fit=crop',
     category: '프로그래밍',
     students: 45,
     lastAccessed: '30분 전',
@@ -66,8 +30,7 @@ const TEACHING_COURSES: Course[] = [
     progress: 100,
     totalLessons: 22,
     completedLessons: 22,
-    thumbnail:
-      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop',
     category: '백엔드',
     students: 32,
     lastAccessed: '1시간 전',
@@ -80,8 +43,7 @@ const TEACHING_COURSES: Course[] = [
     progress: 100,
     totalLessons: 15,
     completedLessons: 15,
-    thumbnail:
-      'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=400&h=250&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=400&h=250&fit=crop',
     category: '개발 도구',
     students: 58,
     lastAccessed: '3시간 전',
@@ -91,10 +53,7 @@ const TEACHING_COURSES: Course[] = [
 
 const t = {
   title: { ko: '내 강의', en: 'My Courses' },
-  subtitle: {
-    ko: '개설한 강의를 관리하고 수강생을 확인하세요',
-    en: 'Manage your courses and track student progress',
-  },
+  subtitle: { ko: '개설한 강의를 관리하고 수강생을 확인하세요', en: 'Manage your courses and track student progress' },
   createCourse: { ko: '강의 생성', en: 'Create Course' },
   all: { ko: '전체', en: 'All' },
   active: { ko: '진행 중', en: 'Active' },
@@ -112,21 +71,14 @@ const t = {
   lessons: { ko: '차시', en: 'Lessons' },
   manageCourse: { ko: '과정 관리', en: 'Manage Course' },
   noCourses: { ko: '개설한 과정이 없습니다', en: 'No courses created yet' },
-  noCoursesDesc: {
-    ko: '새로운 과정을 개설하여 학생들과 지식을 공유하세요',
-    en: 'Create a new course to share knowledge with students',
-  },
+  noCoursesDesc: { ko: '새로운 과정을 개설하여 학생들과 지식을 공유하세요', en: 'Create a new course to share knowledge with students' },
   createNewCourse: { ko: '과정 개설하기', en: 'Create Course' },
 };
 
-export function MyCoursesPage({ language = 'ko' }: MyCoursesPageProps) {
+export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
   const navigate = useNavigate();
-  const [filterStatus, setFilterStatus] = useState<
-    'all' | 'active' | 'completed' | 'draft'
-  >('all');
-  const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>(
-    'recent'
-  );
+  const [filterStatus, setFilterStatus] = useState<'all' | CourseStatus>('all');
+  const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
 
   const filteredCourses = TEACHING_COURSES.filter((course) => {
     if (filterStatus === 'all') return true;
@@ -134,307 +86,65 @@ export function MyCoursesPage({ language = 'ko' }: MyCoursesPageProps) {
   });
 
   const sortedCourses = [...filteredCourses].sort((a, b) => {
-    if (sortBy === 'students') {
-      return (b.students || 0) - (a.students || 0);
-    } else if (sortBy === 'title') {
-      return a.title.localeCompare(b.title);
-    }
+    if (sortBy === 'students') return (b.students || 0) - (a.students || 0);
+    if (sortBy === 'title') return a.title.localeCompare(b.title);
     return 0;
   });
 
-  const getText = (key: keyof typeof t) => {
-    return language === 'ko' ? t[key].ko : t[key].en;
-  };
+  const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
+
+  const totalStudents = TEACHING_COURSES.reduce((acc, c) => acc + (c.students || 0), 0);
+  const avgCompletion = Math.round(TEACHING_COURSES.reduce((acc, c) => acc + c.progress, 0) / TEACHING_COURSES.length);
 
   return (
-    <div
-      style={{
-        padding: '32px',
-        backgroundColor: designTokens.bg.default,
-        minHeight: '100vh',
-      }}
-    >
+    <div className="p-8 bg-bg-default min-h-screen">
       {/* Header */}
-      <div
-        style={{
-          marginBottom: '32px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-        }}
-      >
+      <div className="mb-8 flex justify-between items-start">
         <div>
-          <h1 style={{ color: designTokens.text.primary, marginBottom: '8px' }}>
-            {getText('title')}
-          </h1>
-          <p style={{ color: designTokens.text.secondary, margin: 0 }}>
-            {getText('subtitle')}
-          </p>
+          <h1 className="text-text-primary mb-2">{getText('title')}</h1>
+          <p className="text-text-secondary m-0">{getText('subtitle')}</p>
         </div>
-        <button
-            onClick={() => navigate('/tu/teaching/courses/create')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 24px',
-              backgroundColor: designTokens.button.neutral_default,
-              color: designTokens.button.neutral_text,
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor =
-                designTokens.button.neutral_hover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor =
-                designTokens.button.neutral_default;
-            }}
-          >
-            <Plus size={20} />
-            <span>{getText('createCourse')}</span>
-          </button>
+        <Button onClick={() => navigate('/tu/teaching/courses/create')}>
+          <Plus size={20} />
+          <span>{getText('createCourse')}</span>
+        </Button>
       </div>
 
       {/* Statistics Summary */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
-          marginBottom: '32px',
-        }}
-      >
-        <div
-          style={{
-            padding: '20px',
-            backgroundColor: designTokens.bg.secondary,
-            borderRadius: '12px',
-            border: `1px solid ${designTokens.bg.border}`,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '8px',
-            }}
-          >
-            <div
-              style={{
-                padding: '10px',
-                backgroundColor: designTokens.bg.default,
-                borderRadius: '8px',
-              }}
-            >
-              <BookOpen
-                size={20}
-                style={{ color: designTokens.button.neutral_default }}
-              />
-            </div>
-            <div>
-              <div
-                style={{ fontSize: '13px', color: designTokens.text.secondary }}
-              >
-                {getText('coursesCreated')}
-              </div>
-              <div
-                style={{
-                  fontSize: '24px',
-                  color: designTokens.text.primary,
-                  fontWeight: 600,
-                }}
-              >
-                {TEACHING_COURSES.length}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            padding: '20px',
-            backgroundColor: designTokens.bg.secondary,
-            borderRadius: '12px',
-            border: `1px solid ${designTokens.bg.border}`,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '8px',
-            }}
-          >
-            <div
-              style={{
-                padding: '10px',
-                backgroundColor: designTokens.bg.default,
-                borderRadius: '8px',
-              }}
-            >
-              <Users
-                size={20}
-                style={{ color: designTokens.action.primary_default }}
-              />
-            </div>
-            <div>
-              <div
-                style={{ fontSize: '13px', color: designTokens.text.secondary }}
-              >
-                {getText('totalStudents')}
-              </div>
-              <div
-                style={{
-                  fontSize: '24px',
-                  color: designTokens.text.primary,
-                  fontWeight: 600,
-                }}
-              >
-                {TEACHING_COURSES.reduce((acc, c) => acc + (c.students || 0), 0)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            padding: '20px',
-            backgroundColor: designTokens.bg.secondary,
-            borderRadius: '12px',
-            border: `1px solid ${designTokens.bg.border}`,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '8px',
-            }}
-          >
-            <div
-              style={{
-                padding: '10px',
-                backgroundColor: designTokens.bg.default,
-                borderRadius: '8px',
-              }}
-            >
-              <TrendingUp
-                size={20}
-                style={{ color: designTokens.status.success_text }}
-              />
-            </div>
-            <div>
-              <div
-                style={{ fontSize: '13px', color: designTokens.text.secondary }}
-              >
-                {getText('avgCompletion')}
-              </div>
-              <div
-                style={{
-                  fontSize: '24px',
-                  color: designTokens.text.primary,
-                  fontWeight: 600,
-                }}
-              >
-                {Math.round(
-                  TEACHING_COURSES.reduce((acc, c) => acc + c.progress, 0) /
-                    TEACHING_COURSES.length
-                )}
-                %
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <StatCard icon={<BookOpen size={20} />} label={getText('coursesCreated')} value={TEACHING_COURSES.length} />
+        <StatCard icon={<Users size={20} />} label={getText('totalStudents')} value={totalStudents} />
+        <StatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCompletion')} value={`${avgCompletion}%`} />
       </div>
 
       {/* Filters and Sort */}
-      <div
-        style={{
-          marginBottom: '24px',
-          display: 'flex',
-          gap: '16px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
-        {/* Filter Buttons */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <Filter size={18} style={{ color: designTokens.text.secondary }} />
-          <div
-            style={{
-              display: 'flex',
-              gap: '4px',
-              backgroundColor: designTokens.bg.secondary,
-              padding: '4px',
-              borderRadius: '8px',
-            }}
-          >
-            {(['all', 'active', 'completed', 'draft'] as const).map(
-              (status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  style={{
-                    padding: '6px 16px',
-                    backgroundColor:
-                      filterStatus === status
-                        ? designTokens.button.neutral_default
-                        : 'transparent',
-                    color:
-                      filterStatus === status
-                        ? designTokens.button.neutral_text
-                        : designTokens.text.secondary,
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: filterStatus === status ? 500 : 400,
-                    cursor: 'pointer',
-                    transition: 'all 150ms ease',
-                  }}
-                >
-                  {getText(status)}
-                </button>
-              )
-            )}
+      <div className="mb-6 flex gap-4 items-center flex-wrap">
+        <div className="flex gap-2 items-center">
+          <Filter size={18} className="text-text-secondary" />
+          <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg">
+            {(['all', 'active', 'completed', 'draft'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={cn(
+                  'px-4 py-1.5 rounded-md text-sm transition-colors',
+                  filterStatus === status
+                    ? 'bg-btn-neutral text-white font-medium'
+                    : 'bg-transparent text-text-secondary hover:bg-bg-secondary'
+                )}
+              >
+                {getText(status)}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Sort Dropdown */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center',
-            marginLeft: 'auto',
-          }}
-        >
-          <span
-            style={{ fontSize: '14px', color: designTokens.text.secondary }}
-          >
-            {getText('sortBy')}:
-          </span>
+        <div className="flex gap-2 items-center ml-auto">
+          <span className="text-sm text-text-secondary">{getText('sortBy')}:</span>
           <select
             value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as 'recent' | 'students' | 'title')
-            }
-            style={{
-              padding: '8px 12px',
-              backgroundColor: designTokens.bg.secondary,
-              color: designTokens.text.primary,
-              border: `1px solid ${designTokens.bg.border}`,
-              borderRadius: '6px',
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
+            onChange={(e) => setSortBy(e.target.value as 'recent' | 'students' | 'title')}
+            className="px-3 py-2 bg-bg-secondary text-text-primary border border-border rounded-md text-sm cursor-pointer"
           >
             <option value="recent">{getText('recent')}</option>
             <option value="students">{getText('studentCount')}</option>
@@ -444,245 +154,92 @@ export function MyCoursesPage({ language = 'ko' }: MyCoursesPageProps) {
       </div>
 
       {/* Course Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: '24px',
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedCourses.map((course) => (
-          <div
-            key={course.id}
-            style={{
-              backgroundColor: designTokens.bg.secondary,
-              borderRadius: '12px',
-              overflow: 'hidden',
-              border: `1px solid ${designTokens.bg.border}`,
-              transition: 'all 150ms ease',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            {/* Thumbnail */}
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                height: '180px',
-                overflow: 'hidden',
-              }}
-            >
-              <img
-                src={course.thumbnail}
-                alt={course.title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '12px',
-                  backgroundColor: getCategoryColor(course.category).bg,
-                  color: getCategoryColor(course.category).text,
-                  padding: '4px 12px',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                }}
-              >
-                {course.category}
-              </div>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '20px' }}>
-              <h3
-                style={{
-                  color: designTokens.text.primary,
-                  marginBottom: '8px',
-                  fontSize: '16px',
-                }}
-              >
-                {course.title}
-              </h3>
-              <p
-                style={{
-                  color: designTokens.text.secondary,
-                  fontSize: '14px',
-                  marginBottom: '16px',
-                }}
-              >
-                {getText('students')}: {course.students}명
-              </p>
-
-              {/* Progress Bar */}
-              <div style={{ marginBottom: '16px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '8px',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '13px',
-                      color: designTokens.text.secondary,
-                    }}
-                  >
-                    {getText('contentCompletion')}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '13px',
-                      color: designTokens.text.primary,
-                      fontWeight: 500,
-                    }}
-                  >
-                    {course.completedLessons}/{course.totalLessons}{' '}
-                    {getText('lessons')}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '8px',
-                    backgroundColor: designTokens.bg.default,
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${course.progress}%`,
-                      height: '100%',
-                      backgroundColor: designTokens.button.neutral_default,
-                      transition: 'width 300ms ease',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Footer Info */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: '16px',
-                  borderTop: `1px solid ${designTokens.bg.border}`,
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    color: designTokens.text.secondary,
-                    fontSize: '13px',
-                  }}
-                >
-                  <Clock size={16} />
-                  {course.lastAccessed}
-                </div>
-              </div>
-
-              {/* Action Button */}
-              <button
-                style={{
-                  width: '100%',
-                  marginTop: '16px',
-                  padding: '12px',
-                  backgroundColor: designTokens.button.neutral_default,
-                  color: designTokens.button.neutral_text,
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 150ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    designTokens.button.neutral_hover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    designTokens.button.neutral_default;
-                }}
-              >
-                {getText('manageCourse')}
-              </button>
-            </div>
-          </div>
+          <CourseCard key={course.id} course={course} getText={getText} />
         ))}
       </div>
 
       {/* Empty State */}
       {sortedCourses.length === 0 && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '80px 20px',
-            backgroundColor: designTokens.bg.secondary,
-            borderRadius: '12px',
-            border: `1px solid ${designTokens.bg.border}`,
-          }}
-        >
-          <Award
-            size={64}
-            style={{
-              color: designTokens.text.secondary,
-              marginBottom: '16px',
-              opacity: 0.3,
-            }}
-          />
-          <h3
-            style={{ color: designTokens.text.primary, marginBottom: '8px' }}
-          >
-            {getText('noCourses')}
-          </h3>
-          <p
-            style={{
-              color: designTokens.text.secondary,
-              marginBottom: '24px',
-            }}
-          >
-            {getText('noCoursesDesc')}
-          </p>
-          <button
-            style={{
-              padding: '12px 24px',
-              backgroundColor: designTokens.button.neutral_default,
-              color: designTokens.button.neutral_text,
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor =
-                designTokens.button.neutral_hover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor =
-                designTokens.button.neutral_default;
-            }}
-            onClick={() => navigate('/tu/teaching/courses/create')}
-          >
+        <div className="text-center py-20 px-5 bg-bg-secondary rounded-xl border border-border">
+          <Award size={64} className="text-text-secondary mb-4 opacity-30 mx-auto" />
+          <h3 className="text-text-primary mb-2">{getText('noCourses')}</h3>
+          <p className="text-text-secondary mb-6">{getText('noCoursesDesc')}</p>
+          <Button onClick={() => navigate('/tu/teaching/courses/create')}>
             {getText('createNewCourse')}
-          </button>
+          </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+// 통계 카드 컴포넌트
+function StatCard({ icon, label, value }: Readonly<{ icon: React.ReactNode; label: string; value: string | number }>) {
+  return (
+    <div className="p-5 bg-bg-secondary rounded-xl border border-border">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-bg-default rounded-lg text-btn-neutral">{icon}</div>
+        <div>
+          <div className="text-sm text-text-secondary">{label}</div>
+          <div className="text-2xl text-text-primary font-semibold">{value}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 강의 카드 컴포넌트
+function CourseCard({ course, getText }: Readonly<{ course: Course; getText: (key: keyof typeof t) => string }>) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="bg-bg-secondary rounded-xl overflow-hidden border border-border transition-all hover:-translate-y-1 hover:shadow-lg cursor-pointer">
+      {/* Thumbnail */}
+      <div className="relative w-full h-44 overflow-hidden">
+        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+        <div className="absolute top-3 left-3">
+          <CategoryBadge category={course.category} />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-5">
+        <h3 className="text-text-primary mb-2 text-base">{course.title}</h3>
+        <p className="text-text-secondary text-sm mb-4">
+          {getText('students')}: {course.students}명
+        </p>
+
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-text-secondary">{getText('contentCompletion')}</span>
+            <span className="text-sm text-text-primary font-medium">
+              {course.completedLessons}/{course.totalLessons} {getText('lessons')}
+            </span>
+          </div>
+          <div className="w-full h-2 bg-bg-default rounded overflow-hidden">
+            <div
+              className="h-full bg-btn-neutral transition-all duration-300"
+              style={{ width: `${course.progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Footer Info */}
+        <div className="flex justify-between items-center pt-4 border-t border-border">
+          <div className="flex items-center gap-1.5 text-text-secondary text-sm">
+            <Clock size={16} />
+            {course.lastAccessed}
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <Button className="w-full mt-4" onClick={() => navigate(`/tu/teaching/courses/${course.id}`)}>
+          {getText('manageCourse')}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -1,17 +1,7 @@
 import { useState } from 'react';
-import {
-  Plus,
-  Search,
-  Filter,
-  Eye,
-  Edit,
-  Trash2,
-  FileText,
-  Calendar,
-  ChevronDown,
-  File,
-} from 'lucide-react';
-import { designTokens } from '@/styles/design-tokens';
+import { Plus, Search, Filter, Eye, Edit, Trash2, FileText, Calendar, ChevronDown, File } from 'lucide-react';
+import { cn } from '@/utils/cn';
+import { Button, Badge } from '@/components/common';
 
 type ContentType = 'assignment' | 'notice' | 'reference';
 
@@ -31,68 +21,17 @@ interface MyContentPageProps {
 }
 
 const mockContents: Content[] = [
-  {
-    id: '1',
-    title: '1주차 과제: React 기초 실습',
-    type: 'assignment',
-    registrationDate: '2024-11-15',
-    fileName: 'react-assignment-week1.pdf',
-    fileSize: '2.4 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: '2',
-    title: '강의 일정 변경 안내',
-    type: 'notice',
-    registrationDate: '2024-11-20',
-    fileName: 'schedule-change-notice.pdf',
-    fileSize: '1.2 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: '3',
-    title: 'TypeScript 공식 문서 번역본',
-    type: 'reference',
-    registrationDate: '2024-11-10',
-    fileName: 'typescript-docs-kr.pdf',
-    fileSize: '5.8 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: '4',
-    title: '2주차 과제: 컴포넌트 설계',
-    type: 'assignment',
-    registrationDate: '2024-11-22',
-    fileName: 'component-design-assignment.pdf',
-    fileSize: '3.1 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: '5',
-    title: 'Node.js 개발 환경 설정 가이드',
-    type: 'reference',
-    registrationDate: '2024-11-05',
-    fileName: 'nodejs-setup-guide.pdf',
-    fileSize: '4.5 MB',
-    fileType: 'PDF',
-  },
-  {
-    id: '6',
-    title: '중간 평가 일정 공지',
-    type: 'notice',
-    registrationDate: '2024-11-18',
-    fileName: 'midterm-evaluation-notice.pdf',
-    fileSize: '890 KB',
-    fileType: 'PDF',
-  },
+  { id: '1', title: '1주차 과제: React 기초 실습', type: 'assignment', registrationDate: '2024-11-15', fileName: 'react-assignment-week1.pdf', fileSize: '2.4 MB', fileType: 'PDF' },
+  { id: '2', title: '강의 일정 변경 안내', type: 'notice', registrationDate: '2024-11-20', fileName: 'schedule-change-notice.pdf', fileSize: '1.2 MB', fileType: 'PDF' },
+  { id: '3', title: 'TypeScript 공식 문서 번역본', type: 'reference', registrationDate: '2024-11-10', fileName: 'typescript-docs-kr.pdf', fileSize: '5.8 MB', fileType: 'PDF' },
+  { id: '4', title: '2주차 과제: 컴포넌트 설계', type: 'assignment', registrationDate: '2024-11-22', fileName: 'component-design-assignment.pdf', fileSize: '3.1 MB', fileType: 'PDF' },
+  { id: '5', title: 'Node.js 개발 환경 설정 가이드', type: 'reference', registrationDate: '2024-11-05', fileName: 'nodejs-setup-guide.pdf', fileSize: '4.5 MB', fileType: 'PDF' },
+  { id: '6', title: '중간 평가 일정 공지', type: 'notice', registrationDate: '2024-11-18', fileName: 'midterm-evaluation-notice.pdf', fileSize: '890 KB', fileType: 'PDF' },
 ];
 
 const t = {
   title: { ko: '내 콘텐츠', en: 'My Content' },
-  subtitle: {
-    ko: '등록한 콘텐츠를 관리하고 새로운 콘텐츠를 업로드하세요.',
-    en: 'Manage your content and upload new materials.',
-  },
+  subtitle: { ko: '등록한 콘텐츠를 관리하고 새로운 콘텐츠를 업로드하세요.', en: 'Manage your content and upload new materials.' },
   createContent: { ko: '콘텐츠 등록', en: 'Add Content' },
   searchPlaceholder: { ko: '콘텐츠 검색...', en: 'Search content...' },
   filter: { ko: '필터', en: 'Filter' },
@@ -108,59 +47,23 @@ const t = {
   noResults: { ko: '검색 결과가 없습니다.', en: 'No results found.' },
 };
 
-export function MyContentPage({
-  onCreateContent,
-  language = 'ko',
-}: MyContentPageProps) {
+// 콘텐츠 타입별 색상
+const typeColors: Record<ContentType, { bg: string; text: string }> = {
+  assignment: { bg: '#E3F2FD', text: '#1565C0' },
+  notice: { bg: '#FFF3E0', text: '#E65100' },
+  reference: { bg: '#E8F5E9', text: '#2E7D32' },
+};
+
+export function MyContentPage({ onCreateContent, language = 'ko' }: Readonly<MyContentPageProps>) {
   const [contents] = useState<Content[]>(mockContents);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | ContentType>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  const getText = (key: keyof typeof t) => {
-    return language === 'ko' ? t[key].ko : t[key].en;
-  };
-
-  const getTypeBadge = (type: ContentType) => {
-    const badges = {
-      assignment: {
-        bg: '#E3F2FD',
-        color: '#1565C0',
-        text: getText('assignment'),
-      },
-      notice: {
-        bg: '#FFF3E0',
-        color: '#E65100',
-        text: getText('notice'),
-      },
-      reference: {
-        bg: '#E8F5E9',
-        color: '#2E7D32',
-        text: getText('reference'),
-      },
-    };
-    const badge = badges[type];
-    return (
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          padding: '2px 10px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          backgroundColor: badge.bg,
-          color: badge.color,
-        }}
-      >
-        {badge.text}
-      </span>
-    );
-  };
+  const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   const filteredContents = contents.filter((content) => {
-    const matchesSearch = content.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+    const matchesSearch = content.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter === 'all' || content.type === typeFilter;
     return matchesSearch && matchesType;
   });
@@ -173,190 +76,59 @@ export function MyContentPage({
   };
 
   return (
-    <div
-      style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: designTokens.bg.default,
-      }}
-    >
+    <div className="h-full flex flex-col bg-bg-default">
       {/* Top Bar */}
-      <div
-        style={{
-          borderBottom: `1px solid ${designTokens.bg.border}`,
-          backgroundColor: designTokens.bg.default,
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <div style={{ padding: '24px 32px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '24px',
-            }}
-          >
+      <div className="border-b border-border bg-bg-default sticky top-0 z-10">
+        <div className="p-6 px-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1
-                style={{
-                  color: designTokens.text.primary,
-                  marginBottom: '4px',
-                }}
-              >
-                {getText('title')}
-              </h1>
-              <p
-                style={{
-                  color: designTokens.text.secondary,
-                  fontSize: '14px',
-                  margin: 0,
-                }}
-              >
-                {getText('subtitle')}
-              </p>
+              <h1 className="text-text-primary mb-1">{getText('title')}</h1>
+              <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
-            <button
-              onClick={onCreateContent}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                borderRadius: '8px',
-                color: designTokens.button.neutral_text,
-                backgroundColor: designTokens.button.neutral_default,
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  designTokens.button.neutral_hover;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  designTokens.button.neutral_default;
-              }}
-            >
+            <Button onClick={onCreateContent}>
               <Plus size={20} />
               <span>{getText('createContent')}</span>
-            </button>
+            </Button>
           </div>
 
           {/* Search and Filter Bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <Search
-                size={20}
-                style={{
-                  position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: designTokens.text.secondary,
-                }}
-              />
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
               <input
                 type="text"
                 placeholder={getText('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  paddingLeft: '40px',
-                  paddingRight: '16px',
-                  paddingTop: '10px',
-                  paddingBottom: '10px',
-                  border: `1px solid ${designTokens.bg.border}`,
-                  borderRadius: '8px',
-                  color: designTokens.text.primary,
-                  fontSize: '14px',
-                  outline: 'none',
-                }}
+                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-action-primary"
               />
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                color: designTokens.text.primary,
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
-            >
+            <Button variant="ghost" onClick={() => setShowFilters(!showFilters)} className="border border-border">
               <Filter size={20} />
               <span>{getText('filter')}</span>
-              <ChevronDown
-                size={16}
-                style={{
-                  transition: 'transform 150ms ease',
-                  transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </button>
+              <ChevronDown size={16} className={cn('transition-transform', showFilters && 'rotate-180')} />
+            </Button>
           </div>
 
           {/* Filter Options */}
           {showFilters && (
-            <div
-              style={{
-                marginTop: '16px',
-                padding: '16px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                backgroundColor: designTokens.bg.secondary,
-              }}
-            >
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  color: designTokens.text.primary,
-                  marginBottom: '8px',
-                }}
-              >
-                {getText('contentType')}
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {(['all', 'assignment', 'notice', 'reference'] as const).map(
-                  (type) => (
-                    <button
-                      key={type}
-                      onClick={() => setTypeFilter(type)}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                        backgroundColor:
-                          typeFilter === type
-                            ? designTokens.button.neutral_default
-                            : designTokens.bg.default,
-                        color:
-                          typeFilter === type
-                            ? designTokens.button.neutral_text
-                            : designTokens.text.primary,
-                        border:
-                          typeFilter === type
-                            ? 'none'
-                            : `1px solid ${designTokens.bg.border}`,
-                      }}
-                    >
-                      {getText(type)}
-                    </button>
-                  )
-                )}
+            <div className="mt-4 p-4 border border-border rounded-lg bg-bg-secondary">
+              <label className="block text-sm text-text-primary mb-2">{getText('contentType')}</label>
+              <div className="flex flex-wrap gap-2">
+                {(['all', 'assignment', 'notice', 'reference'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setTypeFilter(type)}
+                    className={cn(
+                      'px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors',
+                      typeFilter === type
+                        ? 'bg-btn-neutral text-white'
+                        : 'bg-bg-default text-text-primary border border-border hover:bg-bg-secondary'
+                    )}
+                  >
+                    {getText(type)}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -364,315 +136,91 @@ export function MyContentPage({
       </div>
 
       {/* Content List */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        <div style={{ padding: '24px 32px' }}>
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 px-8">
           {/* Statistics Cards */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '16px',
-              marginBottom: '24px',
-            }}
-          >
-            <div
-              style={{
-                backgroundColor: designTokens.bg.default,
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '14px',
-                  color: designTokens.text.secondary,
-                  marginBottom: '4px',
-                }}
-              >
-                {getText('totalContent')}
-              </p>
-              <p
-                style={{
-                  fontSize: '24px',
-                  color: designTokens.text.primary,
-                  fontWeight: 600,
-                  margin: 0,
-                }}
-              >
-                {contentStats.total}
-              </p>
-            </div>
-            <div
-              style={{
-                backgroundColor: designTokens.bg.default,
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '14px',
-                  color: designTokens.text.secondary,
-                  marginBottom: '4px',
-                }}
-              >
-                {getText('assignment')}
-              </p>
-              <p
-                style={{
-                  fontSize: '24px',
-                  color: designTokens.text.primary,
-                  fontWeight: 600,
-                  margin: 0,
-                }}
-              >
-                {contentStats.assignment}
-              </p>
-            </div>
-            <div
-              style={{
-                backgroundColor: designTokens.bg.default,
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '14px',
-                  color: designTokens.text.secondary,
-                  marginBottom: '4px',
-                }}
-              >
-                {getText('notice')}
-              </p>
-              <p
-                style={{
-                  fontSize: '24px',
-                  color: designTokens.text.primary,
-                  fontWeight: 600,
-                  margin: 0,
-                }}
-              >
-                {contentStats.notice}
-              </p>
-            </div>
-            <div
-              style={{
-                backgroundColor: designTokens.bg.default,
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: '14px',
-                  color: designTokens.text.secondary,
-                  marginBottom: '4px',
-                }}
-              >
-                {getText('reference')}
-              </p>
-              <p
-                style={{
-                  fontSize: '24px',
-                  color: designTokens.text.primary,
-                  fontWeight: 600,
-                  margin: 0,
-                }}
-              >
-                {contentStats.reference}
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard label={getText('totalContent')} value={contentStats.total} />
+            <StatCard label={getText('assignment')} value={contentStats.assignment} />
+            <StatCard label={getText('notice')} value={contentStats.notice} />
+            <StatCard label={getText('reference')} value={contentStats.reference} />
           </div>
 
           {/* Content Grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '16px',
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredContents.length === 0 ? (
-              <div
-                style={{
-                  gridColumn: '1 / -1',
-                  textAlign: 'center',
-                  padding: '48px 20px',
-                  color: designTokens.text.secondary,
-                }}
-              >
-                <FileText
-                  size={48}
-                  style={{
-                    margin: '0 auto 12px',
-                    color: designTokens.text.placeholder,
-                  }}
-                />
+              <div className="col-span-full text-center py-12 text-text-secondary">
+                <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
                 <p>{getText('noResults')}</p>
               </div>
             ) : (
               filteredContents.map((content) => (
-                <div
-                  key={content.id}
-                  style={{
-                    backgroundColor: designTokens.bg.default,
-                    border: `1px solid ${designTokens.bg.border}`,
-                    borderRadius: '8px',
-                    padding: '20px',
-                    transition: 'all 150ms ease',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow =
-                      '0 4px 12px rgba(0,0,0,0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  {/* Content Header */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <h3
-                      style={{
-                        color: designTokens.text.primary,
-                        marginBottom: '8px',
-                        fontSize: '16px',
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {content.title}
-                    </h3>
-                    {getTypeBadge(content.type)}
-                  </div>
-
-                  {/* File Info */}
-                  <div
-                    style={{
-                      marginBottom: '16px',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      backgroundColor: designTokens.bg.app_default,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '8px',
-                      }}
-                    >
-                      <File size={16} color={designTokens.text.secondary} />
-                      <span
-                        style={{
-                          fontSize: '14px',
-                          color: designTokens.text.primary,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {content.fileName}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        fontSize: '12px',
-                        color: designTokens.text.secondary,
-                      }}
-                    >
-                      <span>{content.fileType}</span>
-                      <span>•</span>
-                      <span>{content.fileSize}</span>
-                    </div>
-                  </div>
-
-                  {/* Registration Date */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      marginBottom: '16px',
-                      fontSize: '14px',
-                      color: designTokens.text.secondary,
-                    }}
-                  >
-                    <Calendar size={16} />
-                    <span>
-                      {getText('registrationDate')}: {content.registrationDate}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      style={{
-                        flex: 1,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        padding: '8px 12px',
-                        border: `1px solid ${designTokens.bg.border}`,
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        color: designTokens.text.primary,
-                        backgroundColor: 'transparent',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                      }}
-                    >
-                      <Eye size={16} />
-                      <span>{getText('view')}</span>
-                    </button>
-                    <button
-                      style={{
-                        flex: 1,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        padding: '8px 12px',
-                        border: `1px solid ${designTokens.bg.border}`,
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        color: designTokens.text.primary,
-                        backgroundColor: 'transparent',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                      }}
-                    >
-                      <Edit size={16} />
-                      <span>{getText('edit')}</span>
-                    </button>
-                    <button
-                      style={{
-                        padding: '8px 12px',
-                        border: `1px solid ${designTokens.bg.border}`,
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        backgroundColor: 'transparent',
-                        cursor: 'pointer',
-                        transition: 'all 150ms ease',
-                      }}
-                    >
-                      <Trash2 size={16} color={designTokens.action.delete_text} />
-                    </button>
-                  </div>
-                </div>
+                <ContentCard key={content.id} content={content} getText={getText} />
               ))
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// 통계 카드 컴포넌트
+function StatCard({ label, value }: Readonly<{ label: string; value: number }>) {
+  return (
+    <div className="bg-bg-default border border-border rounded-lg p-4">
+      <p className="text-sm text-text-secondary mb-1">{label}</p>
+      <p className="text-2xl text-text-primary font-semibold m-0">{value}</p>
+    </div>
+  );
+}
+
+// 콘텐츠 카드 컴포넌트
+function ContentCard({ content, getText }: Readonly<{ content: Content; getText: (key: keyof typeof t) => string }>) {
+  const colors = typeColors[content.type];
+
+  return (
+    <div className="bg-bg-default border border-border rounded-lg p-5 transition-shadow hover:shadow-md cursor-pointer">
+      {/* Content Header */}
+      <div className="mb-3">
+        <h3 className="text-text-primary mb-2 text-base leading-snug">{content.title}</h3>
+        <Badge variant="custom" customBg={colors.bg} customText={colors.text}>
+          {getText(content.type)}
+        </Badge>
+      </div>
+
+      {/* File Info */}
+      <div className="mb-4 p-3 rounded-lg bg-bg-app">
+        <div className="flex items-center gap-2 mb-2">
+          <File size={16} className="text-text-secondary" />
+          <span className="text-sm text-text-primary truncate">{content.fileName}</span>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-text-secondary">
+          <span>{content.fileType}</span>
+          <span>•</span>
+          <span>{content.fileSize}</span>
+        </div>
+      </div>
+
+      {/* Registration Date */}
+      <div className="flex items-center gap-2 mb-4 text-sm text-text-secondary">
+        <Calendar size={16} />
+        <span>{getText('registrationDate')}: {content.registrationDate}</span>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" className="flex-1 border border-border">
+          <Eye size={16} />
+          <span>{getText('view')}</span>
+        </Button>
+        <Button variant="ghost" size="sm" className="flex-1 border border-border">
+          <Edit size={16} />
+          <span>{getText('edit')}</span>
+        </Button>
+        <Button variant="danger" size="sm" className="px-3">
+          <Trash2 size={16} />
+        </Button>
       </div>
     </div>
   );
