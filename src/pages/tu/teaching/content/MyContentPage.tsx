@@ -77,7 +77,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   };
 
   return (
-    <div className="h-full flex flex-col bg-bg-default">
+    <div className="h-full flex flex-col bg-bg-app">
       {/* Top Bar */}
       <div className="border-b border-border bg-bg-default sticky top-0 z-10">
         <div className="p-6 px-8">
