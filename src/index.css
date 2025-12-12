@@ -1,3 +1,107 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* === Background and Neutral Tones === */
+  --color-bg-default: #FFFFFF;
+  --color-bg-app: #FAFAFA;
+  --color-bg-secondary: #F4F4F4;
+  --color-border: #E0E0E0;
+
+  /* === Text Colors === */
+  --color-text-primary: #333333;
+  --color-text-secondary: #666666;
+  --color-text-placeholder: #999999;
+
+  /* === Action Colors === */
+  --color-action-primary: #2A2A2A;
+  --color-action-primary-hover: #3D3D3D;
+  --color-action-text: #FFFFFF;
+  --color-action-delete: #F44336;
+
+  /* === Button - Neutral === */
+  --color-btn-neutral: #2A2A2A;
+  --color-btn-neutral-hover: #3D3D3D;
+  --color-btn-neutral-text: #FFFFFF;
+
+  /* === Button - Brand === */
+  --color-btn-brand: #4C2D9A;
+  --color-btn-brand-hover: #3D2478;
+  --color-btn-brand-text: #FFFFFF;
+
+  /* === Status Colors === */
+  --color-status-success: #388E3C;
+  --color-status-success-bg: #D4EDDA;
+  --color-status-warning: #FFA000;
+  --color-status-warning-bg: #FFF3CD;
+  --color-status-error: #D32F2F;
+  --color-status-error-bg: #FFEBEE;
+  --color-status-disabled: #666666;
+  --color-status-disabled-bg: #E0E0E0;
+
+  /* === Sidebar - Dark Mode === */
+  --sidebar-dark-bg: #2A2A2A;
+  --sidebar-dark-border: #3F3F3F;
+  --sidebar-dark-text-primary: #D4D4D4;
+  --sidebar-dark-text-secondary: #9E9E9E;
+  --sidebar-dark-hover: #353535;
+  --sidebar-dark-active-bg: #4A4A4A;
+  --sidebar-dark-active-text: #E8E8E8;
+  --sidebar-dark-tooltip-bg: #353535;
+
+  /* === Sidebar - Light Mode === */
+  --sidebar-light-bg: #EFEFEF;
+  --sidebar-light-border: #D0D0D0;
+  --sidebar-light-text-primary: #333333;
+  --sidebar-light-text-secondary: #666666;
+  --sidebar-light-hover: #E0E0E0;
+  --sidebar-light-active-bg: #D5D5D5;
+  --sidebar-light-active-text: #1F1F1F;
+  --sidebar-light-tooltip-bg: #FFFFFF;
+
+  /* === Typography === */
+  --font-size-base: 16px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* === Spacing & Radius === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-bg-app text-text-primary;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: var(--font-size-base);
+  }
+
+  h1, h2, h3, h4 {
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h1 {
+    @apply text-2xl;
+  }
+
+  h2 {
+    @apply text-xl;
+  }
+
+  h3 {
+    @apply text-lg;
+  }
+
+  h4 {
+    @apply text-base;
+  }
+}

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const apiClient = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,
   headers: {
@@ -8,7 +8,7 @@ const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     // TODO: 에러 처리 로직 추가
@@ -16,4 +16,4 @@ apiClient.interceptors.response.use(
   }
 );
 
-export default apiClient;
+export default axiosInstance;
