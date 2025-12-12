@@ -3,6 +3,7 @@ import { CourseListPage, CourseDetailPage, CourseCreatePage } from '@/pages/cour
 import { ContentPoolPage, ContentUploadPage } from '@/pages/content';
 import { LearningObjectsPage } from '@/pages/learning';
 import { MyCoursesPage, MyContentPage, CourseCreatePage as TuCourseCreatePage } from '@/pages/tu';
+import ComponentShowcase from '@/pages/ComponentShowcase';
 import {
   SuperAdminLayout,
   TenantAdminLayout,
@@ -114,6 +115,9 @@ function App() {
 
         {/* 기본 경로 - 랜딩 페이지 */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* 컴포넌트 쇼케이스 (개발용) */}
+        <Route path="/showcase" element={<ComponentShowcase />} />
       </Routes>
     </BrowserRouter>
   );
