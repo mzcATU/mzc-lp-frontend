@@ -61,9 +61,13 @@ src/components/
 
 ## 코딩 규칙
 
-- `any` 타입 금지 → 명시적 타입 정의 필수
-- 서버 상태: React Query 사용 (useState는 UI 상태만)
-- API: `src/services/api/axiosInstance.ts` 사용
+```
+✅ any 타입 금지 → 명시적 타입 정의
+✅ 서버 상태: React Query (useState는 UI 상태만)
+✅ API: Axios Instance + handleApiError
+✅ 컴포넌트: Props Destructuring + Early Return
+```
+
 - 임포트 경로: `@/` 별칭 사용 (예: `@/components/common`)
 
 ## 작업 순서
