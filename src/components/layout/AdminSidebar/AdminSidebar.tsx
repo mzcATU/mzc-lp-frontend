@@ -156,13 +156,9 @@ export function AdminSidebar({
       <div
         className={cn(
           'flex-1 overflow-y-auto overflow-x-hidden p-3',
-          'scrollbar-thin scrollbar-thumb-rounded'
+          'sidebar-scrollbar',
+          !isDarkMode && 'sidebar-scrollbar-light'
         )}
-        style={{
-          scrollbarColor: isDarkMode
-            ? 'rgba(255, 255, 255, 0.15) transparent'
-            : 'rgba(0, 0, 0, 0.15) transparent',
-        }}
       >
         <ul className="space-y-1">
           {menuData.map((item) => {

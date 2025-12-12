@@ -7,6 +7,7 @@ export interface MenuItem {
   id: string;
   label: { ko: string; en: string };
   icon: LucideIcon;
+  path?: string;
   subItems?: SubMenuItem[];
 }
 
@@ -14,6 +15,7 @@ export interface SubMenuItem {
   id: string;
   label: { ko: string; en: string };
   icon: LucideIcon;
+  path?: string;
   instructorOnly?: boolean;
 }
 
