@@ -1,8 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { CourseListPage, CourseDetailPage, CourseCreatePage } from '@/pages/courses';
-import { ContentPoolPage, ContentUploadPage } from '@/pages/content';
-import { LearningObjectsPage } from '@/pages/learning';
-import { MyCoursesPage, MyContentPage, CourseCreatePage as TuCourseCreatePage } from '@/pages/tu';
+import { MyCoursesPage, MyContentPage, CourseCreatePage, TuContentCreatePage } from '@/pages/tu';
 import ComponentShowcase from '@/pages/ComponentShowcase';
 import {
   SuperAdminLayout,
@@ -204,16 +201,16 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           {/* 교육 과정 탐색 */}
-          <Route path="courses" element={<CourseListPage />} />
-          <Route path="courses/create" element={<CourseCreatePage />} />
-          <Route path="courses/:id" element={<CourseDetailPage />} />
+          <Route path="courses" element={<PlaceholderPage title="과정 목록" />} />
+          <Route path="courses/create" element={<PlaceholderPage title="과정 생성" />} />
+          <Route path="courses/:id" element={<PlaceholderPage title="과정 상세" />} />
           {/* 교육 운영 관리 */}
           <Route path="sessions" element={<PlaceholderPage title="차수 관리" />} />
           <Route path="instructors" element={<PlaceholderPage title="강사 배정" />} />
           {/* 콘텐츠 관리 */}
-          <Route path="content" element={<ContentPoolPage />} />
-          <Route path="content/upload" element={<ContentUploadPage />} />
-          <Route path="learning-objects" element={<LearningObjectsPage />} />
+          <Route path="content" element={<PlaceholderPage title="콘텐츠 풀" />} />
+          <Route path="content/upload" element={<PlaceholderPage title="콘텐츠 업로드" />} />
+          <Route path="learning-objects" element={<PlaceholderPage title="학습 객체 관리" />} />
           {/* 수강 및 강사 정보 */}
           <Route path="sis" element={<PlaceholderPage title="학생 수강 정보 확인" />} />
           <Route path="iis" element={<PlaceholderPage title="강사 배정 정보 확인" />} />
@@ -229,8 +226,9 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           {/* 내 강의 */}
           <Route path="teaching/courses" element={<MyCoursesPage />} />
-          <Route path="teaching/courses/create" element={<TuCourseCreatePage />} />
+          <Route path="teaching/courses/create" element={<CourseCreatePage />} />
           <Route path="teaching/content" element={<MyContentPage />} />
+          <Route path="teaching/content/create" element={<TuContentCreatePage />} />
           <Route path="teaching/assignments" element={<PlaceholderPage title="내 과제" />} />
           {/* 교육 과정 탐색 */}
           <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
@@ -243,14 +241,6 @@ function App() {
           <Route path="settings/security" element={<PlaceholderPage title="계정 및 보안" />} />
           <Route path="settings/notifications" element={<PlaceholderPage title="알림 설정" />} />
         </Route>
-
-        {/* 기존 라우트 (레거시, 추후 제거 예정) */}
-        <Route path="/courses" element={<CourseListPage />} />
-        <Route path="/courses/create" element={<CourseCreatePage />} />
-        <Route path="/courses/:id" element={<CourseDetailPage />} />
-        <Route path="/content" element={<ContentPoolPage />} />
-        <Route path="/content/upload" element={<ContentUploadPage />} />
-        <Route path="/learning-objects" element={<LearningObjectsPage />} />
 
         {/* 기본 경로 - 랜딩 페이지 */}
         <Route path="/" element={<LandingPage />} />
