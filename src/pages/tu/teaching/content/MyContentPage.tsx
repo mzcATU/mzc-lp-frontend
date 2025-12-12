@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Eye, Edit, Trash2, FileText, Calendar, ChevronDown, File } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge } from '@/components/common';
@@ -16,7 +17,6 @@ interface Content {
 }
 
 interface MyContentPageProps {
-  onCreateContent?: () => void;
   language?: 'ko' | 'en';
 }
 
@@ -54,7 +54,8 @@ const typeColors: Record<ContentType, { bg: string; text: string }> = {
   reference: { bg: '#E8F5E9', text: '#2E7D32' },
 };
 
-export function MyContentPage({ onCreateContent, language = 'ko' }: Readonly<MyContentPageProps>) {
+export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>) {
+  const navigate = useNavigate();
   const [contents] = useState<Content[]>(mockContents);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | ContentType>('all');
@@ -85,7 +86,7 @@ export function MyContentPage({ onCreateContent, language = 'ko' }: Readonly<MyC
               <h1 className="text-text-primary mb-1">{getText('title')}</h1>
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
-            <Button onClick={onCreateContent}>
+            <Button onClick={() => navigate('/tu/teaching/content/create')}>
               <Plus size={20} />
               <span>{getText('createContent')}</span>
             </Button>

@@ -1,8 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
-import { CourseListPage, CourseDetailPage, CourseCreatePage } from '@/pages/courses';
-import { ContentPoolPage, ContentUploadPage } from '@/pages/content';
-import { LearningObjectsPage } from '@/pages/learning';
-import { MyCoursesPage, MyContentPage, CourseCreatePage as TuCourseCreatePage } from '@/pages/tu';
+import { MyCoursesPage, MyContentPage, CourseCreatePage, TuContentCreatePage } from '@/pages/tu';
 import ComponentShowcase from '@/pages/ComponentShowcase';
 import {
   SuperAdminLayout,
@@ -84,12 +81,6 @@ function App() {
         <Route path="/to" element={<TenantOperatorWrapper />}>
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="courses" element={<CourseListPage />} />
-          <Route path="courses/create" element={<CourseCreatePage />} />
-          <Route path="courses/:id" element={<CourseDetailPage />} />
-          <Route path="content" element={<ContentPoolPage />} />
-          <Route path="content/upload" element={<ContentUploadPage />} />
-          <Route path="learning-objects" element={<LearningObjectsPage />} />
           <Route path="settings" element={<DashboardPage />} />
         </Route>
 
@@ -98,20 +89,13 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="teaching/courses" element={<MyCoursesPage />} />
-          <Route path="teaching/courses/create" element={<TuCourseCreatePage />} />
+          <Route path="teaching/courses/create" element={<CourseCreatePage />} />
           <Route path="teaching/content" element={<MyContentPage />} />
+          <Route path="teaching/content/create" element={<TuContentCreatePage />} />
           <Route path="catalog" element={<DashboardPage />} />
           <Route path="certifications" element={<DashboardPage />} />
           <Route path="settings" element={<DashboardPage />} />
         </Route>
-
-        {/* 기존 라우트 (레거시, 추후 제거 예정) */}
-        <Route path="/courses" element={<CourseListPage />} />
-        <Route path="/courses/create" element={<CourseCreatePage />} />
-        <Route path="/courses/:id" element={<CourseDetailPage />} />
-        <Route path="/content" element={<ContentPoolPage />} />
-        <Route path="/content/upload" element={<ContentUploadPage />} />
-        <Route path="/learning-objects" element={<LearningObjectsPage />} />
 
         {/* 기본 경로 - 랜딩 페이지 */}
         <Route path="/" element={<LandingPage />} />

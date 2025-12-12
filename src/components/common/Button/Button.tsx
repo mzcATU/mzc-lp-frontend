@@ -19,7 +19,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: 'neutral',
+      variant: 'brand',
       size: 'md',
     },
   }
