@@ -41,6 +41,11 @@ npm run dev
 
 - http://localhost:3000
 
+### 5. UI 컴포넌트 미리보기
+
+- http://localhost:3000/showcase
+- shadcn/ui 기반 컴포넌트 전체 목록 확인 가능
+
 ---
 
 ## 프로젝트 구조
