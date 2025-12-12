@@ -1,1 +1,1 @@
-export { MyCoursesPage, MyContentPage, CourseCreatePage } from './teaching';
+export { MyCoursesPage, MyContentPage, CourseCreatePage, TuContentCreatePage } from './teaching';
