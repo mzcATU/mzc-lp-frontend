@@ -88,10 +88,11 @@ export const CourseListPage = () => {
               <tr>
                 <td
                   colSpan={4}
-                  className="p-8 text-center"
+                  className="p-12 text-center"
                   style={{ color: designTokens.text.placeholder }}
                 >
-                  등록된 강의가 없습니다.
+                  <p className="text-lg mb-2">🚧 개발 예정</p>
+                  <p className="text-sm">강의 관리 기능이 곧 추가될 예정입니다.</p>
                 </td>
               </tr>
             ) : (

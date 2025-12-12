@@ -74,151 +74,28 @@ export const ContentUploadPage = () => {
           콘텐츠 업로드
         </h1>
 
-        {/* 드롭존 */}
+        {/* 개발 예정 안내 */}
         <div
-          className={`rounded-lg border-2 border-dashed p-12 text-center transition-colors cursor-pointer ${
-            isDragActive ? 'border-blue-500 bg-blue-50' : ''
-          }`}
-          style={{
-            borderColor: isDragActive
-              ? designTokens.button.brand_default
-              : designTokens.bg.border,
-          }}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => document.getElementById('file-input')?.click()}
+          className="rounded-lg border-2 border-dashed p-12 text-center"
+          style={{ borderColor: designTokens.bg.border }}
         >
-          <Upload
-            className="w-12 h-12 mx-auto mb-4"
+          <p className="text-lg mb-2" style={{ color: designTokens.text.placeholder }}>
+            🚧 개발 예정
+          </p>
+          <p
+            className="text-sm"
             style={{ color: designTokens.text.placeholder }}
-          />
-          {isDragActive ? (
-            <p style={{ color: designTokens.button.brand_default }}>
-              파일을 여기에 놓으세요...
-            </p>
-          ) : (
-            <>
-              <p style={{ color: designTokens.text.primary }}>
-                파일을 드래그하거나 클릭하여 업로드
-              </p>
-              <p
-                className="text-sm mt-1"
-                style={{ color: designTokens.text.placeholder }}
-              >
-                여러 파일을 동시에 업로드할 수 있습니다
-              </p>
-            </>
-          )}
-          <input
-            id="file-input"
-            type="file"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-            accept="video/*,application/pdf,image/*,audio/*"
-          />
-        </div>
-
-        {/* 선택된 파일 목록 */}
-        {selectedFiles.length > 0 && (
-          <div
-            className="mt-6 rounded-lg border p-4"
-            style={{
-              backgroundColor: designTokens.bg.secondary,
-              borderColor: designTokens.bg.border,
-            }}
           >
-            <h3
-              className="font-medium mb-3"
-              style={{ color: designTokens.text.primary }}
-            >
-              선택된 파일 ({selectedFiles.length}개)
-            </h3>
-            <ul className="space-y-2">
-              {selectedFiles.map((file, index) => (
-                <li
-                  key={index}
-                  className="flex items-center gap-3 p-2 rounded"
-                  style={{ backgroundColor: designTokens.bg.default }}
-                >
-                  <File
-                    className="w-4 h-4"
-                    style={{ color: designTokens.text.secondary }}
-                  />
-                  <span style={{ color: designTokens.text.primary }}>
-                    {file.name}
-                  </span>
-                  <span
-                    className="text-sm ml-auto"
-                    style={{ color: designTokens.text.placeholder }}
-                  >
-                    {formatFileSize(file.size)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* 업로드 진행률 */}
-        {uploadProgress > 0 && uploadProgress < 100 && (
-          <div className="mt-4">
-            <div
-              className="h-2 rounded-full overflow-hidden"
-              style={{ backgroundColor: designTokens.bg.border }}
-            >
-              <div
-                className="h-full transition-all"
-                style={{
-                  width: `${uploadProgress}%`,
-                  backgroundColor: designTokens.button.brand_default,
-                }}
-              />
-            </div>
-            <p
-              className="text-sm mt-1 text-center"
-              style={{ color: designTokens.text.secondary }}
-            >
-              {Math.round(uploadProgress)}% 완료
-            </p>
-          </div>
-        )}
-
-        {/* 지원 형식 */}
-        <div
-          className="mt-6 rounded-lg border p-4"
-          style={{
-            backgroundColor: designTokens.bg.secondary,
-            borderColor: designTokens.bg.border,
-          }}
-        >
-          <h3
-            className="font-medium mb-2"
-            style={{ color: designTokens.text.primary }}
-          >
-            지원 형식
-          </h3>
-          <ul
-            className="text-sm space-y-1"
-            style={{ color: designTokens.text.secondary }}
-          >
-            <li>영상: mp4, avi, mov, mkv (최대 2GB)</li>
-            <li>문서: pdf, doc, docx, ppt, pptx (최대 100MB)</li>
-            <li>이미지: jpg, png, gif, svg (최대 50MB)</li>
-            <li>오디오: mp3, wav, m4a (최대 500MB)</li>
-          </ul>
+            콘텐츠 업로드 기능이 곧 추가될 예정입니다.
+          </p>
         </div>
 
         {/* 버튼 */}
-        {selectedFiles.length > 0 && (
-          <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline" onClick={() => setSelectedFiles([])}>
-              초기화
-            </Button>
-            <Button onClick={handleUpload}>업로드 시작</Button>
-          </div>
-        )}
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            돌아가기
+          </Button>
+        </div>
       </div>
     </div>
   );

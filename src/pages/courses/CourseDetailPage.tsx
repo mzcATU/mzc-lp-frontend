@@ -97,31 +97,14 @@ export const CourseDetailPage = () => {
           </div>
         </header>
 
-        {/* TreeView 컴포넌트 연동 예정 */}
-        {hierarchy.length === 0 ? (
-          <div
-            className="py-12 text-center"
-            style={{ color: designTokens.text.placeholder }}
-          >
-            <p>커리큘럼이 비어있습니다.</p>
-            <p className="text-sm mt-1">
-              폴더나 차시를 추가하여 강의를 구성하세요.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {/* TODO: TreeView 컴포넌트 */}
-            {hierarchy.map((item) => (
-              <div
-                key={item.id}
-                className="p-3 rounded border"
-                style={{ borderColor: designTokens.bg.border }}
-              >
-                {item.name}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* 개발 예정 안내 */}
+        <div
+          className="py-12 text-center"
+          style={{ color: designTokens.text.placeholder }}
+        >
+          <p className="text-lg mb-2">🚧 개발 예정</p>
+          <p className="text-sm">커리큘럼 구성 기능이 곧 추가될 예정입니다.</p>
+        </div>
       </section>
 
       {/* 학습 순서 설정 */}

@@ -56,67 +56,21 @@ export const CourseCreatePage = () => {
           새 강의 만들기
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 강의명 */}
-          <div>
-            <label
-              htmlFor="courseName"
-              className="block text-sm font-medium mb-2"
-              style={{ color: designTokens.text.primary }}
-            >
-              강의명 <span style={{ color: designTokens.status.error_text }}>*</span>
-            </label>
-            <input
-              type="text"
-              id="courseName"
-              name="courseName"
-              value={formData.courseName}
-              onChange={handleChange}
-              placeholder="강의 이름을 입력하세요"
-              required
-              className="w-full px-4 py-2 rounded-lg border outline-none transition-colors"
-              style={{
-                backgroundColor: designTokens.bg.default,
-                borderColor: designTokens.bg.border,
-                color: designTokens.text.primary,
-              }}
-            />
-          </div>
+        {/* 개발 예정 안내 */}
+        <div
+          className="py-12 text-center"
+          style={{ color: designTokens.text.placeholder }}
+        >
+          <p className="text-lg mb-2">🚧 개발 예정</p>
+          <p className="text-sm">강의 생성 기능이 곧 추가될 예정입니다.</p>
+        </div>
 
-          {/* 강사 선택 */}
-          <div>
-            <label
-              htmlFor="instructorId"
-              className="block text-sm font-medium mb-2"
-              style={{ color: designTokens.text.primary }}
-            >
-              강사
-            </label>
-            <select
-              id="instructorId"
-              name="instructorId"
-              value={formData.instructorId}
-              onChange={handleChange}
-              className="w-full px-4 py-2 rounded-lg border outline-none transition-colors"
-              style={{
-                backgroundColor: designTokens.bg.default,
-                borderColor: designTokens.bg.border,
-                color: designTokens.text.primary,
-              }}
-            >
-              <option value="">강사를 선택하세요</option>
-              {/* TODO: 강사 목록 API 연동 */}
-            </select>
-          </div>
-
-          {/* 버튼 */}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-              취소
-            </Button>
-            <Button type="submit">생성</Button>
-          </div>
-        </form>
+        {/* 버튼 */}
+        <div className="flex justify-end gap-3 pt-4">
+          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+            돌아가기
+          </Button>
+        </div>
       </div>
     </div>
   );

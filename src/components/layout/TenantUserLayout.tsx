@@ -2,22 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TenantUserSidebar } from './TenantUserSidebar';
 import { designTokens } from '@/styles/design-tokens';
-
-// 메뉴 ID와 라우트 매핑
-const menuRoutes: Record<string, string> = {
-  home: '/tu',
-  'my-courses': '/tu/teaching/courses',
-  'content-creation': '/tu/teaching/content',
-  'grading-evaluation': '/tu/teaching/grading',
-  'full-library': '/tu/catalog',
-  'courses-by-role': '/tu/catalog/role',
-  'courses-by-skill': '/tu/catalog/skill',
-  'my-competency': '/tu/certifications/competency',
-  'my-certifications': '/tu/certifications',
-  'account-security': '/tu/settings/security',
-  'language-timezone': '/tu/settings/language',
-  'notification-settings': '/tu/settings/notifications',
-};
+import { tenantUserMenuData } from '@/config/sidebar-menus';
 
 interface TenantUserLayoutProps {
   children: ReactNode;
@@ -30,9 +15,20 @@ export function TenantUserLayout({ children }: TenantUserLayoutProps) {
   const [language, setLanguage] = useState<'ko' | 'en'>('ko');
 
   const handleMenuItemClick = (itemId: string) => {
-    const route = menuRoutes[itemId];
-    if (route) {
-      navigate(route);
+    // Check top-level menu items
+    const menuItem = tenantUserMenuData.find((item) => item.id === itemId);
+    if (menuItem?.path) {
+      navigate(menuItem.path);
+      return;
+    }
+
+    // Check subItems
+    for (const item of tenantUserMenuData) {
+      const subItem = item.subItems?.find((sub) => sub.id === itemId);
+      if (subItem?.path) {
+        navigate(subItem.path);
+        return;
+      }
     }
   };
 
