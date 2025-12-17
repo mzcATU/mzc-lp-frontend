@@ -16,23 +16,23 @@ import {
 } from "lucide-react";
 
 // UI Components
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/common/button";
+import { Input } from "@/components/common/input";
+import { Badge } from "@/components/common/badge";
+import { Separator } from "@/components/common/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/common/tooltip";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+} from "@/components/common/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/common/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,8 +43,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+} from "@/components/common/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/common/avatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -52,7 +52,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@/components/common/breadcrumb";
 import {
   Card,
   CardContent,
@@ -60,13 +60,13 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/common/card";
+import { Checkbox } from "@/components/common/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/components/common/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -75,7 +75,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/components/common/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,26 +83,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
+} from "@/components/common/dropdown-menu";
+import { Label } from "@/components/common/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from "@/components/common/popover";
+import { Progress } from "@/components/common/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/common/radio-group";
+import { ScrollArea } from "@/components/common/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
+} from "@/components/common/select";
+import { Skeleton } from "@/components/common/skeleton";
+import { Slider } from "@/components/common/slider";
+import { Switch } from "@/components/common/switch";
 import {
   Table,
   TableBody,
@@ -110,18 +110,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { Toggle } from "@/components/ui/toggle";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Calendar } from "@/components/ui/calendar";
+} from "@/components/common/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/tabs";
+import { Textarea } from "@/components/common/textarea";
+import { Toggle } from "@/components/common/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/common/toggle-group";
+import { Calendar } from "@/components/common/calendar";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart";
+} from "@/components/common/chart";
 import {
   Bar,
   BarChart,
@@ -133,15 +133,15 @@ import {
 } from "recharts";
 
 // New Admin Components
-import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
-import { DateRangePicker, DatePicker } from "@/components/ui/date-range-picker";
-import { Combobox, MultiCombobox } from "@/components/ui/combobox";
-import { FileUpload, ImageUpload } from "@/components/ui/file-upload";
-import { StatsCard, StatsGrid, MiniStats } from "@/components/ui/stats-card";
-import { Timeline, TimelineItem, HorizontalTimeline, HorizontalTimelineItem } from "@/components/ui/timeline";
-import { Stepper, StepperNavigation } from "@/components/ui/stepper";
-import { EmptyState, NoResultsEmpty, NoDataEmpty } from "@/components/ui/empty-state";
-import { KanbanBoard, type KanbanColumn as KanbanColumnType } from "@/components/ui/kanban";
+import { DataTable, DataTableColumnHeader } from "@/components/common/data-table";
+import { DateRangePicker, DatePicker } from "@/components/common/date-range-picker";
+import { Combobox, MultiCombobox } from "@/components/common/combobox";
+import { FileUpload, ImageUpload } from "@/components/common/file-upload";
+import { StatsCard, StatsGrid, MiniStats } from "@/components/common/stats-card";
+import { Timeline, TimelineItem, HorizontalTimeline, HorizontalTimelineItem } from "@/components/common/timeline";
+import { Stepper, StepperNavigation } from "@/components/common/stepper";
+import { EmptyState, NoResultsEmpty, NoDataEmpty } from "@/components/common/empty-state";
+import { KanbanBoard, type KanbanColumn as KanbanColumnType } from "@/components/common/kanban";
 import { Users, ShoppingCart, DollarSign, Activity, FileText, Clock, CheckCircle } from "lucide-react";
 
 // Section wrapper component

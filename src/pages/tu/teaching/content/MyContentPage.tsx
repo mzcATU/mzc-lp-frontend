@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Eye, Edit, Trash2, FileText, Calendar, ChevronDown, File } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge } from '@/components/common';
+import { Button } from '@/components/common';
 
 type ContentType = 'assignment' | 'notice' | 'reference';
 
@@ -185,9 +185,12 @@ function ContentCard({ content, getText }: Readonly<{ content: Content; getText:
       {/* Content Header */}
       <div className="mb-3">
         <h3 className="text-text-primary mb-2 text-base leading-snug">{content.title}</h3>
-        <Badge variant="custom" customBg={colors.bg} customText={colors.text}>
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
+          style={{ backgroundColor: colors.bg, color: colors.text }}
+        >
           {getText(content.type)}
-        </Badge>
+        </span>
       </div>
 
       {/* File Info */}
@@ -219,7 +222,7 @@ function ContentCard({ content, getText }: Readonly<{ content: Content; getText:
           <Edit size={16} />
           <span>{getText('edit')}</span>
         </Button>
-        <Button variant="danger" size="sm" className="px-3">
+        <Button variant="destructive" size="sm" className="px-3">
           <Trash2 size={16} />
         </Button>
       </div>
