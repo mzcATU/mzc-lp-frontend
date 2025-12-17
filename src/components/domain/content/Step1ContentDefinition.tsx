@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { FileText, FileVideo, Link as LinkIcon, X, Tag, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Textarea, Select } from '@/components/common';
+import { Button, Input, Textarea } from '@/components/common';
 import type { LOData, LOType, ContentCategory } from '@/types';
 
 interface Step1Props {
@@ -167,11 +167,17 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
             <label className="block text-sm font-medium text-text-primary mb-1">
               카테고리 <span className="text-status-error">*</span>
             </label>
-            <Select
+            <select
               value={data.category || ''}
               onChange={(e) => onUpdate({ category: e.target.value })}
-              options={categoryOptions}
-            />
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+            >
+              {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* 태그 입력 */}

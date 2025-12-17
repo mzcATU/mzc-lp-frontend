@@ -1,4 +1,4 @@
-import { AdminSidebar } from '../AdminSidebar';
+import { BaseSidebar } from '../BaseSidebar';
 import { tenantAdminMenuData, roleLabels } from '@/config/sidebar-menus';
 
 interface TenantAdminSidebarProps {
@@ -13,7 +13,7 @@ interface TenantAdminSidebarProps {
 
 export function TenantAdminSidebar(props: TenantAdminSidebarProps) {
   return (
-    <AdminSidebar
+    <BaseSidebar
       {...props}
       menuData={tenantAdminMenuData}
       roleLabel={roleLabels.tenantAdmin}

@@ -48,7 +48,7 @@ import {
   Briefcase,
   Target,
 } from 'lucide-react';
-import type { MenuItem } from '@/types/sidebar.types';
+import type { MenuItem } from '@/types';
 
 /**
  * Super Admin (SA) 메뉴

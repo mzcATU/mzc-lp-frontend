@@ -9,11 +9,11 @@ import {
   Sun,
   GraduationCap,
 } from 'lucide-react';
-import type { AdminSidebarProps, SidebarColors } from '@/types/sidebar.types';
+import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/design-tokens';
 import { cn } from '@/utils/cn';
 
-export function AdminSidebar({
+export function BaseSidebar({
   isExpanded,
   onToggle,
   onMenuItemClick,
@@ -23,7 +23,7 @@ export function AdminSidebar({
   onLanguageChange,
   menuData,
   roleLabel,
-}: AdminSidebarProps) {
+}: BaseSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
 

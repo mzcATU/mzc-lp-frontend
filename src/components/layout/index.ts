@@ -1,6 +1,6 @@
 // Base components
 export { AdminLayout } from './AdminLayout';
-export { AdminSidebar } from './AdminSidebar';
+export { BaseSidebar } from './BaseSidebar';
 
 // Role-specific sidebars
 export { SuperAdminSidebar } from './SuperAdminSidebar';

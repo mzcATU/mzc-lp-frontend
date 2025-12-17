@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Save, FileText, Upload, Plus, GripVertical, ChevronDown, ChevronRight, Trash2, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Textarea, Select } from '@/components/common';
+import { Button, Input, Textarea, Label } from '@/components/common';
 import type { CourseFormData, LessonData, ContentAttachment, CourseDifficulty } from '@/types';
 
 const t = {
@@ -242,50 +242,80 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           {/* Step 1: 기본 정보 */}
           {currentStep === 1 && (
             <div className="flex flex-col gap-6">
-              <Input
-                label={getText('courseName')}
-                value={formData.courseName}
-                onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
-                placeholder={getText('courseNamePlaceholder')}
-              />
-
-              <Textarea
-                label={getText('courseDescription')}
-                value={formData.courseDescription}
-                onChange={(e) => setFormData({ ...formData, courseDescription: e.target.value })}
-                placeholder={getText('courseDescriptionPlaceholder')}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Select
-                  label={getText('category')}
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  options={categoryOptions}
+              <div className="space-y-2">
+                <Label htmlFor="courseName">{getText('courseName')}</Label>
+                <Input
+                  id="courseName"
+                  value={formData.courseName}
+                  onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
+                  placeholder={getText('courseNamePlaceholder')}
                 />
+              </div>
 
-                <Select
-                  label={getText('difficulty')}
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as CourseDifficulty })}
-                  options={difficultyOptions}
+              <div className="space-y-2">
+                <Label htmlFor="courseDescription">{getText('courseDescription')}</Label>
+                <Textarea
+                  id="courseDescription"
+                  value={formData.courseDescription}
+                  onChange={(e) => setFormData({ ...formData, courseDescription: e.target.value })}
+                  placeholder={getText('courseDescriptionPlaceholder')}
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label={getText('startDate')}
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="category">{getText('category')}</Label>
+                  <select
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  >
+                    {categoryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <Input
-                  label={getText('endDate')}
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="difficulty">{getText('difficulty')}</Label>
+                  <select
+                    id="difficulty"
+                    value={formData.difficulty}
+                    onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as CourseDifficulty })}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  >
+                    {difficultyOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">{getText('startDate')}</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">{getText('endDate')}</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
           )}

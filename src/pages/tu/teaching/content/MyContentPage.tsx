@@ -218,7 +218,7 @@ function ContentCard({ content, getText }: Readonly<{ content: Content; getText:
           <Edit size={16} />
           <span>{getText('edit')}</span>
         </Button>
-        <Button variant="danger" size="sm" className="px-3">
+        <Button variant="destructive" size="sm" className="px-3">
           <Trash2 size={16} />
         </Button>
       </div>

@@ -1,3 +1,10 @@
-export type { MenuItem, SubMenuItem, SidebarColors, AdminSidebarProps } from './sidebar.types';
-export * from './course.types';
-export * from './content.types';
+// Common types
+export * from './common';
+
+// Role-specific types
+export * from './to';
+
+// SA, TA, TU types will be exported here as they are created
+// export * from './sa';
+// export * from './ta';
+// export * from './tu';
