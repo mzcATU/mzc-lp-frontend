@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import { AdminSidebar } from './AdminSidebar';
-import type { MenuItem } from '@/types/sidebar.types';
+import { BaseSidebar } from './BaseSidebar';
+import type { MenuItem } from '@/types';
 import { designTokens } from '@/styles/design-tokens';
 
 interface AdminLayoutProps {
@@ -25,7 +25,7 @@ export function AdminLayout({
       className="flex h-screen"
       style={{ backgroundColor: designTokens.bg.app_default }}
     >
-      <AdminSidebar
+      <BaseSidebar
         isExpanded={isSidebarExpanded}
         onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
         onMenuItemClick={onMenuItemClick}

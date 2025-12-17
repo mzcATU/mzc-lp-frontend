@@ -1,4 +1,4 @@
-import { AdminSidebar } from '../AdminSidebar';
+import { BaseSidebar } from '../BaseSidebar';
 import { superAdminMenuData, roleLabels } from '@/config/sidebar-menus';
 
 interface SuperAdminSidebarProps {
@@ -13,7 +13,7 @@ interface SuperAdminSidebarProps {
 
 export function SuperAdminSidebar(props: SuperAdminSidebarProps) {
   return (
-    <AdminSidebar
+    <BaseSidebar
       {...props}
       menuData={superAdminMenuData}
       roleLabel={roleLabels.superAdmin}

@@ -34,9 +34,9 @@ export interface SidebarColors {
 }
 
 /**
- * 사이드바 Props
+ * 공통 사이드바 Props
  */
-export interface AdminSidebarProps {
+export interface BaseSidebarProps {
   isExpanded: boolean;
   onToggle: () => void;
   onMenuItemClick?: (itemId: string) => void;
