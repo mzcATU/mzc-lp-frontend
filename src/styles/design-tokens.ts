@@ -57,6 +57,18 @@ export const designTokens = {
     neutral_disabled_bg: '#E0E0E0',    // 진행 종료 등 비활성 배경
   },
 
+  // --- Badge Colors (태그/카테고리용 - 뮤트 톤) ---
+  badge: {
+    red: { text: '#9E3A3A', bg: '#FAECEC' },
+    orange: { text: '#B5663A', bg: '#FDF3EC' },
+    yellow: { text: '#8C7A35', bg: '#FBF8E8' },
+    green: { text: '#3D7A4A', bg: '#EDF5EF' },
+    blue: { text: '#3A6B9E', bg: '#ECF3FA' },
+    indigo: { text: '#4C2D9A', bg: '#EDE7F6' },
+    purple: { text: '#7A4A8C', bg: '#F5EDF8' },
+    gray: { text: '#616161', bg: '#F5F5F5' },
+  },
+
   // --- Dark Mode Sidebar (Preserved Original Values) ---
   darkMode: {
     bg: '#2A2A2A',

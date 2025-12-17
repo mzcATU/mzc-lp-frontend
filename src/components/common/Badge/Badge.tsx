@@ -1,17 +1,26 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
-import type { BadgeProps, CategoryBadgeProps } from './Badge.types';
+import type { BadgeProps, CategoryBadgeProps, BadgeColor } from './Badge.types';
 
 const badgeVariants = cva(
   'inline-flex items-center px-3 py-1 rounded-md text-xs font-medium',
   {
     variants: {
       variant: {
+        // Status variants
         default: 'bg-bg-secondary text-text-secondary',
         success: 'bg-status-success-bg text-status-success',
         warning: 'bg-status-warning-bg text-status-warning',
         error: 'bg-status-error-bg text-status-error',
-        custom: '',
+        // Badge color variants (뮤트 톤)
+        red: 'bg-badge-red-bg text-badge-red',
+        orange: 'bg-badge-orange-bg text-badge-orange',
+        yellow: 'bg-badge-yellow-bg text-badge-yellow',
+        green: 'bg-badge-green-bg text-badge-green',
+        blue: 'bg-badge-blue-bg text-badge-blue',
+        indigo: 'bg-badge-indigo-bg text-badge-indigo',
+        purple: 'bg-badge-purple-bg text-badge-purple',
+        gray: 'bg-badge-gray-bg text-badge-gray',
       },
     },
     defaultVariants: {
@@ -24,40 +33,28 @@ export const Badge = ({
   children,
   variant,
   className,
-  customBg,
-  customText,
 }: BadgeProps & VariantProps<typeof badgeVariants>) => {
-  const customStyle =
-    variant === 'custom' && customBg && customText
-      ? { backgroundColor: customBg, color: customText }
-      : undefined;
-
   return (
-    <span className={cn(badgeVariants({ variant }), className)} style={customStyle}>
+    <span className={cn(badgeVariants({ variant }), className)}>
       {children}
     </span>
   );
 };
 
-// 카테고리별 색상 매핑
-const categoryColors: Record<string, { bg: string; text: string }> = {
-  프로그래밍: { bg: '#E3F2FD', text: '#1565C0' },
-  백엔드: { bg: '#E8F5E9', text: '#2E7D32' },
-  '개발 도구': { bg: '#FFF3E0', text: '#E65100' },
-  프론트엔드: { bg: '#F3E5F5', text: '#7B1FA2' },
-  데이터베이스: { bg: '#FFEBEE', text: '#C62828' },
-  default: { bg: '#F5F5F5', text: '#616161' },
-};
-
-const getCategoryColor = (category: string) => {
-  return categoryColors[category] || categoryColors.default;
+// 카테고리별 Badge 컬러 매핑
+const categoryColorMap: Record<string, BadgeColor> = {
+  프로그래밍: 'blue',
+  백엔드: 'green',
+  '개발 도구': 'orange',
+  프론트엔드: 'purple',
+  데이터베이스: 'red',
 };
 
 export const CategoryBadge = ({ category, className }: CategoryBadgeProps) => {
-  const colors = getCategoryColor(category);
+  const colorVariant = categoryColorMap[category] || 'gray';
 
   return (
-    <Badge variant="custom" customBg={colors.bg} customText={colors.text} className={className}>
+    <Badge variant={colorVariant} className={className}>
       {category}
     </Badge>
   );

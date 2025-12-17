@@ -38,6 +38,24 @@ export default {
         'status-disabled': 'var(--color-status-disabled)',
         'status-disabled-bg': 'var(--color-status-disabled-bg)',
 
+        // Badge (태그/카테고리용)
+        'badge-red': 'var(--color-badge-red)',
+        'badge-red-bg': 'var(--color-badge-red-bg)',
+        'badge-orange': 'var(--color-badge-orange)',
+        'badge-orange-bg': 'var(--color-badge-orange-bg)',
+        'badge-yellow': 'var(--color-badge-yellow)',
+        'badge-yellow-bg': 'var(--color-badge-yellow-bg)',
+        'badge-green': 'var(--color-badge-green)',
+        'badge-green-bg': 'var(--color-badge-green-bg)',
+        'badge-blue': 'var(--color-badge-blue)',
+        'badge-blue-bg': 'var(--color-badge-blue-bg)',
+        'badge-indigo': 'var(--color-badge-indigo)',
+        'badge-indigo-bg': 'var(--color-badge-indigo-bg)',
+        'badge-purple': 'var(--color-badge-purple)',
+        'badge-purple-bg': 'var(--color-badge-purple-bg)',
+        'badge-gray': 'var(--color-badge-gray)',
+        'badge-gray-bg': 'var(--color-badge-gray-bg)',
+
         // Sidebar - Dark Mode
         'sidebar-dark': {
           bg: 'var(--sidebar-dark-bg)',
