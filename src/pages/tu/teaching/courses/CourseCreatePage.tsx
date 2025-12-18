@@ -485,7 +485,7 @@ function LessonCard({
           {/* 회차 제목 */}
           <div>
             <label className="block text-text-primary mb-1.5 text-sm font-medium">
-              {getText('lessonTitle')} <span className="text-orange-500">*</span>
+              {getText('lessonTitle')} <span className="text-status-error">*</span>
             </label>
             <input
               type="text"

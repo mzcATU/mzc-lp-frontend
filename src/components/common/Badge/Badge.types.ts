@@ -1,9 +1,9 @@
+export type BadgeColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'indigo' | 'purple' | 'gray';
+
 export interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'custom';
+  variant?: 'default' | 'success' | 'warning' | 'error' | BadgeColor;
   className?: string;
-  customBg?: string;
-  customText?: string;
 }
 
 export interface CategoryBadgeProps {

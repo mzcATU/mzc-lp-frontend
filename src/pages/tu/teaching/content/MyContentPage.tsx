@@ -2,9 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Eye, Edit, Trash2, FileText, Calendar, ChevronDown, File } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button } from '@/components/common';
+import { Button, Badge } from '@/components/common';
+import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 
 type ContentType = 'assignment' | 'notice' | 'reference';
+
+// 콘텐츠 타입별 Badge 컬러 매핑
+const contentTypeBadgeColor: Record<ContentType, BadgeColor> = {
+  assignment: 'blue',
+  notice: 'orange',
+  reference: 'green',
+};
 
 interface Content {
   id: string;
@@ -45,13 +53,6 @@ const t = {
   view: { ko: '확인', en: 'View' },
   edit: { ko: '수정', en: 'Edit' },
   noResults: { ko: '검색 결과가 없습니다.', en: 'No results found.' },
-};
-
-// 콘텐츠 타입별 색상
-const typeColors: Record<ContentType, { bg: string; text: string }> = {
-  assignment: { bg: '#E3F2FD', text: '#1565C0' },
-  notice: { bg: '#FFF3E0', text: '#E65100' },
-  reference: { bg: '#E8F5E9', text: '#2E7D32' },
 };
 
 export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>) {
@@ -178,19 +179,14 @@ function StatCard({ label, value }: Readonly<{ label: string; value: number }>) 
 
 // 콘텐츠 카드 컴포넌트
 function ContentCard({ content, getText }: Readonly<{ content: Content; getText: (key: keyof typeof t) => string }>) {
-  const colors = typeColors[content.type];
-
   return (
     <div className="bg-bg-default border border-border rounded-lg p-5 transition-shadow hover:shadow-md cursor-pointer">
       {/* Content Header */}
       <div className="mb-3">
         <h3 className="text-text-primary mb-2 text-base leading-snug">{content.title}</h3>
-        <span
-          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
-          style={{ backgroundColor: colors.bg, color: colors.text }}
-        >
+        <Badge variant={contentTypeBadgeColor[content.type]}>
           {getText(content.type)}
-        </span>
+        </Badge>
       </div>
 
       {/* File Info */}
