@@ -2,7 +2,7 @@ export type BadgeColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'indig
 
 export interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'error' | BadgeColor;
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'secondary' | 'destructive' | 'outline' | BadgeColor;
   className?: string;
 }
 

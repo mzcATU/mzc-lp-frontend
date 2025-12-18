@@ -17,6 +17,15 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        // Badge color variants (뮤트 톤)
+        red: "border-transparent bg-badge-red-bg text-badge-red",
+        orange: "border-transparent bg-badge-orange-bg text-badge-orange",
+        yellow: "border-transparent bg-badge-yellow-bg text-badge-yellow",
+        green: "border-transparent bg-badge-green-bg text-badge-green",
+        blue: "border-transparent bg-badge-blue-bg text-badge-blue",
+        indigo: "border-transparent bg-badge-indigo-bg text-badge-indigo",
+        purple: "border-transparent bg-badge-purple-bg text-badge-purple",
+        gray: "border-transparent bg-badge-gray-bg text-badge-gray",
       },
     },
     defaultVariants: {
