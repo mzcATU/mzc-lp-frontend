@@ -1,9 +1,8 @@
 // Basic UI Components
-export { Button, buttonVariants } from './button';
-export { Input } from './input';
-export { Badge, badgeVariants } from './badge';
+export { Button, buttonVariants } from './Button';
+export { Input, Textarea, Select } from './Input';
+export { Badge, badgeVariants, CategoryBadge } from './Badge';
 export { Separator } from './separator';
-export { Textarea } from './textarea';
 export { Label } from './label';
 export { Checkbox } from './checkbox';
 export { Switch } from './switch';
@@ -13,7 +12,7 @@ export { Skeleton } from './skeleton';
 
 // Form Components
 export {
-  Select,
+  Select as SelectComponent,
   SelectGroup,
   SelectValue,
   SelectTrigger,
@@ -264,14 +263,6 @@ export {
   CommandSeparator,
 } from './command';
 
-// Input OTP
-export {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-  InputOTPSeparator,
-} from './input-otp';
-
 // Form
 export {
   useFormField,
@@ -298,7 +289,6 @@ export {
 export { Toaster } from './sonner';
 
 // Custom Components
-export { CategoryBadge } from './category-badge';
 export { Combobox } from './combobox';
 export { DataTable } from './data-table';
 export { DateRangePicker } from './date-range-picker';
@@ -309,34 +299,6 @@ export { StatsCard } from './stats-card';
 export { Stepper } from './stepper';
 export type { Step } from './stepper';
 export { Timeline, TimelineItem } from './timeline';
-
-// Sidebar
-export {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupAction,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInput,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSkeleton,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarProvider,
-  SidebarRail,
-  SidebarSeparator,
-  SidebarTrigger,
-  useSidebar,
-} from './sidebar';
 
 // Hooks
 export { useIsMobile } from './use-mobile';

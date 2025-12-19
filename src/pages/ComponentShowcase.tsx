@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 
 // UI Components
-import { Button } from "@/components/common/button";
-import { Input } from "@/components/common/input";
-import { Badge } from "@/components/common/badge";
+import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
+import { Badge } from "@/components/common/Badge";
 import { Separator } from "@/components/common/separator";
 import {
   Tooltip,
@@ -112,7 +112,7 @@ import {
   TableRow,
 } from "@/components/common/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/tabs";
-import { Textarea } from "@/components/common/textarea";
+import { Textarea } from "@/components/common";
 import { Toggle } from "@/components/common/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/common/toggle-group";
 import { Calendar } from "@/components/common/calendar";

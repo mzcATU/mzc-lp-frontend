@@ -5,7 +5,7 @@ import { useDropzone, type Accept, type FileRejection } from "react-dropzone";
 import { Upload, X, File, Image, FileText, Film, Music } from "lucide-react";
 
 import { cn } from "./utils";
-import { Button } from "./button";
+import { Button } from "./Button";
 
 interface FileUploadProps {
   onFilesChange?: (files: File[]) => void;

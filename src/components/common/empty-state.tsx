@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "./utils";
-import { Button } from "./button";
+import { Button } from "./Button";
 
 interface EmptyStateProps {
   icon?: LucideIcon;
