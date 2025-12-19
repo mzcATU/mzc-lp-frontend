@@ -1,26 +1,34 @@
+import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/cn';
 import type { BadgeProps, CategoryBadgeProps, BadgeColor } from './Badge.types';
 
-const badgeVariants = cva(
-  'inline-flex items-center px-3 py-1 rounded-md text-xs font-medium',
+export const badgeVariants = cva(
+  'inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
   {
     variants: {
       variant: {
+        default:
+          'border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
+        secondary:
+          'border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
+        destructive:
+          'border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+        outline:
+          'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         // Status variants
-        default: 'bg-bg-secondary text-text-secondary',
-        success: 'bg-status-success-bg text-status-success',
-        warning: 'bg-status-warning-bg text-status-warning',
-        error: 'bg-status-error-bg text-status-error',
+        success: 'border-transparent bg-status-success-bg text-status-success',
+        warning: 'border-transparent bg-status-warning-bg text-status-warning',
+        error: 'border-transparent bg-status-error-bg text-status-error',
         // Badge color variants (뮤트 톤)
-        red: 'bg-badge-red-bg text-badge-red',
-        orange: 'bg-badge-orange-bg text-badge-orange',
-        yellow: 'bg-badge-yellow-bg text-badge-yellow',
-        green: 'bg-badge-green-bg text-badge-green',
-        blue: 'bg-badge-blue-bg text-badge-blue',
-        indigo: 'bg-badge-indigo-bg text-badge-indigo',
-        purple: 'bg-badge-purple-bg text-badge-purple',
-        gray: 'bg-badge-gray-bg text-badge-gray',
+        red: 'border-transparent bg-badge-red-bg text-badge-red',
+        orange: 'border-transparent bg-badge-orange-bg text-badge-orange',
+        yellow: 'border-transparent bg-badge-yellow-bg text-badge-yellow',
+        green: 'border-transparent bg-badge-green-bg text-badge-green',
+        blue: 'border-transparent bg-badge-blue-bg text-badge-blue',
+        indigo: 'border-transparent bg-badge-indigo-bg text-badge-indigo',
+        purple: 'border-transparent bg-badge-purple-bg text-badge-purple',
+        gray: 'border-transparent bg-badge-gray-bg text-badge-gray',
       },
     },
     defaultVariants: {
@@ -33,11 +41,19 @@ export const Badge = ({
   children,
   variant,
   className,
-}: BadgeProps & VariantProps<typeof badgeVariants>) => {
+  asChild = false,
+  ...props
+}: BadgeProps & VariantProps<typeof badgeVariants> & { asChild?: boolean }) => {
+  const Comp = asChild ? Slot : 'span';
+
   return (
-    <span className={cn(badgeVariants({ variant }), className)}>
+    <Comp
+      data-slot="badge"
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    >
       {children}
-    </span>
+    </Comp>
   );
 };
 

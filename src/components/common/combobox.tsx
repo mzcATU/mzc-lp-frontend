@@ -4,7 +4,7 @@ import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 
 import { cn } from "./utils";
-import { Button } from "./button";
+import { Button } from "./Button";
 import {
   Command,
   CommandEmpty,

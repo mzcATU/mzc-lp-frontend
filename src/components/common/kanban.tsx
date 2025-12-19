@@ -3,7 +3,7 @@
 import { MoreHorizontal, Plus, GripVertical } from "lucide-react";
 
 import { cn } from "./utils";
-import { Button } from "./button";
+import { Button } from "./Button";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 import {
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
-import { Badge } from "./badge";
+import { Badge } from "./Badge";
 import { ScrollArea } from "./scroll-area";
 
 // Types

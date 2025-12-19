@@ -4,7 +4,7 @@ import * as React from "react";
 import { Check, type LucideIcon } from "lucide-react";
 
 import { cn } from "./utils";
-import { Button } from "./button";
+import { Button } from "./Button";
 
 interface Step {
   id: string;
