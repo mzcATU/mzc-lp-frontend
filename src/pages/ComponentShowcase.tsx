@@ -32,7 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/common/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/common/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/common/Alert";
 import {
   AlertDialog,
   AlertDialogAction,

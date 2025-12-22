@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, FileText, Upload, Plus, GripVertical, ChevronDown, ChevronRight, Trash2, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Upload, Plus, GripVertical, ChevronDown, ChevronRight, Trash2, Link as LinkIcon, Globe, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Textarea, Label } from '@/components/common';
-import type { CourseFormData, LessonData, ContentAttachment, CourseDifficulty } from '@/types';
+import { Button, Input, Textarea, NativeSelect, TagInput, Label, Checkbox, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
+import type { CourseFormData, LessonData, ContentAttachment, CourseDifficulty, LanguageVersion } from '@/types';
 
 const t = {
   title: { ko: '강의 등록', en: 'Create Course' },
@@ -16,9 +16,7 @@ const t = {
   lastSaved: { ko: '마지막 저장', en: 'Last saved' },
   step1: { ko: '기본 정보', en: 'Basic Info' },
   step2: { ko: '회차 구성', en: 'Curriculum' },
-  step3: { ko: '고급 설정', en: 'Advanced' },
-  step4: { ko: '배포 및 접근 제어', en: 'Deployment' },
-  step5: { ko: '검토 및 저장', en: 'Review' },
+  step3: { ko: '검토 및 저장', en: 'Review' },
   courseName: { ko: '강의명', en: 'Course Name' },
   courseNamePlaceholder: { ko: '강의명을 입력하세요', en: 'Enter course name' },
   courseDescription: { ko: '강의 설명', en: 'Course Description' },
@@ -85,12 +83,16 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     difficulty: '',
     lessons: [],
     isDraft: false,
+    multiLanguage: {
+      enabled: false,
+      languages: [],
+    },
   });
 
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
-  const totalSteps = 5;
+  const totalSteps = 3;
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -179,7 +181,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     setDraggedItem(null);
   };
 
-  const stepLabels = [getText('step1'), getText('step2'), getText('step3'), getText('step4'), getText('step5')];
+  const stepLabels = [getText('step1'), getText('step2'), getText('step3')];
 
   return (
     <div className="bg-bg-app min-h-screen">
@@ -208,7 +210,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       <div className="bg-bg-default border-b border-border px-6 py-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2">
-            {[1, 2, 3, 4, 5].map((step) => (
+            {[1, 2, 3].map((step) => (
               <div key={step} className="flex-1 flex items-center gap-2">
                 <div
                   className={cn(
@@ -227,7 +229,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 >
                   {stepLabels[step - 1]}
                 </span>
-                {step < 5 && (
+                {step < 3 && (
                   <div className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-neutral' : 'bg-border')} />
                 )}
               </div>
@@ -263,37 +265,21 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="category">{getText('category')}</Label>
-                  <select
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  >
-                    {categoryOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <NativeSelect
+                  id="category"
+                  label={getText('category')}
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  options={categoryOptions}
+                />
 
-                <div className="space-y-2">
-                  <Label htmlFor="difficulty">{getText('difficulty')}</Label>
-                  <select
-                    id="difficulty"
-                    value={formData.difficulty}
-                    onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as CourseDifficulty })}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  >
-                    {difficultyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <NativeSelect
+                  id="difficulty"
+                  label={getText('difficulty')}
+                  value={formData.difficulty}
+                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as CourseDifficulty })}
+                  options={difficultyOptions}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -317,6 +303,151 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                   />
                 </div>
               </div>
+
+              {/* 태그 */}
+              <TagInput
+                label="태그"
+                hint="강의와 관련된 키워드를 쉼표(,)로 구분하여 입력하세요. 예: React, TypeScript, 프론트엔드"
+                value={formData.tags}
+                onChange={(tags) => setFormData({ ...formData, tags })}
+                placeholder="태그를 입력하세요 (쉼표로 구분)"
+              />
+
+              {/* 다국어 설정 */}
+              <Card className="bg-bg-secondary">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <Globe size={20} className="text-text-primary" />
+                    <h3 className="text-text-primary m-0 text-base font-medium">다국어 버전 설정</h3>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <label className="flex items-center gap-3 cursor-pointer mb-4">
+                    <Checkbox
+                      checked={formData.multiLanguage.enabled}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          multiLanguage: { ...formData.multiLanguage, enabled: !!checked },
+                        })
+                      }
+                    />
+                    <span className="text-text-primary">다국어 버전 활성화</span>
+                  </label>
+
+                  {formData.multiLanguage.enabled && (
+                    <div className="p-4 bg-bg-default rounded-lg">
+                      <p className="text-text-secondary text-sm mb-3">
+                        지원할 언어를 추가하고 각 언어별 강의 정보를 입력하세요.
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          const newLang: LanguageVersion = {
+                            code: 'en',
+                            name: 'English',
+                            courseName: '',
+                            courseDescription: '',
+                          };
+                          setFormData({
+                            ...formData,
+                            multiLanguage: {
+                              ...formData.multiLanguage,
+                              languages: [...formData.multiLanguage.languages, newLang],
+                            },
+                          });
+                        }}
+                      >
+                        <Plus size={16} />
+                        언어 추가
+                      </Button>
+
+                      {formData.multiLanguage.languages.map((lang, index) => (
+                        <div key={index} className="mt-4 p-4 bg-bg-secondary rounded-lg relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = formData.multiLanguage.languages.filter((_, i) => i !== index);
+                              setFormData({
+                                ...formData,
+                                multiLanguage: { ...formData.multiLanguage, languages: updated },
+                              });
+                            }}
+                            className="absolute top-3 right-3 p-1 bg-transparent border-none cursor-pointer text-text-secondary hover:text-text-primary"
+                          >
+                            <X size={18} />
+                          </button>
+
+                          <div className="mb-3">
+                            <Label className="mb-1.5">언어 코드</Label>
+                            <NativeSelect
+                              value={lang.code}
+                              onChange={(e) => {
+                                const updated = [...formData.multiLanguage.languages];
+                                updated[index] = {
+                                  ...lang,
+                                  code: e.target.value,
+                                  name: e.target.selectedOptions[0].text,
+                                };
+                                setFormData({
+                                  ...formData,
+                                  multiLanguage: { ...formData.multiLanguage, languages: updated },
+                                });
+                              }}
+                              options={[
+                                { value: 'en', label: 'English' },
+                                { value: 'ja', label: '日本語 (Japanese)' },
+                                { value: 'zh', label: '中文 (Chinese)' },
+                                { value: 'es', label: 'Español (Spanish)' },
+                                { value: 'fr', label: 'Français (French)' },
+                              ]}
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <Input
+                              label={`강의 이름 (${lang.name})`}
+                              value={lang.courseName}
+                              onChange={(e) => {
+                                const updated = [...formData.multiLanguage.languages];
+                                updated[index] = { ...lang, courseName: e.target.value };
+                                setFormData({
+                                  ...formData,
+                                  multiLanguage: { ...formData.multiLanguage, languages: updated },
+                                });
+                              }}
+                              placeholder={`Enter course name in ${lang.name}`}
+                            />
+                          </div>
+
+                          <Textarea
+                            label={`강의 소개 (${lang.name})`}
+                            value={lang.courseDescription}
+                            onChange={(e) => {
+                              const updated = [...formData.multiLanguage.languages];
+                              updated[index] = { ...lang, courseDescription: e.target.value };
+                              setFormData({
+                                ...formData,
+                                multiLanguage: { ...formData.multiLanguage, languages: updated },
+                              });
+                            }}
+                            placeholder={`Enter course description in ${lang.name}`}
+                            rows={3}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* 안내 메시지 */}
+              <Alert variant="info">
+                <AlertDescription>
+                  💡 <strong>Tip:</strong> 기본 정보는 나중에 수정할 수 있습니다. 다음 단계에서 차시를 구성하고 콘텐츠를 추가할 수 있습니다.
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 
@@ -370,8 +501,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
             </div>
           )}
 
-          {/* Steps 3-5: Coming Soon */}
-          {currentStep > 2 && (
+          {/* Step 3: 검토 및 저장 */}
+          {currentStep === 3 && (
             <div className="text-center py-16 text-text-secondary">
               <p className="text-lg">{getText('comingSoon')}</p>
               <p className="text-sm mt-2">{stepLabels[currentStep - 1]}</p>
@@ -483,34 +614,23 @@ function LessonCard({
       {isExpanded && (
         <div className="p-4 pt-0 flex flex-col gap-4">
           {/* 회차 제목 */}
-          <div>
-            <label className="block text-text-primary mb-1.5 text-sm font-medium">
-              {getText('lessonTitle')} <span className="text-status-error">*</span>
-            </label>
-            <input
-              type="text"
-              value={lesson.title}
-              onChange={(e) => onUpdate({ title: e.target.value })}
-              placeholder={`${lesson.order}${getText('lessonTitlePlaceholder')}`}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full px-3 py-2.5 rounded-md border border-border bg-bg-default text-text-primary text-sm outline-none focus:ring-2 focus:ring-action-primary"
-            />
-          </div>
+          <Input
+            label={<>{getText('lessonTitle')} <span className="text-status-error">*</span></>}
+            value={lesson.title}
+            onChange={(e) => onUpdate({ title: e.target.value })}
+            placeholder={`${lesson.order}${getText('lessonTitlePlaceholder')}`}
+            onClick={(e) => e.stopPropagation()}
+          />
 
           {/* 회차 설명 */}
-          <div>
-            <label className="block text-text-primary mb-1.5 text-sm font-medium">
-              {getText('lessonDescription')}
-            </label>
-            <textarea
-              value={lesson.description}
-              onChange={(e) => onUpdate({ description: e.target.value })}
-              placeholder={getText('lessonDescriptionPlaceholder')}
-              onClick={(e) => e.stopPropagation()}
-              rows={3}
-              className="w-full px-3 py-2.5 rounded-md border border-border bg-bg-default text-text-primary text-sm outline-none resize-y font-inherit focus:ring-2 focus:ring-action-primary"
-            />
-          </div>
+          <Textarea
+            label={getText('lessonDescription')}
+            value={lesson.description}
+            onChange={(e) => onUpdate({ description: e.target.value })}
+            placeholder={getText('lessonDescriptionPlaceholder')}
+            onClick={(e) => e.stopPropagation()}
+            rows={3}
+          />
 
           {/* 콘텐츠 목록 */}
           <div>

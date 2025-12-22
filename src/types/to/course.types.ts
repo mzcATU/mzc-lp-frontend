@@ -25,6 +25,20 @@ export type CourseDifficulty = 'beginner' | 'elementary' | 'intermediate' | 'adv
 // 강의 상태
 export type CourseStatus = 'active' | 'completed' | 'draft';
 
+// 다국어 버전 타입
+export interface LanguageVersion {
+  code: string;
+  name: string;
+  courseName: string;
+  courseDescription: string;
+}
+
+// 다국어 설정 타입
+export interface MultiLanguageSettings {
+  enabled: boolean;
+  languages: LanguageVersion[];
+}
+
 // 강의 폼 데이터
 export interface CourseFormData {
   courseName: string;
@@ -37,6 +51,7 @@ export interface CourseFormData {
   lessons: LessonData[];
   isDraft: boolean;
   lastSaved?: string;
+  multiLanguage: MultiLanguageSettings;
 }
 
 // 강의 목록 아이템
