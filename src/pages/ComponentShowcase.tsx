@@ -60,7 +60,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/common/card";
+} from "@/components/common/Card";
 import { Checkbox } from "@/components/common/checkbox";
 import {
   Collapsible,
@@ -84,7 +84,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/dropdown-menu";
-import { Label } from "@/components/common/label";
+import { Label } from "@/components/common/Label";
 import {
   Popover,
   PopoverContent,

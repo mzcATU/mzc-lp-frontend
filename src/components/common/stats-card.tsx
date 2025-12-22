@@ -4,7 +4,7 @@ import * as React from "react";
 import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
 
 import { cn } from "./utils";
-import { Card, CardContent, CardHeader, CardTitle } from "./card";
+import { Card, CardContent, CardHeader, CardTitle } from "./Card";
 
 interface StatsCardProps {
   title: string;
