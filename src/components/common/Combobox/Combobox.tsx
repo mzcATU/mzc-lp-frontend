@@ -14,23 +14,9 @@ import {
   CommandList,
 } from '@/components/common/Command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/Popover';
+import type { ComboboxOption, ComboboxProps, MultiComboboxProps } from './Combobox.types';
 
-export interface ComboboxOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
-
-interface ComboboxProps {
-  options: ComboboxOption[];
-  value?: string;
-  onValueChange?: (value: string) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyMessage?: string;
-  className?: string;
-  disabled?: boolean;
-}
+export type { ComboboxOption };
 
 function Combobox({
   options,
@@ -102,18 +88,6 @@ function Combobox({
 }
 
 // Multi-select combobox
-interface MultiComboboxProps {
-  options: ComboboxOption[];
-  values?: string[];
-  onValuesChange?: (values: string[]) => void;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyMessage?: string;
-  className?: string;
-  disabled?: boolean;
-  maxDisplay?: number;
-}
-
 function MultiCombobox({
   options,
   values,
@@ -201,4 +175,3 @@ function MultiCombobox({
 }
 
 export { Combobox, MultiCombobox };
-export type { ComboboxProps, MultiComboboxProps };

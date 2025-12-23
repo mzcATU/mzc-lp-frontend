@@ -5,27 +5,11 @@ import {
   Search,
   FolderOpen,
   Inbox,
-  type LucideIcon,
 } from "lucide-react";
 
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common/Button';
-
-interface EmptyStateProps {
-  icon?: LucideIcon;
-  title: string;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-  secondaryAction?: {
-    label: string;
-    onClick: () => void;
-  };
-  className?: string;
-  iconClassName?: string;
-}
+import type { EmptyStateProps, NoResultsEmptyProps, NoDataEmptyProps, ErrorEmptyProps } from './EmptyState.types';
 
 function EmptyState({
   icon: Icon = Inbox,
@@ -76,11 +60,7 @@ function NoResultsEmpty({
   searchTerm,
   onClear,
   className,
-}: {
-  searchTerm?: string;
-  onClear?: () => void;
-  className?: string;
-}) {
+}: NoResultsEmptyProps) {
   return (
     <EmptyState
       icon={Search}
@@ -102,13 +82,7 @@ function NoDataEmpty({
   actionLabel = "Create new",
   onAction,
   className,
-}: {
-  title?: string;
-  description?: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  className?: string;
-}) {
+}: NoDataEmptyProps) {
   return (
     <EmptyState
       icon={FolderOpen}
@@ -125,12 +99,7 @@ function ErrorEmpty({
   description = "We encountered an error while loading the data.",
   onRetry,
   className,
-}: {
-  title?: string;
-  description?: string;
-  onRetry?: () => void;
-  className?: string;
-}) {
+}: ErrorEmptyProps) {
   return (
     <EmptyState
       icon={FileQuestion}
@@ -144,4 +113,3 @@ function ErrorEmpty({
 }
 
 export { EmptyState, NoResultsEmpty, NoDataEmpty, ErrorEmpty };
-export type { EmptyStateProps };

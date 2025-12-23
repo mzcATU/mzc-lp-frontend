@@ -13,34 +13,9 @@ import {
 } from '@/components/common/DropdownMenu';
 import { Badge } from '@/components/common/Badge';
 import { ScrollArea } from '@/components/common/ScrollArea';
+import type { KanbanItem, KanbanColumn, KanbanCardProps, KanbanColumnProps, KanbanBoardProps } from './Kanban.types';
 
-// Types
-export interface KanbanItem {
-  id: string;
-  title: string;
-  description?: string;
-  tags?: string[];
-  priority?: "low" | "medium" | "high";
-  assignee?: {
-    name: string;
-    avatar?: string;
-  };
-}
-
-export interface KanbanColumn {
-  id: string;
-  title: string;
-  color?: string;
-  items: KanbanItem[];
-}
-
-// Kanban Card
-interface KanbanCardProps {
-  item: KanbanItem;
-  onEdit?: (item: KanbanItem) => void;
-  onDelete?: (item: KanbanItem) => void;
-  isDragging?: boolean;
-}
+export type { KanbanItem, KanbanColumn };
 
 function KanbanCard({ item, onEdit, onDelete, isDragging }: KanbanCardProps) {
   const priorityColors = {
@@ -134,14 +109,6 @@ function KanbanCard({ item, onEdit, onDelete, isDragging }: KanbanCardProps) {
 }
 
 // Kanban Column
-interface KanbanColumnProps {
-  column: KanbanColumn;
-  onAddItem?: (columnId: string) => void;
-  onEditItem?: (item: KanbanItem) => void;
-  onDeleteItem?: (item: KanbanItem) => void;
-  className?: string;
-}
-
 function KanbanColumnComponent({
   column,
   onAddItem,
@@ -205,19 +172,6 @@ function KanbanColumnComponent({
 }
 
 // Kanban Board
-interface KanbanBoardProps {
-  columns: KanbanColumn[];
-  onAddItem?: (columnId: string) => void;
-  onEditItem?: (item: KanbanItem) => void;
-  onDeleteItem?: (item: KanbanItem) => void;
-  onMoveItem?: (
-    itemId: string,
-    sourceColumnId: string,
-    targetColumnId: string
-  ) => void;
-  className?: string;
-}
-
 function KanbanBoard({
   columns,
   onAddItem,
@@ -240,5 +194,4 @@ function KanbanBoard({
   );
 }
 
-export { KanbanBoard, KanbanColumnComponent as KanbanColumn, KanbanCard };
-export type { KanbanBoardProps, KanbanColumnProps, KanbanCardProps };
+export { KanbanBoard, KanbanColumnComponent, KanbanCard };

@@ -1,26 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Check, type LucideIcon } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common/Button';
-
-interface Step {
-  id: string;
-  title: string;
-  description?: string;
-  icon?: LucideIcon;
-}
-
-interface StepperProps {
-  steps: Step[];
-  currentStep: number;
-  onStepClick?: (stepIndex: number) => void;
-  className?: string;
-  orientation?: "horizontal" | "vertical";
-  allowClickNavigation?: boolean;
-}
+import type { StepperProps, StepperWithContentProps, StepperNavigationProps } from './Stepper.types';
 
 function Stepper({
   steps,
@@ -120,10 +105,6 @@ function Stepper({
 }
 
 // Stepper with content panels
-interface StepperWithContentProps extends StepperProps {
-  children: React.ReactNode;
-}
-
 function StepperWithContent({
   steps,
   currentStep,
@@ -141,19 +122,6 @@ function StepperWithContent({
 }
 
 // Stepper navigation buttons
-interface StepperNavigationProps {
-  currentStep: number;
-  totalSteps: number;
-  onPrevious: () => void;
-  onNext: () => void;
-  onComplete?: () => void;
-  isNextDisabled?: boolean;
-  previousLabel?: string;
-  nextLabel?: string;
-  completeLabel?: string;
-  className?: string;
-}
-
 function StepperNavigation({
   currentStep,
   totalSteps,
@@ -192,4 +160,3 @@ function StepperNavigation({
 }
 
 export { Stepper, StepperWithContent, StepperNavigation };
-export type { Step, StepperProps, StepperWithContentProps, StepperNavigationProps };

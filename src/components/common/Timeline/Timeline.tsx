@@ -1,19 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { type LucideIcon } from "lucide-react";
 
 import { cn } from '@/utils/cn';
-
-interface TimelineItemProps {
-  title: string;
-  description?: string;
-  time?: string;
-  icon?: LucideIcon;
-  iconClassName?: string;
-  isLast?: boolean;
-  children?: React.ReactNode;
-}
+import type { TimelineItemProps, TimelineProps, HorizontalTimelineItemProps, HorizontalTimelineProps } from './Timeline.types';
 
 function TimelineItem({
   title,
@@ -58,11 +48,6 @@ function TimelineItem({
   );
 }
 
-interface TimelineProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
 function Timeline({ children, className }: TimelineProps) {
   const items = React.Children.toArray(children);
 
@@ -81,14 +66,6 @@ function Timeline({ children, className }: TimelineProps) {
 }
 
 // Horizontal timeline variant
-interface HorizontalTimelineItemProps {
-  title: string;
-  description?: string;
-  isActive?: boolean;
-  isCompleted?: boolean;
-  isLast?: boolean;
-}
-
 function HorizontalTimelineItem({
   title,
   description,
@@ -165,11 +142,6 @@ function HorizontalTimelineItem({
   );
 }
 
-interface HorizontalTimelineProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
 function HorizontalTimeline({ children, className }: HorizontalTimelineProps) {
   const items = React.Children.toArray(children);
 
@@ -192,10 +164,4 @@ export {
   TimelineItem,
   HorizontalTimeline,
   HorizontalTimelineItem,
-};
-export type {
-  TimelineProps,
-  TimelineItemProps,
-  HorizontalTimelineProps,
-  HorizontalTimelineItemProps,
 };

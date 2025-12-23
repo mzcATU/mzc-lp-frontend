@@ -4,23 +4,19 @@ import * as React from "react";
 import { ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 import { cn } from '@/utils/cn';
+import type {
+  ChartConfig,
+  ChartContextProps,
+  ChartContainerProps,
+  ChartStyleProps,
+  PayloadItem,
+  ChartTooltipContentProps,
+  LegendPayloadItem,
+  ChartLegendContentProps,
+} from './Chart.types';
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const;
-
-export type ChartConfig = {
-  [k in string]: {
-    label?: React.ReactNode;
-    icon?: React.ComponentType;
-  } & (
-    | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
-  );
-};
-
-type ChartContextProps = {
-  config: ChartConfig;
-};
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
@@ -32,11 +28,6 @@ function useChart() {
   }
 
   return context;
-}
-
-interface ChartContainerProps extends React.ComponentProps<"div"> {
-  config: ChartConfig;
-  children: React.ComponentProps<typeof ResponsiveContainer>["children"];
 }
 
 function ChartContainer({
@@ -65,11 +56,6 @@ function ChartContainer({
       </div>
     </ChartContext.Provider>
   );
-}
-
-interface ChartStyleProps {
-  id: string;
-  config: ChartConfig;
 }
 
 const ChartStyle = ({ id, config }: ChartStyleProps) => {
@@ -106,35 +92,6 @@ ${colorConfig
 };
 
 const ChartTooltip = Tooltip;
-
-interface PayloadItem {
-  value?: number | string;
-  name?: string;
-  dataKey?: string | number;
-  color?: string;
-  payload?: Record<string, unknown>;
-}
-
-interface ChartTooltipContentProps extends React.ComponentProps<"div"> {
-  active?: boolean;
-  payload?: PayloadItem[];
-  label?: string;
-  labelFormatter?: (label: string, payload: PayloadItem[]) => React.ReactNode;
-  formatter?: (
-    value: number,
-    name: string,
-    item: PayloadItem,
-    index: number,
-    payload: Record<string, unknown>
-  ) => React.ReactNode;
-  hideLabel?: boolean;
-  hideIndicator?: boolean;
-  indicator?: "line" | "dot" | "dashed";
-  nameKey?: string;
-  labelKey?: string;
-  labelClassName?: string;
-  color?: string;
-}
 
 function ChartTooltipContent({
   active,
@@ -266,19 +223,6 @@ function ChartTooltipContent({
 }
 
 const ChartLegend = Legend;
-
-interface LegendPayloadItem {
-  value?: string;
-  dataKey?: string;
-  color?: string;
-}
-
-interface ChartLegendContentProps extends React.ComponentProps<"div"> {
-  payload?: LegendPayloadItem[];
-  verticalAlign?: "top" | "bottom";
-  hideIcon?: boolean;
-  nameKey?: string;
-}
 
 function ChartLegendContent({
   className,

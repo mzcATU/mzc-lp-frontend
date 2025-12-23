@@ -3,21 +3,13 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { DateRange } from "react-day-picker";
+import type { DateRange } from "react-day-picker";
 
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common/Button';
 import { Calendar } from '@/components/common/Calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/common/Popover';
-
-interface DateRangePickerProps {
-  className?: string;
-  date?: DateRange;
-  onDateChange?: (date: DateRange | undefined) => void;
-  placeholder?: string;
-  align?: "start" | "center" | "end";
-  disabled?: boolean;
-}
+import type { DateRangePickerProps, DatePickerProps } from './DateRangePicker.types';
 
 function DateRangePicker({
   className,
@@ -78,15 +70,6 @@ function DateRangePicker({
 }
 
 // Single date picker for convenience
-interface DatePickerProps {
-  className?: string;
-  date?: Date;
-  onDateChange?: (date: Date | undefined) => void;
-  placeholder?: string;
-  align?: "start" | "center" | "end";
-  disabled?: boolean;
-}
-
 function DatePicker({
   className,
   date,
@@ -131,4 +114,3 @@ function DatePicker({
 }
 
 export { DateRangePicker, DatePicker };
-export type { DateRangePickerProps, DatePickerProps };

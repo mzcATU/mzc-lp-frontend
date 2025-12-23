@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  ColumnDef,
   ColumnFiltersState,
   SortingState,
   VisibilityState,
@@ -48,16 +47,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
+import type { DataTableProps, DataTableLabels, DataTableColumnHeaderProps } from './DataTable.types';
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  searchKey?: string;
-  searchPlaceholder?: string;
-  showColumnToggle?: boolean;
-  showPagination?: boolean;
-  pageSize?: number;
-}
+const defaultLabels: DataTableLabels = {
+  columns: 'Columns',
+  noResults: 'No results.',
+  rowsSelected: '{selected} of {total} row(s) selected.',
+  rowsPerPage: 'Rows per page',
+  pageOf: 'Page {current} of {total}',
+  goToFirstPage: 'Go to first page',
+  goToPreviousPage: 'Go to previous page',
+  goToNextPage: 'Go to next page',
+  goToLastPage: 'Go to last page',
+};
 
 function DataTable<TData, TValue>({
   columns,
@@ -67,7 +69,9 @@ function DataTable<TData, TValue>({
   showColumnToggle = true,
   showPagination = true,
   pageSize = 10,
+  labels: customLabels,
 }: DataTableProps<TData, TValue>) {
+  const labels = { ...defaultLabels, ...customLabels };
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -123,7 +127,7 @@ function DataTable<TData, TValue>({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <Settings2 className="mr-2 h-4 w-4" />
-                Columns
+                {labels.columns}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -193,7 +197,7 @@ function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {labels.noResults}
                 </TableCell>
               </TableRow>
             )}
@@ -205,12 +209,13 @@ function DataTable<TData, TValue>({
       {showPagination && (
         <div className="flex items-center justify-between px-2">
           <div className="flex-1 text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
+            {labels.rowsSelected
+              ?.replace('{selected}', String(table.getFilteredSelectedRowModel().rows.length))
+              .replace('{total}', String(table.getFilteredRowModel().rows.length))}
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex items-center space-x-2">
-              <p className="text-sm font-medium">Rows per page</p>
+              <p className="text-sm font-medium">{labels.rowsPerPage}</p>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
                 onValueChange={(value) => {
@@ -232,8 +237,9 @@ function DataTable<TData, TValue>({
               </Select>
             </div>
             <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
+              {labels.pageOf
+                ?.replace('{current}', String(table.getState().pagination.pageIndex + 1))
+                .replace('{total}', String(table.getPageCount()))}
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -242,7 +248,7 @@ function DataTable<TData, TValue>({
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to first page</span>
+                <span className="sr-only">{labels.goToFirstPage}</span>
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -251,7 +257,7 @@ function DataTable<TData, TValue>({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">Go to previous page</span>
+                <span className="sr-only">{labels.goToPreviousPage}</span>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
@@ -260,7 +266,7 @@ function DataTable<TData, TValue>({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to next page</span>
+                <span className="sr-only">{labels.goToNextPage}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button
@@ -269,7 +275,7 @@ function DataTable<TData, TValue>({
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">Go to last page</span>
+                <span className="sr-only">{labels.goToLastPage}</span>
                 <ChevronsRight className="h-4 w-4" />
               </Button>
             </div>
@@ -281,15 +287,6 @@ function DataTable<TData, TValue>({
 }
 
 // Sortable header helper
-interface DataTableColumnHeaderProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  column: {
-    getIsSorted: () => false | "asc" | "desc";
-    toggleSorting: (desc?: boolean) => void;
-  };
-  title: string;
-}
-
 function DataTableColumnHeader({
   column,
   title,
@@ -317,4 +314,3 @@ function DataTableColumnHeader({
 }
 
 export { DataTable, DataTableColumnHeader };
-export type { DataTableProps };

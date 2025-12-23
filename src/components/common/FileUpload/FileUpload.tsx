@@ -1,21 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { useDropzone, type Accept, type FileRejection } from "react-dropzone";
+import { useDropzone, type FileRejection } from "react-dropzone";
 import { Upload, X, File, Image, FileText, Film, Music } from "lucide-react";
 
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common/Button';
+import type { FileUploadProps, FileUploadLabels, ImageUploadProps, ImageUploadLabels } from './FileUpload.types';
 
-interface FileUploadProps {
-  onFilesChange?: (files: File[]) => void;
-  accept?: Accept;
-  maxFiles?: number;
-  maxSize?: number; // in bytes
-  disabled?: boolean;
-  className?: string;
-  multiple?: boolean;
-}
+const defaultLabels: FileUploadLabels = {
+  dropHere: 'Drop the files here...',
+  dragAndDrop: 'Drag & drop files here, or',
+  browse: 'browse',
+  maxSizePerFile: 'Max {size} per file',
+  upToFiles: 'Up to {count} files',
+};
 
 function FileUpload({
   onFilesChange,
@@ -25,7 +24,9 @@ function FileUpload({
   disabled = false,
   className,
   multiple = false,
+  labels: customLabels,
 }: FileUploadProps) {
+  const labels = { ...defaultLabels, ...customLabels };
   const [files, setFiles] = React.useState<File[]>([]);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -104,17 +105,17 @@ function FileUpload({
         />
         <p className="text-sm text-muted-foreground text-center">
           {isDragActive ? (
-            "Drop the files here..."
+            labels.dropHere
           ) : (
             <>
-              Drag & drop files here, or{" "}
-              <span className="text-primary font-medium">browse</span>
+              {labels.dragAndDrop}{" "}
+              <span className="text-primary font-medium">{labels.browse}</span>
             </>
           )}
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          Max {formatFileSize(maxSize)} per file
-          {multiple && ` · Up to ${maxFiles} files`}
+          {labels.maxSizePerFile?.replace('{size}', formatFileSize(maxSize))}
+          {multiple && ` · ${labels.upToFiles?.replace('{count}', String(maxFiles))}`}
         </p>
       </div>
 
@@ -155,13 +156,12 @@ function FileUpload({
 }
 
 // Image upload with preview
-interface ImageUploadProps {
-  onImageChange?: (file: File | null) => void;
-  maxSize?: number;
-  disabled?: boolean;
-  className?: string;
-  previewClassName?: string;
-}
+const defaultImageLabels: ImageUploadLabels = {
+  dropHere: 'Drop the image here...',
+  dragAndDrop: 'Drop an image here, or',
+  browse: 'browse',
+  acceptedFormats: 'PNG, JPG, GIF up to {size}MB',
+};
 
 function ImageUpload({
   onImageChange,
@@ -169,7 +169,9 @@ function ImageUpload({
   disabled = false,
   className,
   previewClassName,
+  labels: customLabels,
 }: ImageUploadProps) {
+  const labels = { ...defaultImageLabels, ...customLabels };
   const [preview, setPreview] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -252,16 +254,16 @@ function ImageUpload({
           />
           <p className="text-sm text-muted-foreground text-center">
             {isDragActive ? (
-              "Drop the image here..."
+              labels.dropHere
             ) : (
               <>
-                Drop an image here, or{" "}
-                <span className="text-primary font-medium">browse</span>
+                {labels.dragAndDrop}{" "}
+                <span className="text-primary font-medium">{labels.browse}</span>
               </>
             )}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            PNG, JPG, GIF up to {maxSize / 1024 / 1024}MB
+            {labels.acceptedFormats?.replace('{size}', String(maxSize / 1024 / 1024))}
           </p>
         </div>
       )}
@@ -272,4 +274,3 @@ function ImageUpload({
 }
 
 export { FileUpload, ImageUpload };
-export type { FileUploadProps, ImageUploadProps };

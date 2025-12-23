@@ -1,23 +1,9 @@
 "use client";
-
-import * as React from "react";
-import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 import { cn } from '@/utils/cn';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
-
-interface StatsCardProps {
-  title: string;
-  value: string | number;
-  description?: string;
-  icon?: LucideIcon;
-  trend?: {
-    value: number;
-    label?: string;
-  };
-  className?: string;
-  valueClassName?: string;
-}
+import type { StatsCardProps, StatsGridProps, MiniStatsProps } from './StatsCard.types';
 
 function StatsCard({
   title,
@@ -68,12 +54,6 @@ function StatsCard({
 }
 
 // Stats card grid for dashboard
-interface StatsGridProps {
-  children: React.ReactNode;
-  columns?: 2 | 3 | 4;
-  className?: string;
-}
-
 function StatsGrid({ children, columns = 4, className }: StatsGridProps) {
   const gridCols = {
     2: "grid-cols-1 md:grid-cols-2",
@@ -89,13 +69,6 @@ function StatsGrid({ children, columns = 4, className }: StatsGridProps) {
 }
 
 // Mini stats for inline display
-interface MiniStatsProps {
-  label: string;
-  value: string | number;
-  trend?: number;
-  className?: string;
-}
-
 function MiniStats({ label, value, trend, className }: MiniStatsProps) {
   return (
     <div className={cn("flex flex-col", className)}>
@@ -124,4 +97,3 @@ function MiniStats({ label, value, trend, className }: MiniStatsProps) {
 }
 
 export { StatsCard, StatsGrid, MiniStats };
-export type { StatsCardProps, StatsGridProps, MiniStatsProps };
