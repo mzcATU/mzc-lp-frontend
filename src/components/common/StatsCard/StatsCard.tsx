@@ -23,21 +23,21 @@ function StatsCard({
 
   const getTrendColor = () => {
     if (!trend) return "";
-    if (trend.value > 0) return "text-green-600";
-    if (trend.value < 0) return "text-red-600";
-    return "text-muted-foreground";
+    if (trend.value > 0) return "text-status-success";
+    if (trend.value < 0) return "text-status-error";
+    return "text-text-secondary";
   };
 
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+        {Icon && <Icon className="h-4 w-4 text-text-secondary" />}
       </CardHeader>
       <CardContent>
         <div className={cn("text-2xl font-bold", valueClassName)}>{value}</div>
         {(description || trend) && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+          <div className="flex items-center gap-2 text-xs text-text-secondary mt-1">
             {trend && (
               <span className={cn("flex items-center gap-1", getTrendColor())}>
                 {getTrendIcon()}
@@ -72,14 +72,14 @@ function StatsGrid({ children, columns = 4, className }: StatsGridProps) {
 function MiniStats({ label, value, trend, className }: MiniStatsProps) {
   return (
     <div className={cn("flex flex-col", className)}>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs text-text-secondary">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-lg font-semibold">{value}</span>
         {trend !== undefined && (
           <span
             className={cn(
               "text-xs flex items-center",
-              trend > 0 ? "text-green-600" : trend < 0 ? "text-red-600" : "text-muted-foreground"
+              trend > 0 ? "text-status-success" : trend < 0 ? "text-status-error" : "text-text-secondary"
             )}
           >
             {trend > 0 ? (

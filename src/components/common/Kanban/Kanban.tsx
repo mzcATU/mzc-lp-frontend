@@ -19,9 +19,9 @@ export type { KanbanItem, KanbanColumn };
 
 function KanbanCard({ item, onEdit, onDelete, isDragging }: KanbanCardProps) {
   const priorityColors = {
-    low: "bg-blue-100 text-blue-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    high: "bg-red-100 text-red-700",
+    low: "bg-badge-blue-bg text-badge-blue",
+    medium: "bg-badge-yellow-bg text-badge-yellow",
+    high: "bg-badge-red-bg text-badge-red",
   };
 
   return (
@@ -34,7 +34,7 @@ function KanbanCard({ item, onEdit, onDelete, isDragging }: KanbanCardProps) {
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <GripVertical className="h-4 w-4 text-muted-foreground opacity-50" />
+            <GripVertical className="h-4 w-4 text-text-secondary opacity-50" />
             <h4 className="text-sm font-medium">{item.title}</h4>
           </div>
           {(onEdit || onDelete) && (
@@ -53,7 +53,7 @@ function KanbanCard({ item, onEdit, onDelete, isDragging }: KanbanCardProps) {
                 {onDelete && (
                   <DropdownMenuItem
                     onClick={() => onDelete(item)}
-                    className="text-destructive"
+                    className="text-status-error"
                   >
                     Delete
                   </DropdownMenuItem>
@@ -64,7 +64,7 @@ function KanbanCard({ item, onEdit, onDelete, isDragging }: KanbanCardProps) {
         </div>
 
         {item.description && (
-          <p className="mt-2 text-xs text-muted-foreground line-clamp-2 ml-6">
+          <p className="mt-2 text-xs text-text-secondary line-clamp-2 ml-6">
             {item.description}
           </p>
         )}
@@ -94,11 +94,11 @@ function KanbanCard({ item, onEdit, onDelete, isDragging }: KanbanCardProps) {
                 className="h-5 w-5 rounded-full"
               />
             ) : (
-              <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-xs">
+              <div className="h-5 w-5 rounded-full bg-bg-secondary flex items-center justify-center text-xs">
                 {item.assignee.name[0]}
               </div>
             )}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-text-secondary">
               {item.assignee.name}
             </span>
           </div>
@@ -160,7 +160,7 @@ function KanbanColumnComponent({
               ))}
               {column.items.length === 0 && (
                 <div className="flex items-center justify-center h-20 border-2 border-dashed rounded-md">
-                  <p className="text-xs text-muted-foreground">No items</p>
+                  <p className="text-xs text-text-secondary">No items</p>
                 </div>
               )}
             </div>

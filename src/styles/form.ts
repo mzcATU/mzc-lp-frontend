@@ -7,7 +7,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 /** 입력 필드 공통 기본 스타일 */
 const inputBase =
-  'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex w-full min-w-0 rounded-md border text-base bg-input-background transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
+  'file:text-foreground placeholder:text-text-placeholder selection:bg-action-primary selection:text-white border-border flex w-full min-w-0 rounded-md border text-base bg-bg-default transition-[color,box-shadow] outline-none focus:outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus:ring-2 focus:ring-action-primary';
 
 /** Input 필드 variants */
 export const inputVariants = cva(

@@ -3,10 +3,32 @@
 @tailwind utilities;
 
 :root {
+  /* === shadcn/ui Semantic Tokens (mapped to design-tokens) === */
+  --background: #FFFFFF;
+  --foreground: #333333;
+  --muted: #F4F4F4;
+  --muted-foreground: #666666;
+  --primary: #4C2D9A;
+  --primary-foreground: #FFFFFF;
+  --destructive: #D32F2F;
+  --destructive-foreground: #FFFFFF;
+  --ring: #2A2A2A;
+  --input: #E0E0E0;
+  --card: #FFFFFF;
+  --card-foreground: #333333;
+  --popover: #FFFFFF;
+  --popover-foreground: #333333;
+  --secondary: #F4F4F4;
+  --secondary-foreground: #333333;
+  --accent: #F4F4F4;
+  --accent-foreground: #333333;
+  --border: #E0E0E0;
+
   /* === Background and Neutral Tones === */
   --color-bg-default: #FFFFFF;
   --color-bg-app: #FAFAFA;
   --color-bg-secondary: #F4F4F4;
+  --color-bg-card-static: #F0F0F0;
   --color-border: #E0E0E0;
 
   /* === Text Colors === */
@@ -29,6 +51,11 @@
   --color-btn-brand: #4C2D9A;
   --color-btn-brand-hover: #3D2478;
   --color-btn-brand-text: #FFFFFF;
+
+  /* === Tenant Primary (동적으로 변경됨, 기본값: Brand) === */
+  --color-tenant-primary: #4C2D9A;
+  --color-tenant-primary-hover: #3D2478;
+  --color-tenant-primary-text: #FFFFFF;
 
   /* === Status Colors === */
   --color-status-success: #388E3C;

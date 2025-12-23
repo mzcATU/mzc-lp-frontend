@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { FileText, FileVideo, Link as LinkIcon, X, Tag, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Textarea } from '@/components/common';
+import { Button, Input, Textarea, NativeSelect } from '@/components/common';
+import { inputVariants } from '@/styles/form';
 import type { LOData, LOType, ContentCategory } from '@/types';
 
 interface Step1Props {
@@ -167,17 +168,11 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
             <label className="block text-sm font-medium text-text-primary mb-1">
               카테고리 <span className="text-status-error">*</span>
             </label>
-            <select
+            <NativeSelect
               value={data.category || ''}
               onChange={(e) => onUpdate({ category: e.target.value })}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-            >
-              {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              options={categoryOptions}
+            />
           </div>
 
           {/* 태그 입력 */}
@@ -185,14 +180,14 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
             <label className="block text-sm font-medium text-text-primary mb-1">태그</label>
             <div className="flex gap-2 mb-3">
               <div className="flex-1 relative">
-                <Tag className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary" />
+                <Tag className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary z-10" />
                 <input
                   type="text"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="태그 입력 후 Enter"
-                  className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-bg-default text-text-primary placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-action-primary"
+                  className={cn(inputVariants({ state: 'default' }), 'pl-10')}
                 />
               </div>
               <Button type="button" onClick={handleAddTag}>
