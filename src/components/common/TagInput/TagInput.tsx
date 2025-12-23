@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { formStyles } from '@/styles/form';
+import { inputVariants, labelStyles, hintStyles, errorStyles } from '@/styles/form';
 import { Badge } from '../Badge';
 import type { TagInputProps } from './TagInput.types';
 
@@ -36,15 +36,15 @@ export const TagInput = ({
 
   return (
     <div>
-      {label && <label className={formStyles.label}>{label}</label>}
-      {hint && <p className={formStyles.hint}>{hint}</p>}
+      {label && <label className={labelStyles}>{label}</label>}
+      {hint && <p className={hintStyles}>{hint}</p>}
       <input
         type="text"
         data-slot="input"
         value={inputValue}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className={cn(formStyles.input, error && formStyles.errorBorder, className)}
+        className={cn(inputVariants({ state: error ? 'error' : 'default' }), className)}
         {...props}
       />
       {value.length > 0 && (
@@ -67,7 +67,7 @@ export const TagInput = ({
           ))}
         </div>
       )}
-      {error && <p className={formStyles.error}>{error}</p>}
+      {error && <p className={errorStyles}>{error}</p>}
     </div>
   );
 };

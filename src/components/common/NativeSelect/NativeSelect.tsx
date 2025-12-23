@@ -1,14 +1,14 @@
 import { cn } from '@/utils/cn';
-import { formStyles } from '@/styles/form';
+import { selectVariants, labelStyles, errorStyles } from '@/styles/form';
 import type { NativeSelectProps } from './NativeSelect.types';
 
 export const NativeSelect = ({ label, error, options, className, ...props }: NativeSelectProps) => {
   return (
     <div>
-      {label && <label className={formStyles.label}>{label}</label>}
+      {label && <label className={labelStyles}>{label}</label>}
       <select
         data-slot="select"
-        className={cn(formStyles.input, 'cursor-pointer', error && formStyles.errorBorder, className)}
+        className={cn(selectVariants({ state: error ? 'error' : 'default' }), className)}
         {...props}
       >
         {options.map((option) => (
@@ -17,7 +17,7 @@ export const NativeSelect = ({ label, error, options, className, ...props }: Nat
           </option>
         ))}
       </select>
-      {error && <p className={formStyles.error}>{error}</p>}
+      {error && <p className={errorStyles}>{error}</p>}
     </div>
   );
 };
