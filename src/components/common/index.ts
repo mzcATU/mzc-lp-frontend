@@ -5,13 +5,13 @@ export { Textarea } from './Textarea';
 export { NativeSelect } from './NativeSelect';
 export { TagInput } from './TagInput';
 export { Badge, badgeVariants, CategoryBadge } from './Badge';
-export { Separator } from './separator';
+export { Separator } from './Separator';
 export { Label } from './Label';
-export { Checkbox } from './checkbox';
-export { Switch } from './switch';
-export { Slider } from './slider';
-export { Progress } from './progress';
-export { Skeleton } from './skeleton';
+export { Checkbox } from './Checkbox';
+export { Switch } from './Switch';
+export { Slider } from './Slider';
+export { Progress } from './Progress';
+export { Skeleton } from './Skeleton';
 
 // Form Components
 export {
@@ -25,8 +25,8 @@ export {
   SelectSeparator,
   SelectScrollUpButton,
   SelectScrollDownButton,
-} from './select';
-export { RadioGroup, RadioGroupItem } from './radio-group';
+} from './Select';
+export { RadioGroup, RadioGroupItem } from './RadioGroup';
 
 // Tooltip
 export {
@@ -34,7 +34,7 @@ export {
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-} from './tooltip';
+} from './Tooltip';
 
 // Dialog & Modal
 export {
@@ -48,7 +48,7 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from './dialog';
+} from './Dialog';
 
 export {
   AlertDialog,
@@ -62,7 +62,7 @@ export {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
-} from './alert-dialog';
+} from './AlertDialog';
 
 export {
   Sheet,
@@ -73,7 +73,7 @@ export {
   SheetFooter,
   SheetTitle,
   SheetDescription,
-} from './sheet';
+} from './Sheet';
 
 export {
   Drawer,
@@ -86,11 +86,11 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
-} from './drawer';
+} from './Drawer';
 
 // Popover & HoverCard
-export { Popover, PopoverTrigger, PopoverContent } from './popover';
-export { HoverCard, HoverCardTrigger, HoverCardContent } from './hover-card';
+export { Popover, PopoverTrigger, PopoverContent } from './Popover';
+export { HoverCard, HoverCardTrigger, HoverCardContent } from './HoverCard';
 
 // Navigation & Menu
 export {
@@ -109,7 +109,7 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
-} from './dropdown-menu';
+} from './DropdownMenu';
 
 export {
   Menubar,
@@ -128,7 +128,7 @@ export {
   MenubarGroup,
   MenubarSub,
   MenubarShortcut,
-} from './menubar';
+} from './Menubar';
 
 export {
   navigationMenuTriggerStyle,
@@ -140,7 +140,7 @@ export {
   NavigationMenuLink,
   NavigationMenuIndicator,
   NavigationMenuViewport,
-} from './navigation-menu';
+} from './NavigationMenu';
 
 export {
   ContextMenu,
@@ -158,21 +158,21 @@ export {
   ContextMenuSubContent,
   ContextMenuSubTrigger,
   ContextMenuRadioGroup,
-} from './context-menu';
+} from './ContextMenu';
 
 // Tabs & Accordion
-export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from './accordion';
+} from './Accordion';
 export {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
-} from './collapsible';
+} from './Collapsible';
 
 // Table
 export {
@@ -184,7 +184,7 @@ export {
   TableRow,
   TableCell,
   TableCaption,
-} from './table';
+} from './Table';
 
 // Card
 export {
@@ -201,7 +201,7 @@ export {
 export { Alert, AlertTitle, AlertDescription } from './Alert';
 
 // Avatar
-export { Avatar, AvatarImage, AvatarFallback } from './avatar';
+export { Avatar, AvatarImage, AvatarFallback } from './Avatar';
 
 // Breadcrumb
 export {
@@ -212,7 +212,7 @@ export {
   BreadcrumbPage,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
-} from './breadcrumb';
+} from './Breadcrumb';
 
 // Pagination
 export {
@@ -223,27 +223,27 @@ export {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from './pagination';
+} from './Pagination';
 
 // Toggle
-export { Toggle, toggleVariants } from './toggle';
-export { ToggleGroup, ToggleGroupItem } from './toggle-group';
+export { Toggle, toggleVariants } from './Toggle';
+export { ToggleGroup, ToggleGroupItem } from './ToggleGroup';
 
 // Scroll Area
-export { ScrollArea, ScrollBar } from './scroll-area';
+export { ScrollArea, ScrollBar } from './ScrollArea';
 
 // Aspect Ratio
-export { AspectRatio } from './aspect-ratio';
+export { AspectRatio } from './AspectRatio';
 
 // Resizable
 export {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
-} from './resizable';
+} from './Resizable';
 
 // Calendar
-export { Calendar } from './calendar';
+export { Calendar } from './Calendar';
 
 // Carousel
 export {
@@ -252,7 +252,7 @@ export {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
-} from './carousel';
+} from './Carousel';
 
 // Command
 export {
@@ -265,7 +265,7 @@ export {
   CommandItem,
   CommandShortcut,
   CommandSeparator,
-} from './command';
+} from './Command';
 
 // Form
 export {
@@ -277,7 +277,7 @@ export {
   FormDescription,
   FormMessage,
   FormField,
-} from './form';
+} from './Form';
 
 // Chart
 export {
@@ -287,25 +287,19 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
-} from './chart';
+} from './Chart';
 
 // Sonner (Toast)
-export { Toaster } from './sonner';
+export { Toaster } from './Sonner';
 
 // Custom Components
-export { Combobox } from './combobox';
-export { DataTable } from './data-table';
-export { DateRangePicker } from './date-range-picker';
-export { EmptyState } from './empty-state';
-export { FileUpload } from './file-upload';
-export { KanbanBoard, KanbanColumn, KanbanCard } from './kanban';
-export { StatsCard } from './stats-card';
-export { Stepper } from './stepper';
-export type { Step } from './stepper';
-export { Timeline, TimelineItem } from './timeline';
-
-// Hooks
-export { useIsMobile } from './use-mobile';
-
-// Utils
-export { cn } from './utils';
+export { Combobox } from './Combobox';
+export { DataTable } from './DataTable';
+export { DateRangePicker } from './DateRangePicker';
+export { EmptyState } from './EmptyState';
+export { FileUpload } from './FileUpload';
+export { KanbanBoard, KanbanColumn, KanbanCard } from './Kanban';
+export { StatsCard } from './StatsCard';
+export { Stepper } from './Stepper';
+export type { Step } from './Stepper';
+export { Timeline, TimelineItem } from './Timeline';
