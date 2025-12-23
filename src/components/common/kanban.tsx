@@ -4,7 +4,7 @@ import { MoreHorizontal, Plus, GripVertical } from "lucide-react";
 
 import { cn } from "./utils";
 import { Button } from "./Button";
-import { Card, CardContent, CardHeader, CardTitle } from "./card";
+import { Card, CardContent, CardHeader, CardTitle } from "./Card";
 import {
   DropdownMenu,
   DropdownMenuContent,

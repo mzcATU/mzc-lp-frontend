@@ -32,7 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/common/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/common/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/common/Alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +60,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/common/card";
+} from "@/components/common/Card";
 import { Checkbox } from "@/components/common/checkbox";
 import {
   Collapsible,
@@ -84,7 +84,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/dropdown-menu";
-import { Label } from "@/components/common/label";
+import { Label } from "@/components/common/Label";
 import {
   Popover,
   PopoverContent,

@@ -1,5 +1,5 @@
 import { cn } from '@/utils/cn';
-import type { InputProps, TextareaProps, SelectProps } from './Input.types';
+import type { InputProps } from './Input.types';
 
 const baseInputStyles =
   'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive';
@@ -18,45 +18,6 @@ export const Input = ({ label, error, className, type, ...props }: InputProps) =
         className={cn(baseInputStyles, error && 'border-status-error', className)}
         {...props}
       />
-      {error && <p className={errorStyles}>{error}</p>}
-    </div>
-  );
-};
-
-export const Textarea = ({ label, error, className, ...props }: TextareaProps) => {
-  return (
-    <div>
-      {label && <label className={labelStyles}>{label}</label>}
-      <textarea
-        data-slot="textarea"
-        className={cn(
-          baseInputStyles,
-          'min-h-[100px] resize-y h-auto',
-          error && 'border-status-error',
-          className
-        )}
-        {...props}
-      />
-      {error && <p className={errorStyles}>{error}</p>}
-    </div>
-  );
-};
-
-export const Select = ({ label, error, options, className, ...props }: SelectProps) => {
-  return (
-    <div>
-      {label && <label className={labelStyles}>{label}</label>}
-      <select
-        data-slot="select"
-        className={cn(baseInputStyles, 'cursor-pointer', error && 'border-status-error', className)}
-        {...props}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
       {error && <p className={errorStyles}>{error}</p>}
     </div>
   );

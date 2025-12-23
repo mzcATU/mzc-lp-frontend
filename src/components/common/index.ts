@@ -1,9 +1,12 @@
 // Basic UI Components
 export { Button, buttonVariants } from './Button';
-export { Input, Textarea, Select } from './Input';
+export { Input } from './Input';
+export { Textarea } from './Textarea';
+export { NativeSelect } from './NativeSelect';
+export { TagInput } from './TagInput';
 export { Badge, badgeVariants, CategoryBadge } from './Badge';
 export { Separator } from './separator';
-export { Label } from './label';
+export { Label } from './Label';
 export { Checkbox } from './checkbox';
 export { Switch } from './switch';
 export { Slider } from './slider';
@@ -190,11 +193,12 @@ export {
   CardFooter,
   CardTitle,
   CardDescription,
+  CardAction,
   CardContent,
-} from './card';
+} from './Card';
 
 // Alert
-export { Alert, AlertTitle, AlertDescription } from './alert';
+export { Alert, AlertTitle, AlertDescription } from './Alert';
 
 // Avatar
 export { Avatar, AvatarImage, AvatarFallback } from './avatar';
