@@ -1,4 +1,4 @@
-import { BaseSidebar } from '../BaseSidebar';
+import { BaseSidebar } from '../../common/BaseSidebar';
 import { tenantAdminMenuData, roleLabels } from '@/config/sidebar-menus';
 
 interface TenantAdminSidebarProps {
