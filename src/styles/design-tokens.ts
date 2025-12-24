@@ -6,9 +6,10 @@
 export const designTokens = {
   // --- Background and Neutral Tones ---
   bg: {
-    default: '#FFFFFF',           // 주요 콘텐츠/카드 배경
+    default: '#FFFFFF',           // 주요 콘텐츠/카드 배경 (인터랙티브)
     app_default: '#FAFAFA',       // 전체 앱 배경 (고정)
     secondary: '#F4F4F4',         // Admin 페이지 배경/테이블 헤더
+    card_static: '#F0F0F0',       // 정적 카드 배경 (통계, 설정 등 클릭 불가)
     border: '#E0E0E0',            // 경계선, 인풋 테두리
     brand_active: '#D4CDEF',      // 사이드바/탭 활성 배경 (Soft Indigo)
     sidebar_light_hover: '#F5F5F5', // 사이드바 라이트 모드 호버

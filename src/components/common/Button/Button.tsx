@@ -8,15 +8,12 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-btn-brand text-white hover:bg-btn-brand-hover',
-        destructive: 'bg-status-error text-white hover:bg-status-error/90',
-        outline: 'border border-border bg-transparent hover:bg-bg-secondary text-text-primary',
-        secondary: 'bg-bg-secondary text-text-primary hover:bg-bg-secondary/80',
-        ghost: 'bg-transparent text-text-secondary hover:bg-bg-secondary',
-        link: 'text-action-primary underline-offset-4 hover:underline',
-        neutral: 'bg-btn-neutral text-white hover:bg-btn-neutral-hover',
-        brand: 'bg-btn-brand text-white hover:bg-btn-brand-hover',
-        danger: 'bg-status-error-bg text-status-error hover:bg-status-error-bg/80',
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-4 py-2',

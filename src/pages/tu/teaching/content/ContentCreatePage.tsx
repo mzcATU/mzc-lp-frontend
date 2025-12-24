@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ContentRegistrationWizard } from '@/components/domain/content';
+import { ContentRegistrationWizard } from '@/components/domain/tu/content';
 import type { LOData } from '@/types';
 import { useUploadContent, useCreateExternalLink } from '@/hooks/tu';
 

@@ -21,7 +21,7 @@ import { cn } from '@/utils/cn';
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent } from '@/hooks/tu';
-import { ContentPreviewModal } from '@/components/domain/content';
+import { ContentPreviewModal } from '@/components/domain/tu/content';
 import type { ContentType, ContentStatus, ContentListResponse, ContentFilterParams } from '@/types/tu';
 
 // [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제
