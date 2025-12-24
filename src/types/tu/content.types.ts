@@ -16,6 +16,7 @@ export type VersionChangeType = 'FILE_UPLOAD' | 'FILE_REPLACE' | 'METADATA_UPDAT
 export interface ContentResponse {
   id: number;
   originalFileName: string;
+  uploadedFileName: string;
   storedFileName: string;
   contentType: ContentType;
   status: ContentStatus;
@@ -54,6 +55,8 @@ export interface ContentVersionResponse {
   versionNumber: number;
   changeType: VersionChangeType;
   originalFileName: string;
+  uploadedFileName: string;
+  storedFileName: string;
   contentType: ContentType;
   fileSize: number;
   duration: number | null;

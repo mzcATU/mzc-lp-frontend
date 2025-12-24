@@ -15,7 +15,7 @@ interface DevLoginButtonProps {
 export function DevLoginButton({ className }: DevLoginButtonProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { token, setToken, setUser, logout, isAuthenticated } = useAuthStore();
+  const { setToken, setUser, logout, isAuthenticated } = useAuthStore();
 
   const testUser = {
     email: 'test1222@test.test',

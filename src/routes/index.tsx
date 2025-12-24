@@ -1,5 +1,5 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
-import { MyCoursesPage, MyContentPage, CourseCreatePage, TuContentCreatePage } from '@/pages/tu';
+import { MyCoursesPage, MyContentPage, CourseCreatePage, TuContentCreatePage, ContentDetailPage } from '@/pages/tu';
 import ComponentShowcase from '@/pages/ComponentShowcase';
 import {
   SuperAdminLayout,
@@ -129,6 +129,7 @@ export function AppRoutes() {
         <Route path="teaching/courses/create" element={<CourseCreatePage />} />
         <Route path="teaching/content" element={<MyContentPage />} />
         <Route path="teaching/content/create" element={<TuContentCreatePage />} />
+        <Route path="teaching/content/:id" element={<ContentDetailPage />} />
         <Route path="teaching/assignments" element={<PlaceholderPage title="내 과제" />} />
         {/* 교육 과정 탐색 */}
         <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />

@@ -321,6 +321,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
                     onArchive={() => handleArchive(content.id)}
                     onRestore={() => handleRestore(content.id)}
                     onDelete={() => handleDelete(content.id)}
+                    onNavigateDetail={() => navigate(`/tu/teaching/content/${content.id}`)}
                     isDeleting={deleteContent.isPending}
                   />
                 ))
@@ -385,6 +386,7 @@ interface ContentCardProps {
   onArchive: () => void;
   onRestore: () => void;
   onDelete: () => void;
+  onNavigateDetail: () => void;
   isDeleting: boolean;
 }
 
@@ -395,6 +397,7 @@ function ContentCard({
   onArchive,
   onRestore,
   onDelete,
+  onNavigateDetail,
   isDeleting,
 }: Readonly<ContentCardProps>) {
   const IconComponent = contentTypeIcon[content.contentType];
@@ -403,9 +406,10 @@ function ContentCard({
   return (
     <div
       className={cn(
-        'bg-bg-default border border-border rounded-lg p-5 transition-shadow hover:shadow-md',
+        'bg-bg-default border border-border rounded-lg p-5 transition-shadow hover:shadow-md cursor-pointer',
         isArchived && 'opacity-60'
       )}
+      onClick={onNavigateDetail}
     >
       {/* Content Header */}
       <div className="mb-3">
@@ -450,7 +454,7 @@ function ContentCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <Button variant="ghost" size="sm" className="flex-1 border border-border" onClick={onPreview}>
           <Eye size={16} />
           <span>{getText('view')}</span>
