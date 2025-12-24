@@ -1,8 +1,33 @@
 /**
- * Course 관련 타입 정의
+ * Course 관련 타입 정의 (Tenant Operator)
+ *
+ * 백엔드 정렬 타입은 common/course.types.ts 에서 관리됩니다.
+ * 아래는 UI/폼 전용 타입들입니다.
  */
 
-// 콘텐츠 첨부 타입
+// ============================================
+// Re-export from common (백엔드 정렬 타입)
+// ============================================
+export type {
+  CourseLevel,
+  CourseType,
+  CourseResponse,
+  CourseDetailResponse,
+  CourseItemResponse,
+  CreateCourseRequest,
+  UpdateCourseRequest,
+} from '../common/course.types';
+
+export {
+  COURSE_LEVEL_LABELS,
+  COURSE_TYPE_LABELS,
+} from '../common/course.types';
+
+// ============================================
+// UI/Form Types (프론트엔드 전용)
+// ============================================
+
+/** 콘텐츠 첨부 타입 */
 export interface ContentAttachment {
   id: string;
   type: 'upload' | 'link';
@@ -10,7 +35,7 @@ export interface ContentAttachment {
   url: string;
 }
 
-// 회차(레슨) 데이터 타입
+/** 회차(레슨) 데이터 타입 */
 export interface LessonData {
   id: string;
   order: number;
@@ -19,13 +44,16 @@ export interface LessonData {
   contents: ContentAttachment[];
 }
 
-// 강의 난이도
+/**
+ * 강의 난이도 (UI 전용)
+ * @deprecated common/course.types.ts의 CourseLevel 사용 권장
+ */
 export type CourseDifficulty = 'beginner' | 'elementary' | 'intermediate' | 'advanced' | '';
 
-// 강의 상태
+/** 강의 상태 (UI 전용) */
 export type CourseStatus = 'active' | 'completed' | 'draft';
 
-// 다국어 버전 타입
+/** 다국어 버전 타입 */
 export interface LanguageVersion {
   code: string;
   name: string;
@@ -33,13 +61,16 @@ export interface LanguageVersion {
   courseDescription: string;
 }
 
-// 다국어 설정 타입
+/** 다국어 설정 타입 */
 export interface MultiLanguageSettings {
   enabled: boolean;
   languages: LanguageVersion[];
 }
 
-// 강의 폼 데이터
+/**
+ * 강의 폼 데이터 (UI 전용)
+ * @deprecated CreateCourseRequest 사용 권장
+ */
 export interface CourseFormData {
   courseName: string;
   courseDescription: string;
@@ -54,7 +85,10 @@ export interface CourseFormData {
   multiLanguage: MultiLanguageSettings;
 }
 
-// 강의 목록 아이템
+/**
+ * 강의 목록 아이템 (UI 전용)
+ * @deprecated CourseResponse 사용 권장
+ */
 export interface Course {
   id: string;
   title: string;
@@ -70,11 +104,15 @@ export interface Course {
   status?: CourseStatus;
 }
 
-// 카테고리 색상 타입
+// ============================================
+// UI Utility Types
+// ============================================
+
+/** 카테고리 색상 타입 */
 export interface CategoryColor {
   bg: string;
   text: string;
 }
 
-// 카테고리 색상 맵
+/** 카테고리 색상 맵 */
 export type CategoryColorsMap = Record<string, CategoryColor>;
