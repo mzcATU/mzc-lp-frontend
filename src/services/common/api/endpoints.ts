@@ -70,4 +70,30 @@ export const API_ENDPOINTS = {
     CHILDREN: (id: number) => `/content-folders/${id}/children`,
     MOVE: (id: number) => `/content-folders/${id}/move`,
   },
+
+  // Snapshots (TO)
+  SNAPSHOTS: {
+    BASE: '/snapshots',
+    BY_ID: (id: number) => `/snapshots/${id}`,
+    PUBLISH: (id: number) => `/snapshots/${id}/publish`,
+    COMPLETE: (id: number) => `/snapshots/${id}/complete`,
+    ARCHIVE: (id: number) => `/snapshots/${id}/archive`,
+    // Course에서 스냅샷 생성/조회
+    FROM_COURSE: (courseId: number) => `/courses/${courseId}/snapshots`,
+    // Items
+    ITEMS: (snapshotId: number) => `/snapshots/${snapshotId}/items`,
+    ITEMS_FLAT: (snapshotId: number) => `/snapshots/${snapshotId}/items/flat`,
+    ITEM_BY_ID: (snapshotId: number, itemId: number) =>
+      `/snapshots/${snapshotId}/items/${itemId}`,
+    ITEM_MOVE: (snapshotId: number, itemId: number) =>
+      `/snapshots/${snapshotId}/items/${itemId}/move`,
+    // Relations
+    RELATIONS: (snapshotId: number) => `/snapshots/${snapshotId}/relations`,
+    RELATIONS_ORDERED: (snapshotId: number) =>
+      `/snapshots/${snapshotId}/relations/ordered`,
+    RELATIONS_START: (snapshotId: number) =>
+      `/snapshots/${snapshotId}/relations/start`,
+    RELATION_BY_ID: (snapshotId: number, relationId: number) =>
+      `/snapshots/${snapshotId}/relations/${relationId}`,
+  },
 } as const;
