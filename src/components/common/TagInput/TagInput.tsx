@@ -1,17 +1,9 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { inputVariants, labelStyles, hintStyles, errorStyles } from '@/styles/form';
 import { Badge } from '../Badge';
 import type { TagInputProps } from './TagInput.types';
-
-const baseInputStyles =
-  'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
-
-const labelStyles = 'block text-sm font-medium text-text-primary mb-1';
-
-const hintStyles = 'text-sm text-text-secondary mb-2';
-
-const errorStyles = 'text-sm text-status-error mt-1';
 
 export const TagInput = ({
   label,
@@ -52,7 +44,7 @@ export const TagInput = ({
         value={inputValue}
         onChange={handleInputChange}
         placeholder={placeholder}
-        className={cn(baseInputStyles, error && 'border-status-error', className)}
+        className={cn(inputVariants({ state: error ? 'error' : 'default' }), className)}
         {...props}
       />
       {value.length > 0 && (

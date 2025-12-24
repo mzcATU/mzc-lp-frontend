@@ -4,10 +4,45 @@ export default {
   theme: {
     extend: {
       colors: {
+        // shadcn/ui Semantic Tokens
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)',
+        },
+        primary: {
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)',
+        },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)',
+        },
+        ring: 'var(--ring)',
+        input: 'var(--input)',
+        card: {
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)',
+        },
+        popover: {
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)',
+        },
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)',
+        },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
+        },
+
         // Background
         'bg-default': 'var(--color-bg-default)',
         'bg-app': 'var(--color-bg-app)',
         'bg-secondary': 'var(--color-bg-secondary)',
+        'bg-card-static': 'var(--color-bg-card-static)',
         border: 'var(--color-border)',
 
         // Text
@@ -27,6 +62,10 @@ export default {
         // Button - Brand
         'btn-brand': 'var(--color-btn-brand)',
         'btn-brand-hover': 'var(--color-btn-brand-hover)',
+
+        // Tenant Primary (동적)
+        'tenant-primary': 'var(--color-tenant-primary)',
+        'tenant-primary-hover': 'var(--color-tenant-primary-hover)',
 
         // Status
         'status-success': 'var(--color-status-success)',
