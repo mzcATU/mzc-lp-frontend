@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TenantOperatorSidebar } from './TenantOperatorSidebar';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { tenantOperatorMenuData } from '@/config/sidebar-menus';
+import { useUIStore } from '@/store/common/uiStore';
 
 interface TenantOperatorLayoutProps {
   children: ReactNode;
@@ -12,9 +13,7 @@ export function TenantOperatorLayout({
   children,
 }: TenantOperatorLayoutProps) {
   const navigate = useNavigate();
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'ko' | 'en'>('ko');
+  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items
@@ -41,12 +40,10 @@ export function TenantOperatorLayout({
     >
       <TenantOperatorSidebar
         isExpanded={isSidebarExpanded}
-        onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        onToggle={toggleSidebar}
         onMenuItemClick={handleMenuItemClick}
         isDarkMode={isDarkMode}
-        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
         language={language}
-        onLanguageChange={setLanguage}
       />
 
       <main className="flex-1 overflow-auto">{children}</main>

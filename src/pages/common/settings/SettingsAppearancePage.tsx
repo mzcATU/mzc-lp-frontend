@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -19,13 +18,15 @@ import {
   Label,
   RadioOptionCard,
 } from '@/components/common';
+import { useUIStore } from '@/store/common/uiStore';
 
 export function SettingsAppearancePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
-  const [sidebarDefault, setSidebarDefault] = useState<'expanded' | 'collapsed'>('expanded');
+  const { isDarkMode, setDarkMode, isSidebarExpanded, setSidebarExpanded } = useUIStore();
+  const themeMode = isDarkMode ? 'dark' : 'light';
+  const sidebarDefault = isSidebarExpanded ? 'expanded' : 'collapsed';
 
   const basePath = location.pathname.split('/settings')[0];
 
@@ -108,7 +109,7 @@ export function SettingsAppearancePage() {
                   label={option.label}
                   description={option.description}
                   isSelected={themeMode === option.value}
-                  onChange={(v) => setThemeMode(v as 'light' | 'dark')}
+                  onChange={(v) => setDarkMode(v === 'dark')}
                   icon={option.icon}
                   iconBg={option.iconBg}
                   iconColor={option.iconColor}
@@ -132,7 +133,7 @@ export function SettingsAppearancePage() {
               <div className="flex gap-3 mt-3">
                 <Button
                   variant={sidebarDefault === 'expanded' ? 'default' : 'outline'}
-                  onClick={() => setSidebarDefault('expanded')}
+                  onClick={() => setSidebarExpanded(true)}
                   className="flex-1 gap-2"
                 >
                   <Maximize2 className="w-4 h-4" />
@@ -140,7 +141,7 @@ export function SettingsAppearancePage() {
                 </Button>
                 <Button
                   variant={sidebarDefault === 'collapsed' ? 'default' : 'outline'}
-                  onClick={() => setSidebarDefault('collapsed')}
+                  onClick={() => setSidebarExpanded(false)}
                   className="flex-1 gap-2"
                 >
                   <Minimize2 className="w-4 h-4" />

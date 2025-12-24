@@ -41,9 +41,7 @@ export interface BaseSidebarProps {
   onToggle: () => void;
   onMenuItemClick?: (itemId: string) => void;
   isDarkMode?: boolean;
-  onThemeToggle?: () => void;
   language?: 'ko' | 'en';
-  onLanguageChange?: (language: 'ko' | 'en') => void;
   menuData: MenuItem[];
   roleLabel: { ko: string; en: string };
 }

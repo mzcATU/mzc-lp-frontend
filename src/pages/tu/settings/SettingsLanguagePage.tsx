@@ -12,12 +12,13 @@ import {
   NativeSelect,
   RadioOptionCard,
 } from '@/components/common';
+import { useUIStore } from '@/store/common/uiStore';
 
 export function SettingsLanguagePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [language, setLanguage] = useState<'ko' | 'en'>('ko');
+  const { language, setLanguage } = useUIStore();
   const [timezone, setTimezone] = useState('Asia/Seoul');
   const [dateFormat, setDateFormat] = useState('YYYY-MM-DD');
 

@@ -6,9 +6,7 @@ interface TenantUserSidebarProps {
   onToggle: () => void;
   onMenuItemClick?: (itemId: string) => void;
   isDarkMode?: boolean;
-  onThemeToggle?: () => void;
   language?: 'ko' | 'en';
-  onLanguageChange?: (language: 'ko' | 'en') => void;
 }
 
 export function TenantUserSidebar(props: TenantUserSidebarProps) {
