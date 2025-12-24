@@ -1,11 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Construction } from 'lucide-react';
 import { designTokens } from '@/styles/admin-design-tokens';
-import {
-  Button,
-  Card,
-  CardContent,
-} from '@/components/common';
+import { Button, EmptyState } from '@/components/common';
 
 export function SettingsNotificationsPage() {
   const navigate = useNavigate();
@@ -51,70 +47,12 @@ export function SettingsNotificationsPage() {
         </p>
 
         {/* Under Development Placeholder */}
-        <Card className="border-dashed border-2">
-          <CardContent className="py-12 px-6 text-center">
-            <div
-              className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: designTokens.status.warning_background }}
-            >
-              <Construction
-                className="w-10 h-10"
-                style={{ color: designTokens.status.warning_text }}
-              />
-            </div>
-
-            <h2
-              style={{
-                color: designTokens.text.primary,
-                marginBottom: '12px',
-                fontSize: '20px',
-                fontWeight: 500,
-              }}
-            >
-              개발 예정
-            </h2>
-
-            <p
-              style={{
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                lineHeight: '1.6',
-                maxWidth: '400px',
-                margin: '0 auto',
-              }}
-            >
-              알림 설정 기능은 현재 개발 중입니다. 곧 다양한 알림 옵션을 제공할 예정입니다.
-            </p>
-
-            <div
-              className="mt-8 p-4 rounded-lg text-left"
-              style={{ backgroundColor: designTokens.bg.secondary }}
-            >
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: designTokens.text.secondary,
-                  marginBottom: '8px',
-                }}
-              >
-                예정된 기능:
-              </p>
-              <ul
-                style={{
-                  fontSize: '12px',
-                  color: designTokens.text.secondary,
-                  paddingLeft: '20px',
-                  margin: 0,
-                }}
-              >
-                <li>이메일 알림 설정</li>
-                <li>브라우저 푸시 알림</li>
-                <li>알림 시간 설정</li>
-                <li>카테고리별 알림 관리</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Construction}
+          title="개발 예정"
+          description="알림 설정 기능은 현재 개발 중입니다. 곧 다양한 알림 옵션을 제공할 예정입니다."
+          className="border-2 border-dashed rounded-lg"
+        />
       </div>
     </div>
   );

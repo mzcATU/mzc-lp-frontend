@@ -405,11 +405,12 @@ export function SettingsSecurityPage() {
                 color: designTokens.status.error_text,
                 borderColor: designTokens.status.error_text,
               }}
-              className="hover:bg-destructive"
               onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = designTokens.status.error_text;
                 e.currentTarget.style.color = designTokens.action.primary_text;
               }}
               onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
                 e.currentTarget.style.color = designTokens.status.error_text;
               }}
             >
