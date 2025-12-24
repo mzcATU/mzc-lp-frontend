@@ -1,19 +1,38 @@
 import { useNavigate } from 'react-router-dom';
 import { ContentRegistrationWizard } from '@/components/domain/tu/content';
 import type { LOData } from '@/types';
+import { useUploadContent, useCreateExternalLink } from '@/hooks/tu';
 
 export function ContentCreatePage() {
   const navigate = useNavigate();
+  const uploadContent = useUploadContent();
+  const createExternalLink = useCreateExternalLink();
 
   const handleBack = () => {
     navigate('/tu/teaching/content');
   };
 
-  const handleSave = (data: LOData) => {
-    console.log('콘텐츠 저장:', data);
-    // TODO: API 호출로 콘텐츠 저장
-    alert('콘텐츠가 발행되었습니다.');
-    navigate('/tu/teaching/content');
+  const handleSave = async (data: LOData) => {
+    try {
+      if (data.loType === 'external-link' && data.externalUrl) {
+        // 외부 링크 생성
+        await createExternalLink.mutateAsync({
+          url: data.externalUrl,
+          name: data.title, // 콘텐츠 제목을 name으로 사용
+        });
+      } else if (data.uploadedFile) {
+        // 파일 업로드
+        await uploadContent.mutateAsync({
+          file: data.uploadedFile,
+        });
+      }
+
+      alert('콘텐츠가 등록되었습니다.');
+      navigate('/tu/teaching/content');
+    } catch (error) {
+      console.error('콘텐츠 등록 실패:', error);
+      alert('콘텐츠 등록에 실패했습니다.');
+    }
   };
 
   return <ContentRegistrationWizard onBack={handleBack} onSave={handleSave} />;
