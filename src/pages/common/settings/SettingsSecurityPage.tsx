@@ -178,7 +178,7 @@ export function SettingsSecurityPage() {
               <CardTitle className="text-lg font-medium">프로필 정보</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 px-6 pb-6">
+          <CardContent className="px-6 pb-6">
             {/* Profile Image */}
             <div className="mb-5">
               <Label className="mb-3 text-muted-foreground text-sm">프로필 이미지</Label>
@@ -235,12 +235,7 @@ export function SettingsSecurityPage() {
                 type="email"
                 value={profileData.email}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm border cursor-not-allowed"
-                style={{
-                  backgroundColor: designTokens.bg.secondary,
-                  color: designTokens.text.secondary,
-                  borderColor: designTokens.bg.border,
-                }}
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed bg-bg-secondary text-text-secondary border border-border outline-none hover:bg-bg-secondary focus:bg-bg-secondary"
               />
             </div>
 
@@ -254,12 +249,7 @@ export function SettingsSecurityPage() {
                 type="text"
                 value={profileData.joinDate}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm border cursor-not-allowed"
-                style={{
-                  backgroundColor: designTokens.bg.secondary,
-                  color: designTokens.text.secondary,
-                  borderColor: designTokens.bg.border,
-                }}
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed bg-bg-secondary text-text-secondary border border-border outline-none hover:bg-bg-secondary focus:bg-bg-secondary"
               />
             </div>
 
@@ -278,7 +268,7 @@ export function SettingsSecurityPage() {
               <CardTitle className="text-lg font-medium">비밀번호 변경</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 px-6 pb-6">
+          <CardContent className="px-6 pb-6">
             <div className="mb-5">
               <Input
                 label="현재 비밀번호"
@@ -327,7 +317,7 @@ export function SettingsSecurityPage() {
                 <CardTitle className="text-lg font-medium">강의 개설 권한</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 px-6 pb-6">
+            <CardContent className="px-6 pb-6">
               <div className="mb-5">
                 <Label className="mb-3 text-muted-foreground text-sm">현재 권한 상태</Label>
                 <div className="mt-3">
@@ -377,7 +367,7 @@ export function SettingsSecurityPage() {
               <CardTitle className="text-lg font-medium">계정 관리</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 px-6 pb-6">
+          <CardContent className="px-6 pb-6">
             <Alert
               className="mb-4"
               style={{

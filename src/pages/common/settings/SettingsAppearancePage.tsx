@@ -6,7 +6,6 @@ import {
   Monitor,
   Sun,
   Moon,
-  Laptop,
   Maximize2,
   Minimize2,
 } from 'lucide-react';
@@ -18,13 +17,14 @@ import {
   CardTitle,
   CardContent,
   Label,
+  RadioOptionCard,
 } from '@/components/common';
 
 export function SettingsAppearancePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('light');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
   const [sidebarDefault, setSidebarDefault] = useState<'expanded' | 'collapsed'>('expanded');
 
   const basePath = location.pathname.split('/settings')[0];
@@ -53,14 +53,6 @@ export function SettingsAppearancePage() {
       description: '어두운 배경과 밝은 텍스트',
       iconBg: designTokens.badge.blue.bg,
       iconColor: designTokens.badge.blue.text,
-    },
-    {
-      value: 'system' as const,
-      icon: Laptop,
-      label: '시스템 설정 따라가기',
-      description: '운영체제 테마 설정을 따릅니다',
-      iconBg: designTokens.badge.purple.bg,
-      iconColor: designTokens.badge.purple.text,
     },
   ];
 
@@ -106,56 +98,22 @@ export function SettingsAppearancePage() {
               <CardTitle className="text-lg font-medium">테마 모드</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 px-6 pb-6">
+          <CardContent className="px-6 pb-6">
             <div className="flex flex-col gap-3">
-              {themeOptions.map((option) => {
-                const Icon = option.icon;
-                const isSelected = themeMode === option.value;
-                return (
-                  <label
-                    key={option.value}
-                    className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-muted/50"
-                    style={{
-                      border: `2px solid ${isSelected ? designTokens.action.primary_default : designTokens.bg.border}`,
-                      backgroundColor: isSelected ? designTokens.bg.secondary : 'transparent',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="themeMode"
-                      value={option.value}
-                      checked={isSelected}
-                      onChange={() => setThemeMode(option.value)}
-                      className="hidden"
-                    />
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
-                      style={{ backgroundColor: option.iconBg }}
-                    >
-                      <Icon className="w-6 h-6" style={{ color: option.iconColor }} />
-                    </div>
-                    <div className="flex-1">
-                      <div style={{ color: designTokens.text.primary, fontSize: '16px', marginBottom: '4px' }}>
-                        {option.label}
-                      </div>
-                      <div style={{ color: designTokens.text.secondary, fontSize: '13px' }}>
-                        {option.description}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: designTokens.action.primary_default }}
-                      >
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: designTokens.bg.default }}
-                        />
-                      </div>
-                    )}
-                  </label>
-                );
-              })}
+              {themeOptions.map((option) => (
+                <RadioOptionCard
+                  key={option.value}
+                  name="themeMode"
+                  value={option.value}
+                  label={option.label}
+                  description={option.description}
+                  isSelected={themeMode === option.value}
+                  onChange={(v) => setThemeMode(v as 'light' | 'dark')}
+                  icon={option.icon}
+                  iconBg={option.iconBg}
+                  iconColor={option.iconColor}
+                />
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -168,7 +126,7 @@ export function SettingsAppearancePage() {
               <CardTitle className="text-lg font-medium">사이드바 설정</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 px-6 pb-6">
+          <CardContent className="px-6 pb-6">
             <div>
               <Label className="mb-3 text-muted-foreground text-sm">사이드바 기본 상태</Label>
               <div className="flex gap-3 mt-3">

@@ -10,6 +10,7 @@ import {
   CardContent,
   Label,
   NativeSelect,
+  RadioOptionCard,
 } from '@/components/common';
 
 export function SettingsLanguagePage() {
@@ -90,7 +91,7 @@ export function SettingsLanguagePage() {
               <CardTitle className="text-lg font-medium">언어 설정</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 px-6 pb-6">
+          <CardContent className="px-6 pb-6">
             <div>
               <Label className="mb-3 text-muted-foreground text-sm">표시 언어</Label>
               <div className="flex gap-3 mt-3 flex-wrap">
@@ -124,7 +125,7 @@ export function SettingsLanguagePage() {
               <CardTitle className="text-lg font-medium">시간대 설정</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 px-6 pb-6">
+          <CardContent className="px-6 pb-6">
             <div className="mb-6">
               <NativeSelect
                 label="시간대"
@@ -140,36 +141,17 @@ export function SettingsLanguagePage() {
             <div>
               <Label className="mb-3 text-muted-foreground text-sm">날짜 형식</Label>
               <div className="flex flex-col gap-2 mt-3">
-                {dateFormats.map((format) => {
-                  const isSelected = dateFormat === format.value;
-                  return (
-                    <label
-                      key={format.value}
-                      className="flex items-center p-3 rounded-lg cursor-pointer transition-all hover:bg-muted/50"
-                      style={{
-                        border: `1px solid ${isSelected ? designTokens.action.primary_default : designTokens.bg.border}`,
-                        backgroundColor: isSelected ? designTokens.bg.secondary : 'transparent',
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="dateFormat"
-                        value={format.value}
-                        checked={isSelected}
-                        onChange={(e) => setDateFormat(e.target.value)}
-                        className="mr-3 cursor-pointer"
-                      />
-                      <div className="flex-1">
-                        <div style={{ color: designTokens.text.primary, fontSize: '14px', marginBottom: '4px' }}>
-                          {format.label}
-                        </div>
-                        <div style={{ color: designTokens.text.secondary, fontSize: '12px' }}>
-                          {format.description}
-                        </div>
-                      </div>
-                    </label>
-                  );
-                })}
+                {dateFormats.map((format) => (
+                  <RadioOptionCard
+                    key={format.value}
+                    name="dateFormat"
+                    value={format.value}
+                    label={format.label}
+                    description={format.description}
+                    isSelected={dateFormat === format.value}
+                    onChange={setDateFormat}
+                  />
+                ))}
               </div>
             </div>
           </CardContent>
