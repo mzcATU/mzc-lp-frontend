@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  /* === shadcn/ui Semantic Tokens (mapped to design-tokens) === */
+  /* === shadcn/ui Semantic Tokens (mapped to admin-design-tokens) === */
   --background: #FFFFFF;
   --foreground: #333333;
   --muted: #F4F4F4;

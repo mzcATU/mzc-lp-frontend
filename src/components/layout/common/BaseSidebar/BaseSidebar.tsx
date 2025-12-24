@@ -10,7 +10,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
-import { designTokens } from '@/styles/design-tokens';
+import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
 
 export function BaseSidebar({

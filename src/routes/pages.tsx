@@ -1,4 +1,4 @@
-import { designTokens } from '@/styles/design-tokens';
+import { designTokens } from '@/styles/admin-design-tokens';
 
 /**
  * 임시 대시보드 컴포넌트 (개발 예정)
