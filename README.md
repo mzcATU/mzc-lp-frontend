@@ -69,4 +69,3 @@ src/
 |------|------|
 | 전체 문서 | [mzc-lp-docs](https://github.com/mzcATU/mzc-lp-docs) |
 | 컨벤션 | [docs/conventions/](https://github.com/mzcATU/mzc-lp-docs/tree/main/docs/conventions) |
-| 화면 정의서 | [docs/design-specs/](https://github.com/mzcATU/mzc-lp-docs/tree/main/docs/design-specs) |
