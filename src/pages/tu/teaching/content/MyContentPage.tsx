@@ -21,8 +21,11 @@ import { cn } from '@/utils/cn';
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent } from '@/hooks/tu';
-import { contentService } from '@/services/tu';
+import { ContentPreviewModal } from '@/components/domain/content';
 import type { ContentType, ContentStatus, ContentListResponse, ContentFilterParams } from '@/types/tu';
+
+// [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제
+import { DevLoginButton } from '@/components/dev/DevLoginButton';
 
 // 콘텐츠 타입별 Badge 컬러 매핑
 const contentTypeBadgeColor: Record<ContentType, BadgeColor> = {
@@ -76,7 +79,8 @@ const t = {
 };
 
 // 파일 크기 포맷팅
-function formatFileSize(bytes: number): string {
+function formatFileSize(bytes: number | null | undefined): string {
+  if (bytes === null || bytes === undefined) return '-';
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -100,6 +104,14 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   const [statusFilter, setStatusFilter] = useState<ContentStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
+
+  // 미리보기 모달 상태
+  const [previewModal, setPreviewModal] = useState<{
+    isOpen: boolean;
+    contentId: number | null;
+    contentType: ContentType | null;
+    fileName: string | null;
+  }>({ isOpen: false, contentId: null, contentType: null, fileName: null });
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -127,6 +139,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     VIDEO: contents.filter((c) => c.contentType === 'VIDEO').length,
     DOCUMENT: contents.filter((c) => c.contentType === 'DOCUMENT').length,
     IMAGE: contents.filter((c) => c.contentType === 'IMAGE').length,
+    EXTERNAL_LINK: contents.filter((c) => c.contentType === 'EXTERNAL_LINK').length,
   };
 
   const handleDelete = async (id: number) => {
@@ -154,8 +167,17 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     }
   };
 
-  const handlePreview = (id: number) => {
-    window.open(contentService.getPreviewUrl(id), '_blank');
+  const handlePreview = (content: ContentListResponse) => {
+    setPreviewModal({
+      isOpen: true,
+      contentId: content.id,
+      contentType: content.contentType,
+      fileName: content.originalFileName,
+    });
+  };
+
+  const handleClosePreview = () => {
+    setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null });
   };
 
   if (error) {
@@ -174,6 +196,9 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       {/* Top Bar */}
       <div className="border-b border-border bg-bg-default sticky top-0 z-10">
         <div className="p-6 px-8">
+          {/* [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제 */}
+          <DevLoginButton />
+
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-text-primary mb-1">{getText('title')}</h1>
@@ -262,11 +287,12 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       <div className="flex-1 overflow-auto">
         <div className="p-6 px-8">
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <StatCard label={getText('totalContent')} value={contentStats.total} />
             <StatCard label={getText('VIDEO')} value={contentStats.VIDEO} />
             <StatCard label={getText('DOCUMENT')} value={contentStats.DOCUMENT} />
             <StatCard label={getText('IMAGE')} value={contentStats.IMAGE} />
+            <StatCard label={getText('EXTERNAL_LINK')} value={contentStats.EXTERNAL_LINK} />
           </div>
 
           {/* Loading State */}
@@ -291,7 +317,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
                     key={content.id}
                     content={content}
                     getText={getText}
-                    onPreview={() => handlePreview(content.id)}
+                    onPreview={() => handlePreview(content)}
                     onArchive={() => handleArchive(content.id)}
                     onRestore={() => handleRestore(content.id)}
                     onDelete={() => handleDelete(content.id)}
@@ -328,6 +354,15 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           )}
         </div>
       </div>
+
+      {/* 미리보기 모달 */}
+      <ContentPreviewModal
+        isOpen={previewModal.isOpen}
+        onClose={handleClosePreview}
+        contentId={previewModal.contentId}
+        contentType={previewModal.contentType}
+        fileName={previewModal.fileName ?? undefined}
+      />
     </div>
   );
 }

@@ -56,20 +56,20 @@ export const contentService = {
 
   // 콘텐츠 목록 조회
   async getContents(params?: ContentFilterParams): Promise<PageResponse<ContentListResponse>> {
-    const { data } = await axiosInstance.get<PageResponse<ContentListResponse>>(
+    const { data } = await axiosInstance.get<{ data: PageResponse<ContentListResponse> }>(
       API_ENDPOINTS.CONTENTS.BASE,
       { params }
     );
-    return data;
+    return data.data;
   },
 
   // 내 콘텐츠 목록 조회 (DESIGNER용)
   async getMyContents(params?: ContentFilterParams): Promise<PageResponse<ContentListResponse>> {
-    const { data } = await axiosInstance.get<PageResponse<ContentListResponse>>(
+    const { data } = await axiosInstance.get<{ data: PageResponse<ContentListResponse> }>(
       API_ENDPOINTS.CONTENTS.MY,
       { params }
     );
-    return data;
+    return data.data;
   },
 
   // 콘텐츠 상세 조회
@@ -143,6 +143,18 @@ export const contentService = {
   getPreviewUrl(id: number): string {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     return `${baseUrl}${API_ENDPOINTS.CONTENTS.PREVIEW(id)}`;
+  },
+
+  // 미리보기 데이터 가져오기 (Blob)
+  async getPreviewData(id: number): Promise<{ blob: Blob; contentType: string }> {
+    const response = await axiosInstance.get(
+      API_ENDPOINTS.CONTENTS.PREVIEW(id),
+      { responseType: 'blob' }
+    );
+    return {
+      blob: response.data,
+      contentType: response.headers['content-type'] || 'application/octet-stream',
+    };
   },
 
   // 버전 히스토리 조회

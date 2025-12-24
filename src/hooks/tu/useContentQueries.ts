@@ -2,6 +2,7 @@
  * Content (CMS) React Query Hooks
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/store/common/authStore';
 import { contentService } from '@/services/tu';
 import type {
   ContentFilterParams,
@@ -22,21 +23,28 @@ export const contentKeys = {
   versions: (id: number) => [...contentKeys.detail(id), 'versions'] as const,
   version: (id: number, versionNumber: number) =>
     [...contentKeys.versions(id), versionNumber] as const,
+  preview: (id: number) => [...contentKeys.detail(id), 'preview'] as const,
 };
 
 // 콘텐츠 목록 조회
 export const useContents = (params?: ContentFilterParams) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return useQuery({
     queryKey: contentKeys.list(params),
     queryFn: () => contentService.getContents(params),
+    enabled: isAuthenticated,
   });
 };
 
 // 내 콘텐츠 목록 조회
 export const useMyContents = (params?: ContentFilterParams) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return useQuery({
     queryKey: contentKeys.myList(params),
     queryFn: () => contentService.getMyContents(params),
+    enabled: isAuthenticated,
   });
 };
 
@@ -187,5 +195,14 @@ export const useRestoreVersion = () => {
       queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });
     },
+  });
+};
+
+// 콘텐츠 미리보기 데이터 조회
+export const useContentPreview = (id: number | null) => {
+  return useQuery({
+    queryKey: contentKeys.preview(id!),
+    queryFn: () => contentService.getPreviewData(id!),
+    enabled: !!id,
   });
 };

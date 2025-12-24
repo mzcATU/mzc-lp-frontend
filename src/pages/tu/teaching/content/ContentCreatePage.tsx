@@ -17,7 +17,8 @@ export function ContentCreatePage() {
       if (data.loType === 'external-link' && data.externalUrl) {
         // 외부 링크 생성
         await createExternalLink.mutateAsync({
-          externalUrl: data.externalUrl,
+          url: data.externalUrl,
+          name: data.title, // 콘텐츠 제목을 name으로 사용
         });
       } else if (data.uploadedFile) {
         // 파일 업로드

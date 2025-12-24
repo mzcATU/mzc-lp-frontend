@@ -65,7 +65,8 @@ export interface ContentVersionResponse {
 
 // 외부 링크 생성 요청
 export interface CreateExternalLinkRequest {
-  externalUrl: string;
+  url: string;           // 외부 링크 URL (필수)
+  name: string;          // 콘텐츠 이름 (필수)
   folderId?: number | null;
 }
 

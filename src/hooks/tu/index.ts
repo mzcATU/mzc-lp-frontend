@@ -14,6 +14,7 @@ export {
   useArchiveContent,
   useRestoreContent,
   useRestoreVersion,
+  useContentPreview,
 } from './useContentQueries';
 
 // Learning Object (LO) Hooks
