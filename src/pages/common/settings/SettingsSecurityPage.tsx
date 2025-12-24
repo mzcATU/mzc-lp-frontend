@@ -11,7 +11,22 @@ import {
   CheckCircle,
   Camera,
 } from 'lucide-react';
-import { designTokens } from '@/styles/design-tokens';
+import { designTokens } from '@/styles/admin-design-tokens';
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Badge,
+  Alert,
+  AlertDescription,
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  Label,
+} from '@/components/common';
 
 export function SettingsSecurityPage() {
   const navigate = useNavigate();
@@ -98,16 +113,16 @@ export function SettingsSecurityPage() {
     }
   };
 
-  const getAuthBadgeColor = (status: 'USER' | 'DESIGNER' | 'OWNER') => {
+  const getAuthBadgeVariant = (status: 'USER' | 'DESIGNER' | 'OWNER') => {
     switch (status) {
       case 'USER':
-        return '#999999';
+        return 'gray' as const;
       case 'DESIGNER':
-        return '#4C2D9A';
+        return 'indigo' as const;
       case 'OWNER':
-        return '#FF7043';
+        return 'orange' as const;
       default:
-        return '#999999';
+        return 'gray' as const;
     }
   };
 
@@ -132,26 +147,14 @@ export function SettingsSecurityPage() {
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Header with Back Button */}
-        <button
+        <Button
+          variant="ghost"
           onClick={handleBack}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 12px',
-            marginBottom: '24px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: designTokens.text.secondary,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = designTokens.text.primary)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = designTokens.text.secondary)}
+          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft style={{ width: '20px', height: '20px' }} />
+          <ArrowLeft className="w-5 h-5" />
           <span>설정으로 돌아가기</span>
-        </button>
+        </Button>
 
         <h1
           style={{
@@ -168,557 +171,252 @@ export function SettingsSecurityPage() {
         </p>
 
         {/* Profile Information Section */}
-        <section
-          style={{
-            backgroundColor: designTokens.bg.default,
-            border: `1px solid ${designTokens.bg.border}`,
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
-              paddingBottom: '16px',
-              borderBottom: `1px solid ${designTokens.bg.border}`,
-            }}
-          >
-            <Shield style={{ width: '20px', height: '20px', color: '#4C2D9A' }} />
-            <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
-              프로필 정보
-            </h2>
-          </div>
-
-          {/* Profile Image */}
-          <div style={{ marginBottom: '20px' }}>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '12px',
-              }}
-            >
-              프로필 이미지
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  backgroundColor: profileImagePreview ? 'transparent' : '#F4F4F4',
-                  border: `2px solid ${designTokens.bg.border}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                }}
-              >
-                {profileImagePreview ? (
-                  <img
-                    src={profileImagePreview}
-                    alt="Profile"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">프로필 정보</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 px-6 pb-6">
+            {/* Profile Image */}
+            <div className="mb-5">
+              <Label className="mb-3 text-muted-foreground text-sm">프로필 이미지</Label>
+              <div className="flex items-center gap-4 mt-3">
+                <Avatar className="w-20 h-20">
+                  {profileImagePreview ? (
+                    <AvatarImage src={profileImagePreview} alt="Profile" />
+                  ) : (
+                    <AvatarFallback>
+                      <User className="w-8 h-8" style={{ color: designTokens.text.placeholder }} />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Camera className="w-4 h-4" />
+                    이미지 변경
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
                   />
-                ) : (
-                  <User style={{ width: '32px', height: '32px', color: '#999999' }} />
-                )}
-              </div>
-              <div>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: designTokens.bg.default,
-                    border: `1px solid ${designTokens.bg.border}`,
-                    borderRadius: '8px',
-                    color: designTokens.text.primary,
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#4C2D9A';
-                    e.currentTarget.style.backgroundColor = '#F8F5FC';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = designTokens.bg.border;
-                    e.currentTarget.style.backgroundColor = designTokens.bg.default;
-                  }}
-                >
-                  <Camera style={{ width: '16px', height: '16px' }} />
-                  이미지 변경
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{ display: 'none' }}
-                />
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: designTokens.text.secondary,
-                    marginTop: '8px',
-                  }}
-                >
-                  JPG, PNG (최대 5MB)
-                </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    JPG, PNG (최대 5MB)
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Name */}
-          <div style={{ marginBottom: '20px' }}>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '8px',
-              }}
-            >
-              <User style={{ width: '16px', height: '16px' }} />
-              이름
-            </label>
-            <input
-              type="text"
-              value={profileData.name}
-              onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: designTokens.text.primary,
-                backgroundColor: designTokens.bg.default,
-                outline: 'none',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = '#4C2D9A')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = designTokens.bg.border)}
-            />
-          </div>
+            {/* Name */}
+            <div className="mb-5">
+              <Input
+                label="이름"
+                value={profileData.name}
+                onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
 
-          {/* Email (Read-only) */}
-          <div style={{ marginBottom: '20px' }}>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '8px',
-              }}
-            >
-              <Mail style={{ width: '16px', height: '16px' }} />
-              이메일
-            </label>
-            <input
-              type="email"
-              value={profileData.email}
-              readOnly
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: designTokens.text.secondary,
-                backgroundColor: '#F8F8F8',
-                cursor: 'not-allowed',
-              }}
-            />
-          </div>
+            {/* Email (Read-only) */}
+            <div className="mb-5">
+              <Label className="flex items-center gap-2 mb-2 text-muted-foreground text-sm">
+                <Mail className="w-4 h-4" />
+                이메일
+              </Label>
+              <input
+                type="email"
+                value={profileData.email}
+                readOnly
+                className="w-full px-3 py-2.5 rounded-md text-sm border cursor-not-allowed"
+                style={{
+                  backgroundColor: designTokens.bg.secondary,
+                  color: designTokens.text.secondary,
+                  borderColor: designTokens.bg.border,
+                }}
+              />
+            </div>
 
-          {/* Join Date (Read-only) */}
-          <div style={{ marginBottom: '24px' }}>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '8px',
-              }}
-            >
-              <Calendar style={{ width: '16px', height: '16px' }} />
-              가입일
-            </label>
-            <input
-              type="text"
-              value={profileData.joinDate}
-              readOnly
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: designTokens.text.secondary,
-                backgroundColor: '#F8F8F8',
-                cursor: 'not-allowed',
-              }}
-            />
-          </div>
+            {/* Join Date (Read-only) */}
+            <div className="mb-6">
+              <Label className="flex items-center gap-2 mb-2 text-muted-foreground text-sm">
+                <Calendar className="w-4 h-4" />
+                가입일
+              </Label>
+              <input
+                type="text"
+                value={profileData.joinDate}
+                readOnly
+                className="w-full px-3 py-2.5 rounded-md text-sm border cursor-not-allowed"
+                style={{
+                  backgroundColor: designTokens.bg.secondary,
+                  color: designTokens.text.secondary,
+                  borderColor: designTokens.bg.border,
+                }}
+              />
+            </div>
 
-          {/* Save Button */}
-          <button
-            onClick={handleProfileSave}
-            style={{
-              padding: '10px 24px',
-              backgroundColor: designTokens.button.brand_default,
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-          >
-            저장
-          </button>
-        </section>
+            {/* Save Button */}
+            <Button onClick={handleProfileSave}>
+              저장
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Password Change Section */}
-        <section
-          style={{
-            backgroundColor: designTokens.bg.default,
-            border: `1px solid ${designTokens.bg.border}`,
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
-              paddingBottom: '16px',
-              borderBottom: `1px solid ${designTokens.bg.border}`,
-            }}
-          >
-            <Lock style={{ width: '20px', height: '20px', color: '#4C2D9A' }} />
-            <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Lock className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">비밀번호 변경</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 px-6 pb-6">
+            <div className="mb-5">
+              <Input
+                label="현재 비밀번호"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) =>
+                  setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="mb-5">
+              <Input
+                label="새 비밀번호"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) =>
+                  setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="mb-6">
+              <Input
+                label="새 비밀번호 확인"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) =>
+                  setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                }
+              />
+            </div>
+
+            <Button onClick={handlePasswordChange}>
               비밀번호 변경
-            </h2>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '8px',
-              }}
-            >
-              현재 비밀번호
-            </label>
-            <input
-              type="password"
-              value={passwordData.currentPassword}
-              onChange={(e) =>
-                setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))
-              }
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: designTokens.text.primary,
-                backgroundColor: designTokens.bg.default,
-                outline: 'none',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = '#4C2D9A')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = designTokens.bg.border)}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '8px',
-              }}
-            >
-              새 비밀번호
-            </label>
-            <input
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(e) =>
-                setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))
-              }
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: designTokens.text.primary,
-                backgroundColor: designTokens.bg.default,
-                outline: 'none',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = '#4C2D9A')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = designTokens.bg.border)}
-            />
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '8px',
-              }}
-            >
-              새 비밀번호 확인
-            </label>
-            <input
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(e) =>
-                setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))
-              }
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: designTokens.text.primary,
-                backgroundColor: designTokens.bg.default,
-                outline: 'none',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = '#4C2D9A')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = designTokens.bg.border)}
-            />
-          </div>
-
-          <button
-            onClick={handlePasswordChange}
-            style={{
-              padding: '10px 24px',
-              backgroundColor: designTokens.button.brand_default,
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-          >
-            비밀번호 변경
-          </button>
-        </section>
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Design Authority Section (User Role Only) */}
         {isUserRole && (
-          <section
-            style={{
-              backgroundColor: designTokens.bg.default,
-              border: `1px solid ${designTokens.bg.border}`,
-              borderRadius: '12px',
-              padding: '24px',
-              marginBottom: '24px',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '24px',
-                paddingBottom: '16px',
-                borderBottom: `1px solid ${designTokens.bg.border}`,
-              }}
-            >
-              <CheckCircle style={{ width: '20px', height: '20px', color: '#4C2D9A' }} />
-              <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
-                강의 개설 권한
-              </h2>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label
-                style={{
-                  display: 'block',
-                  color: designTokens.text.secondary,
-                  fontSize: '14px',
-                  marginBottom: '12px',
-                }}
-              >
-                현재 권한 상태
-              </label>
-              <div
-                style={{
-                  display: 'inline-block',
-                  padding: '8px 16px',
-                  backgroundColor: `${getAuthBadgeColor(designAuthStatus)}15`,
-                  border: `1px solid ${getAuthBadgeColor(designAuthStatus)}`,
-                  borderRadius: '20px',
-                  fontSize: '14px',
-                  color: getAuthBadgeColor(designAuthStatus),
-                  fontWeight: 500,
-                }}
-              >
-                {getAuthLabel(designAuthStatus)}
+          <Card className="mb-6">
+            <CardHeader className="border-b px-6 py-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+                <CardTitle className="text-lg font-medium">강의 개설 권한</CardTitle>
               </div>
-            </div>
+            </CardHeader>
+            <CardContent className="pt-6 px-6 pb-6">
+              <div className="mb-5">
+                <Label className="mb-3 text-muted-foreground text-sm">현재 권한 상태</Label>
+                <div className="mt-3">
+                  <Badge variant={getAuthBadgeVariant(designAuthStatus)} className="px-4 py-2 text-sm">
+                    {getAuthLabel(designAuthStatus)}
+                  </Badge>
+                </div>
+              </div>
 
-            {designAuthStatus === 'USER' && (
-              <div>
-                <p
+              {designAuthStatus === 'USER' && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                    강의를 개설하고 콘텐츠를 등록하려면 권한을 요청해주세요.
+                  </p>
+                  <Button
+                    onClick={handleRequestDesignAuth}
+                    disabled={isRequestPending}
+                  >
+                    {isRequestPending ? '요청 중...' : '강의 개설 권한 요청'}
+                  </Button>
+                </div>
+              )}
+
+              {(designAuthStatus === 'DESIGNER' || designAuthStatus === 'OWNER') && (
+                <Alert
+                  className="flex items-center gap-3"
                   style={{
-                    fontSize: '14px',
-                    color: designTokens.text.secondary,
-                    marginBottom: '16px',
-                    lineHeight: '1.6',
+                    backgroundColor: designTokens.status.success_background,
+                    borderColor: designTokens.status.success_text,
                   }}
                 >
-                  강의를 개설하고 콘텐츠를 등록하려면 권한을 요청해주세요.
-                </p>
-                <button
-                  onClick={handleRequestDesignAuth}
-                  disabled={isRequestPending}
-                  style={{
-                    padding: '10px 24px',
-                    backgroundColor: isRequestPending ? '#CCCCCC' : designTokens.button.brand_default,
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: isRequestPending ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
-                    transition: 'opacity 0.2s',
-                  }}
-                  onMouseEnter={(e) =>
-                    !isRequestPending && (e.currentTarget.style.opacity = '0.9')
-                  }
-                  onMouseLeave={(e) =>
-                    !isRequestPending && (e.currentTarget.style.opacity = '1')
-                  }
-                >
-                  {isRequestPending ? '요청 중...' : '강의 개설 권한 요청'}
-                </button>
-              </div>
-            )}
-
-            {(designAuthStatus === 'DESIGNER' || designAuthStatus === 'OWNER') && (
-              <div
-                style={{
-                  padding: '12px 16px',
-                  backgroundColor: '#E8F5E9',
-                  border: '1px solid #4CAF50',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                }}
-              >
-                <CheckCircle style={{ width: '20px', height: '20px', color: '#4CAF50' }} />
-                <p style={{ fontSize: '14px', color: '#2E7D32' }}>
-                  강의 개설 및 콘텐츠 등록 권한이 활성화되었습니다.
-                </p>
-              </div>
-            )}
-          </section>
+                  <CheckCircle className="w-5 h-5" style={{ color: designTokens.status.success_text }} />
+                  <AlertDescription style={{ color: designTokens.status.success_text }}>
+                    강의 개설 및 콘텐츠 등록 권한이 활성화되었습니다.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Account Management Section */}
-        <section
-          style={{
-            backgroundColor: designTokens.bg.default,
-            border: `1px solid ${designTokens.bg.border}`,
-            borderRadius: '12px',
-            padding: '24px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '16px',
-              paddingBottom: '16px',
-              borderBottom: `1px solid ${designTokens.bg.border}`,
-            }}
-          >
-            <AlertTriangle style={{ width: '20px', height: '20px', color: '#FF7043' }} />
-            <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
-              계정 관리
-            </h2>
-          </div>
+        <Card>
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5" style={{ color: designTokens.badge.orange.text }} />
+              <CardTitle className="text-lg font-medium">계정 관리</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 px-6 pb-6">
+            <Alert
+              className="mb-4"
+              style={{
+                backgroundColor: designTokens.status.warning_background,
+                borderColor: designTokens.status.warning_text,
+              }}
+            >
+              <AlertDescription style={{ color: designTokens.status.warning_text }}>
+                계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
+              </AlertDescription>
+            </Alert>
 
-          <div
-            style={{
-              padding: '16px',
-              backgroundColor: '#FFF3E0',
-              border: '1px solid #FFB74D',
-              borderRadius: '8px',
-              marginBottom: '16px',
-            }}
-          >
-            <p style={{ fontSize: '14px', color: '#E65100', lineHeight: '1.6' }}>
-              계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              if (
-                confirm(
-                  '정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'
-                )
-              ) {
-                alert('계정 삭제가 요청되었습니다.');
-              }
-            }}
-            style={{
-              padding: '10px 24px',
-              backgroundColor: 'transparent',
-              color: '#D32F2F',
-              border: '1px solid #D32F2F',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#D32F2F';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#D32F2F';
-            }}
-          >
-            회원 탈퇴
-          </button>
-        </section>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (
+                  confirm(
+                    '정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'
+                  )
+                ) {
+                  alert('계정 삭제가 요청되었습니다.');
+                }
+              }}
+              style={{
+                color: designTokens.status.error_text,
+                borderColor: designTokens.status.error_text,
+              }}
+              className="hover:bg-destructive"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = designTokens.action.primary_text;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = designTokens.status.error_text;
+              }}
+            >
+              회원 탈퇴
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

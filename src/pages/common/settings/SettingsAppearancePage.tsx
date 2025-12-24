@@ -10,7 +10,15 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react';
-import { designTokens } from '@/styles/design-tokens';
+import { designTokens } from '@/styles/admin-design-tokens';
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Label,
+} from '@/components/common';
 
 export function SettingsAppearancePage() {
   const navigate = useNavigate();
@@ -29,6 +37,33 @@ export function SettingsAppearancePage() {
     alert('외관 설정이 저장되었습니다.');
   };
 
+  const themeOptions = [
+    {
+      value: 'light' as const,
+      icon: Sun,
+      label: '라이트 모드',
+      description: '밝은 배경과 어두운 텍스트',
+      iconBg: designTokens.badge.yellow.bg,
+      iconColor: designTokens.badge.yellow.text,
+    },
+    {
+      value: 'dark' as const,
+      icon: Moon,
+      label: '다크 모드',
+      description: '어두운 배경과 밝은 텍스트',
+      iconBg: designTokens.badge.blue.bg,
+      iconColor: designTokens.badge.blue.text,
+    },
+    {
+      value: 'system' as const,
+      icon: Laptop,
+      label: '시스템 설정 따라가기',
+      description: '운영체제 테마 설정을 따릅니다',
+      iconBg: designTokens.badge.purple.bg,
+      iconColor: designTokens.badge.purple.text,
+    },
+  ];
+
   return (
     <div
       style={{
@@ -40,26 +75,14 @@ export function SettingsAppearancePage() {
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Header with Back Button */}
-        <button
+        <Button
+          variant="ghost"
           onClick={handleBack}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 12px',
-            marginBottom: '24px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: designTokens.text.secondary,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = designTokens.text.primary)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = designTokens.text.secondary)}
+          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft style={{ width: '20px', height: '20px' }} />
+          <ArrowLeft className="w-5 h-5" />
           <span>설정으로 돌아가기</span>
-        </button>
+        </Button>
 
         <h1
           style={{
@@ -76,446 +99,108 @@ export function SettingsAppearancePage() {
         </p>
 
         {/* Theme Mode Section */}
-        <section
-          style={{
-            backgroundColor: designTokens.bg.default,
-            border: `1px solid ${designTokens.bg.border}`,
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
-              paddingBottom: '16px',
-              borderBottom: `1px solid ${designTokens.bg.border}`,
-            }}
-          >
-            <Palette style={{ width: '20px', height: '20px', color: '#4C2D9A' }} />
-            <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
-              테마 모드
-            </h2>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Light Mode */}
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '16px',
-                border: `2px solid ${themeMode === 'light' ? '#4C2D9A' : designTokens.bg.border}`,
-                borderRadius: '12px',
-                cursor: 'pointer',
-                backgroundColor: themeMode === 'light' ? '#F8F5FC' : 'transparent',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                if (themeMode !== 'light') {
-                  e.currentTarget.style.backgroundColor = '#FAFAFA';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (themeMode !== 'light') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <input
-                type="radio"
-                name="themeMode"
-                value="light"
-                checked={themeMode === 'light'}
-                onChange={() => setThemeMode('light')}
-                style={{ display: 'none' }}
-              />
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: '#FFF9E6',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '16px',
-                }}
-              >
-                <Sun style={{ width: '24px', height: '24px', color: '#FFB74D' }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    color: designTokens.text.primary,
-                    fontSize: '16px',
-                    marginBottom: '4px',
-                  }}
-                >
-                  라이트 모드
-                </div>
-                <div
-                  style={{
-                    color: designTokens.text.secondary,
-                    fontSize: '13px',
-                  }}
-                >
-                  밝은 배경과 어두운 텍스트
-                </div>
-              </div>
-              {themeMode === 'light' && (
-                <div
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: '#4C2D9A',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <div
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Palette className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">테마 모드</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 px-6 pb-6">
+            <div className="flex flex-col gap-3">
+              {themeOptions.map((option) => {
+                const Icon = option.icon;
+                const isSelected = themeMode === option.value;
+                return (
+                  <label
+                    key={option.value}
+                    className="flex items-center p-4 rounded-xl cursor-pointer transition-all hover:bg-muted/50"
                     style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
+                      border: `2px solid ${isSelected ? designTokens.action.primary_default : designTokens.bg.border}`,
+                      backgroundColor: isSelected ? designTokens.bg.secondary : 'transparent',
                     }}
-                  />
-                </div>
-              )}
-            </label>
-
-            {/* Dark Mode */}
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '16px',
-                border: `2px solid ${themeMode === 'dark' ? '#4C2D9A' : designTokens.bg.border}`,
-                borderRadius: '12px',
-                cursor: 'pointer',
-                backgroundColor: themeMode === 'dark' ? '#F8F5FC' : 'transparent',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                if (themeMode !== 'dark') {
-                  e.currentTarget.style.backgroundColor = '#FAFAFA';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (themeMode !== 'dark') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <input
-                type="radio"
-                name="themeMode"
-                value="dark"
-                checked={themeMode === 'dark'}
-                onChange={() => setThemeMode('dark')}
-                style={{ display: 'none' }}
-              />
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: '#E3F2FD',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '16px',
-                }}
-              >
-                <Moon style={{ width: '24px', height: '24px', color: '#5C6BC0' }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    color: designTokens.text.primary,
-                    fontSize: '16px',
-                    marginBottom: '4px',
-                  }}
-                >
-                  다크 모드
-                </div>
-                <div
-                  style={{
-                    color: designTokens.text.secondary,
-                    fontSize: '13px',
-                  }}
-                >
-                  어두운 배경과 밝은 텍스트
-                </div>
-              </div>
-              {themeMode === 'dark' && (
-                <div
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: '#4C2D9A',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                    }}
-                  />
-                </div>
-              )}
-            </label>
-
-            {/* System Mode */}
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '16px',
-                border: `2px solid ${themeMode === 'system' ? '#4C2D9A' : designTokens.bg.border}`,
-                borderRadius: '12px',
-                cursor: 'pointer',
-                backgroundColor: themeMode === 'system' ? '#F8F5FC' : 'transparent',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                if (themeMode !== 'system') {
-                  e.currentTarget.style.backgroundColor = '#FAFAFA';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (themeMode !== 'system') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <input
-                type="radio"
-                name="themeMode"
-                value="system"
-                checked={themeMode === 'system'}
-                onChange={() => setThemeMode('system')}
-                style={{ display: 'none' }}
-              />
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  backgroundColor: '#F3E5F5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '16px',
-                }}
-              >
-                <Laptop style={{ width: '24px', height: '24px', color: '#9C27B0' }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    color: designTokens.text.primary,
-                    fontSize: '16px',
-                    marginBottom: '4px',
-                  }}
-                >
-                  시스템 설정 따라가기
-                </div>
-                <div
-                  style={{
-                    color: designTokens.text.secondary,
-                    fontSize: '13px',
-                  }}
-                >
-                  운영체제 테마 설정을 따릅니다
-                </div>
-              </div>
-              {themeMode === 'system' && (
-                <div
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: '#4C2D9A',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: 'white',
-                    }}
-                  />
-                </div>
-              )}
-            </label>
-          </div>
-        </section>
+                  >
+                    <input
+                      type="radio"
+                      name="themeMode"
+                      value={option.value}
+                      checked={isSelected}
+                      onChange={() => setThemeMode(option.value)}
+                      className="hidden"
+                    />
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
+                      style={{ backgroundColor: option.iconBg }}
+                    >
+                      <Icon className="w-6 h-6" style={{ color: option.iconColor }} />
+                    </div>
+                    <div className="flex-1">
+                      <div style={{ color: designTokens.text.primary, fontSize: '16px', marginBottom: '4px' }}>
+                        {option.label}
+                      </div>
+                      <div style={{ color: designTokens.text.secondary, fontSize: '13px' }}>
+                        {option.description}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: designTokens.action.primary_default }}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: designTokens.bg.default }}
+                        />
+                      </div>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Sidebar Settings Section */}
-        <section
-          style={{
-            backgroundColor: designTokens.bg.default,
-            border: `1px solid ${designTokens.bg.border}`,
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
-              paddingBottom: '16px',
-              borderBottom: `1px solid ${designTokens.bg.border}`,
-            }}
-          >
-            <Monitor style={{ width: '20px', height: '20px', color: '#4C2D9A' }} />
-            <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
-              사이드바 설정
-            </h2>
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '12px',
-              }}
-            >
-              사이드바 기본 상태
-            </label>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setSidebarDefault('expanded')}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '16px',
-                  backgroundColor:
-                    sidebarDefault === 'expanded'
-                      ? designTokens.button.brand_default
-                      : designTokens.bg.default,
-                  color: sidebarDefault === 'expanded' ? 'white' : designTokens.text.primary,
-                  border: `1px solid ${sidebarDefault === 'expanded' ? designTokens.button.brand_default : designTokens.bg.border}`,
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (sidebarDefault !== 'expanded') {
-                    e.currentTarget.style.borderColor = '#4C2D9A';
-                    e.currentTarget.style.backgroundColor = '#F8F5FC';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (sidebarDefault !== 'expanded') {
-                    e.currentTarget.style.borderColor = designTokens.bg.border;
-                    e.currentTarget.style.backgroundColor = designTokens.bg.default;
-                  }
-                }}
-              >
-                <Maximize2 style={{ width: '18px', height: '18px' }} />
-                확장
-              </button>
-              <button
-                onClick={() => setSidebarDefault('collapsed')}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '16px',
-                  backgroundColor:
-                    sidebarDefault === 'collapsed'
-                      ? designTokens.button.brand_default
-                      : designTokens.bg.default,
-                  color: sidebarDefault === 'collapsed' ? 'white' : designTokens.text.primary,
-                  border: `1px solid ${sidebarDefault === 'collapsed' ? designTokens.button.brand_default : designTokens.bg.border}`,
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (sidebarDefault !== 'collapsed') {
-                    e.currentTarget.style.borderColor = '#4C2D9A';
-                    e.currentTarget.style.backgroundColor = '#F8F5FC';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (sidebarDefault !== 'collapsed') {
-                    e.currentTarget.style.borderColor = designTokens.bg.border;
-                    e.currentTarget.style.backgroundColor = designTokens.bg.default;
-                  }
-                }}
-              >
-                <Minimize2 style={{ width: '18px', height: '18px' }} />
-                축소
-              </button>
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Monitor className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">사이드바 설정</CardTitle>
             </div>
-            <p
-              style={{
-                fontSize: '12px',
-                color: designTokens.text.secondary,
-                marginTop: '12px',
-              }}
-            >
-              로그인 시 사이드바의 기본 상태를 설정합니다.
-            </p>
-          </div>
-        </section>
+          </CardHeader>
+          <CardContent className="pt-6 px-6 pb-6">
+            <div>
+              <Label className="mb-3 text-muted-foreground text-sm">사이드바 기본 상태</Label>
+              <div className="flex gap-3 mt-3">
+                <Button
+                  variant={sidebarDefault === 'expanded' ? 'default' : 'outline'}
+                  onClick={() => setSidebarDefault('expanded')}
+                  className="flex-1 gap-2"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                  확장
+                </Button>
+                <Button
+                  variant={sidebarDefault === 'collapsed' ? 'default' : 'outline'}
+                  onClick={() => setSidebarDefault('collapsed')}
+                  className="flex-1 gap-2"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                  축소
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                로그인 시 사이드바의 기본 상태를 설정합니다.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Save Button */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            paddingTop: '16px',
-          }}
-        >
-          <button
-            onClick={handleSave}
-            style={{
-              padding: '10px 24px',
-              backgroundColor: designTokens.button.brand_default,
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-          >
+        <div className="flex justify-end pt-4">
+          <Button onClick={handleSave}>
             저장
-          </button>
+          </Button>
         </div>
       </div>
     </div>

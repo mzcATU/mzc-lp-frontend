@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Globe, Clock } from 'lucide-react';
-import { designTokens } from '@/styles/design-tokens';
+import { designTokens } from '@/styles/admin-design-tokens';
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Label,
+  NativeSelect,
+} from '@/components/common';
 
 export function SettingsLanguagePage() {
   const navigate = useNavigate();
@@ -50,26 +59,14 @@ export function SettingsLanguagePage() {
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Header with Back Button */}
-        <button
+        <Button
+          variant="ghost"
           onClick={handleBack}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 12px',
-            marginBottom: '24px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: designTokens.text.secondary,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = designTokens.text.primary)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = designTokens.text.secondary)}
+          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft style={{ width: '20px', height: '20px' }} />
+          <ArrowLeft className="w-5 h-5" />
           <span>설정으로 돌아가기</span>
-        </button>
+        </Button>
 
         <h1
           style={{
@@ -86,282 +83,103 @@ export function SettingsLanguagePage() {
         </p>
 
         {/* Language Section */}
-        <section
-          style={{
-            backgroundColor: designTokens.bg.default,
-            border: `1px solid ${designTokens.bg.border}`,
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
-              paddingBottom: '16px',
-              borderBottom: `1px solid ${designTokens.bg.border}`,
-            }}
-          >
-            <Globe style={{ width: '20px', height: '20px', color: '#4C2D9A' }} />
-            <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
-              언어 설정
-            </h2>
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '12px',
-              }}
-            >
-              표시 언어
-            </label>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setLanguage('ko')}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor:
-                    language === 'ko' ? designTokens.button.brand_default : designTokens.bg.default,
-                  color: language === 'ko' ? 'white' : designTokens.text.primary,
-                  border: `1px solid ${language === 'ko' ? designTokens.button.brand_default : designTokens.bg.border}`,
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  transition: 'all 0.2s',
-                  minWidth: '120px',
-                }}
-                onMouseEnter={(e) => {
-                  if (language !== 'ko') {
-                    e.currentTarget.style.borderColor = '#4C2D9A';
-                    e.currentTarget.style.backgroundColor = '#F8F5FC';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (language !== 'ko') {
-                    e.currentTarget.style.borderColor = designTokens.bg.border;
-                    e.currentTarget.style.backgroundColor = designTokens.bg.default;
-                  }
-                }}
-              >
-                한국어
-              </button>
-              <button
-                onClick={() => setLanguage('en')}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor:
-                    language === 'en' ? designTokens.button.brand_default : designTokens.bg.default,
-                  color: language === 'en' ? 'white' : designTokens.text.primary,
-                  border: `1px solid ${language === 'en' ? designTokens.button.brand_default : designTokens.bg.border}`,
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  transition: 'all 0.2s',
-                  minWidth: '120px',
-                }}
-                onMouseEnter={(e) => {
-                  if (language !== 'en') {
-                    e.currentTarget.style.borderColor = '#4C2D9A';
-                    e.currentTarget.style.backgroundColor = '#F8F5FC';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (language !== 'en') {
-                    e.currentTarget.style.borderColor = designTokens.bg.border;
-                    e.currentTarget.style.backgroundColor = designTokens.bg.default;
-                  }
-                }}
-              >
-                English
-              </button>
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Globe className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">언어 설정</CardTitle>
             </div>
-            <p
-              style={{
-                fontSize: '12px',
-                color: designTokens.text.secondary,
-                marginTop: '12px',
-              }}
-            >
-              인터페이스 언어가 즉시 변경됩니다.
-            </p>
-          </div>
-        </section>
+          </CardHeader>
+          <CardContent className="pt-6 px-6 pb-6">
+            <div>
+              <Label className="mb-3 text-muted-foreground text-sm">표시 언어</Label>
+              <div className="flex gap-3 mt-3 flex-wrap">
+                <Button
+                  variant={language === 'ko' ? 'default' : 'outline'}
+                  onClick={() => setLanguage('ko')}
+                  className="min-w-[120px]"
+                >
+                  한국어
+                </Button>
+                <Button
+                  variant={language === 'en' ? 'default' : 'outline'}
+                  onClick={() => setLanguage('en')}
+                  className="min-w-[120px]"
+                >
+                  English
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                인터페이스 언어가 즉시 변경됩니다.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Timezone Section */}
-        <section
-          style={{
-            backgroundColor: designTokens.bg.default,
-            border: `1px solid ${designTokens.bg.border}`,
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '24px',
-              paddingBottom: '16px',
-              borderBottom: `1px solid ${designTokens.bg.border}`,
-            }}
-          >
-            <Clock style={{ width: '20px', height: '20px', color: '#4C2D9A' }} />
-            <h2 style={{ color: designTokens.text.primary, fontSize: '18px', fontWeight: 500 }}>
-              시간대 설정
-            </h2>
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '8px',
-              }}
-            >
-              시간대
-            </label>
-            <select
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1px solid ${designTokens.bg.border}`,
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: designTokens.text.primary,
-                backgroundColor: designTokens.bg.default,
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = '#4C2D9A')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = designTokens.bg.border)}
-            >
-              {timezones.map((tz) => (
-                <option key={tz.value} value={tz.value}>
-                  {tz.label}
-                </option>
-              ))}
-            </select>
-            <p
-              style={{
-                fontSize: '12px',
-                color: designTokens.text.secondary,
-                marginTop: '8px',
-              }}
-            >
-              강의 일정과 알림 시간에 적용됩니다.
-            </p>
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: 'block',
-                color: designTokens.text.secondary,
-                fontSize: '14px',
-                marginBottom: '12px',
-              }}
-            >
-              날짜 형식
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {dateFormats.map((format) => (
-                <label
-                  key={format.value}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '12px',
-                    border: `1px solid ${dateFormat === format.value ? '#4C2D9A' : designTokens.bg.border}`,
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    backgroundColor: dateFormat === format.value ? '#F8F5FC' : 'transparent',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (dateFormat !== format.value) {
-                      e.currentTarget.style.backgroundColor = '#FAFAFA';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (dateFormat !== format.value) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="dateFormat"
-                    value={format.value}
-                    checked={dateFormat === format.value}
-                    onChange={(e) => setDateFormat(e.target.value)}
-                    style={{
-                      marginRight: '12px',
-                      cursor: 'pointer',
-                    }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        color: designTokens.text.primary,
-                        fontSize: '14px',
-                        marginBottom: '4px',
-                      }}
-                    >
-                      {format.label}
-                    </div>
-                    <div
-                      style={{
-                        color: designTokens.text.secondary,
-                        fontSize: '12px',
-                      }}
-                    >
-                      {format.description}
-                    </div>
-                  </div>
-                </label>
-              ))}
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">시간대 설정</CardTitle>
             </div>
-          </div>
-        </section>
+          </CardHeader>
+          <CardContent className="pt-6 px-6 pb-6">
+            <div className="mb-6">
+              <NativeSelect
+                label="시간대"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                options={timezones}
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                강의 일정과 알림 시간에 적용됩니다.
+              </p>
+            </div>
+
+            <div>
+              <Label className="mb-3 text-muted-foreground text-sm">날짜 형식</Label>
+              <div className="flex flex-col gap-2 mt-3">
+                {dateFormats.map((format) => {
+                  const isSelected = dateFormat === format.value;
+                  return (
+                    <label
+                      key={format.value}
+                      className="flex items-center p-3 rounded-lg cursor-pointer transition-all hover:bg-muted/50"
+                      style={{
+                        border: `1px solid ${isSelected ? designTokens.action.primary_default : designTokens.bg.border}`,
+                        backgroundColor: isSelected ? designTokens.bg.secondary : 'transparent',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="dateFormat"
+                        value={format.value}
+                        checked={isSelected}
+                        onChange={(e) => setDateFormat(e.target.value)}
+                        className="mr-3 cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <div style={{ color: designTokens.text.primary, fontSize: '14px', marginBottom: '4px' }}>
+                          {format.label}
+                        </div>
+                        <div style={{ color: designTokens.text.secondary, fontSize: '12px' }}>
+                          {format.description}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Save Button */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            paddingTop: '16px',
-          }}
-        >
-          <button
-            onClick={handleSave}
-            style={{
-              padding: '10px 24px',
-              backgroundColor: designTokens.button.brand_default,
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-          >
+        <div className="flex justify-end pt-4">
+          <Button onClick={handleSave}>
             저장
-          </button>
+          </Button>
         </div>
       </div>
     </div>

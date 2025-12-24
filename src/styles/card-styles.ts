@@ -1,4 +1,4 @@
-import { designTokens } from './design-tokens';
+import { designTokens } from './admin-design-tokens';
 
 /**
  * LMS Platform - Common Card Styles

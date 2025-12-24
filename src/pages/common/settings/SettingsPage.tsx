@@ -1,126 +1,62 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Bell, Globe, Palette, Building2, Users, Database, FileText } from 'lucide-react';
-import { designTokens } from '@/styles/design-tokens';
-import { cardStyles } from '@/styles/card-styles';
+import { Shield, Bell, Globe, Palette, LucideIcon } from 'lucide-react';
+import { designTokens } from '@/styles/admin-design-tokens';
+import { SettingsCard } from '@/components/common';
 
 type UserRole = 'USER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SUPER_ADMIN';
 
-interface SettingCard {
+interface SettingCardData {
   id: string;
-  icon: typeof Shield;
+  icon: LucideIcon;
   title: string;
   description: string;
-  color: string;
 }
 
 interface SettingsPageProps {
   userRole?: UserRole;
 }
 
-// 역할별 카드 설정
-const getSettingCards = (userRole: UserRole): SettingCard[] => {
-  // 공통 카드 (모든 역할)
-  const commonCards: SettingCard[] = [
+// 역할별 카드 설정 (개인 설정만 - 관리 기능은 사이드바 메뉴에서 접근)
+// 새 카드 추가 시 색상은 자동으로 순환됨 (SettingsCard 컴포넌트에서 처리)
+const getSettingCards = (userRole: UserRole): SettingCardData[] => {
+  // 공통 카드 (모든 역할) - 개인 설정
+  const commonCards: SettingCardData[] = [
     {
       id: 'security',
       icon: Shield,
       title: '계정 및 보안',
       description: '프로필, 비밀번호, 계정 관리',
-      color: '#4C2D9A',
     },
     {
       id: 'notifications',
       icon: Bell,
       title: '알림',
       description: '알림 설정 및 환경 설정',
-      color: '#FF7043',
     },
     {
       id: 'appearance',
       icon: Palette,
       title: '외관',
       description: '테마, 사이드바 및 표시 옵션',
-      color: '#9C27B0',
     },
   ];
 
-  // USER 전용 카드
-  const userOnlyCards: SettingCard[] = [
+  // USER 전용 카드 (언어 및 지역 설정)
+  const userOnlyCards: SettingCardData[] = [
     {
       id: 'language',
       icon: Globe,
       title: '언어 및 지역',
       description: '언어, 시간대 및 날짜 형식',
-      color: '#4CAF50',
-    },
-    {
-      id: 'appearance',
-      icon: Palette,
-      title: '외관',
-      description: '테마, 사이드바 및 표시 옵션',
-      color: '#9C27B0',
     },
   ];
 
-  // OPERATOR 전용 카드
-  const operatorCards: SettingCard[] = [
-    {
-      id: 'content-defaults',
-      icon: FileText,
-      title: '콘텐츠 기본 설정',
-      description: '콘텐츠 업로드 및 관리 기본값',
-      color: '#2196F3',
-    },
-  ];
-
-  // TENANT_ADMIN 전용 카드
-  const tenantAdminCards: SettingCard[] = [
-    {
-      id: 'tenant-settings',
-      icon: Building2,
-      title: '테넌트 설정',
-      description: '조직 정보 및 브랜딩 설정',
-      color: '#009688',
-    },
-    {
-      id: 'user-management',
-      icon: Users,
-      title: '사용자 관리 설정',
-      description: '사용자 그룹 및 권한 기본값',
-      color: '#795548',
-    },
-  ];
-
-  // SUPER_ADMIN 전용 카드
-  const superAdminCards: SettingCard[] = [
-    {
-      id: 'system-settings',
-      icon: Database,
-      title: '시스템 설정',
-      description: '글로벌 시스템 구성 및 관리',
-      color: '#607D8B',
-    },
-    {
-      id: 'tenant-defaults',
-      icon: Building2,
-      title: '테넌트 기본값',
-      description: '신규 테넌트 생성 시 기본 설정',
-      color: '#009688',
-    },
-  ];
-
-  switch (userRole) {
-    case 'USER':
-      return [...commonCards, ...userOnlyCards];
-    case 'OPERATOR':
-      return [...commonCards, ...operatorCards];
-    case 'TENANT_ADMIN':
-      return [...commonCards, ...tenantAdminCards];
-    case 'SUPER_ADMIN':
-      return [...commonCards, ...superAdminCards];
-    default:
-      return commonCards;
+  // USER만 언어 설정 추가, 나머지 역할은 공통 카드만
+  if (userRole === 'USER') {
+    return [...commonCards, ...userOnlyCards];
   }
+
+  return commonCards;
 };
 
 // URL 경로에서 역할 추출
@@ -185,68 +121,16 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
             gap: '24px',
           }}
         >
-          {settingCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <button
-                key={card.id}
-                onClick={() => handleCardClick(card.id)}
-                style={{
-                  ...cardStyles.base,
-                  ...cardStyles.interactive,
-                  padding: cardStyles.padding.md,
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = card.color;
-                  e.currentTarget.style.boxShadow = cardStyles.shadow.md;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = designTokens.bg.border;
-                  e.currentTarget.style.boxShadow = cardStyles.shadow.sm;
-                }}
-              >
-                {/* Icon Container */}
-                <div
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
-                    backgroundColor: `${card.color}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '16px',
-                  }}
-                >
-                  <Icon style={{ width: '24px', height: '24px', color: card.color }} />
-                </div>
-
-                {/* Title */}
-                <h3
-                  style={{
-                    color: designTokens.text.primary,
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    marginBottom: '8px',
-                  }}
-                >
-                  {card.title}
-                </h3>
-
-                {/* Description */}
-                <p
-                  style={{
-                    color: designTokens.text.secondary,
-                    fontSize: '14px',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {card.description}
-                </p>
-              </button>
-            );
-          })}
+          {settingCards.map((card, index) => (
+            <SettingsCard
+              key={card.id}
+              icon={card.icon}
+              title={card.title}
+              description={card.description}
+              onClick={() => handleCardClick(card.id)}
+              index={index}
+            />
+          ))}
         </div>
       </div>
     </div>

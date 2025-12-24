@@ -300,6 +300,7 @@ export { EmptyState } from './EmptyState';
 export { FileUpload } from './FileUpload';
 export { KanbanBoard, KanbanColumnComponent, KanbanCard } from './Kanban';
 export type { KanbanColumn } from './Kanban';
+export { SettingsCard } from './SettingsCard';
 export { StatsCard } from './StatsCard';
 export { Stepper } from './Stepper';
 export type { Step } from './Stepper';
