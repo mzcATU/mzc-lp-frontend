@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { BaseSidebar } from './BaseSidebar';
 import type { MenuItem } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
+import { useUIStore } from '@/store/common/uiStore';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -16,9 +17,7 @@ export function AdminLayout({
   roleLabel,
   onMenuItemClick,
 }: AdminLayoutProps) {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'ko' | 'en'>('ko');
+  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
 
   return (
     <div
@@ -27,12 +26,10 @@ export function AdminLayout({
     >
       <BaseSidebar
         isExpanded={isSidebarExpanded}
-        onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        onToggle={toggleSidebar}
         onMenuItemClick={onMenuItemClick}
         isDarkMode={isDarkMode}
-        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
         language={language}
-        onLanguageChange={setLanguage}
         menuData={menuData}
         roleLabel={roleLabel}
       />

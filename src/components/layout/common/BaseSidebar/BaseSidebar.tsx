@@ -4,9 +4,6 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
-  Languages,
-  Moon,
-  Sun,
   GraduationCap,
 } from 'lucide-react';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
@@ -18,21 +15,12 @@ export function BaseSidebar({
   onToggle,
   onMenuItemClick,
   isDarkMode = true,
-  onThemeToggle,
   language = 'ko',
-  onLanguageChange,
   menuData,
   roleLabel,
 }: BaseSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
-
-  const toggleLanguage = () => {
-    const newLanguage = language === 'ko' ? 'en' : 'ko';
-    if (onLanguageChange) {
-      onLanguageChange(newLanguage);
-    }
-  };
 
   // Color tokens - Dynamic based on theme
   const colors: SidebarColors = isDarkMode
@@ -357,81 +345,6 @@ export function BaseSidebar({
 
       {/* Divider */}
       <div className="border-t" style={{ borderColor: colors.border }} />
-
-      {/* Language Toggle */}
-      <div className="p-3 border-b" style={{ borderColor: colors.border }}>
-        <button
-          onClick={toggleLanguage}
-          className={cn(
-            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
-            !isExpanded && 'justify-center'
-          )}
-          style={{ color: colors.textPrimary }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors.hover;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-          title={language === 'ko' ? '한국어 / English' : 'Korean / English'}
-        >
-          <Languages
-            className="w-5 h-5"
-            style={{ color: colors.textSecondary }}
-          />
-          {isExpanded && (
-            <span className="flex-1 text-left text-sm">
-              {language === 'ko' ? '한국어' : 'English'}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Theme Toggle */}
-      {onThemeToggle && (
-        <div className="p-3 border-b" style={{ borderColor: colors.border }}>
-          <button
-            onClick={onThemeToggle}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
-              !isExpanded && 'justify-center'
-            )}
-            style={{ color: colors.textPrimary }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = colors.hover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            title={
-              isDarkMode
-                ? language === 'ko'
-                  ? '라이트 모드'
-                  : 'Light Mode'
-                : language === 'ko'
-                  ? '다크 모드'
-                  : 'Dark Mode'
-            }
-          >
-            {isDarkMode ? (
-              <Sun className="w-5 h-5" style={{ color: colors.textSecondary }} />
-            ) : (
-              <Moon className="w-5 h-5" style={{ color: colors.textSecondary }} />
-            )}
-            {isExpanded && (
-              <span className="flex-1 text-left text-sm">
-                {isDarkMode
-                  ? language === 'ko'
-                    ? '라이트 모드'
-                    : 'Light Mode'
-                  : language === 'ko'
-                    ? '다크 모드'
-                    : 'Dark Mode'}
-              </span>
-            )}
-          </button>
-        </div>
-      )}
 
       {/* Collapse Toggle */}
       <div className="p-3">

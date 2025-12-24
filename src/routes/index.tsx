@@ -1,5 +1,18 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
-import { MyCoursesPage, MyContentPage, CourseCreatePage, TuContentCreatePage, ContentDetailPage } from '@/pages/tu';
+import {
+  MyCoursesPage,
+  MyContentPage,
+  CourseCreatePage,
+  TuContentCreatePage,
+  ContentDetailPage,
+  SettingsLanguagePage,
+} from '@/pages/tu';
+import {
+  SettingsPage,
+  SettingsSecurityPage,
+  SettingsNotificationsPage,
+  SettingsAppearancePage,
+} from '@/pages/common';
 import ComponentShowcase from '@/pages/ComponentShowcase';
 import {
   SuperAdminLayout,
@@ -66,9 +79,12 @@ export function AppRoutes() {
         <Route path="analytics/activity" element={<PlaceholderPage title="활동 분석" />} />
         <Route path="analytics/logs" element={<PlaceholderPage title="로그 관리" />} />
         {/* 설정 */}
-        <Route path="settings" element={<PlaceholderPage title="설정" />} />
-        <Route path="settings/security" element={<PlaceholderPage title="계정 및 보안" />} />
-        <Route path="settings/notifications" element={<PlaceholderPage title="알림 설정" />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/security" element={<SettingsSecurityPage />} />
+        <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
+        <Route path="settings/appearance" element={<SettingsAppearancePage />} />
+        <Route path="settings/system-settings" element={<PlaceholderPage title="시스템 설정" />} />
+        <Route path="settings/tenant-defaults" element={<PlaceholderPage title="테넌트 기본값" />} />
       </Route>
 
       {/* Tenant Admin (TA) 라우트 */}
@@ -91,9 +107,12 @@ export function AppRoutes() {
         <Route path="analytics/export" element={<PlaceholderPage title="통계 조회 및 내보내기" />} />
         <Route path="analytics/logs" element={<PlaceholderPage title="이력 분석 및 로그 관리" />} />
         {/* 설정 */}
-        <Route path="settings" element={<PlaceholderPage title="설정" />} />
-        <Route path="settings/security" element={<PlaceholderPage title="계정 및 보안" />} />
-        <Route path="settings/notifications" element={<PlaceholderPage title="알림 설정" />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/security" element={<SettingsSecurityPage />} />
+        <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
+        <Route path="settings/appearance" element={<SettingsAppearancePage />} />
+        <Route path="settings/tenant-settings" element={<PlaceholderPage title="테넌트 설정" />} />
+        <Route path="settings/user-management" element={<PlaceholderPage title="사용자 관리 설정" />} />
       </Route>
 
       {/* Tenant Operator (TO) 라우트 */}
@@ -115,9 +134,11 @@ export function AppRoutes() {
         <Route path="sis" element={<PlaceholderPage title="학생 수강 정보 확인" />} />
         <Route path="iis" element={<PlaceholderPage title="강사 배정 정보 확인" />} />
         {/* 설정 */}
-        <Route path="settings" element={<PlaceholderPage title="설정" />} />
-        <Route path="settings/security" element={<PlaceholderPage title="계정 및 보안" />} />
-        <Route path="settings/notifications" element={<PlaceholderPage title="알림 설정" />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/security" element={<SettingsSecurityPage />} />
+        <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
+        <Route path="settings/appearance" element={<SettingsAppearancePage />} />
+        <Route path="settings/content-defaults" element={<PlaceholderPage title="콘텐츠 기본 설정" />} />
       </Route>
 
       {/* Tenant User (TU) 라우트 */}
@@ -138,9 +159,11 @@ export function AppRoutes() {
         <Route path="progress" element={<PlaceholderPage title="학습 진도" />} />
         <Route path="certifications" element={<PlaceholderPage title="인증서" />} />
         {/* 설정 */}
-        <Route path="settings" element={<PlaceholderPage title="설정" />} />
-        <Route path="settings/security" element={<PlaceholderPage title="계정 및 보안" />} />
-        <Route path="settings/notifications" element={<PlaceholderPage title="알림 설정" />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/security" element={<SettingsSecurityPage />} />
+        <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
+        <Route path="settings/language" element={<SettingsLanguagePage />} />
+        <Route path="settings/appearance" element={<SettingsAppearancePage />} />
       </Route>
 
       {/* 기본 경로 - 랜딩 페이지 */}
