@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TenantUserSidebar } from './TenantUserSidebar';
-import { designTokens } from '@/styles/design-tokens';
+import { designTokens } from '@/styles/admin-design-tokens';
 import { tenantUserMenuData } from '@/config/sidebar-menus';
 
 interface TenantUserLayoutProps {

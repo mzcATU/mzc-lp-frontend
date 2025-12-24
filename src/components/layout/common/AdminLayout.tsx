@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { BaseSidebar } from './BaseSidebar';
 import type { MenuItem } from '@/types';
-import { designTokens } from '@/styles/design-tokens';
+import { designTokens } from '@/styles/admin-design-tokens';
 
 interface AdminLayoutProps {
   children: ReactNode;
