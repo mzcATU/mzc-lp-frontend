@@ -43,6 +43,16 @@ export interface CourseItemResponse {
   updatedAt: string;
 }
 
+/** 강의 아이템 계층 구조 응답 (트리 조회용) */
+export interface CourseItemHierarchyResponse {
+  itemId: number;
+  itemName: string;
+  depth: number;
+  learningObjectId: number | null;
+  isFolder: boolean;
+  children: CourseItemHierarchyResponse[];
+}
+
 /** 강의 상세 조회 응답 */
 export interface CourseDetailResponse {
   courseId: number;
@@ -83,6 +93,40 @@ export interface UpdateCourseRequest {
   estimatedHours?: number;
   categoryId?: number;
   thumbnailUrl?: string;
+}
+
+// ============================================
+// CourseItem Request Types
+// ============================================
+
+/** 차시 생성 요청 */
+export interface CreateItemRequest {
+  itemName: string;
+  parentId?: number | null;
+  learningObjectId: number;
+}
+
+/** 폴더 생성 요청 */
+export interface CreateFolderRequest {
+  folderName: string;
+  parentId?: number | null;
+}
+
+/** 항목 이동 요청 */
+export interface MoveItemRequest {
+  itemId: number;
+  targetParentId?: number | null;
+  targetIndex?: number;
+}
+
+/** 항목 이름 변경 요청 */
+export interface UpdateItemNameRequest {
+  itemName: string;
+}
+
+/** 학습 객체 변경 요청 */
+export interface UpdateLearningObjectRequest {
+  learningObjectId: number;
 }
 
 // ============================================
