@@ -71,6 +71,18 @@ export const API_ENDPOINTS = {
     MOVE: (id: number) => `/content-folders/${id}/move`,
   },
 
+  // Programs (TO)
+  PROGRAMS: {
+    BASE: '/programs',
+    BY_ID: (id: number) => `/programs/${id}`,
+    SUBMIT: (id: number) => `/programs/${id}/submit`,
+    PENDING: '/programs/pending',
+    APPROVE: (id: number) => `/programs/${id}/approve`,
+    REJECT: (id: number) => `/programs/${id}/reject`,
+    CLOSE: (id: number) => `/programs/${id}/close`,
+    SNAPSHOT: (id: number) => `/programs/${id}/snapshot`,
+  },
+
   // Snapshots (TO)
   SNAPSHOTS: {
     BASE: '/snapshots',
