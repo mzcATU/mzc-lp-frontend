@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Clock, Users, TrendingUp, Award, Plus, Filter } from 'lucide-react';
+import { BookOpen, Users, TrendingUp, Award, Plus, Filter } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, CategoryBadge } from '@/components/common';
+import { Button, IconStatCard } from '@/components/common';
+import { CourseCard } from '@/components/domain/tu/course';
 import type { Course, CourseStatus } from '@/types';
 
 interface MyCoursesPageProps {
@@ -112,9 +113,9 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
       {/* Statistics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <StatCard icon={<BookOpen size={20} />} label={getText('coursesCreated')} value={TEACHING_COURSES.length} />
-        <StatCard icon={<Users size={20} />} label={getText('totalStudents')} value={totalStudents} />
-        <StatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCompletion')} value={`${avgCompletion}%`} />
+        <IconStatCard icon={<BookOpen size={20} />} label={getText('coursesCreated')} value={TEACHING_COURSES.length} />
+        <IconStatCard icon={<Users size={20} />} label={getText('totalStudents')} value={totalStudents} />
+        <IconStatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCompletion')} value={`${avgCompletion}%`} />
       </div>
 
       {/* Filters and Sort */}
@@ -156,7 +157,16 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedCourses.map((course) => (
-          <CourseCard key={course.id} course={course} getText={getText} />
+          <CourseCard
+            key={course.id}
+            course={course}
+            labels={{
+              students: getText('students'),
+              contentCompletion: getText('contentCompletion'),
+              lessons: getText('lessons'),
+              manageCourse: getText('manageCourse'),
+            }}
+          />
         ))}
       </div>
 
@@ -175,71 +185,3 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   );
 }
 
-// 통계 카드 컴포넌트
-function StatCard({ icon, label, value }: Readonly<{ icon: React.ReactNode; label: string; value: string | number }>) {
-  return (
-    <div className="p-5 bg-bg-secondary rounded-xl border border-border">
-      <div className="flex items-center gap-3">
-        <div className="p-2.5 bg-bg-default rounded-lg text-btn-neutral">{icon}</div>
-        <div>
-          <div className="text-sm text-text-secondary">{label}</div>
-          <div className="text-2xl text-text-primary font-semibold">{value}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// 강의 카드 컴포넌트
-function CourseCard({ course, getText }: Readonly<{ course: Course; getText: (key: keyof typeof t) => string }>) {
-  const navigate = useNavigate();
-
-  return (
-    <div className="bg-bg-secondary rounded-xl overflow-hidden border border-border transition-all hover:-translate-y-1 hover:shadow-lg cursor-pointer">
-      {/* Thumbnail */}
-      <div className="relative w-full h-44 overflow-hidden">
-        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-        <div className="absolute top-3 left-3">
-          <CategoryBadge category={course.category} />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-5">
-        <h3 className="text-text-primary mb-2 text-base">{course.title}</h3>
-        <p className="text-text-secondary text-sm mb-4">
-          {getText('students')}: {course.students}명
-        </p>
-
-        {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-text-secondary">{getText('contentCompletion')}</span>
-            <span className="text-sm text-text-primary font-medium">
-              {course.completedLessons}/{course.totalLessons} {getText('lessons')}
-            </span>
-          </div>
-          <div className="w-full h-2 bg-bg-default rounded overflow-hidden">
-            <div
-              className="h-full bg-btn-neutral transition-all duration-300"
-              style={{ width: `${course.progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Footer Info */}
-        <div className="flex justify-between items-center pt-4 border-t border-border">
-          <div className="flex items-center gap-1.5 text-text-secondary text-sm">
-            <Clock size={16} />
-            {course.lastAccessed}
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <Button className="w-full mt-4" onClick={() => navigate(`/tu/teaching/courses/${course.id}`)}>
-          {getText('manageCourse')}
-        </Button>
-      </div>
-    </div>
-  );
-}

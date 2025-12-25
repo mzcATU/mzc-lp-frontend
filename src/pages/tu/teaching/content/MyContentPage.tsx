@@ -18,7 +18,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge, ViewToggle, SimpleTable } from '@/components/common';
+import { Button, Badge, ViewToggle, SimpleTable, IconStatCard } from '@/components/common';
 import type { SimpleTableColumn, SortOrder } from '@/components/common';
 import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent } from '@/hooks/tu';
 import {
@@ -390,11 +390,11 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
         <div className="p-6 px-8 pt-0">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <StatCard icon={<LayoutGrid size={20} />} label={getText('totalContent')} value={contentStats.total} />
-            <StatCard icon={<Video size={20} />} label={getText('VIDEO')} value={contentStats.VIDEO} />
-            <StatCard icon={<FileIcon size={20} />} label={getText('DOCUMENT')} value={contentStats.DOCUMENT} />
-            <StatCard icon={<Image size={20} />} label={getText('IMAGE')} value={contentStats.IMAGE} />
-            <StatCard icon={<Link size={20} />} label={getText('EXTERNAL_LINK')} value={contentStats.EXTERNAL_LINK} />
+            <IconStatCard icon={<LayoutGrid size={20} />} label={getText('totalContent')} value={contentStats.total} />
+            <IconStatCard icon={<Video size={20} />} label={getText('VIDEO')} value={contentStats.VIDEO} />
+            <IconStatCard icon={<FileIcon size={20} />} label={getText('DOCUMENT')} value={contentStats.DOCUMENT} />
+            <IconStatCard icon={<Image size={20} />} label={getText('IMAGE')} value={contentStats.IMAGE} />
+            <IconStatCard icon={<Link size={20} />} label={getText('EXTERNAL_LINK')} value={contentStats.EXTERNAL_LINK} />
           </div>
 
           {/* View Toggle & Count */}
@@ -506,17 +506,3 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   );
 }
 
-// 통계 카드 컴포넌트
-function StatCard({ icon, label, value }: Readonly<{ icon: React.ReactNode; label: string; value: number }>) {
-  return (
-    <div className="p-5 bg-bg-secondary rounded-xl border border-border">
-      <div className="flex items-center gap-3">
-        <div className="p-2.5 bg-bg-default rounded-lg text-btn-neutral">{icon}</div>
-        <div>
-          <div className="text-sm text-text-secondary">{label}</div>
-          <div className="text-2xl text-text-primary font-semibold">{value}</div>
-        </div>
-      </div>
-    </div>
-  );
-}

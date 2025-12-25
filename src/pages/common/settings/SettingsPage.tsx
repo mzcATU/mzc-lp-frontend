@@ -1,6 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Shield, Bell, Globe, Palette, LucideIcon } from 'lucide-react';
-import { designTokens } from '@/styles/admin-design-tokens';
 import { SettingsCard } from '@/components/common';
 
 type UserRole = 'USER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SUPER_ADMIN';
@@ -88,39 +87,20 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
   };
 
   return (
-    <div
-      style={{
-        padding: '40px',
-        backgroundColor: designTokens.bg.app_default,
-        minHeight: '100%',
-      }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="p-10 bg-bg-app-default min-h-full">
+      <div className="max-w-[1200px] mx-auto">
         {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
-          <h1
-            style={{
-              color: designTokens.text.primary,
-              fontSize: '24px',
-              fontWeight: 600,
-              marginBottom: '8px',
-            }}
-          >
+        <div className="mb-8">
+          <h1 className="text-text-primary text-2xl font-semibold mb-2">
             설정
           </h1>
-          <p style={{ color: designTokens.text.secondary, fontSize: '14px' }}>
+          <p className="text-text-secondary text-sm">
             계정 설정 및 환경 설정을 관리하세요
           </p>
         </div>
 
         {/* Settings Cards Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '24px',
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6">
           {settingCards.map((card, index) => (
             <SettingsCard
               key={card.id}

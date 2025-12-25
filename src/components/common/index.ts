@@ -298,6 +298,7 @@ export { DataTable } from './DataTable';
 export { DateRangePicker } from './DateRangePicker';
 export { EmptyState } from './EmptyState';
 export { FileUpload } from './FileUpload';
+export { IconStatCard } from './IconStatCard';
 export { KanbanBoard, KanbanColumnComponent, KanbanCard } from './Kanban';
 export type { KanbanColumn } from './Kanban';
 export { RadioOptionCard } from './RadioOptionCard';
