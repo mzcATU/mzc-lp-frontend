@@ -157,7 +157,19 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
-      await courseService.create(request);
+      // 1. 강의 생성
+      const courseResponse = await courseService.create(request);
+      const courseId = courseResponse.courseId;
+
+      // 2. 회차(폴더) 생성
+      if (formData.lessons.length > 0) {
+        for (const lesson of formData.lessons) {
+          await courseService.createFolder(courseId, {
+            folderName: lesson.title || `회차 ${lesson.order}`,
+          });
+        }
+      }
+
       alert('강의가 등록되었습니다!');
       navigate('/tu/teaching/courses');
     } catch (error) {
