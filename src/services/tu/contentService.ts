@@ -169,7 +169,9 @@ export const contentService = {
       { responseType: 'blob' }
     );
 
-    const blob = new Blob([response.data]);
+    // 응답의 Content-Type을 사용하여 Blob 생성
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    const blob = new Blob([response.data], { type: contentType });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
