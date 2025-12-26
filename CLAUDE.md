@@ -41,6 +41,16 @@
 
 ---
 
+## 디자인 시스템
+
+```
+⚠️ 색상 하드코딩 금지 → designTokens 필수
+⚠️ 스타일 작업 전 → src/styles/admin-design-tokens.ts 읽을 것
+⚠️ 새 컴포넌트 → src/components/common/index.ts에서 기존 것 먼저 확인
+```
+
+---
+
 ## 역할 기반 라우팅
 
 | 경로 | 역할 | 설명 |
