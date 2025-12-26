@@ -1,61 +1,48 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/common/authStore';
-import type { UserRole } from '@/types/common/auth.types';
+import type { TenantRole } from '@/types/common/auth.types';
+
+// 개발 모드에서 인증 우회 여부 (환경 변수로 제어)
+const DEV_BYPASS_AUTH = import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_AUTH === 'true';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  allowedRoles?: TenantRole[];
   redirectTo?: string;
 }
 
 /**
- * 인증된 사용자만 접근 가능한 라우트 래퍼 컴포넌트
- * @param children - 보호할 컴포넌트
- * @param allowedRoles - 허용된 역할 목록 (미지정 시 인증만 확인)
- * @param redirectTo - 인증 실패 시 리다이렉트 경로
+ * 인증된 사용자만 접근 가능한 라우트를 보호하는 컴포넌트
+ *
+ * @param children - 보호할 자식 컴포넌트
+ * @param allowedRoles - 허용된 역할 목록 (비어있으면 모든 인증된 사용자 허용)
+ * @param redirectTo - 인증 실패 시 리다이렉트할 경로 (기본: /login)
  */
 export function ProtectedRoute({
   children,
   allowedRoles,
   redirectTo = '/login',
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user } = useAuthStore();
   const location = useLocation();
+  const { isAuthenticated, user } = useAuthStore();
 
-  // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+  // 개발 모드에서 인증 우회
+  if (DEV_BYPASS_AUTH) {
+    return <>{children}</>;
+  }
+
+  // 인증되지 않은 경우
   if (!isAuthenticated) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // 역할 기반 접근 제어
+  // 역할 제한이 있고, 사용자 역할이 허용되지 않은 경우
   if (allowedRoles && allowedRoles.length > 0 && user) {
-    const hasAllowedRole = allowedRoles.includes(user.role);
-    if (!hasAllowedRole) {
-      // 권한이 없는 경우 역할에 맞는 기본 경로로 리다이렉트
-      const defaultPath = getDefaultPathByRole(user.role);
-      return <Navigate to={defaultPath} replace />;
+    if (!allowedRoles.includes(user.role)) {
+      // 권한이 없으면 403 또는 홈으로 리다이렉트
+      return <Navigate to="/unauthorized" replace />;
     }
   }
 
   return <>{children}</>;
 }
-
-/**
- * 역할별 기본 경로 반환
- */
-function getDefaultPathByRole(role: UserRole | string): string {
-  switch (role) {
-    case 'SUPER_ADMIN':
-      return '/sa/dashboard';
-    case 'TENANT_ADMIN':
-      return '/ta/dashboard';
-    case 'TENANT_OPERATOR':
-      return '/to/dashboard';
-    case 'TENANT_USER':
-      return '/tu/dashboard';
-    default:
-      return '/';
-  }
-}
-
-export default ProtectedRoute;

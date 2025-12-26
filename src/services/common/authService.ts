@@ -1,37 +1,34 @@
 import axiosInstance from './api/axiosInstance';
 import { API_ENDPOINTS } from './api/endpoints';
-import type { LoginRequest, LoginResponse, AuthUser } from '@/types/common/auth.types';
+import type {
+  LoginRequest,
+  RegisterRequest,
+  RefreshTokenRequest,
+  TokenResponse,
+  UserResponse,
+} from '@/types/common/auth.types';
+import type { ApiResponse } from '@/types/common/api.types';
 
 /**
- * 회원가입 요청 타입
- */
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-}
-
-/**
- * API 응답 래퍼 타입
- */
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
-/**
- * 인증 서비스
+ * 인증 관련 API 서비스
  */
 export const authService = {
   /**
+   * 회원가입
+   */
+  register: async (request: RegisterRequest): Promise<UserResponse> => {
+    const response = await axiosInstance.post<ApiResponse<UserResponse>>(
+      API_ENDPOINTS.AUTH.REGISTER,
+      request
+    );
+    return response.data.data;
+  },
+
+  /**
    * 로그인
    */
-  login: async (request: LoginRequest): Promise<LoginResponse> => {
-    const response = await axiosInstance.post<ApiResponse<LoginResponse>>(
+  login: async (request: LoginRequest): Promise<TokenResponse> => {
+    const response = await axiosInstance.post<ApiResponse<TokenResponse>>(
       API_ENDPOINTS.AUTH.LOGIN,
       request
     );
@@ -39,37 +36,22 @@ export const authService = {
   },
 
   /**
-   * 회원가입
-   */
-  register: async (request: RegisterRequest): Promise<void> => {
-    await axiosInstance.post<ApiResponse<void>>('/auth/register', request);
-  },
-
-  /**
-   * 로그아웃
-   */
-  logout: async (): Promise<void> => {
-    await axiosInstance.post(API_ENDPOINTS.AUTH.LOGOUT);
-  },
-
-  /**
    * 토큰 갱신
    */
-  refresh: async (refreshToken: string): Promise<LoginResponse> => {
-    const response = await axiosInstance.post<ApiResponse<LoginResponse>>(
+  refresh: async (refreshToken: string): Promise<TokenResponse> => {
+    const request: RefreshTokenRequest = { refreshToken };
+    const response = await axiosInstance.post<ApiResponse<TokenResponse>>(
       API_ENDPOINTS.AUTH.REFRESH,
-      { refreshToken }
+      request
     );
     return response.data.data;
   },
 
   /**
-   * 현재 사용자 정보 조회
+   * 로그아웃
    */
-  getMe: async (): Promise<AuthUser> => {
-    const response = await axiosInstance.get<ApiResponse<AuthUser>>(API_ENDPOINTS.AUTH.ME);
-    return response.data.data;
+  logout: async (refreshToken: string): Promise<void> => {
+    const request: RefreshTokenRequest = { refreshToken };
+    await axiosInstance.post(API_ENDPOINTS.AUTH.LOGOUT, request);
   },
 };
-
-export default authService;

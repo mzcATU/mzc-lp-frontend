@@ -1,26 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AuthUser, LoginResponse, UserRole } from '@/types/common/auth.types';
+import type { AuthUser, TenantRole } from '@/types/common/auth.types';
 
 interface AuthState {
   user: AuthUser | null;
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  // Legacy compatibility
-  token: string | null;
 
   // Actions
-  setAuth: (response: LoginResponse) => void;
-  setUser: (user: AuthUser | null) => void;
-  setToken: (token: string | null) => void;
-  setRefreshToken: (refreshToken: string | null) => void;
+  setAuth: (user: AuthUser, accessToken: string, refreshToken: string) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
+  updateUser: (user: Partial<AuthUser>) => void;
   logout: () => void;
 
-  // Helpers
-  hasRole: (role: UserRole) => boolean;
-  isAdmin: () => boolean;
-  isTenantAdmin: () => boolean;
+  // Selectors
+  hasRole: (role: TenantRole) => boolean;
+  hasAnyRole: (roles: TenantRole[]) => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -30,45 +26,46 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      token: null,
 
-      setAuth: (response: LoginResponse) => set({
-        user: response.user,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        token: response.accessToken, // Legacy compatibility
-        isAuthenticated: true,
-      }),
+      setAuth: (user, accessToken, refreshToken) =>
+        set({
+          user,
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+        }),
 
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
+      setTokens: (accessToken, refreshToken) =>
+        set({ accessToken, refreshToken }),
 
-      setToken: (token) => set({ token, accessToken: token }),
+      updateUser: (userData) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...userData } : null,
+        })),
 
-      setRefreshToken: (refreshToken) => set({ refreshToken }),
+      logout: () =>
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        }),
 
-      logout: () => set({
-        user: null,
-        accessToken: null,
-        refreshToken: null,
-        token: null,
-        isAuthenticated: false,
-      }),
+      hasRole: (role) => get().user?.role === role,
 
-      hasRole: (role: UserRole) => {
-        const user = get().user;
-        return user?.role === role;
-      },
-
-      isAdmin: () => {
-        const user = get().user;
-        return user?.role === 'SUPER_ADMIN';
-      },
-
-      isTenantAdmin: () => {
-        const user = get().user;
-        return user?.role === 'TENANT_ADMIN' || user?.role === 'SUPER_ADMIN';
+      hasAnyRole: (roles) => {
+        const userRole = get().user?.role;
+        return userRole ? roles.includes(userRole) : false;
       },
     }),
-    { name: 'auth-storage' }
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
   )
 );

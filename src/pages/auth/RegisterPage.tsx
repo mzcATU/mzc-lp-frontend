@@ -1,62 +1,62 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/common/auth';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
-import { Checkbox } from '@/components/common/Checkbox';
-import { designTokens } from '@/styles/admin-design-tokens';
-
-interface RegisterFormData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
+import { Label } from '@/components/common/Label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/common/Card';
+import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
+import { Eye, EyeOff, Loader2, Check, X } from 'lucide-react';
 
 interface FormErrors {
-  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
-  terms?: string;
-  general?: string;
+  name?: string;
+  phone?: string;
 }
 
 /**
  * 회원가입 페이지
- * 디자인 토큰 준수: admin-design-tokens.ts, 01-DESIGN-TOKENS-COMMON.md
+ * 디자인 토큰 및 UX 패턴 준수:
+ * - 배경: bg-bg-app (--color-bg-app: #FAFAFA)
+ * - 카드: Card 컴포넌트 (bg-card, rounded-lg, shadow)
+ * - 텍스트: text-text-primary (#333333), text-text-secondary (#666666)
+ * - 에러: text-status-error (#D32F2F)
+ * - 성공: text-status-success (#388E3C)
+ * - 버튼: Button variant="brand" (--color-btn-brand: #4C2D9A)
+ * - 링크: text-btn-brand with hover:underline
+ * - 간격: space-y-4 (16px), space-y-2 (8px)
+ * - 반응형: 모바일 우선 (px-4 → 패딩)
+ * - 접근성: aria-invalid, aria-describedby, role="alert"
  */
-export const RegisterPage = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState<RegisterFormData>({
-    name: '',
+export function RegisterPage() {
+  const { isAuthenticated, user, register, isRegistering } = useAuth();
+  const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
+    name: '',
+    phone: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const handleChange = (field: keyof RegisterFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
-    // 입력 시 해당 필드 에러 제거
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
+  // 이미 로그인된 경우 역할별 페이지로 리다이렉트
+  if (isAuthenticated && user) {
+    return <Navigate to={ROLE_REDIRECT_PATH[user.role]} replace />;
+  }
 
-  const validateForm = (): boolean => {
+  const passwordRequirements = [
+    { label: '8자 이상', test: (p: string) => p.length >= 8 },
+    { label: '영문 포함', test: (p: string) => /[A-Za-z]/.test(p) },
+    { label: '숫자 포함', test: (p: string) => /\d/.test(p) },
+    { label: '특수문자 포함', test: (p: string) => /[@$!%*#?&]/.test(p) },
+  ];
+
+  const validate = (): boolean => {
     const newErrors: FormErrors = {};
-
-    // 이름 검증
-    if (!formData.name.trim()) {
-      newErrors.name = '이름을 입력해주세요.';
-    } else if (formData.name.length < 2) {
-      newErrors.name = '이름은 2자 이상이어야 합니다.';
-    }
 
     // 이메일 검증
     if (!formData.email) {
@@ -68,10 +68,10 @@ export const RegisterPage = () => {
     // 비밀번호 검증
     if (!formData.password) {
       newErrors.password = '비밀번호를 입력해주세요.';
-    } else if (formData.password.length < 8) {
-      newErrors.password = '비밀번호는 8자 이상이어야 합니다.';
-    } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = '비밀번호는 영문과 숫자를 포함해야 합니다.';
+    } else if (
+      !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/.test(formData.password)
+    ) {
+      newErrors.password = '비밀번호 요구사항을 모두 충족해야 합니다.';
     }
 
     // 비밀번호 확인 검증
@@ -81,251 +81,248 @@ export const RegisterPage = () => {
       newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
     }
 
-    // 약관 동의 검증
-    if (!agreeTerms) {
-      newErrors.terms = '서비스 이용약관에 동의해주세요.';
+    // 이름 검증
+    if (!formData.name) {
+      newErrors.name = '이름을 입력해주세요.';
+    } else if (formData.name.length > 50) {
+      newErrors.name = '이름은 50자 이하여야 합니다.';
+    }
+
+    // 전화번호 검증 (선택)
+    if (formData.phone && !/^01[0-9]-\d{3,4}-\d{4}$/.test(formData.phone)) {
+      newErrors.phone = '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    setErrors({});
-
-    try {
-      // TODO: API 연동
-      // await authService.register({
-      //   name: formData.name,
-      //   email: formData.email,
-      //   password: formData.password,
-      // });
-
-      // 임시: 성공 시 로그인 페이지로 이동
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      navigate('/auth/login', { state: { message: '회원가입이 완료되었습니다. 로그인해주세요.' } });
-    } catch {
-      setErrors({ general: '회원가입 중 오류가 발생했습니다. 다시 시도해주세요.' });
-    } finally {
-      setIsLoading(false);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // 입력 시 해당 필드 에러 제거
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  const renderPasswordInput = (
-    field: 'password' | 'confirmPassword',
-    label: string,
-    placeholder: string,
-    show: boolean,
-    setShow: (v: boolean) => void
-  ) => (
-    <div>
-      <label
-        className="block text-sm font-medium mb-1"
-        style={{ color: designTokens.text.primary }}
-      >
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          type={show ? 'text' : 'password'}
-          placeholder={placeholder}
-          value={formData[field]}
-          onChange={handleChange(field)}
-          disabled={isLoading}
-          className={`w-full h-9 px-3 py-1 pr-10 rounded-md border text-sm transition-colors outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-            errors[field]
-              ? 'border-status-error ring-status-error/20'
-              : 'border-border focus:ring-action-primary'
-          }`}
-          style={{
-            backgroundColor: designTokens.bg.default,
-            color: designTokens.text.primary,
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => setShow(!show)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5"
-          style={{ color: designTokens.text.secondary }}
-          tabIndex={-1}
-        >
-          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-        </button>
-      </div>
-      {errors[field] && (
-        <p className="text-sm mt-1" style={{ color: designTokens.status.error_text }}>
-          {errors[field]}
-        </p>
-      )}
-    </div>
-  );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validate()) {
+      register({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        phone: formData.phone || undefined,
+      });
+    }
+  };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundColor: designTokens.bg.app_default }}
-    >
-      <div
-        className="w-full max-w-[400px] rounded-lg p-8"
-        style={{
-          backgroundColor: designTokens.bg.default,
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        }}
-      >
-        {/* 로고 영역 */}
-        <div className="text-center mb-8">
-          <div
-            className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center"
-            style={{ backgroundColor: designTokens.button.brand_default }}
-          >
-            <UserPlus className="w-6 h-6 text-white" />
-          </div>
-          <h1
-            className="text-2xl font-semibold"
-            style={{ color: designTokens.text.primary }}
-          >
+    <div className="min-h-screen flex items-center justify-center bg-bg-app px-4 py-8">
+      <Card className="w-full max-w-[400px]">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-xl font-semibold text-text-primary">
             회원가입
-          </h1>
-          <p
-            className="text-sm mt-2"
-            style={{ color: designTokens.text.secondary }}
-          >
-            계정을 만들고 학습을 시작하세요
-          </p>
-        </div>
-
-        {/* 에러 메시지 */}
-        {errors.general && (
-          <div
-            className="mb-4 p-3 rounded-md text-sm"
-            style={{
-              backgroundColor: designTokens.status.error_background,
-              color: designTokens.status.error_text,
-            }}
-          >
-            {errors.general}
-          </div>
-        )}
-
-        {/* 회원가입 폼 */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 이름 입력 */}
-          <Input
-            type="text"
-            label="이름"
-            placeholder="홍길동"
-            value={formData.name}
-            onChange={handleChange('name')}
-            error={errors.name}
-            disabled={isLoading}
-          />
-
-          {/* 이메일 입력 */}
-          <Input
-            type="email"
-            label="이메일"
-            placeholder="example@email.com"
-            value={formData.email}
-            onChange={handleChange('email')}
-            error={errors.email}
-            disabled={isLoading}
-          />
-
-          {/* 비밀번호 입력 */}
-          {renderPasswordInput('password', '비밀번호', '8자 이상, 영문+숫자', showPassword, setShowPassword)}
-
-          {/* 비밀번호 확인 */}
-          {renderPasswordInput(
-            'confirmPassword',
-            '비밀번호 확인',
-            '비밀번호를 다시 입력하세요',
-            showConfirmPassword,
-            setShowConfirmPassword
-          )}
-
-          {/* 약관 동의 */}
-          <div>
-            <div className="flex items-start gap-2">
-              <Checkbox
-                id="terms"
-                checked={agreeTerms}
-                onCheckedChange={(checked) => {
-                  setAgreeTerms(checked === true);
-                  if (errors.terms) {
-                    setErrors((prev) => ({ ...prev, terms: undefined }));
-                  }
-                }}
-                disabled={isLoading}
-                className="mt-0.5"
+          </CardTitle>
+          <CardDescription className="text-text-secondary">
+            MZC Learn Platform에 가입하세요
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* 이메일 필드 */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-text-primary font-medium">
+                이메일 <span className="text-status-error">*</span>
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="email@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={isRegistering}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                className={errors.email ? 'border-status-error focus-visible:ring-status-error' : ''}
               />
-              <label
-                htmlFor="terms"
-                className="text-sm cursor-pointer"
-                style={{ color: designTokens.text.secondary }}
-              >
-                <Link
-                  to="/terms"
-                  className="hover:underline"
-                  style={{ color: designTokens.button.brand_default }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  서비스 이용약관
-                </Link>
-                {' 및 '}
-                <Link
-                  to="/privacy"
-                  className="hover:underline"
-                  style={{ color: designTokens.button.brand_default }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  개인정보 처리방침
-                </Link>
-                에 동의합니다.
-              </label>
+              {errors.email && (
+                <p id="email-error" role="alert" className="text-sm text-status-error">
+                  {errors.email}
+                </p>
+              )}
             </div>
-            {errors.terms && (
-              <p className="text-sm mt-1" style={{ color: designTokens.status.error_text }}>
-                {errors.terms}
-              </p>
-            )}
-          </div>
 
-          {/* 회원가입 버튼 */}
-          <Button
-            type="submit"
-            className="w-full"
-            size="md"
-            disabled={isLoading}
-            style={{
-              backgroundColor: designTokens.button.neutral_default,
-              color: designTokens.button.neutral_text,
-            }}
-          >
-            {isLoading ? '가입 중...' : '회원가입'}
-          </Button>
-        </form>
+            {/* 이름 필드 */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-text-primary font-medium">
+                이름 <span className="text-status-error">*</span>
+              </Label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="홍길동"
+                value={formData.name}
+                onChange={handleChange}
+                disabled={isRegistering}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? 'name-error' : undefined}
+                className={errors.name ? 'border-status-error focus-visible:ring-status-error' : ''}
+              />
+              {errors.name && (
+                <p id="name-error" role="alert" className="text-sm text-status-error">
+                  {errors.name}
+                </p>
+              )}
+            </div>
 
-        {/* 로그인 링크 */}
-        <div className="mt-6 text-center">
-          <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+            {/* 전화번호 필드 */}
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-text-primary font-medium">
+                전화번호 <span className="text-text-secondary">(선택)</span>
+              </Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="010-1234-5678"
+                value={formData.phone}
+                onChange={handleChange}
+                disabled={isRegistering}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? 'phone-error' : undefined}
+                className={errors.phone ? 'border-status-error focus-visible:ring-status-error' : ''}
+              />
+              {errors.phone && (
+                <p id="phone-error" role="alert" className="text-sm text-status-error">
+                  {errors.phone}
+                </p>
+              )}
+            </div>
+
+            {/* 비밀번호 필드 */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-text-primary font-medium">
+                비밀번호 <span className="text-status-error">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="비밀번호를 입력하세요"
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={isRegistering}
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? 'password-error' : 'password-requirements'}
+                  className={`pr-10 ${errors.password ? 'border-status-error focus-visible:ring-status-error' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                  tabIndex={-1}
+                  aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {/* 비밀번호 요구사항 */}
+              {formData.password && (
+                <div id="password-requirements" className="mt-2 space-y-1">
+                  {passwordRequirements.map((req) => {
+                    const passed = req.test(formData.password);
+                    return (
+                      <div
+                        key={req.label}
+                        className={`flex items-center gap-2 text-xs ${
+                          passed ? 'text-status-success' : 'text-text-secondary'
+                        }`}
+                      >
+                        {passed ? <Check size={12} /> : <X size={12} />}
+                        {req.label}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {errors.password && (
+                <p id="password-error" role="alert" className="text-sm text-status-error">
+                  {errors.password}
+                </p>
+              )}
+            </div>
+
+            {/* 비밀번호 확인 필드 */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-text-primary font-medium">
+                비밀번호 확인 <span className="text-status-error">*</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="비밀번호를 다시 입력하세요"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  disabled={isRegistering}
+                  aria-invalid={!!errors.confirmPassword}
+                  aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                  className={`pr-10 ${errors.confirmPassword ? 'border-status-error focus-visible:ring-status-error' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                  tabIndex={-1}
+                  aria-label={showConfirmPassword ? '비밀번호 확인 숨기기' : '비밀번호 확인 보기'}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p id="confirmPassword-error" role="alert" className="text-sm text-status-error">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+
+            {/* 회원가입 버튼 */}
+            <Button
+              type="submit"
+              variant="brand"
+              className="w-full"
+              disabled={isRegistering}
+              aria-busy={isRegistering}
+            >
+              {isRegistering ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  가입 중...
+                </>
+              ) : (
+                '회원가입'
+              )}
+            </Button>
+          </form>
+
+          {/* 로그인 링크 */}
+          <div className="mt-6 text-center text-sm text-text-secondary">
             이미 계정이 있으신가요?{' '}
             <Link
-              to="/auth/login"
-              className="font-medium hover:underline"
-              style={{ color: designTokens.button.brand_default }}
+              to="/login"
+              className="text-btn-brand hover:underline font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
             >
               로그인
             </Link>
-          </p>
-        </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
-};
-
-export default RegisterPage;
+}
