@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Checkbox } from '@/components/common/Checkbox';
 import { designTokens } from '@/styles/admin-design-tokens';
+import { useLogin } from '@/hooks/common';
 
 /**
  * 로그인 페이지
@@ -12,11 +13,11 @@ import { designTokens } from '@/styles/admin-design-tokens';
  */
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const loginMutation = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
   const validateForm = (): boolean => {
@@ -43,21 +44,29 @@ export const LoginPage = () => {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
     setErrors({});
 
     try {
-      // TODO: API 연동
-      // const response = await authService.login({ email, password });
-      // authStore.setAuth(response);
+      const user = await loginMutation.mutateAsync({ email, password });
 
-      // 임시: 성공 시 대시보드로 이동
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      navigate('/tu/dashboard');
+      // Role에 따른 리다이렉트
+      switch (user.role) {
+        case 'SYSTEM_ADMIN':
+          navigate('/sa/dashboard');
+          break;
+        case 'TENANT_ADMIN':
+          navigate('/ta/dashboard');
+          break;
+        case 'TENANT_OPERATOR':
+          navigate('/to/dashboard');
+          break;
+        case 'TENANT_USER':
+        default:
+          navigate('/');
+          break;
+      }
     } catch {
       setErrors({ general: '이메일 또는 비밀번호가 올바르지 않습니다.' });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -119,7 +128,7 @@ export const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={errors.email}
-              disabled={isLoading}
+              disabled={loginMutation.isPending}
             />
           </div>
 
@@ -137,7 +146,7 @@ export const LoginPage = () => {
                 placeholder="비밀번호를 입력하세요"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
+                disabled={loginMutation.isPending}
                 className={`w-full h-9 px-3 py-1 pr-10 rounded-md border text-sm transition-colors outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   errors.password
                     ? 'border-status-error ring-status-error/20'
@@ -175,7 +184,7 @@ export const LoginPage = () => {
                 id="remember"
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked === true)}
-                disabled={isLoading}
+                disabled={loginMutation.isPending}
               />
               <label
                 htmlFor="remember"
@@ -199,13 +208,13 @@ export const LoginPage = () => {
             type="submit"
             className="w-full"
             size="md"
-            disabled={isLoading}
+            disabled={loginMutation.isPending}
             style={{
               backgroundColor: designTokens.button.neutral_default,
               color: designTokens.button.neutral_text,
             }}
           >
-            {isLoading ? '로그인 중...' : '로그인'}
+            {loginMutation.isPending ? '로그인 중...' : '로그인'}
           </Button>
         </form>
 
@@ -217,7 +226,7 @@ export const LoginPage = () => {
           >
             계정이 없으신가요?{' '}
             <Link
-              to="/auth/register"
+              to="/register"
               className="font-medium hover:underline"
               style={{ color: designTokens.button.brand_default }}
             >

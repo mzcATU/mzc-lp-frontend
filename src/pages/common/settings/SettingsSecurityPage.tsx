@@ -74,15 +74,22 @@ export function SettingsSecurityPage() {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [withdrawPassword, setWithdrawPassword] = useState('');
 
+  // API 베이스 URL (uploads는 /api 없이 직접 접근)
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
+
   // Sync profile data from API
   useEffect(() => {
     if (profile) {
       setProfileData({ name: profile.name });
       if (profile.profileImageUrl) {
-        setProfileImagePreview(profile.profileImageUrl);
+        // 상대 경로면 백엔드 URL 붙이기
+        const imageUrl = profile.profileImageUrl.startsWith('http')
+          ? profile.profileImageUrl
+          : `${apiBaseUrl}${profile.profileImageUrl}`;
+        setProfileImagePreview(imageUrl);
       }
     }
-  }, [profile]);
+  }, [profile, apiBaseUrl]);
 
   // Get base path from current location
   const basePath = location.pathname.split('/settings')[0];
