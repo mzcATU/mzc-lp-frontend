@@ -6,6 +6,7 @@ import { Input } from '@/components/common/Input';
 import { Checkbox } from '@/components/common/Checkbox';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { useLogin } from '@/hooks/common';
+import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
 
 /**
  * 로그인 페이지
@@ -50,21 +51,8 @@ export const LoginPage = () => {
       const user = await loginMutation.mutateAsync({ email, password });
 
       // Role에 따른 리다이렉트
-      switch (user.role) {
-        case 'SYSTEM_ADMIN':
-          navigate('/sa/dashboard');
-          break;
-        case 'TENANT_ADMIN':
-          navigate('/ta/dashboard');
-          break;
-        case 'TENANT_OPERATOR':
-          navigate('/to/dashboard');
-          break;
-        case 'TENANT_USER':
-        default:
-          navigate('/');
-          break;
-      }
+      const redirectPath = ROLE_REDIRECT_PATH[user.role] || '/';
+      navigate(redirectPath);
     } catch {
       setErrors({ general: '이메일 또는 비밀번호가 올바르지 않습니다.' });
     }
