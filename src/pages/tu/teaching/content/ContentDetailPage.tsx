@@ -22,7 +22,9 @@ import {
   Loader2,
   AlertCircle,
   Check,
+  History,
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import {
@@ -32,10 +34,12 @@ import {
   useArchiveContent,
   useRestoreContent,
   useDeleteContent,
+  useContentVersions,
+  useRestoreVersion,
 } from '@/hooks/tu';
 import { contentService } from '@/services/tu';
 import { ContentPreviewModal } from '@/components/domain/tu/content';
-import type { ContentType } from '@/types/tu';
+import type { ContentType, ContentVersionResponse } from '@/types/tu';
 
 // 콘텐츠 타입별 Badge 컬러 매핑
 const contentTypeBadgeColor: Record<ContentType, BadgeColor> = {
@@ -171,11 +175,13 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
 
   // React Query hooks
   const { data: content, isLoading, error } = useContent(contentId);
+  const { data: versions, isLoading: versionsLoading } = useContentVersions(contentId);
   const updateContent = useUpdateContent();
   const replaceFile = useReplaceFile();
   const archiveContent = useArchiveContent();
   const restoreContent = useRestoreContent();
   const deleteContent = useDeleteContent();
+  const restoreVersion = useRestoreVersion();
 
   // 편집 모드 시작
   const handleStartEdit = () => {
@@ -280,6 +286,17 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   const handleDownload = () => {
     const downloadUrl = contentService.getDownloadUrl(contentId);
     window.open(downloadUrl, '_blank');
+  };
+
+  // 버전 복원
+  const handleVersionRestore = async (versionNumber: number) => {
+    if (!confirm(getText('confirmVersionRestore'))) return;
+    try {
+      await restoreVersion.mutateAsync({ id: contentId, versionNumber });
+      alert(getText('versionRestoreSuccess'));
+    } catch (err) {
+      console.error('Version restore failed:', err);
+    }
   };
 
   // 로딩 상태
@@ -608,6 +625,36 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
               </div>
             </div>
           </div>
+
+          {/* Version History Section */}
+          <div className="bg-bg-default border border-border rounded-lg p-6">
+            <h2 className="text-text-primary text-lg font-medium flex items-center gap-2 mb-4">
+              <History size={20} />
+              {getText('versionHistory')}
+            </h2>
+
+            {versionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={24} className="animate-spin text-text-secondary" />
+              </div>
+            ) : versions && versions.length > 0 ? (
+              <div className="space-y-3">
+                {versions.map((version) => (
+                  <VersionCard
+                    key={version.id}
+                    version={version}
+                    isCurrentVersion={version.versionNumber === content.currentVersion}
+                    isExternalLink={isExternalLink}
+                    getText={getText}
+                    onRestore={() => handleVersionRestore(version.versionNumber)}
+                    isRestoring={restoreVersion.isPending}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-text-secondary text-center py-8">버전 기록이 없습니다.</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -623,3 +670,85 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   );
 }
 
+// 버전 카드 컴포넌트
+interface VersionCardProps {
+  version: ContentVersionResponse;
+  isCurrentVersion: boolean;
+  isExternalLink: boolean;
+  getText: (key: keyof typeof t) => string;
+  onRestore: () => void;
+  isRestoring: boolean;
+}
+
+function VersionCard({
+  version,
+  isCurrentVersion,
+  isExternalLink,
+  getText,
+  onRestore,
+  isRestoring,
+}: Readonly<VersionCardProps>) {
+  const changeTypeText: Record<string, { ko: string; en: string }> = {
+    FILE_UPLOAD: { ko: '파일 업로드', en: 'File Upload' },
+    FILE_REPLACE: { ko: '파일 교체', en: 'File Replace' },
+    METADATA_UPDATE: { ko: '메타데이터 수정', en: 'Metadata Update' },
+  };
+
+  return (
+    <div
+      className={cn(
+        'p-4 border rounded-lg',
+        isCurrentVersion
+          ? 'border-action-primary bg-bg-brand-active'
+          : 'border-border bg-bg-secondary'
+      )}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-text-primary font-medium">
+              v{version.versionNumber}
+            </span>
+            {isCurrentVersion && (
+              <Badge variant="indigo">현재 버전</Badge>
+            )}
+            <Badge variant="gray">
+              {changeTypeText[version.changeType]?.ko || version.changeType}
+            </Badge>
+          </div>
+          <p className="text-sm text-text-primary mb-1">
+            {version.originalFileName}
+          </p>
+          {!isExternalLink && version.uploadedFileName && (
+            <p className="text-xs text-text-secondary mb-1">
+              {version.uploadedFileName}
+            </p>
+          )}
+          {!isExternalLink && version.fileSize && (
+            <p className="text-xs text-text-secondary mb-1">
+              {formatFileSize(version.fileSize)}
+            </p>
+          )}
+          {version.changeSummary && (
+            <p className="text-sm text-text-secondary">{version.changeSummary}</p>
+          )}
+          <p className="text-xs text-text-placeholder mt-2">
+            {formatDate(version.createdAt)}
+          </p>
+        </div>
+        {!isCurrentVersion && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="border border-border shrink-0"
+            onClick={onRestore}
+            disabled={isRestoring}
+          >
+            <RotateCcw size={14} />
+            {getText('restoreVersion')}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}

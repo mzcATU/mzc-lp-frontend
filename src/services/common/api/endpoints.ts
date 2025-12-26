@@ -31,10 +31,29 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenants/${id}`,
   },
 
+  // Categories (TO)
+  CATEGORIES: {
+    BASE: '/categories',
+    BY_ID: (id: number) => `/categories/${id}`,
+  },
+
   // Courses (TO, TU)
   COURSES: {
     BASE: '/courses',
     BY_ID: (id: number) => `/courses/${id}`,
+    // Course Items
+    ITEMS: (courseId: number) => `/courses/${courseId}/items`,
+    ITEMS_HIERARCHY: (courseId: number) => `/courses/${courseId}/items/hierarchy`,
+    ITEMS_ORDERED: (courseId: number) => `/courses/${courseId}/items/ordered`,
+    ITEMS_MOVE: (courseId: number) => `/courses/${courseId}/items/move`,
+    ITEM_BY_ID: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}`,
+    ITEM_NAME: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}/name`,
+    ITEM_LEARNING_OBJECT: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}/learning-object`,
+    // Course Folders
+    FOLDERS: (courseId: number) => `/courses/${courseId}/folders`,
   },
 
   // Content (TO, TU) - Legacy
