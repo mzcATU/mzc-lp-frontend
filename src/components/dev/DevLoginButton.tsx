@@ -15,7 +15,7 @@ interface DevLoginButtonProps {
 export function DevLoginButton({ className }: DevLoginButtonProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { setToken, setUser, logout, isAuthenticated } = useAuthStore();
+  const { setAuth, logout, isAuthenticated } = useAuthStore();
 
   const testUser = {
     email: 'test1222@test.test',
@@ -35,14 +35,18 @@ export function DevLoginButton({ className }: DevLoginButtonProps) {
           password: testUser.password,
         });
 
-        const { accessToken } = loginRes.data.data;
-        setToken(accessToken);
-        setUser({ id: 1, name: testUser.name, email: testUser.email, role: 'USER' });
+        const { accessToken, refreshToken } = loginRes.data.data;
+        setAuth(
+          { id: 1, name: testUser.name, email: testUser.email, role: 'USER' },
+          accessToken,
+          refreshToken
+        );
         setMessage('로그인 성공!');
         return;
-      } catch (loginError: any) {
+      } catch (loginError: unknown) {
         // 로그인 실패하면 회원가입 후 재시도
-        if (loginError.response?.status === 401) {
+        const axiosError = loginError as { response?: { status?: number } };
+        if (axiosError.response?.status === 401) {
           // 2. 회원가입
           await axios.post(`${API_BASE}/auth/register`, {
             email: testUser.email,
@@ -56,17 +60,21 @@ export function DevLoginButton({ className }: DevLoginButtonProps) {
             password: testUser.password,
           });
 
-          const { accessToken } = loginRes.data.data;
-          setToken(accessToken);
-          setUser({ id: 1, name: testUser.name, email: testUser.email, role: 'USER' });
+          const { accessToken, refreshToken } = loginRes.data.data;
+          setAuth(
+            { id: 1, name: testUser.name, email: testUser.email, role: 'USER' },
+            accessToken,
+            refreshToken
+          );
           setMessage('회원가입 + 로그인 성공!');
           return;
         }
         throw loginError;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      setMessage(`실패: ${error.response?.data?.error?.message || error.message}`);
+      const axiosError = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      setMessage(`실패: ${axiosError.response?.data?.error?.message || axiosError.message}`);
     } finally {
       setLoading(false);
     }

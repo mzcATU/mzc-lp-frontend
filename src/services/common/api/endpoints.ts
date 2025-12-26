@@ -4,19 +4,25 @@
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
+    REGISTER: '/auth/register',
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
-    ME: '/auth/me',
   },
 
   // Users
   USERS: {
     BASE: '/users',
-    BY_ID: (id: number) => `/users/${id}`,
     ME: '/users/me',
     ME_PASSWORD: '/users/me/password',
     ME_PROFILE_IMAGE: '/users/me/profile-image',
+    ME_COURSE_ROLES: '/users/me/course-roles',
+    ME_COURSE_ROLES_DESIGNER: '/users/me/course-roles/designer',
+    BY_ID: (id: number) => `/users/${id}`,
+    ROLE: (id: number) => `/users/${id}/role`,
+    STATUS: (id: number) => `/users/${id}/status`,
+    COURSE_ROLES: (id: number) => `/users/${id}/course-roles`,
+    COURSE_ROLE_BY_ID: (userId: number, roleId: number) => `/users/${userId}/course-roles/${roleId}`,
   },
 
   // Tenants (SA)
@@ -25,10 +31,29 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenants/${id}`,
   },
 
+  // Categories (TO)
+  CATEGORIES: {
+    BASE: '/categories',
+    BY_ID: (id: number) => `/categories/${id}`,
+  },
+
   // Courses (TO, TU)
   COURSES: {
     BASE: '/courses',
     BY_ID: (id: number) => `/courses/${id}`,
+    // Course Items
+    ITEMS: (courseId: number) => `/courses/${courseId}/items`,
+    ITEMS_HIERARCHY: (courseId: number) => `/courses/${courseId}/items/hierarchy`,
+    ITEMS_ORDERED: (courseId: number) => `/courses/${courseId}/items/ordered`,
+    ITEMS_MOVE: (courseId: number) => `/courses/${courseId}/items/move`,
+    ITEM_BY_ID: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}`,
+    ITEM_NAME: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}/name`,
+    ITEM_LEARNING_OBJECT: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}/learning-object`,
+    // Course Folders
+    FOLDERS: (courseId: number) => `/courses/${courseId}/folders`,
   },
 
   // Content (TO, TU) - Legacy

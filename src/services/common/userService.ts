@@ -1,65 +1,31 @@
 import axiosInstance from './api/axiosInstance';
 import { API_ENDPOINTS } from './api/endpoints';
+import type {
+  UserDetailResponse,
+  ChangePasswordRequest,
+  UpdateProfileRequest,
+} from '@/types/common/auth.types';
+import type { ApiResponse } from '@/types/common/api.types';
 
 /**
- * 사용자 프로필 타입
- */
-export interface UserProfile {
-  id: number;
-  email: string;
-  name: string;
-  role: string;
-  tenantId?: number;
-  profileImageUrl?: string;
-  createdAt: string;
-}
-
-/**
- * 프로필 수정 요청 타입
- */
-export interface UpdateProfileRequest {
-  name?: string;
-}
-
-/**
- * 비밀번호 변경 요청 타입
- */
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
-
-/**
- * API 응답 래퍼 타입
- */
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
-/**
- * 사용자 서비스
+ * 사용자 관련 API 서비스
  */
 export const userService = {
   /**
    * 내 정보 조회
    */
-  getMe: async (): Promise<UserProfile> => {
-    const response = await axiosInstance.get<ApiResponse<UserProfile>>(
+  getMe: async (): Promise<UserDetailResponse> => {
+    const response = await axiosInstance.get<ApiResponse<UserDetailResponse>>(
       API_ENDPOINTS.USERS.ME
     );
     return response.data.data;
   },
 
   /**
-   * 내 정보 수정
+   * 프로필 수정
    */
-  updateMe: async (request: UpdateProfileRequest): Promise<UserProfile> => {
-    const response = await axiosInstance.put<ApiResponse<UserProfile>>(
+  updateProfile: async (request: UpdateProfileRequest): Promise<UserDetailResponse> => {
+    const response = await axiosInstance.put<ApiResponse<UserDetailResponse>>(
       API_ENDPOINTS.USERS.ME,
       request
     );
@@ -74,30 +40,44 @@ export const userService = {
   },
 
   /**
-   * 회원 탈퇴
-   */
-  withdraw: async (): Promise<void> => {
-    await axiosInstance.delete(API_ENDPOINTS.USERS.ME);
-  },
-
-  /**
    * 프로필 이미지 업로드
    */
-  uploadProfileImage: async (file: File): Promise<{ imageUrl: string }> => {
+  uploadProfileImage: async (file: File): Promise<{ profileImageUrl: string }> => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await axiosInstance.post<ApiResponse<{ imageUrl: string }>>(
+    const response = await axiosInstance.post<ApiResponse<{ profileImageUrl: string }>>(
       API_ENDPOINTS.USERS.ME_PROFILE_IMAGE,
       formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     );
+    return response.data.data;
+  },
+
+  /**
+   * 회원 탈퇴
+   */
+  withdraw: async (password: string): Promise<void> => {
+    await axiosInstance.delete(API_ENDPOINTS.USERS.ME, {
+      data: { password },
+    });
+  },
+
+  /**
+   * 과정 설계자 역할 신청
+   */
+  applyDesignerRole: async (): Promise<void> => {
+    await axiosInstance.post(API_ENDPOINTS.USERS.ME_COURSE_ROLES_DESIGNER);
+  },
+
+  /**
+   * 내 과정 역할 조회
+   */
+  getMyCourseRoles: async () => {
+    const response = await axiosInstance.get(API_ENDPOINTS.USERS.ME_COURSE_ROLES);
     return response.data.data;
   },
 };
 
-export default userService;
+// Re-export types for convenience
+export type { UpdateProfileRequest, ChangePasswordRequest } from '@/types/common/auth.types';

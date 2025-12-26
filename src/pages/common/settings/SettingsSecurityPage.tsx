@@ -72,6 +72,7 @@ export function SettingsSecurityPage() {
   const [designAuthStatus, setDesignAuthStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
   const [isRequestPending, setIsRequestPending] = useState(false);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [withdrawPassword, setWithdrawPassword] = useState('');
 
   // Sync profile data from API
   useEffect(() => {
@@ -171,12 +172,16 @@ export function SettingsSecurityPage() {
   };
 
   const handleWithdraw = async () => {
+    if (!withdrawPassword) {
+      toast.error('비밀번호를 입력해주세요.');
+      return;
+    }
     try {
-      await withdrawMutation.mutateAsync();
+      await withdrawMutation.mutateAsync(withdrawPassword);
       toast.success('회원 탈퇴가 완료되었습니다.');
       navigate('/');
     } catch {
-      toast.error('회원 탈퇴에 실패했습니다.');
+      toast.error('회원 탈퇴에 실패했습니다. 비밀번호를 확인해주세요.');
     }
   };
 
@@ -510,7 +515,7 @@ export function SettingsSecurityPage() {
               </AlertDescription>
             </Alert>
 
-            <AlertDialog>
+            <AlertDialog onOpenChange={(open) => !open && setWithdrawPassword('')}>
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
@@ -531,6 +536,15 @@ export function SettingsSecurityPage() {
                     모든 데이터가 영구적으로 삭제됩니다.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="py-4">
+                  <Input
+                    label="비밀번호 확인"
+                    type="password"
+                    value={withdrawPassword}
+                    onChange={(e) => setWithdrawPassword(e.target.value)}
+                    placeholder="현재 비밀번호를 입력하세요"
+                  />
+                </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>취소</AlertDialogCancel>
                   <AlertDialogAction
@@ -539,7 +553,7 @@ export function SettingsSecurityPage() {
                       backgroundColor: designTokens.status.error_text,
                       color: 'white',
                     }}
-                    disabled={withdrawMutation.isPending}
+                    disabled={withdrawMutation.isPending || !withdrawPassword}
                   >
                     {withdrawMutation.isPending ? '처리 중...' : '탈퇴하기'}
                   </AlertDialogAction>

@@ -1,0 +1,47 @@
+import { Route, Outlet } from 'react-router-dom';
+import { TenantOperatorLayout } from '@/components/layout';
+import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import {
+  SettingsPage,
+  SettingsSecurityPage,
+  SettingsNotificationsPage,
+  SettingsAppearancePage,
+} from '@/pages/common';
+import { DashboardPage, PlaceholderPage } from './pages';
+
+function TenantOperatorWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={['OPERATOR', 'TENANT_ADMIN']}>
+      <TenantOperatorLayout>
+        <Outlet />
+      </TenantOperatorLayout>
+    </ProtectedRoute>
+  );
+}
+
+export const toRoutes = (
+  <Route path="/to" element={<TenantOperatorWrapper />}>
+    <Route index element={<DashboardPage />} />
+    <Route path="dashboard" element={<DashboardPage />} />
+    {/* 교육 과정 탐색 */}
+    <Route path="courses" element={<PlaceholderPage title="과정 목록" />} />
+    <Route path="courses/create" element={<PlaceholderPage title="과정 생성" />} />
+    <Route path="courses/:id" element={<PlaceholderPage title="과정 상세" />} />
+    {/* 교육 운영 관리 */}
+    <Route path="sessions" element={<PlaceholderPage title="차수 관리" />} />
+    <Route path="instructors" element={<PlaceholderPage title="강사 배정" />} />
+    {/* 콘텐츠 관리 */}
+    <Route path="content" element={<PlaceholderPage title="콘텐츠 풀" />} />
+    <Route path="content/upload" element={<PlaceholderPage title="콘텐츠 업로드" />} />
+    <Route path="learning-objects" element={<PlaceholderPage title="학습 객체 관리" />} />
+    {/* 수강 및 강사 정보 */}
+    <Route path="sis" element={<PlaceholderPage title="학생 수강 정보 확인" />} />
+    <Route path="iis" element={<PlaceholderPage title="강사 배정 정보 확인" />} />
+    {/* 설정 */}
+    <Route path="settings" element={<SettingsPage />} />
+    <Route path="settings/security" element={<SettingsSecurityPage />} />
+    <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
+    <Route path="settings/appearance" element={<SettingsAppearancePage />} />
+    <Route path="settings/content-defaults" element={<PlaceholderPage title="콘텐츠 기본 설정" />} />
+  </Route>
+);
