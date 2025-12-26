@@ -31,14 +31,20 @@ export const useMe = () => {
 
 /**
  * 로그인 뮤테이션 훅
+ * 성공 시 사용자 정보를 반환하여 role 기반 리다이렉트가 가능하도록 함
  */
 export const useLogin = () => {
   const queryClient = useQueryClient();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const setTokens = useAuthStore((state) => state.setTokens);
 
   return useMutation({
-    mutationFn: (request: LoginRequest) => authService.login(request),
-    onSuccess: async (tokenData) => {
+    mutationFn: async (request: LoginRequest) => {
+      const tokenData = await authService.login(request);
+
+      // 먼저 토큰을 저장 (이후 getMe 요청 시 토큰이 헤더에 포함됨)
+      setTokens(tokenData.accessToken, tokenData.refreshToken);
+
       // 토큰으로 사용자 정보 조회
       const userDetail = await userService.getMe();
       const user = {
@@ -50,6 +56,9 @@ export const useLogin = () => {
       };
       setAuth(user, tokenData.accessToken, tokenData.refreshToken);
       queryClient.invalidateQueries({ queryKey: authKeys.me() });
+
+      // 사용자 정보 반환 (role 기반 리다이렉트를 위해)
+      return user;
     },
   });
 };

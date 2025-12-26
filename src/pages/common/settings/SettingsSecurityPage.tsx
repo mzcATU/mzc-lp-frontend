@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -10,7 +10,9 @@ import {
   Shield,
   CheckCircle,
   Camera,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
@@ -26,17 +28,39 @@ import {
   AvatarImage,
   AvatarFallback,
   Label,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/common';
+import {
+  useMyProfile,
+  useUpdateProfile,
+  useChangePassword,
+  useUploadProfileImage,
+  useWithdraw,
+} from '@/hooks/common';
 
 export function SettingsSecurityPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // API Hooks
+  const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
+  const uploadImageMutation = useUploadProfileImage();
+  const withdrawMutation = useWithdraw();
+
+  // Local State
   const [profileData, setProfileData] = useState({
-    name: '김교수',
-    email: 'professor.kim@mzrun.edu',
-    joinDate: '2024-01-15',
-    profileImage: undefined as File | undefined,
+    name: '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -48,8 +72,24 @@ export function SettingsSecurityPage() {
   const [designAuthStatus, setDesignAuthStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
   const [isRequestPending, setIsRequestPending] = useState(false);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [withdrawPassword, setWithdrawPassword] = useState('');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // API 베이스 URL (uploads는 /api 없이 직접 접근)
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
+
+  // Sync profile data from API
+  useEffect(() => {
+    if (profile) {
+      setProfileData({ name: profile.name });
+      if (profile.profileImageUrl) {
+        // 상대 경로면 백엔드 URL 붙이기
+        const imageUrl = profile.profileImageUrl.startsWith('http')
+          ? profile.profileImageUrl
+          : `${apiBaseUrl}${profile.profileImageUrl}`;
+        setProfileImagePreview(imageUrl);
+      }
+    }
+  }, [profile, apiBaseUrl]);
 
   // Get base path from current location
   const basePath = location.pathname.split('/settings')[0];
@@ -59,57 +99,96 @@ export function SettingsSecurityPage() {
     navigate(`${basePath}/settings`);
   };
 
-  const handleProfileSave = () => {
-    alert('프로필 정보가 저장되었습니다.');
+  const handleProfileSave = async () => {
+    if (!profileData.name.trim()) {
+      toast.error('이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      await updateProfileMutation.mutateAsync({ name: profileData.name });
+      toast.success('프로필 정보가 저장되었습니다.');
+    } catch {
+      toast.error('프로필 저장에 실패했습니다.');
+    }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      alert('모든 필드를 입력해주세요.');
+      toast.error('모든 필드를 입력해주세요.');
       return;
     }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('새 비밀번호가 일치하지 않습니다.');
+      toast.error('새 비밀번호가 일치하지 않습니다.');
       return;
     }
     if (passwordData.newPassword.length < 8) {
-      alert('비밀번호는 최소 8자 이상이어야 합니다.');
+      toast.error('비밀번호는 최소 8자 이상이어야 합니다.');
       return;
     }
 
-    alert('비밀번호가 변경되었습니다.');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  };
-
-  const handleRequestDesignAuth = () => {
-    if (confirm('강의 개설 권한을 요청하시겠습니까?')) {
-      setIsRequestPending(true);
-      setTimeout(() => {
-        setDesignAuthStatus('DESIGNER');
-        setIsRequestPending(false);
-        alert('권한이 승인되었습니다.');
-      }, 1500);
+    try {
+      await changePasswordMutation.mutateAsync({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      toast.success('비밀번호가 변경되었습니다.');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch {
+      toast.error('비밀번호 변경에 실패했습니다. 현재 비밀번호를 확인해주세요.');
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        alert('이미지 파일만 업로드 가능합니다.');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('파일 크기는 5MB 이하여야 합니다.');
-        return;
-      }
+  const handleRequestDesignAuth = () => {
+    setIsRequestPending(true);
+    // TODO: 실제 API 연동 시 구현
+    setTimeout(() => {
+      setDesignAuthStatus('DESIGNER');
+      setIsRequestPending(false);
+      toast.success('권한이 승인되었습니다.');
+    }, 1500);
+  };
 
-      setProfileData((prev) => ({ ...prev, profileImage: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('이미지 파일만 업로드 가능합니다.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('파일 크기는 5MB 이하여야 합니다.');
+      return;
+    }
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    try {
+      await uploadImageMutation.mutateAsync(file);
+      toast.success('프로필 이미지가 업로드되었습니다.');
+    } catch {
+      toast.error('이미지 업로드에 실패했습니다.');
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!withdrawPassword) {
+      toast.error('비밀번호를 입력해주세요.');
+      return;
+    }
+    try {
+      await withdrawMutation.mutateAsync(withdrawPassword);
+      toast.success('회원 탈퇴가 완료되었습니다.');
+      navigate('/');
+    } catch {
+      toast.error('회원 탈퇴에 실패했습니다. 비밀번호를 확인해주세요.');
     }
   };
 
@@ -136,6 +215,26 @@ export function SettingsSecurityPage() {
         return '전체 권한';
     }
   };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  if (isLoadingProfile) {
+    return (
+      <div
+        className="flex items-center justify-center min-h-full"
+        style={{ backgroundColor: designTokens.bg.app_default }}
+      >
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.secondary }} />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -198,8 +297,13 @@ export function SettingsSecurityPage() {
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
                     className="gap-2"
+                    disabled={uploadImageMutation.isPending}
                   >
-                    <Camera className="w-4 h-4" />
+                    {uploadImageMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
                     이미지 변경
                   </Button>
                   <input
@@ -233,9 +337,14 @@ export function SettingsSecurityPage() {
               </Label>
               <input
                 type="email"
-                value={profileData.email}
+                value={profile?.email || ''}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed bg-bg-secondary text-text-secondary border border-border outline-none hover:bg-bg-secondary focus:bg-bg-secondary"
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed"
+                style={{
+                  backgroundColor: designTokens.bg.secondary,
+                  color: designTokens.text.secondary,
+                  border: `1px solid ${designTokens.bg.border}`,
+                }}
               />
             </div>
 
@@ -247,15 +356,30 @@ export function SettingsSecurityPage() {
               </Label>
               <input
                 type="text"
-                value={profileData.joinDate}
+                value={formatDate(profile?.createdAt)}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed bg-bg-secondary text-text-secondary border border-border outline-none hover:bg-bg-secondary focus:bg-bg-secondary"
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed"
+                style={{
+                  backgroundColor: designTokens.bg.secondary,
+                  color: designTokens.text.secondary,
+                  border: `1px solid ${designTokens.bg.border}`,
+                }}
               />
             </div>
 
             {/* Save Button */}
-            <Button onClick={handleProfileSave}>
-              저장
+            <Button
+              onClick={handleProfileSave}
+              disabled={updateProfileMutation.isPending}
+            >
+              {updateProfileMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  저장 중...
+                </>
+              ) : (
+                '저장'
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -289,6 +413,7 @@ export function SettingsSecurityPage() {
                   setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))
                 }
               />
+              <p className="text-xs text-muted-foreground mt-1.5">최소 8자 이상 입력해주세요</p>
             </div>
 
             <div className="mb-6">
@@ -302,8 +427,18 @@ export function SettingsSecurityPage() {
               />
             </div>
 
-            <Button onClick={handlePasswordChange}>
-              비밀번호 변경
+            <Button
+              onClick={handlePasswordChange}
+              disabled={changePasswordMutation.isPending}
+            >
+              {changePasswordMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  변경 중...
+                </>
+              ) : (
+                '비밀번호 변경'
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -336,7 +471,14 @@ export function SettingsSecurityPage() {
                     onClick={handleRequestDesignAuth}
                     disabled={isRequestPending}
                   >
-                    {isRequestPending ? '요청 중...' : '강의 개설 권한 요청'}
+                    {isRequestPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        요청 중...
+                      </>
+                    ) : (
+                      '강의 개설 권한 요청'
+                    )}
                   </Button>
                 </div>
               )}
@@ -380,32 +522,51 @@ export function SettingsSecurityPage() {
               </AlertDescription>
             </Alert>
 
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (
-                  confirm(
-                    '정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'
-                  )
-                ) {
-                  alert('계정 삭제가 요청되었습니다.');
-                }
-              }}
-              style={{
-                color: designTokens.status.error_text,
-                borderColor: designTokens.status.error_text,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = designTokens.status.error_text;
-                e.currentTarget.style.color = designTokens.action.primary_text;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = designTokens.status.error_text;
-              }}
-            >
-              회원 탈퇴
-            </Button>
+            <AlertDialog onOpenChange={(open) => !open && setWithdrawPassword('')}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  style={{
+                    color: designTokens.status.error_text,
+                    borderColor: designTokens.status.error_text,
+                  }}
+                  className="hover:bg-red-50"
+                >
+                  회원 탈퇴
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며,
+                    모든 데이터가 영구적으로 삭제됩니다.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-4">
+                  <Input
+                    label="비밀번호 확인"
+                    type="password"
+                    value={withdrawPassword}
+                    onChange={(e) => setWithdrawPassword(e.target.value)}
+                    placeholder="현재 비밀번호를 입력하세요"
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleWithdraw}
+                    style={{
+                      backgroundColor: designTokens.status.error_text,
+                      color: 'white',
+                    }}
+                    disabled={withdrawMutation.isPending || !withdrawPassword}
+                  >
+                    {withdrawMutation.isPending ? '처리 중...' : '탈퇴하기'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </div>

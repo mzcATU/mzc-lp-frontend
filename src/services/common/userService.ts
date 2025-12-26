@@ -78,3 +78,6 @@ export const userService = {
     return response.data.data;
   },
 };
+
+// Re-export types for convenience
+export type { UpdateProfileRequest, ChangePasswordRequest } from '@/types/common/auth.types';
