@@ -276,8 +276,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
 
   const cardLabels = {
     view: getText('view'),
-    archive: getText('archive'),
-    restore: getText('restore'),
+    edit: language === 'ko' ? '수정' : 'Edit',
     registrationDate: getText('registrationDate'),
     archived: getText('ARCHIVED'),
   };
@@ -444,8 +443,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
                   content={content}
                   labels={cardLabels}
                   onPreview={() => handlePreview(content)}
-                  onArchive={() => handleArchive(content.id)}
-                  onRestore={() => handleRestore(content.id)}
+                  onEdit={() => navigate(`/tu/teaching/content/${content.id}/edit`)}
                   onDelete={() => handleDelete(content.id)}
                   onNavigateDetail={() => navigate(`/tu/teaching/content/${content.id}`)}
                   isDeleting={deleteContent.isPending}

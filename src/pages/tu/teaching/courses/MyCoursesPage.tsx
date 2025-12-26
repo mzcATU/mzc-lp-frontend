@@ -68,7 +68,7 @@ const t = {
   totalStudents: { ko: '총 수강생', en: 'Total Students' },
   avgCompletion: { ko: '평균 완료율', en: 'Avg. Completion' },
   students: { ko: '수강생', en: 'Students' },
-  contentCompletion: { ko: '콘텐츠 완성도', en: 'Content Completion' },
+  courseCompletion: { ko: '콘텐츠 완성도', en: 'Course Completion' },
   lessons: { ko: '차시', en: 'Lessons' },
   manageCourse: { ko: '과정 관리', en: 'Manage Course' },
   noCourses: { ko: '개설한 과정이 없습니다', en: 'No courses created yet' },
@@ -162,7 +162,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
             course={course}
             labels={{
               students: getText('students'),
-              contentCompletion: getText('contentCompletion'),
+              courseCompletion: getText('courseCompletion'),
               lessons: getText('lessons'),
               manageCourse: getText('manageCourse'),
             }}
