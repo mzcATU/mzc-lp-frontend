@@ -14,6 +14,9 @@ export const API_ENDPOINTS = {
   USERS: {
     BASE: '/users',
     BY_ID: (id: number) => `/users/${id}`,
+    ME: '/users/me',
+    ME_PASSWORD: '/users/me/password',
+    ME_PROFILE_IMAGE: '/users/me/profile-image',
   },
 
   // Tenants (SA)
@@ -107,5 +110,20 @@ export const API_ENDPOINTS = {
       `/snapshots/${snapshotId}/relations/start`,
     RELATION_BY_ID: (snapshotId: number, relationId: number) =>
       `/snapshots/${snapshotId}/relations/${relationId}`,
+  },
+
+  // Course Times (차수) - TU Catalog
+  TIMES: {
+    BASE: '/times',
+    BY_ID: (id: number) => `/times/${id}`,
+    ENROLLMENTS: (id: number) => `/times/${id}/enrollments`,
+  },
+
+  // Enrollments (수강 신청) - TU
+  ENROLLMENTS: {
+    BASE: '/enrollments',
+    MY: '/enrollments/my',
+    BY_ID: (id: number) => `/enrollments/${id}`,
+    CANCEL: (id: number) => `/enrollments/${id}/cancel`,
   },
 } as const;

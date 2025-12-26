@@ -40,3 +40,21 @@ export {
   useMoveContentFolder,
   useDeleteContentFolder,
 } from './useContentFolderQueries';
+
+// Catalog Hooks
+export {
+  catalogKeys,
+  useCatalogPrograms,
+  useCatalogProgram,
+  useCatalogCourseTimes,
+  useCatalogCourseTime,
+} from './useCatalogQueries';
+
+// Enrollment Hooks
+export {
+  enrollmentKeys,
+  useMyEnrollments,
+  useEnrollment,
+  useEnroll,
+  useCancelEnrollment,
+} from './useEnrollmentQueries';
