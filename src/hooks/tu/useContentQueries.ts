@@ -75,13 +75,23 @@ export const useContentVersion = (id: number, versionNumber: number) => {
   });
 };
 
+// 파일 업로드 파라미터
+interface UploadContentParams {
+  file: File;
+  folderId?: number;
+  originalFileName?: string;
+  description?: string;
+  tags?: string;
+  thumbnail?: File;
+}
+
 // 파일 업로드
 export const useUploadContent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ file, folderId }: { file: File; folderId?: number }) =>
-      contentService.uploadFile(file, folderId),
+    mutationFn: ({ file, folderId, originalFileName, description, tags, thumbnail }: UploadContentParams) =>
+      contentService.uploadFile(file, { folderId, originalFileName, description, tags, thumbnail }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });

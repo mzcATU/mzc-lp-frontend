@@ -234,8 +234,7 @@ export {
 // 5. DATA DISPLAY - 데이터 표시
 // ═══════════════════════════════════════════════════════════════════════════════
 // 데이터를 시각적으로 표시하는 컴포넌트들.
-// - SimpleTable: 간단한 테이블 (정렬 지원)
-// - DataTable: 고급 테이블 (필터, 검색, 페이지네이션)
+// - DataTable: TanStack Table 기반 고급 테이블 (정렬, 필터, 검색, 페이지네이션, 행 클릭)
 // - Table: 기본 테이블 요소 (DataTable 내부용)
 
 export {
@@ -248,9 +247,6 @@ export {
   TableCell,
   TableCaption,
 } from './Table';
-
-export { SimpleTable } from './SimpleTable';
-export type { SimpleTableColumn, SortOrder } from './SimpleTable';
 
 export { DataTable, DataTableColumnHeader } from './DataTable';
 
