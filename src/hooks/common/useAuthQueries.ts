@@ -4,8 +4,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/common/authStore';
-import { authService, type RegisterRequest } from '@/services/common/authService';
-import type { LoginRequest } from '@/types/common/auth.types';
+import { authService } from '@/services/common/authService';
+import { userService } from '@/services/common/userService';
+import type { LoginRequest, RegisterRequest } from '@/types/common/auth.types';
 
 // Query Keys
 export const authKeys = {
@@ -21,7 +22,7 @@ export const useMe = () => {
 
   return useQuery({
     queryKey: authKeys.me(),
-    queryFn: () => authService.getMe(),
+    queryFn: () => userService.getMe(),
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5분
     retry: false,
@@ -37,8 +38,17 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: (request: LoginRequest) => authService.login(request),
-    onSuccess: (data) => {
-      setAuth(data);
+    onSuccess: async (tokenData) => {
+      // 토큰으로 사용자 정보 조회
+      const userDetail = await userService.getMe();
+      const user = {
+        id: userDetail.userId,
+        email: userDetail.email,
+        name: userDetail.name,
+        role: userDetail.role,
+        tenantId: userDetail.tenantId,
+      };
+      setAuth(user, tokenData.accessToken, tokenData.refreshToken);
       queryClient.invalidateQueries({ queryKey: authKeys.me() });
     },
   });
@@ -59,10 +69,16 @@ export const useRegister = () => {
 export const useLogout = () => {
   const queryClient = useQueryClient();
   const logout = useAuthStore((state) => state.logout);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: () => authService.logout(),
+    mutationFn: () => {
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+      return authService.logout(refreshToken);
+    },
     onSuccess: () => {
       logout();
       queryClient.clear();
@@ -81,7 +97,7 @@ export const useLogout = () => {
  * 토큰 갱신 뮤테이션 훅
  */
 export const useRefreshToken = () => {
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const setTokens = useAuthStore((state) => state.setTokens);
   const refreshToken = useAuthStore((state) => state.refreshToken);
 
   return useMutation({
@@ -92,7 +108,7 @@ export const useRefreshToken = () => {
       return authService.refresh(refreshToken);
     },
     onSuccess: (data) => {
-      setAuth(data);
+      setTokens(data.accessToken, data.refreshToken);
     },
   });
 };

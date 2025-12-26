@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import ComponentShowcase from '@/pages/ComponentShowcase';
+import ComponentShowcase from '@/pages/dev/ComponentShowcase';
 import { saRoutes } from './sa.routes';
 import { taRoutes } from './ta.routes';
 import { toRoutes } from './to.routes';
