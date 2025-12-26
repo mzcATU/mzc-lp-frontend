@@ -30,3 +30,17 @@ export type {
   UpdateContentFolderRequest,
   MoveContentFolderRequest,
 } from './contentFolder.types';
+
+// Instructor Assignment (IIS - 내 배정)
+export type {
+  InstructorRole,
+  AssignmentStatus,
+  InstructorAssignmentResponse,
+  CourseTimeStatResponse,
+  InstructorDetailStatResponse,
+} from './instructorAssignment.types';
+
+export {
+  INSTRUCTOR_ROLE_LABELS,
+  ASSIGNMENT_STATUS_LABELS,
+} from './instructorAssignment.types';

@@ -42,11 +42,11 @@ export const courseService = {
 
   /** 강의 생성 */
   async create(request: CreateCourseRequest): Promise<CourseResponse> {
-    const { data } = await axiosInstance.post<CourseResponse>(
+    const { data } = await axiosInstance.post<{ data: CourseResponse }>(
       API_ENDPOINTS.COURSES.BASE,
       request
     );
-    return data;
+    return data.data;
   },
 
   /** 강의 목록 조회 */
@@ -106,11 +106,11 @@ export const courseService = {
     courseId: number,
     request: CreateFolderRequest
   ): Promise<CourseItemResponse> {
-    const { data } = await axiosInstance.post<CourseItemResponse>(
+    const { data } = await axiosInstance.post<{ data: CourseItemResponse }>(
       API_ENDPOINTS.COURSES.FOLDERS(courseId),
       request
     );
-    return data;
+    return data.data;
   },
 
   /** 계층 구조 조회 */
