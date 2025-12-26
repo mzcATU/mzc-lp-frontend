@@ -4,16 +4,25 @@
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
+    REGISTER: '/auth/register',
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
-    ME: '/auth/me',
   },
 
   // Users
   USERS: {
     BASE: '/users',
+    ME: '/users/me',
+    ME_PASSWORD: '/users/me/password',
+    ME_PROFILE_IMAGE: '/users/me/profile-image',
+    ME_COURSE_ROLES: '/users/me/course-roles',
+    ME_COURSE_ROLES_DESIGNER: '/users/me/course-roles/designer',
     BY_ID: (id: number) => `/users/${id}`,
+    ROLE: (id: number) => `/users/${id}/role`,
+    STATUS: (id: number) => `/users/${id}/status`,
+    COURSE_ROLES: (id: number) => `/users/${id}/course-roles`,
+    COURSE_ROLE_BY_ID: (userId: number, roleId: number) => `/users/${userId}/course-roles/${roleId}`,
   },
 
   // Tenants (SA)

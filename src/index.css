@@ -177,3 +177,469 @@
 .sidebar-scrollbar-light::-webkit-scrollbar-thumb:hover {
   background-color: #B0B0B0;
 }
+
+/* === Landing Page Dark Theme Styles === */
+
+/* Gradient Text Animation */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #70f2a0, #6778ff, #6bc2f0, #70f2a0);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease infinite;
+}
+
+.gradient-text-purple {
+  background: linear-gradient(90deg, #a855f7, #6366f1, #06b6d4, #a855f7);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease infinite;
+}
+
+/* Glass Effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hover glow effect */
+.hover-glow {
+  transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(103, 120, 255, 0.3);
+}
+
+/* Landing Button styles */
+.landing-btn-primary {
+  background: linear-gradient(135deg, #6778ff 0%, #a855f7 100%);
+  transition: all 0.3s ease;
+}
+
+.landing-btn-primary:hover {
+  background: linear-gradient(135deg, #8b99ff 0%, #c084fc 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(103, 120, 255, 0.4);
+}
+
+.landing-btn-outline {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.landing-btn-outline:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Animated background gradient */
+@keyframes bg-gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animated-bg {
+  background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0a0a0a);
+  background-size: 400% 400%;
+  animation: bg-gradient 15s ease infinite;
+}
+
+/* Dark theme scrollbar */
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* === Landing Page Theme Variables === */
+
+/* Light theme (default for landing) */
+.landing-light {
+  --landing-bg: #FAFAFA;
+  --landing-bg-secondary: #F4F4F4;
+  --landing-bg-card: #FFFFFF;
+  --landing-text-primary: #333333;
+  --landing-text-secondary: #666666;
+  --landing-text-muted: #999999;
+  --landing-border: #E0E0E0;
+  --landing-header-bg: rgba(255, 255, 255, 0.9);
+  --landing-card-bg: rgba(255, 255, 255, 1);
+  --landing-card-border: rgba(0, 0, 0, 0.08);
+  --landing-footer-bg: #F4F4F4;
+}
+
+/* Dark theme for landing */
+.landing-dark {
+  --landing-bg: #0a0a0a;
+  --landing-bg-secondary: #0f0f1a;
+  --landing-bg-card: rgba(255, 255, 255, 0.05);
+  --landing-text-primary: #FFFFFF;
+  --landing-text-secondary: #D4D4D4;
+  --landing-text-muted: #9E9E9E;
+  --landing-border: rgba(255, 255, 255, 0.1);
+  --landing-header-bg: rgba(0, 0, 0, 0.6);
+  --landing-card-bg: rgba(255, 255, 255, 0.05);
+  --landing-card-border: rgba(255, 255, 255, 0.1);
+  --landing-footer-bg: #000000;
+}
+
+/* Landing page base styles using CSS variables */
+.landing-page {
+  background-color: var(--landing-bg);
+  color: var(--landing-text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light theme specific overrides */
+.landing-light .glass-header {
+  background: var(--landing-header-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.landing-light .landing-card {
+  background: var(--landing-card-bg);
+  border: 1px solid var(--landing-card-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.landing-light .landing-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.landing-light .landing-footer {
+  background: var(--landing-footer-bg);
+  border-top: 1px solid var(--landing-border);
+}
+
+.landing-light .category-chip {
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  color: #666666;
+}
+
+.landing-light .category-chip:hover {
+  background: #F4F4F4;
+  color: #333333;
+}
+
+.landing-light .category-chip.active {
+  background: linear-gradient(135deg, #6778ff 0%, #a855f7 100%);
+  border-color: transparent;
+  color: #FFFFFF;
+}
+
+.landing-light .landing-btn-outline {
+  border: 1px solid #E0E0E0;
+  color: #333333;
+}
+
+.landing-light .landing-btn-outline:hover {
+  border-color: #333333;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.landing-light .hero-subtitle {
+  color: #666666;
+}
+
+.landing-light .hero-description {
+  color: #999999;
+}
+
+.landing-light .section-title {
+  color: #333333;
+}
+
+.landing-light .section-subtitle {
+  color: #999999;
+}
+
+.landing-light .course-title {
+  color: #333333;
+}
+
+.landing-light .course-instructor {
+  color: #666666;
+}
+
+.landing-light .course-price {
+  color: #4C2D9A;
+}
+
+.landing-light .view-all-link {
+  color: #666666;
+}
+
+.landing-light .view-all-link:hover {
+  color: #333333;
+}
+
+/* Dark theme specific overrides */
+.landing-dark .glass-header {
+  background: var(--landing-header-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.landing-dark .landing-card {
+  background: var(--landing-card-bg);
+  border: 1px solid var(--landing-card-border);
+}
+
+.landing-dark .landing-footer {
+  background: var(--landing-footer-bg);
+  border-top: 1px solid var(--landing-border);
+}
+
+.landing-dark .category-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #9E9E9E;
+}
+
+.landing-dark .category-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.landing-dark .category-chip.active {
+  background: linear-gradient(135deg, #6778ff 0%, #a855f7 100%);
+  border-color: transparent;
+  color: #FFFFFF;
+  box-shadow: 0 4px 15px rgba(103, 120, 255, 0.25);
+}
+
+.landing-dark .landing-btn-outline {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+}
+
+.landing-dark .landing-btn-outline:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-dark .hero-subtitle {
+  color: #D4D4D4;
+}
+
+.landing-dark .hero-description {
+  color: #9E9E9E;
+}
+
+.landing-dark .section-title {
+  color: #FFFFFF;
+}
+
+.landing-dark .section-subtitle {
+  color: #9E9E9E;
+}
+
+.landing-dark .course-title {
+  color: #FFFFFF;
+}
+
+.landing-dark .course-instructor {
+  color: #9E9E9E;
+}
+
+.landing-dark .course-price {
+  color: #6bc2f0;
+}
+
+.landing-dark .view-all-link {
+  color: #9E9E9E;
+}
+
+.landing-dark .view-all-link:hover {
+  color: #FFFFFF;
+}
+
+/* Light theme animated background */
+.landing-light .animated-bg {
+  background: linear-gradient(-45deg, #FAFAFA, #F0F4FF, #F5F0FF, #FAFAFA);
+  background-size: 400% 400%;
+  animation: bg-gradient 15s ease infinite;
+}
+
+/* Light theme scrollbar */
+.landing-light::-webkit-scrollbar {
+  width: 8px;
+}
+
+.landing-light::-webkit-scrollbar-track {
+  background: #F4F4F4;
+}
+
+.landing-light::-webkit-scrollbar-thumb {
+  background: #C8C8C8;
+  border-radius: 4px;
+}
+
+.landing-light::-webkit-scrollbar-thumb:hover {
+  background: #B0B0B0;
+}
+
+/* === Landing Page Utility Classes === */
+
+/* Background */
+.landing-dark {
+  background-color: var(--landing-bg);
+  color: var(--landing-text-primary);
+}
+
+.landing-light {
+  background-color: var(--landing-bg);
+  color: var(--landing-text-primary);
+}
+
+/* Text utilities */
+.landing-text-primary {
+  color: var(--landing-text-primary);
+}
+
+.landing-text-secondary {
+  color: var(--landing-text-secondary);
+}
+
+.landing-text-muted {
+  color: var(--landing-text-muted);
+}
+
+/* Section alternate background */
+.landing-dark .landing-section-alt {
+  background: linear-gradient(180deg, var(--landing-bg) 0%, var(--landing-bg-secondary) 50%, var(--landing-bg) 100%);
+}
+
+.landing-light .landing-section-alt {
+  background: linear-gradient(180deg, var(--landing-bg) 0%, #EEF2FF 50%, var(--landing-bg) 100%);
+}
+
+/* Category chip inactive state */
+.landing-dark .landing-chip-inactive {
+  background: rgba(255, 255, 255, 0.05);
+  color: #9E9E9E;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing-dark .landing-chip-inactive:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.landing-light .landing-chip-inactive {
+  background: #FFFFFF;
+  color: #666666;
+  border: 1px solid #E0E0E0;
+}
+
+.landing-light .landing-chip-inactive:hover {
+  background: #F4F4F4;
+  color: #333333;
+}
+
+/* Header glass effect for themes */
+.landing-dark .glass-dark {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing-light .glass-dark {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Light theme header text colors */
+.landing-light .glass-dark a,
+.landing-light .glass-dark nav a {
+  color: #333333;
+}
+
+.landing-light .glass-dark nav a:hover {
+  color: #6778ff;
+}
+
+.landing-light .glass-dark input {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #E0E0E0;
+  color: #333333;
+}
+
+.landing-light .glass-dark input::placeholder {
+  color: #999999;
+}
+
+.landing-light .glass-dark button.p-2 {
+  color: #666666;
+}
+
+.landing-light .glass-dark button.p-2:hover {
+  color: #333333;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Footer theme support */
+.landing-dark .landing-footer-wrapper {
+  background: #000000;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.landing-light .landing-footer-wrapper {
+  background: #F4F4F4;
+  border-top: 1px solid #E0E0E0;
+}

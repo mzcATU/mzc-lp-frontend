@@ -14,6 +14,9 @@ export const buttonVariants = cva(
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
+        // 디자인 토큰 기반 버튼 variants
+        neutral: 'bg-btn-neutral text-white hover:bg-btn-neutral-hover',
+        brand: 'bg-btn-brand text-white hover:bg-btn-brand-hover',
       },
       size: {
         default: 'h-9 px-4 py-2',
