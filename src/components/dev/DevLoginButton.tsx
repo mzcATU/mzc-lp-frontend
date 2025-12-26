@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '@/store/common/authStore';
+import { UserRole } from '@/types/common/auth.types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -37,7 +38,7 @@ export function DevLoginButton({ className }: DevLoginButtonProps) {
 
         const { accessToken } = loginRes.data.data;
         setToken(accessToken);
-        setUser({ id: 1, name: testUser.name, email: testUser.email, role: 'USER' });
+        setUser({ id: 1, name: testUser.name, email: testUser.email, role: UserRole.TenantUser });
         setMessage('로그인 성공!');
         return;
       } catch (loginError: any) {
@@ -58,7 +59,7 @@ export function DevLoginButton({ className }: DevLoginButtonProps) {
 
           const { accessToken } = loginRes.data.data;
           setToken(accessToken);
-          setUser({ id: 1, name: testUser.name, email: testUser.email, role: 'USER' });
+          setUser({ id: 1, name: testUser.name, email: testUser.email, role: UserRole.TenantUser });
           setMessage('회원가입 + 로그인 성공!');
           return;
         }

@@ -310,3 +310,6 @@ export { Stepper } from './Stepper';
 export type { Step } from './Stepper';
 export { Timeline, TimelineItem } from './Timeline';
 export { ViewToggle } from './ViewToggle';
+
+// Auth Components
+export { ProtectedRoute } from './ProtectedRoute';

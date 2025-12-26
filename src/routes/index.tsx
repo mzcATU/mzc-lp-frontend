@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import {
   MyCoursesPage,
   MyContentPage,
@@ -13,6 +13,7 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
+import { LoginPage, RegisterPage } from '@/pages/auth';
 import ComponentShowcase from '@/pages/ComponentShowcase';
 import {
   SuperAdminLayout,
@@ -20,7 +21,39 @@ import {
   TenantOperatorLayout,
   TenantUserLayout,
 } from '@/components/layout';
+import { ProtectedRoute } from '@/components/common';
+import { useAuthStore } from '@/store/common/authStore';
+import { UserRole } from '@/types/common/auth.types';
 import { DashboardPage, PlaceholderPage, LandingPage } from './pages';
+
+// 인증 상태에 따른 리다이렉트 컴포넌트
+function AuthRedirect({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (isAuthenticated && user) {
+    // 이미 로그인된 경우 역할에 맞는 대시보드로 리다이렉트
+    const redirectPath = getDefaultPathByRole(user.role);
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// 역할별 기본 경로 반환
+function getDefaultPathByRole(role: string): string {
+  switch (role) {
+    case UserRole.SuperAdmin:
+      return '/sa/dashboard';
+    case UserRole.TenantAdmin:
+      return '/ta/dashboard';
+    case UserRole.TenantOperator:
+      return '/to/dashboard';
+    case UserRole.TenantUser:
+      return '/tu/dashboard';
+    default:
+      return '/';
+  }
+}
 
 // 역할별 레이아웃 wrapper 컴포넌트
 function SuperAdminWrapper() {
@@ -59,7 +92,14 @@ export function AppRoutes() {
   return (
     <Routes>
       {/* Super Admin (SA) 라우트 */}
-      <Route path="/sa" element={<SuperAdminWrapper />}>
+      <Route
+        path="/sa"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.SuperAdmin]}>
+            <SuperAdminWrapper />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         {/* 테넌트 관리 */}
@@ -88,7 +128,14 @@ export function AppRoutes() {
       </Route>
 
       {/* Tenant Admin (TA) 라우트 */}
-      <Route path="/ta" element={<TenantAdminWrapper />}>
+      <Route
+        path="/ta"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.SuperAdmin, UserRole.TenantAdmin]}>
+            <TenantAdminWrapper />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         {/* 시스템 기반 관리 */}
@@ -116,7 +163,14 @@ export function AppRoutes() {
       </Route>
 
       {/* Tenant Operator (TO) 라우트 */}
-      <Route path="/to" element={<TenantOperatorWrapper />}>
+      <Route
+        path="/to"
+        element={
+          <ProtectedRoute allowedRoles={[UserRole.SuperAdmin, UserRole.TenantAdmin, UserRole.TenantOperator]}>
+            <TenantOperatorWrapper />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         {/* 교육 과정 탐색 */}
@@ -142,7 +196,14 @@ export function AppRoutes() {
       </Route>
 
       {/* Tenant User (TU) 라우트 */}
-      <Route path="/tu" element={<TenantUserWrapper />}>
+      <Route
+        path="/tu"
+        element={
+          <ProtectedRoute>
+            <TenantUserWrapper />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         {/* 내 강의 */}
@@ -165,6 +226,24 @@ export function AppRoutes() {
         <Route path="settings/language" element={<SettingsLanguagePage />} />
         <Route path="settings/appearance" element={<SettingsAppearancePage />} />
       </Route>
+
+      {/* 인증 라우트 */}
+      <Route
+        path="/login"
+        element={
+          <AuthRedirect>
+            <LoginPage />
+          </AuthRedirect>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <AuthRedirect>
+            <RegisterPage />
+          </AuthRedirect>
+        }
+      />
 
       {/* 기본 경로 - 랜딩 페이지 */}
       <Route path="/" element={<LandingPage />} />
