@@ -27,6 +27,9 @@ export interface ContentResponse {
   externalUrl: string | null;
   filePath: string;
   thumbnailPath: string | null;
+  customThumbnailPath: string | null;
+  description: string | null;
+  tags: string | null;
   createdBy: number;
   currentVersion: number;
   inCourse: boolean;
@@ -42,9 +45,13 @@ export interface ContentListResponse {
   status: ContentStatus;
   fileSize: number;
   duration: number | null;
+  resolution: string | null;
   thumbnailPath: string | null;
-  createdBy: number;
+  customThumbnailPath: string | null;
+  description: string | null;
+  tags: string | null;
   currentVersion: number;
+  inCourse: boolean | null;
   createdAt: string;
 }
 
