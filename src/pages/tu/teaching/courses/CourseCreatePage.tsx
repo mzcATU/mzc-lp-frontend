@@ -1,92 +1,26 @@
+/**
+ * 강의 등록 페이지 - 메인 컨테이너
+ * 담당: 전체 레이아웃, 상태 관리, 네비게이션
+ *
+ * Step별 UI는 components/ 폴더의 개별 컴포넌트 참조:
+ * - Step1BasicInfo: 기본 정보 (course 테이블 담당자)
+ * - Step2Curriculum: 회차 구성 (content 테이블 담당자)
+ * - Step3Review: 검토 및 저장
+ */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, FileText, Upload, Plus, GripVertical, ChevronDown, ChevronRight, Trash2, Link as LinkIcon, Globe, X, Pencil, CheckCircle2, AlertTriangle, BookOpen, Calendar, Tag } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Upload } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Textarea, NativeSelect, TagInput, Label, Checkbox, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
+import { Button } from '@/components/common';
 import { courseService, categoryService } from '@/services/common';
-import type { CourseFormData, LessonData, ContentAttachment, LanguageVersion, CourseLevel } from '@/types';
+import type { CourseFormData } from '@/types';
 import type { CategoryResponse, CreateCourseRequest } from '@/types/common';
-
-const t = {
-  title: { ko: '강의 등록', en: 'Create Course' },
-  loadTemplate: { ko: '템플릿 불러오기', en: 'Load Template' },
-  close: { ko: '닫기', en: 'Close' },
-  previous: { ko: '이전', en: 'Previous' },
-  next: { ko: '다음', en: 'Next' },
-  saveDraft: { ko: '임시저장', en: 'Save Draft' },
-  submit: { ko: '강의 등록', en: 'Submit' },
-  lastSaved: { ko: '마지막 저장', en: 'Last saved' },
-  step1: { ko: '기본 정보', en: 'Basic Info' },
-  step2: { ko: '회차 구성', en: 'Curriculum' },
-  step3: { ko: '검토 및 저장', en: 'Review' },
-  courseName: { ko: '강의명', en: 'Course Name' },
-  courseNamePlaceholder: { ko: '강의명을 입력하세요', en: 'Enter course name' },
-  courseDescription: { ko: '강의 설명', en: 'Course Description' },
-  courseDescriptionPlaceholder: { ko: '강의에 대한 설명을 입력하세요', en: 'Enter course description' },
-  category: { ko: '카테고리', en: 'Category' },
-  selectCategory: { ko: '카테고리 선택', en: 'Select category' },
-  difficulty: { ko: '난이도', en: 'Difficulty' },
-  selectDifficulty: { ko: '난이도 선택', en: 'Select difficulty' },
-  beginner: { ko: '입문', en: 'Beginner' },
-  elementary: { ko: '초급', en: 'Elementary' },
-  intermediate: { ko: '중급', en: 'Intermediate' },
-  advanced: { ko: '고급', en: 'Advanced' },
-  startDate: { ko: '시작일', en: 'Start Date' },
-  endDate: { ko: '종료일', en: 'End Date' },
-  comingSoon: { ko: '준비 중입니다', en: 'Coming Soon' },
-  curriculumTitle: { ko: '회차 구성', en: 'Curriculum' },
-  curriculumDesc: { ko: '회차를 추가하고 콘텐츠를 등록하세요. 드래그앤드롭으로 순서를 변경할 수 있습니다.', en: 'Add lessons and register content. Drag and drop to reorder.' },
-  noLessons: { ko: '아직 등록된 회차가 없습니다.', en: 'No lessons registered yet.' },
-  addFirstLesson: { ko: '첫 번째 회차 추가', en: 'Add First Lesson' },
-  addLesson: { ko: '회차 추가', en: 'Add Lesson' },
-  lessonTitle: { ko: '회차 제목', en: 'Lesson Title' },
-  lessonTitlePlaceholder: { ko: '회차 제목을 입력하세요', en: 'Enter lesson title' },
-  lessonDescription: { ko: '회차 설명', en: 'Lesson Description' },
-  lessonDescriptionPlaceholder: { ko: '회차에 대한 설명을 입력하세요', en: 'Enter lesson description' },
-  contents: { ko: '콘텐츠', en: 'Contents' },
-  noContents: { ko: '등록된 콘텐츠가 없습니다.', en: 'No content registered.' },
-  fileUpload: { ko: '파일 업로드', en: 'File Upload' },
-  externalLink: { ko: '외부 링크', en: 'External Link' },
-  loadExisting: { ko: '기존 콘텐츠 불러오기', en: 'Load Existing Content' },
-  deleteLesson: { ko: '회차 삭제', en: 'Delete Lesson' },
-  // Step 3 관련 텍스트
-  reviewTitle: { ko: '강의 정보 검토', en: 'Review Course Information' },
-  reviewDesc: { ko: '등록할 강의 정보를 확인하세요. 수정이 필요하면 각 섹션의 수정 버튼을 눌러주세요.', en: 'Please review your course information. Click edit to modify each section.' },
-  edit: { ko: '수정', en: 'Edit' },
-  basicInfo: { ko: '기본 정보', en: 'Basic Information' },
-  tags: { ko: '태그', en: 'Tags' },
-  noTags: { ko: '태그 없음', en: 'No tags' },
-  period: { ko: '수강 기간', en: 'Course Period' },
-  noPeriod: { ko: '기간 미설정', en: 'Not set' },
-  multiLanguage: { ko: '다국어 설정', en: 'Multi-language' },
-  enabled: { ko: '활성화', en: 'Enabled' },
-  disabled: { ko: '비활성화', en: 'Disabled' },
-  languageCount: { ko: '개 언어', en: ' languages' },
-  curriculum: { ko: '커리큘럼', en: 'Curriculum' },
-  totalLessons: { ko: '총 회차', en: 'Total lessons' },
-  totalContents: { ko: '총 콘텐츠', en: 'Total contents' },
-  lessonNumber: { ko: '회차', en: 'Lesson' },
-  contentsCount: { ko: '개 콘텐츠', en: ' contents' },
-  noCurriculum: { ko: '등록된 회차가 없습니다.', en: 'No lessons registered.' },
-  notEntered: { ko: '미입력', en: 'Not entered' },
-  warningTitle: { ko: '입력 확인 필요', en: 'Input Required' },
-  warningCourse: { ko: '강의명이 입력되지 않았습니다.', en: 'Course name is required.' },
-  warningCategory: { ko: '카테고리가 선택되지 않았습니다.', en: 'Category is required.' },
-  warningLesson: { ko: '최소 1개의 회차가 필요합니다.', en: 'At least one lesson is required.' },
-  readyToSubmit: { ko: '강의 등록 준비 완료', en: 'Ready to Submit' },
-  readyToSubmitDesc: { ko: '모든 필수 정보가 입력되었습니다. 강의 등록 버튼을 눌러 강의를 등록하세요.', en: 'All required information has been entered. Click Submit to register your course.' },
-};
+import { Step1BasicInfo, Step2Curriculum, Step3Review, translations } from './components';
+import type { TranslationKey } from './components';
 
 interface CourseCreatePageProps {
   language?: 'ko' | 'en';
 }
-
-const levelOptions = [
-  { value: '', label: '난이도 선택' },
-  { value: 'BEGINNER', label: '초급' },
-  { value: 'INTERMEDIATE', label: '중급' },
-  { value: 'ADVANCED', label: '고급' },
-];
 
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
   const navigate = useNavigate();
@@ -109,8 +43,10 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     },
   });
 
-  const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
-  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const totalSteps = 3;
+
+  const getText = (key: TranslationKey) =>
+    language === 'ko' ? translations[key].ko : translations[key].en;
 
   // 카테고리 목록 조회
   useEffect(() => {
@@ -125,19 +61,16 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     fetchCategories();
   }, []);
 
-  const totalSteps = 3;
-
-  const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
-
+  // 네비게이션 핸들러
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
   const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+  const handleGoToStep = (step: number) => setCurrentStep(step);
+  const handleClose = () => navigate('/tu/teaching/courses');
 
   const handleSaveDraft = () => {
     setFormData({ ...formData, isDraft: true, lastSaved: new Date().toISOString() });
     alert('임시저장되었습니다.');
   };
-
-  const handleClose = () => navigate('/tu/teaching/courses');
 
   const handleSubmit = async () => {
     if (!formData.title) {
@@ -157,7 +90,19 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
-      await courseService.create(request);
+      // 1. 강의 생성
+      const courseResponse = await courseService.create(request);
+      const courseId = courseResponse.courseId;
+
+      // 2. 회차(폴더) 생성
+      if (formData.lessons.length > 0) {
+        for (const lesson of formData.lessons) {
+          await courseService.createFolder(courseId, {
+            folderName: lesson.title || `회차 ${lesson.order}`,
+          });
+        }
+      }
+
       alert('강의가 등록되었습니다!');
       navigate('/tu/teaching/courses');
     } catch (error) {
@@ -168,75 +113,9 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     }
   };
 
-  // Step 2 functions
-  const addLesson = () => {
-    const newLesson: LessonData = {
-      id: Date.now().toString(),
-      title: '',
-      description: '',
-      order: formData.lessons.length + 1,
-      contents: [],
-    };
-    setFormData({ ...formData, lessons: [...formData.lessons, newLesson] });
-    setExpandedLessons(new Set([...expandedLessons, newLesson.id]));
-  };
-
-  const updateLesson = (lessonId: string, updates: Partial<LessonData>) => {
-    const updatedLessons = formData.lessons.map((lesson) =>
-      lesson.id === lessonId ? { ...lesson, ...updates } : lesson
-    );
-    setFormData({ ...formData, lessons: updatedLessons });
-  };
-
-  const deleteLesson = (lessonId: string) => {
-    const updatedLessons = formData.lessons
-      .filter((lesson) => lesson.id !== lessonId)
-      .map((lesson, index) => ({ ...lesson, order: index + 1 }));
-    setFormData({ ...formData, lessons: updatedLessons });
-    const newExpanded = new Set(expandedLessons);
-    newExpanded.delete(lessonId);
-    setExpandedLessons(newExpanded);
-  };
-
-  const toggleLessonExpand = (lessonId: string) => {
-    const newExpanded = new Set(expandedLessons);
-    newExpanded.has(lessonId) ? newExpanded.delete(lessonId) : newExpanded.add(lessonId);
-    setExpandedLessons(newExpanded);
-  };
-
-  const addContentToLesson = (lessonId: string, type: 'upload' | 'link') => {
-    const newContent: ContentAttachment = {
-      id: Date.now().toString(),
-      type,
-      name: type === 'upload' ? '업로드할 파일' : '링크 URL',
-      url: '',
-    };
-    const updatedLessons = formData.lessons.map((lesson) =>
-      lesson.id === lessonId ? { ...lesson, contents: [...lesson.contents, newContent] } : lesson
-    );
-    setFormData({ ...formData, lessons: updatedLessons });
-  };
-
-  const deleteContent = (lessonId: string, contentId: string) => {
-    const updatedLessons = formData.lessons.map((lesson) =>
-      lesson.id === lessonId ? { ...lesson, contents: lesson.contents.filter((c) => c.id !== contentId) } : lesson
-    );
-    setFormData({ ...formData, lessons: updatedLessons });
-  };
-
-  const handleDragStart = (lessonId: string) => setDraggedItem(lessonId);
-  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
-
-  const handleDrop = (targetLessonId: string) => {
-    if (!draggedItem || draggedItem === targetLessonId) return;
-    const draggedIndex = formData.lessons.findIndex((l) => l.id === draggedItem);
-    const targetIndex = formData.lessons.findIndex((l) => l.id === targetLessonId);
-    const newLessons = [...formData.lessons];
-    const [draggedLesson] = newLessons.splice(draggedIndex, 1);
-    newLessons.splice(targetIndex, 0, draggedLesson);
-    const reorderedLessons = newLessons.map((lesson, index) => ({ ...lesson, order: index + 1 }));
-    setFormData({ ...formData, lessons: reorderedLessons });
-    setDraggedItem(null);
+  // formData 업데이트 핸들러 (Step 컴포넌트들에서 사용)
+  const handleFormDataChange = (updates: Partial<CourseFormData>) => {
+    setFormData((prev) => ({ ...prev, ...updates }));
   };
 
   const stepLabels = [getText('step1'), getText('step2'), getText('step3')];
@@ -253,7 +132,11 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 {getText('lastSaved')}: {new Date(formData.lastSaved).toLocaleString('ko-KR')}
               </span>
             )}
-            <Button variant="ghost" onClick={() => alert('템플릿 불러오기 기능은 추후 구현됩니다.')} className="border border-border">
+            <Button
+              variant="ghost"
+              onClick={() => alert('템플릿 불러오기 기능은 추후 구현됩니다.')}
+              className="border border-border"
+            >
               <FileText size={16} />
               {getText('loadTemplate')}
             </Button>
@@ -288,7 +171,9 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                   {stepLabels[step - 1]}
                 </span>
                 {step < 3 && (
-                  <div className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-neutral' : 'bg-border')} />
+                  <div
+                    className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-neutral' : 'bg-border')}
+                  />
                 )}
               </div>
             ))}
@@ -301,501 +186,31 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         <div className="bg-bg-default rounded-xl p-8 border border-border">
           {/* Step 1: 기본 정보 */}
           {currentStep === 1 && (
-            <div className="flex flex-col gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">{getText('courseName')}</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder={getText('courseNamePlaceholder')}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">{getText('courseDescription')}</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder={getText('courseDescriptionPlaceholder')}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <NativeSelect
-                  id="categoryId"
-                  label={getText('category')}
-                  value={formData.categoryId?.toString() ?? ''}
-                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value ? Number(e.target.value) : null })}
-                  options={[
-                    { value: '', label: getText('selectCategory') },
-                    ...categories.map((cat) => ({ value: cat.id.toString(), label: cat.name })),
-                  ]}
-                />
-
-                <NativeSelect
-                  id="level"
-                  label={getText('difficulty')}
-                  value={formData.level}
-                  onChange={(e) => setFormData({ ...formData, level: e.target.value as CourseLevel | '' })}
-                  options={levelOptions}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">{getText('startDate')}</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">{getText('endDate')}</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* 태그 */}
-              <TagInput
-                label="태그"
-                hint="강의와 관련된 키워드를 쉼표(,)로 구분하여 입력하세요. 예: React, TypeScript, 프론트엔드"
-                value={formData.tags}
-                onChange={(tags) => setFormData({ ...formData, tags })}
-                placeholder="태그를 입력하세요 (쉼표로 구분)"
-              />
-
-              {/* 다국어 설정 */}
-              <Card className="bg-bg-secondary">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <Globe size={20} className="text-text-primary" />
-                    <h3 className="text-text-primary m-0 text-base font-medium">다국어 버전 설정</h3>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <label className="flex items-center gap-3 cursor-pointer mb-4">
-                    <Checkbox
-                      checked={formData.multiLanguage.enabled}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          multiLanguage: { ...formData.multiLanguage, enabled: !!checked },
-                        })
-                      }
-                    />
-                    <span className="text-text-primary">다국어 버전 활성화</span>
-                  </label>
-
-                  {formData.multiLanguage.enabled && (
-                    <div className="p-4 bg-bg-default rounded-lg">
-                      <p className="text-text-secondary text-sm mb-3">
-                        지원할 언어를 추가하고 각 언어별 강의 정보를 입력하세요.
-                      </p>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          const newLang: LanguageVersion = {
-                            code: 'en',
-                            name: 'English',
-                            courseName: '',
-                            courseDescription: '',
-                          };
-                          setFormData({
-                            ...formData,
-                            multiLanguage: {
-                              ...formData.multiLanguage,
-                              languages: [...formData.multiLanguage.languages, newLang],
-                            },
-                          });
-                        }}
-                      >
-                        <Plus size={16} />
-                        언어 추가
-                      </Button>
-
-                      {formData.multiLanguage.languages.map((lang, index) => (
-                        <div key={index} className="mt-4 p-4 bg-bg-secondary rounded-lg relative">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = formData.multiLanguage.languages.filter((_, i) => i !== index);
-                              setFormData({
-                                ...formData,
-                                multiLanguage: { ...formData.multiLanguage, languages: updated },
-                              });
-                            }}
-                            className="absolute top-3 right-3 p-1 bg-transparent border-none cursor-pointer text-text-secondary hover:text-text-primary"
-                          >
-                            <X size={18} />
-                          </button>
-
-                          <div className="mb-3">
-                            <Label className="mb-1.5">언어 코드</Label>
-                            <NativeSelect
-                              value={lang.code}
-                              onChange={(e) => {
-                                const updated = [...formData.multiLanguage.languages];
-                                updated[index] = {
-                                  ...lang,
-                                  code: e.target.value,
-                                  name: e.target.selectedOptions[0].text,
-                                };
-                                setFormData({
-                                  ...formData,
-                                  multiLanguage: { ...formData.multiLanguage, languages: updated },
-                                });
-                              }}
-                              options={[
-                                { value: 'en', label: 'English' },
-                                { value: 'ja', label: '日本語 (Japanese)' },
-                                { value: 'zh', label: '中文 (Chinese)' },
-                                { value: 'es', label: 'Español (Spanish)' },
-                                { value: 'fr', label: 'Français (French)' },
-                              ]}
-                            />
-                          </div>
-
-                          <div className="mb-3">
-                            <Input
-                              label={`강의 이름 (${lang.name})`}
-                              value={lang.courseName}
-                              onChange={(e) => {
-                                const updated = [...formData.multiLanguage.languages];
-                                updated[index] = { ...lang, courseName: e.target.value };
-                                setFormData({
-                                  ...formData,
-                                  multiLanguage: { ...formData.multiLanguage, languages: updated },
-                                });
-                              }}
-                              placeholder={`Enter course name in ${lang.name}`}
-                            />
-                          </div>
-
-                          <Textarea
-                            label={`강의 소개 (${lang.name})`}
-                            value={lang.courseDescription}
-                            onChange={(e) => {
-                              const updated = [...formData.multiLanguage.languages];
-                              updated[index] = { ...lang, courseDescription: e.target.value };
-                              setFormData({
-                                ...formData,
-                                multiLanguage: { ...formData.multiLanguage, languages: updated },
-                              });
-                            }}
-                            placeholder={`Enter course description in ${lang.name}`}
-                            rows={3}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* 안내 메시지 */}
-              <Alert variant="info">
-                <AlertDescription>
-                  💡 <strong>Tip:</strong> 기본 정보는 나중에 수정할 수 있습니다. 다음 단계에서 차시를 구성하고 콘텐츠를 추가할 수 있습니다.
-                </AlertDescription>
-              </Alert>
-            </div>
+            <Step1BasicInfo
+              language={language}
+              formData={formData}
+              categories={categories}
+              onFormDataChange={handleFormDataChange}
+            />
           )}
 
           {/* Step 2: 회차 구성 */}
           {currentStep === 2 && (
-            <div className="flex flex-col gap-6">
-              <div>
-                <h2 className="text-text-primary mb-2">{getText('curriculumTitle')}</h2>
-                <p className="text-text-secondary m-0">{getText('curriculumDesc')}</p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {formData.lessons.length === 0 ? (
-                  <div className="p-12 text-center bg-bg-app border-2 border-dashed border-border rounded-xl">
-                    <p className="text-text-secondary mb-4">{getText('noLessons')}</p>
-                    <Button onClick={addLesson}>
-                      <Plus size={18} />
-                      {getText('addFirstLesson')}
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {formData.lessons.map((lesson) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        isExpanded={expandedLessons.has(lesson.id)}
-                        isDragged={draggedItem === lesson.id}
-                        getText={getText}
-                        onToggle={() => toggleLessonExpand(lesson.id)}
-                        onUpdate={(updates) => updateLesson(lesson.id, updates)}
-                        onDelete={() => deleteLesson(lesson.id)}
-                        onAddContent={(type) => addContentToLesson(lesson.id, type)}
-                        onDeleteContent={(contentId) => deleteContent(lesson.id, contentId)}
-                        onDragStart={() => handleDragStart(lesson.id)}
-                        onDragOver={handleDragOver}
-                        onDrop={() => handleDrop(lesson.id)}
-                      />
-                    ))}
-
-                    <button
-                      onClick={addLesson}
-                      className="p-3.5 bg-bg-default text-text-primary border-2 border-dashed border-border rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:bg-bg-secondary transition-colors"
-                    >
-                      <Plus size={18} />
-                      {getText('addLesson')}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+            <Step2Curriculum
+              language={language}
+              formData={formData}
+              onFormDataChange={handleFormDataChange}
+            />
           )}
 
           {/* Step 3: 검토 및 저장 */}
           {currentStep === 3 && (
-            <div className="flex flex-col gap-6">
-              {/* 헤더 */}
-              <div>
-                <h2 className="text-text-primary mb-2">{getText('reviewTitle')}</h2>
-                <p className="text-text-secondary m-0">{getText('reviewDesc')}</p>
-              </div>
-
-              {/* 경고 메시지 또는 완료 메시지 */}
-              {(() => {
-                const warnings: string[] = [];
-                if (!formData.title) warnings.push(getText('warningCourse'));
-                if (!formData.categoryId) warnings.push(getText('warningCategory'));
-                if (formData.lessons.length === 0) warnings.push(getText('warningLesson'));
-
-                if (warnings.length > 0) {
-                  return (
-                    <Alert variant="destructive">
-                      <AlertTriangle size={16} />
-                      <AlertDescription>
-                        <strong>{getText('warningTitle')}</strong>
-                        <ul className="mt-2 mb-0 pl-4">
-                          {warnings.map((warning, index) => (
-                            <li key={index}>{warning}</li>
-                          ))}
-                        </ul>
-                      </AlertDescription>
-                    </Alert>
-                  );
-                }
-                return (
-                  <Alert variant="info">
-                    <CheckCircle2 size={16} />
-                    <AlertDescription>
-                      <strong>{getText('readyToSubmit')}</strong>
-                      <p className="mt-1 mb-0">{getText('readyToSubmitDesc')}</p>
-                    </AlertDescription>
-                  </Alert>
-                );
-              })()}
-
-              {/* 기본 정보 섹션 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <BookOpen size={20} className="text-action-primary" />
-                      <h3 className="text-text-primary m-0 text-base font-medium">{getText('basicInfo')}</h3>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setCurrentStep(1)} className="border border-border">
-                      <Pencil size={14} />
-                      {getText('edit')}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* 강의명 */}
-                    <div className="md:col-span-2">
-                      <Label className="text-text-secondary text-sm">{getText('courseName')}</Label>
-                      <p className="text-text-primary mt-1 mb-0">
-                        {formData.title || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
-                      </p>
-                    </div>
-
-                    {/* 강의 설명 */}
-                    <div className="md:col-span-2">
-                      <Label className="text-text-secondary text-sm">{getText('courseDescription')}</Label>
-                      <p className="text-text-primary mt-1 mb-0 whitespace-pre-wrap">
-                        {formData.description || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
-                      </p>
-                    </div>
-
-                    {/* 카테고리 */}
-                    <div>
-                      <Label className="text-text-secondary text-sm">{getText('category')}</Label>
-                      <p className="text-text-primary mt-1 mb-0">
-                        {formData.categoryId ? (
-                          categories.find((cat) => cat.id === formData.categoryId)?.name
-                        ) : (
-                          <span className="text-text-tertiary italic">{getText('notEntered')}</span>
-                        )}
-                      </p>
-                    </div>
-
-                    {/* 난이도 */}
-                    <div>
-                      <Label className="text-text-secondary text-sm">{getText('difficulty')}</Label>
-                      <p className="text-text-primary mt-1 mb-0">
-                        {formData.level ? (
-                          levelOptions.find((opt) => opt.value === formData.level)?.label
-                        ) : (
-                          <span className="text-text-tertiary italic">{getText('notEntered')}</span>
-                        )}
-                      </p>
-                    </div>
-
-                    {/* 수강 기간 */}
-                    <div className="md:col-span-2">
-                      <Label className="text-text-secondary text-sm flex items-center gap-1">
-                        <Calendar size={14} />
-                        {getText('period')}
-                      </Label>
-                      <p className="text-text-primary mt-1 mb-0">
-                        {formData.startDate && formData.endDate ? (
-                          `${formData.startDate} ~ ${formData.endDate}`
-                        ) : formData.startDate ? (
-                          `${formData.startDate} ~`
-                        ) : formData.endDate ? (
-                          `~ ${formData.endDate}`
-                        ) : (
-                          <span className="text-text-tertiary italic">{getText('noPeriod')}</span>
-                        )}
-                      </p>
-                    </div>
-
-                    {/* 태그 */}
-                    <div className="md:col-span-2">
-                      <Label className="text-text-secondary text-sm flex items-center gap-1">
-                        <Tag size={14} />
-                        {getText('tags')}
-                      </Label>
-                      <div className="mt-2">
-                        {formData.tags.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {formData.tags.map((tag, index) => (
-                              <span
-                                key={index}
-                                className="px-2.5 py-1 bg-bg-secondary text-text-primary text-sm rounded-md"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-text-tertiary italic">{getText('noTags')}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 다국어 설정 */}
-                    <div className="md:col-span-2">
-                      <Label className="text-text-secondary text-sm flex items-center gap-1">
-                        <Globe size={14} />
-                        {getText('multiLanguage')}
-                      </Label>
-                      <p className="text-text-primary mt-1 mb-0">
-                        {formData.multiLanguage.enabled ? (
-                          <>
-                            <span className="text-status-success">{getText('enabled')}</span>
-                            {formData.multiLanguage.languages.length > 0 && (
-                              <span className="text-text-secondary ml-2">
-                                ({formData.multiLanguage.languages.length}{getText('languageCount')}: {formData.multiLanguage.languages.map(l => l.name).join(', ')})
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-text-tertiary">{getText('disabled')}</span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* 커리큘럼 섹션 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FileText size={20} className="text-action-primary" />
-                      <h3 className="text-text-primary m-0 text-base font-medium">{getText('curriculum')}</h3>
-                      {formData.lessons.length > 0 && (
-                        <span className="text-text-secondary text-sm">
-                          ({getText('totalLessons')}: {formData.lessons.length}, {getText('totalContents')}: {formData.lessons.reduce((acc, lesson) => acc + lesson.contents.length, 0)})
-                        </span>
-                      )}
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setCurrentStep(2)} className="border border-border">
-                      <Pencil size={14} />
-                      {getText('edit')}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {formData.lessons.length > 0 ? (
-                    <div className="flex flex-col gap-3">
-                      {formData.lessons.map((lesson) => (
-                        <div
-                          key={lesson.id}
-                          className="p-4 bg-bg-secondary rounded-lg flex items-start gap-3"
-                        >
-                          <div className="w-7 h-7 rounded-md bg-btn-neutral text-white flex items-center justify-center font-medium text-sm shrink-0">
-                            {lesson.order}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-text-primary font-medium m-0">
-                              {lesson.title || `${getText('lessonNumber')} ${lesson.order}`}
-                            </p>
-                            {lesson.description && (
-                              <p className="text-text-secondary text-sm mt-1 mb-0 line-clamp-2">
-                                {lesson.description}
-                              </p>
-                            )}
-                            {lesson.contents.length > 0 && (
-                              <div className="flex items-center gap-2 mt-2">
-                                <Upload size={14} className="text-text-tertiary" />
-                                <span className="text-text-secondary text-sm">
-                                  {lesson.contents.length}{getText('contentsCount')}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-text-secondary m-0">{getText('noCurriculum')}</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCurrentStep(2)}
-                        className="mt-3 border border-border"
-                      >
-                        <Plus size={14} />
-                        {getText('addLesson')}
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            <Step3Review
+              language={language}
+              formData={formData}
+              categories={categories}
+              onGoToStep={handleGoToStep}
+            />
           )}
         </div>
 
@@ -829,189 +244,6 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// 회차 카드 컴포넌트
-interface LessonCardProps {
-  lesson: LessonData;
-  isExpanded: boolean;
-  isDragged: boolean;
-  getText: (key: keyof typeof t) => string;
-  onToggle: () => void;
-  onUpdate: (updates: Partial<LessonData>) => void;
-  onDelete: () => void;
-  onAddContent: (type: 'upload' | 'link') => void;
-  onDeleteContent: (contentId: string) => void;
-  onDragStart: () => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: () => void;
-}
-
-function LessonCard({
-  lesson,
-  isExpanded,
-  isDragged,
-  getText,
-  onToggle,
-  onUpdate,
-  onDelete,
-  onAddContent,
-  onDeleteContent,
-  onDragStart,
-  onDragOver,
-  onDrop,
-}: Readonly<LessonCardProps>) {
-  return (
-    <div
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      className={cn(
-        'border border-border rounded-lg bg-bg-default overflow-hidden cursor-move transition-opacity',
-        isDragged && 'opacity-50'
-      )}
-    >
-      {/* 회차 헤더 */}
-      <div
-        onClick={onToggle}
-        className={cn(
-          'p-4 flex items-center gap-3 cursor-pointer',
-          isExpanded && 'bg-bg-secondary'
-        )}
-      >
-        <GripVertical size={20} className="text-text-secondary" />
-        <div className="w-7 h-7 rounded-md bg-btn-neutral text-white flex items-center justify-center font-medium text-sm">
-          {lesson.order}
-        </div>
-        <div className="flex-1">
-          <span className="text-text-primary font-medium">{lesson.title || `회차 ${lesson.order}`}</span>
-          {lesson.contents.length > 0 && (
-            <span className="text-text-secondary ml-2 text-sm">({lesson.contents.length}개 콘텐츠)</span>
-          )}
-        </div>
-        {isExpanded ? (
-          <ChevronDown size={20} className="text-text-secondary" />
-        ) : (
-          <ChevronRight size={20} className="text-text-secondary" />
-        )}
-      </div>
-
-      {/* 회차 내용 */}
-      {isExpanded && (
-        <div className="p-4 pt-0 flex flex-col gap-4">
-          {/* 회차 제목 */}
-          <Input
-            label={<>{getText('lessonTitle')} <span className="text-status-error">*</span></>}
-            value={lesson.title}
-            onChange={(e) => onUpdate({ title: e.target.value })}
-            placeholder={`${lesson.order}${getText('lessonTitlePlaceholder')}`}
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          {/* 회차 설명 */}
-          <Textarea
-            label={getText('lessonDescription')}
-            value={lesson.description}
-            onChange={(e) => onUpdate({ description: e.target.value })}
-            placeholder={getText('lessonDescriptionPlaceholder')}
-            onClick={(e) => e.stopPropagation()}
-            rows={3}
-          />
-
-          {/* 콘텐츠 목록 */}
-          <div>
-            <label className="block text-text-primary mb-2 text-sm font-medium">{getText('contents')}</label>
-            {lesson.contents.length > 0 ? (
-              <div className="flex flex-col gap-2 mb-3">
-                {lesson.contents.map((content) => (
-                  <div key={content.id} className="p-3 bg-bg-secondary rounded-md flex items-center gap-3">
-                    {content.type === 'upload' ? (
-                      <Upload size={18} className="text-text-secondary" />
-                    ) : (
-                      <LinkIcon size={18} className="text-text-secondary" />
-                    )}
-                    <div className="flex-1">
-                      <span className="text-text-primary text-sm">{content.name}</span>
-                      <span className="text-text-secondary text-xs ml-2">
-                        ({content.type === 'upload' ? '파일 업로드' : '외부 링크'})
-                      </span>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteContent(content.id);
-                      }}
-                      className="p-1.5 bg-transparent border-none cursor-pointer rounded hover:bg-bg-secondary"
-                    >
-                      <Trash2 size={16} className="text-action-delete" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-text-secondary text-sm mb-3">{getText('noContents')}</p>
-            )}
-
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddContent('upload');
-                }}
-                className="border border-border"
-              >
-                <Upload size={16} />
-                {getText('fileUpload')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAddContent('link');
-                }}
-                className="border border-border"
-              >
-                <LinkIcon size={16} />
-                {getText('externalLink')}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  alert('기존 콘텐츠 불러오기 기능은 추후 구현됩니다.');
-                }}
-                className="border border-border"
-              >
-                <FileText size={16} />
-                {getText('loadExisting')}
-              </Button>
-            </div>
-          </div>
-
-          {/* 회차 삭제 버튼 */}
-          <div className="pt-2 border-t border-border">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (confirm(`${lesson.order}회차를 삭제하시겠습니까?`)) {
-                  onDelete();
-                }
-              }}
-              className="py-2 px-3.5 bg-transparent text-action-delete border-none rounded-md cursor-pointer text-sm flex items-center gap-1.5 hover:bg-status-error-bg"
-            >
-              <Trash2 size={16} />
-              {getText('deleteLesson')}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
