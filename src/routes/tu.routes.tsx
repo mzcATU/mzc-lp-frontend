@@ -1,54 +1,18 @@
-import { Route, Outlet } from 'react-router-dom';
-import { TenantUserLayout } from '@/components/layout';
-import { ProtectedRoute } from '@/components/common/ProtectedRoute';
-import {
-  MyCoursesPage,
-  MyContentPage,
-  CourseCreatePage,
-  TuContentCreatePage,
-  ContentDetailPage,
-  SettingsLanguagePage,
-} from '@/pages/tu';
-import {
-  SettingsPage,
-  SettingsSecurityPage,
-  SettingsNotificationsPage,
-  SettingsAppearancePage,
-} from '@/pages/common';
-import { DashboardPage, PlaceholderPage } from './pages';
-
-function TenantUserWrapper() {
-  return (
-    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'OPERATOR', 'TENANT_ADMIN']}>
-      <TenantUserLayout>
-        <Outlet />
-      </TenantUserLayout>
-    </ProtectedRoute>
-  );
-}
+import { Route } from 'react-router-dom';
+import { LandingPage, Page1, Page2, Page3 } from '@/pages/tu';
+import { tuCoursesRoutes } from './tu.courses.routes';
 
 export const tuRoutes = (
-  <Route path="/tu" element={<TenantUserWrapper />}>
-    <Route index element={<DashboardPage />} />
-    <Route path="dashboard" element={<DashboardPage />} />
-    {/* 내 강의 */}
-    <Route path="teaching/courses" element={<MyCoursesPage />} />
-    <Route path="teaching/courses/create" element={<CourseCreatePage />} />
-    <Route path="teaching/content" element={<MyContentPage />} />
-    <Route path="teaching/content/create" element={<TuContentCreatePage />} />
-    <Route path="teaching/content/:id" element={<ContentDetailPage />} />
-    <Route path="teaching/assignments" element={<PlaceholderPage title="내 과제" />} />
-    {/* 교육 과정 탐색 */}
-    <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
-    <Route path="learning" element={<PlaceholderPage title="내 학습" />} />
-    {/* 성과 및 인증 */}
-    <Route path="progress" element={<PlaceholderPage title="학습 진도" />} />
-    <Route path="certifications" element={<PlaceholderPage title="인증서" />} />
-    {/* 설정 */}
-    <Route path="settings" element={<SettingsPage />} />
-    <Route path="settings/security" element={<SettingsSecurityPage />} />
-    <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
-    <Route path="settings/language" element={<SettingsLanguagePage />} />
-    <Route path="settings/appearance" element={<SettingsAppearancePage />} />
-  </Route>
+  <>
+    {/* TU 강의 관련 라우트 (사이드바 있음) */}
+    {tuCoursesRoutes}
+
+    {/* 기본 경로 - 랜딩 페이지 */}
+    <Route path="/" element={<LandingPage />} />
+
+    {/* 메인 페이지 (사이드바 없음) */}
+    <Route path="/tu/main/page1" element={<Page1 />} />
+    <Route path="/tu/main/page2" element={<Page2 />} />
+    <Route path="/tu/main/page3" element={<Page3 />} />
+  </>
 );

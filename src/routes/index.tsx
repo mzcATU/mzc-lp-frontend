@@ -1,5 +1,4 @@
 import { Routes, Route } from 'react-router-dom';
-import { LandingPage } from '@/pages/tu';
 import ComponentShowcase from '@/pages/ComponentShowcase';
 import { saRoutes } from './sa.routes';
 import { taRoutes } from './ta.routes';
@@ -22,9 +21,6 @@ export function AppRoutes() {
 
       {/* 권한 없음 페이지 */}
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
-
-      {/* 기본 경로 - 랜딩 페이지 */}
-      <Route path="/" element={<LandingPage />} />
 
       {/* 컴포넌트 쇼케이스 (개발용) */}
       <Route path="/showcase" element={<ComponentShowcase />} />

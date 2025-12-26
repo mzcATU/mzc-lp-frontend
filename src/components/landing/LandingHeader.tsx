@@ -54,17 +54,14 @@ export function LandingHeader() {
 
             {/* Desktop Nav Links */}
             <nav className="hidden md:flex items-center gap-8 text-gray-300 font-medium text-[15px]">
-              <Link to="/tu/catalog" className="hover:text-white transition-colors">
-                강의
+              <Link to="/tu/main/page1" className="hover:text-white transition-colors">
+                1페이지
               </Link>
-              <Link
-                to="/tu/learning"
-                className="hover:text-white transition-colors flex items-center gap-1"
-              >
-                내 학습
+              <Link to="/tu/main/page2" className="hover:text-white transition-colors">
+                2페이지
               </Link>
-              <Link to="/tu/teaching/courses" className="hover:text-white transition-colors">
-                강의 관리
+              <Link to="/tu/main/page3" className="hover:text-white transition-colors">
+                3페이지
               </Link>
             </nav>
           </div>

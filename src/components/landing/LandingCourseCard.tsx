@@ -25,7 +25,7 @@ export function LandingCourseCard({
 }: LandingCourseCardProps) {
   return (
     <Link to={`/tu/catalog/${id}`} className="group block h-full">
-      <div className="h-full card-hover rounded-xl overflow-hidden bg-white/5 border border-white/10">
+      <div className="h-full card-hover rounded-xl overflow-hidden landing-card-bg border landing-card-border">
         {/* Image Container */}
         <div className="relative aspect-[16/10] overflow-hidden">
           <img
@@ -56,29 +56,29 @@ export function LandingCourseCard({
 
         {/* Content */}
         <div className="p-4 space-y-2">
-          <h3 className="font-bold text-white line-clamp-2 text-[15px] group-hover:text-[#6bc2f0] transition-colors h-11">
+          <h3 className="font-bold landing-text-primary line-clamp-2 text-[15px] group-hover:text-[#6778ff] transition-colors h-11">
             {title}
           </h3>
 
-          <div className="text-xs text-gray-500">{instructor}</div>
+          <div className="text-xs landing-text-muted">{instructor}</div>
 
           <div className="flex items-center gap-1.5 text-xs">
             <div className="flex">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-3 h-3 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600'}`}
+                  className={`w-3 h-3 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'landing-text-muted'}`}
                 />
               ))}
             </div>
-            <span className="font-bold text-white">{rating}</span>
-            <span className="text-gray-500">({reviewCount.toLocaleString()})</span>
+            <span className="font-bold landing-text-primary">{rating}</span>
+            <span className="landing-text-muted">({reviewCount.toLocaleString()})</span>
           </div>
 
           <div className="pt-2 flex items-center justify-between">
-            <span className="font-bold text-[#6bc2f0] text-lg">{price}</span>
+            <span className="font-bold text-[#6778ff] text-lg">{price}</span>
             <div className="flex gap-1.5">
-              <span className="bg-white/10 text-gray-400 text-[10px] px-2 py-1 rounded-full">
+              <span className="landing-badge-bg landing-text-muted text-[10px] px-2 py-1 rounded-full">
                 +{reviewCount > 100 ? '100' : reviewCount}명
               </span>
             </div>

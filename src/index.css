@@ -388,6 +388,21 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+/* Hero section buttons should keep white text on dark background */
+.landing-light .animated-bg .landing-btn-outline {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.landing-light .animated-bg .landing-btn-outline:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-light .animated-bg .landing-btn-primary {
+  color: #ffffff;
+}
+
 .landing-light .hero-subtitle {
   color: #666666;
 }
@@ -633,6 +648,20 @@
   background: rgba(0, 0, 0, 0.05);
 }
 
+/* Header buttons in light mode */
+.landing-light .glass-dark .landing-btn-outline {
+  border: 1px solid #6778ff;
+  color: #6778ff;
+}
+
+.landing-light .glass-dark .landing-btn-outline:hover {
+  background: rgba(103, 120, 255, 0.1);
+}
+
+.landing-light .glass-dark .landing-btn-primary {
+  color: #ffffff;
+}
+
 /* Footer theme support */
 .landing-dark .landing-footer-wrapper {
   background: #000000;
@@ -642,4 +671,114 @@
 .landing-light .landing-footer-wrapper {
   background: #F4F4F4;
   border-top: 1px solid #E0E0E0;
+}
+
+/* Card background and border utilities */
+.landing-dark .landing-card-bg {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.landing-light .landing-card-bg {
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.landing-dark .landing-card-border {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.landing-light .landing-card-border {
+  border-color: #E0E0E0;
+}
+
+/* Badge background */
+.landing-dark .landing-badge-bg {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-light .landing-badge-bg {
+  background: #F4F4F4;
+}
+
+/* Border utilities */
+.landing-dark .landing-border-top {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing-light .landing-border-top {
+  border-top: 1px solid #E0E0E0;
+}
+
+/* Social button */
+.landing-dark .landing-social-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.landing-dark .landing-social-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-light .landing-social-btn {
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  color: #666666;
+}
+
+.landing-light .landing-social-btn:hover {
+  background: #F4F4F4;
+  color: #333333;
+}
+
+/* Link hover */
+.landing-dark .landing-link-hover:hover {
+  color: #FFFFFF;
+}
+
+.landing-light .landing-link-hover:hover {
+  color: #6778ff;
+}
+
+/* Hero section for light mode - medium gradient background */
+.landing-light .animated-bg {
+  background: linear-gradient(135deg, #252542 0%, #3a3a70 50%, #252542 100%);
+}
+
+.landing-light .animated-bg h2.text-white {
+  color: #ffffff;
+}
+
+.landing-light .animated-bg .text-gray-300 {
+  color: #d1d5db;
+}
+
+.landing-light .animated-bg .text-gray-500 {
+  color: #9ca3af;
+}
+
+.landing-light .animated-bg .glass {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.landing-light .animated-bg .glass svg {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.landing-light .animated-bg button.glass {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-light .animated-bg button.glass:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.landing-light .animated-bg button.glass svg {
+  color: #ffffff;
+}
+
+.landing-light .animated-bg span.bg-white\/10 {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
 }

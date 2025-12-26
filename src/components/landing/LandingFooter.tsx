@@ -2,16 +2,16 @@ import { Youtube, Instagram } from 'lucide-react';
 
 export function LandingFooter() {
   return (
-    <footer className="bg-[#000000] border-t border-white/5 text-gray-400 text-sm py-16">
+    <footer className="landing-footer-wrapper landing-text-secondary text-sm py-16">
       <div className="w-full px-4 md:px-8 lg:px-16">
         {/* Middle Section - Company Info */}
-        <div className="border-t border-white/10 pt-8 pb-8">
+        <div className="landing-border-top pt-8 pb-8">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-8">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-bold gradient-text">MEGAZONECLOUD</span>
               </div>
-              <div className="text-[12px] text-gray-500 leading-relaxed space-y-1">
+              <div className="text-[12px] landing-text-muted leading-relaxed space-y-1">
                 <p>메가존클라우드(주) | 대표이사: 이주완, 조원우</p>
                 <p>사업자등록번호: 232-88-00982</p>
                 <p>서울시 강남구 논현로85길 46 메가존빌딩</p>
@@ -23,7 +23,7 @@ export function LandingFooter() {
             <div className="flex items-center gap-4">
               <a
                 href="#"
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                className="p-3 rounded-full landing-social-btn transition-colors"
                 aria-label="X (Twitter)"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -32,21 +32,21 @@ export function LandingFooter() {
               </a>
               <a
                 href="#"
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                className="p-3 rounded-full landing-social-btn transition-colors"
                 aria-label="YouTube"
               >
                 <Youtube className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                className="p-3 rounded-full landing-social-btn transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5" />
               </a>
               <a
                 href="#"
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                className="p-3 rounded-full landing-social-btn transition-colors"
                 aria-label="LinkedIn"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -55,7 +55,7 @@ export function LandingFooter() {
               </a>
               <a
                 href="#"
-                className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10"
+                className="p-3 rounded-full landing-social-btn transition-colors"
                 aria-label="GitHub"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -67,19 +67,19 @@ export function LandingFooter() {
         </div>
 
         {/* Bottom Section - Legal */}
-        <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex flex-wrap gap-6 text-[12px] text-gray-500">
-            <a href="#" className="hover:text-white transition-colors">
+        <div className="landing-border-top pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-wrap gap-6 text-[12px] landing-text-muted">
+            <a href="#" className="landing-link-hover transition-colors">
               개인정보처리방침
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="landing-link-hover transition-colors">
               이용약관
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="landing-link-hover transition-colors">
               이메일무단수집거부
             </a>
           </div>
-          <p className="text-[12px] text-gray-600">
+          <p className="text-[12px] landing-text-muted">
             &copy; {new Date().getFullYear()} MEGAZONECLOUD Corp. All rights reserved.
           </p>
         </div>
