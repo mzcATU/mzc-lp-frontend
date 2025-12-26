@@ -117,6 +117,10 @@ const t = {
   inCourse: { ko: '과정에 포함됨', en: 'In Course' },
   yes: { ko: '예', en: 'Yes' },
   no: { ko: '아니오', en: 'No' },
+  description: { ko: '설명', en: 'Description' },
+  tags: { ko: '태그', en: 'Tags' },
+  noDescription: { ko: '설명 없음', en: 'No description' },
+  noTags: { ko: '태그 없음', en: 'No tags' },
 };
 
 // 파일 크기 포맷팅
@@ -628,6 +632,34 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
                   {formatDate(content.updatedAt)}
                 </p>
               </div>
+
+              {/* Description (설명) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm text-text-secondary mb-1">{getText('description')}</label>
+                <p className="text-text-primary">
+                  {content.description || <span className="text-text-placeholder">{getText('noDescription')}</span>}
+                </p>
+              </div>
+
+              {/* Tags (태그) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm text-text-secondary mb-1">{getText('tags')}</label>
+                {content.tags ? (
+                  <div className="flex flex-wrap gap-2">
+                    {content.tags.split(',').map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-2 py-1 bg-bg-secondary border border-border rounded-full text-sm text-text-primary"
+                      >
+                        {tag.trim()}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-text-placeholder">{getText('noTags')}</p>
+                )}
+              </div>
+
             </div>
           </div>
 

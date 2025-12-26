@@ -82,6 +82,11 @@ export const ContentCard = ({
   const IconComponent = contentTypeIcon[content.contentType];
   const isArchived = content.status === 'ARCHIVED';
 
+  // 썸네일 URL 결정: prop > customThumbnailPath > thumbnailPath
+  const resolvedThumbnailUrl = thumbnailUrl
+    || (content.customThumbnailPath ? `${import.meta.env.VITE_API_BASE_URL || ''}${content.customThumbnailPath}` : null)
+    || (content.thumbnailPath ? `${import.meta.env.VITE_API_BASE_URL || ''}${content.thumbnailPath}` : null);
+
   return (
     <div
       className={cn(
@@ -92,11 +97,14 @@ export const ContentCard = ({
     >
       {/* Thumbnail */}
       <div className="relative aspect-video bg-bg-secondary">
-        {thumbnailUrl ? (
+        {resolvedThumbnailUrl ? (
           <img
-            src={thumbnailUrl}
+            src={resolvedThumbnailUrl}
             alt={content.originalFileName}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

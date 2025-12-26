@@ -22,16 +22,35 @@ interface PageResponse<T> {
   number: number;
 }
 
+// 파일 업로드 옵션
+interface UploadFileOptions {
+  folderId?: number;
+  originalFileName?: string;
+  description?: string;
+  tags?: string;
+  thumbnail?: File;
+}
+
 export const contentService = {
   // 파일 업로드
-  async uploadFile(file: File, folderId?: number, originalFileName?: string): Promise<ContentResponse> {
+  async uploadFile(file: File, options?: UploadFileOptions): Promise<ContentResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    if (folderId) {
-      formData.append('folderId', String(folderId));
+
+    if (options?.folderId) {
+      formData.append('folderId', String(options.folderId));
     }
-    if (originalFileName) {
-      formData.append('originalFileName', originalFileName);
+    if (options?.originalFileName) {
+      formData.append('originalFileName', options.originalFileName);
+    }
+    if (options?.description) {
+      formData.append('description', options.description);
+    }
+    if (options?.tags) {
+      formData.append('tags', options.tags);
+    }
+    if (options?.thumbnail) {
+      formData.append('thumbnail', options.thumbnail);
     }
 
     const { data } = await axiosInstance.post<{ data: ContentResponse }>(
