@@ -369,3 +369,8 @@ export {
 
 export { Toggle, toggleVariants } from './Toggle';
 export { ToggleGroup, ToggleGroupItem } from './ToggleGroup';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 9. AUTH - 인증 관련
+// ═══════════════════════════════════════════════════════════════════════════════
+export { ProtectedRoute } from './ProtectedRoute';
