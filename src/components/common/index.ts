@@ -306,3 +306,6 @@ export { StatsCard } from './StatsCard';
 export { Stepper } from './Stepper';
 export type { Step } from './Stepper';
 export { Timeline, TimelineItem } from './Timeline';
+
+// Auth Components
+export { ProtectedRoute } from './ProtectedRoute';
