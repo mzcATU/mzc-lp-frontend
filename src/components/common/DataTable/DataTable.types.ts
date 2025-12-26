@@ -21,6 +21,8 @@ export interface DataTableProps<TData, TValue> {
   showPagination?: boolean;
   pageSize?: number;
   labels?: DataTableLabels;
+  /** 행 클릭 핸들러 */
+  onRowClick?: (row: TData) => void;
 }
 
 export interface DataTableColumnHeaderProps

@@ -54,6 +54,7 @@ import { Skeleton } from "@/components/common/Skeleton";
 // ═══════════════════════════════════════════════════════════════════════════════
 import { Checkbox } from "@/components/common/Checkbox";
 import { Switch } from "@/components/common/Switch";
+import { NativeSelect } from "@/components/common/NativeSelect";
 import {
   Select,
   SelectContent,
@@ -63,6 +64,7 @@ import {
 } from "@/components/common/Select";
 import { Combobox, MultiCombobox } from "@/components/common/Combobox";
 import { RadioOptionCard } from "@/components/common/RadioOptionCard";
+import { TagInput } from "@/components/common/TagInput";
 import { Slider } from "@/components/common/Slider";
 import { DateRangePicker, DatePicker } from "@/components/common/DateRangePicker";
 
@@ -108,6 +110,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/DropdownMenu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/common/Sheet";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/common/HoverCard";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 4. LAYOUT - 레이아웃 컨테이너
@@ -184,11 +199,22 @@ import {
   BreadcrumbSeparator,
 } from "@/components/common/Breadcrumb";
 import { Stepper, StepperNavigation } from "@/components/common/Stepper";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/common/Pagination";
+import { ViewToggle } from "@/components/common/ViewToggle";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 8. DOMAIN SPECIFIC - 도메인 특화 컴포넌트
 // ═══════════════════════════════════════════════════════════════════════════════
 import { StatsCard, StatsGrid, MiniStats } from "@/components/common/StatsCard";
+import { IconStatCard } from "@/components/common/IconStatCard";
+import { SettingsCard } from "@/components/common/SettingsCard";
 import { FileUpload, ImageUpload } from "@/components/common/FileUpload";
 import { KanbanBoard, type KanbanColumn as KanbanColumnType } from "@/components/common/Kanban";
 import { Toggle } from "@/components/common/Toggle";
@@ -276,6 +302,9 @@ export default function ComponentShowcase() {
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
   const [stepperStep, setStepperStep] = useState(1);
   const [notificationPref, setNotificationPref] = useState("email");
+  const [tags, setTags] = useState<string[]>(["React", "TypeScript"]);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [currentPage, setCurrentPage] = useState(1);
 
   return (
     <TooltipProvider>
@@ -1120,6 +1149,138 @@ export default function ComponentShowcase() {
               onEditItem={(item) => console.log("Edit", item)}
               onDeleteItem={(item) => console.log("Delete", item)}
             />
+          </Section>
+
+          <Section title="IconStatCard & SettingsCard">
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <IconStatCard icon={<Users className="w-5 h-5" />} label="Total Users" value="1,234" />
+              <IconStatCard icon={<ShoppingCart className="w-5 h-5" />} label="Orders" value="56" />
+              <IconStatCard icon={<DollarSign className="w-5 h-5" />} label="Revenue" value="$12,345" />
+              <IconStatCard icon={<Activity className="w-5 h-5" />} label="Active" value="89%" />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <SettingsCard
+                icon={User}
+                title="Profile"
+                description="Manage your profile settings"
+                onClick={() => console.log("Profile clicked")}
+                index={0}
+              />
+              <SettingsCard
+                icon={Bell}
+                title="Notifications"
+                description="Configure notification preferences"
+                onClick={() => console.log("Notifications clicked")}
+                index={1}
+              />
+              <SettingsCard
+                icon={Settings}
+                title="Security"
+                description="Update security settings"
+                onClick={() => console.log("Security clicked")}
+                index={2}
+              />
+            </div>
+          </Section>
+
+          <Section title="NativeSelect & TagInput">
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <Label>Native Select</Label>
+                <NativeSelect
+                  options={[
+                    { value: "", label: "Select an option" },
+                    { value: "1", label: "Option 1" },
+                    { value: "2", label: "Option 2" },
+                    { value: "3", label: "Option 3" },
+                  ]}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tag Input</Label>
+                <TagInput
+                  value={tags}
+                  onChange={setTags}
+                  placeholder="Add tags (comma separated)"
+                />
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Sheet & HoverCard">
+            <div className="flex gap-4">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline">Open Sheet</Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Sheet Title</SheetTitle>
+                    <SheetDescription>
+                      This is a side panel that slides in from the edge.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="py-4">
+                    <p>Sheet content goes here.</p>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <Button variant="link">Hover me</Button>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-80">
+                  <div className="flex gap-4">
+                    <Avatar>
+                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarFallback>SC</AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-semibold">@shadcn</h4>
+                      <p className="text-sm text-muted-foreground">
+                        The creator of shadcn/ui components.
+                      </p>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            </div>
+          </Section>
+
+          <Section title="Pagination & ViewToggle">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">View Mode: {viewMode}</p>
+                <ViewToggle
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  gridLabel="Grid"
+                  listLabel="List"
+                />
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious href="#" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} />
+                  </PaginationItem>
+                  {[1, 2, 3, 4, 5].map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        isActive={currentPage === page}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext href="#" onClick={() => setCurrentPage(Math.min(5, currentPage + 1))} />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           </Section>
         </div>
       </div>

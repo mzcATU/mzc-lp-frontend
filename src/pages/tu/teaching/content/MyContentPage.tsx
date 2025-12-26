@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
   Plus,
   Search,
@@ -18,8 +19,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge, ViewToggle, SimpleTable, IconStatCard } from '@/components/common';
-import type { SimpleTableColumn, SortOrder } from '@/components/common';
+import { Button, Badge, ViewToggle, DataTable, DataTableColumnHeader, IconStatCard } from '@/components/common';
 import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent } from '@/hooks/tu';
 import {
   ContentCard,
@@ -38,7 +38,6 @@ interface MyContentPageProps {
 }
 
 type ViewMode = 'grid' | 'list';
-type SortField = 'title' | 'type' | 'date';
 
 const t = {
   title: { ko: '내 콘텐츠', en: 'My Content' },
@@ -87,8 +86,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   // 미리보기 모달 상태
   const [previewModal, setPreviewModal] = useState<{
@@ -127,31 +124,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     EXTERNAL_LINK: contents.filter((c) => c.contentType === 'EXTERNAL_LINK').length,
   };
 
-  // 정렬된 콘텐츠
-  const sortedContents = [...contents].sort((a, b) => {
-    if (sortField === 'title') {
-      return sortOrder === 'asc'
-        ? a.originalFileName.localeCompare(b.originalFileName)
-        : b.originalFileName.localeCompare(a.originalFileName);
-    } else if (sortField === 'type') {
-      return sortOrder === 'asc'
-        ? a.contentType.localeCompare(b.contentType)
-        : b.contentType.localeCompare(a.contentType);
-    } else {
-      return sortOrder === 'asc'
-        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
-  });
-
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field as SortField);
-      setSortOrder('asc');
-    }
-  };
 
   const handleDelete = async (id: number) => {
     if (!confirm(getText('confirmDelete'))) return;
@@ -191,88 +163,93 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null });
   };
 
-  // 리스트뷰 컬럼 정의
-  const columns: SimpleTableColumn<ContentListResponse>[] = [
+  // 리스트뷰 컬럼 정의 (TanStack Table ColumnDef)
+  const columns: ColumnDef<ContentListResponse>[] = useMemo(() => [
     {
-      key: 'title',
-      header: getText('columnTitle'),
-      sortable: true,
-      render: (item) => (
+      accessorKey: 'originalFileName',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={getText('columnTitle')} />
+      ),
+      cell: ({ row }) => (
         <p className="text-sm text-text-primary max-w-md truncate">
-          {item.originalFileName}
+          {row.original.originalFileName}
         </p>
       ),
     },
     {
-      key: 'type',
-      header: getText('columnType'),
-      sortable: true,
-      render: (item) => (
-        <Badge variant={contentTypeBadgeColor[item.contentType]}>
-          {getText(item.contentType)}
+      accessorKey: 'contentType',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={getText('columnType')} />
+      ),
+      cell: ({ row }) => (
+        <Badge variant={contentTypeBadgeColor[row.original.contentType]}>
+          {getText(row.original.contentType)}
         </Badge>
       ),
     },
     {
-      key: 'date',
-      header: getText('columnDate'),
-      sortable: true,
-      render: (item) => (
-        <p className="text-sm text-text-secondary">{formatDate(item.createdAt)}</p>
+      accessorKey: 'createdAt',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={getText('columnDate')} />
+      ),
+      cell: ({ row }) => (
+        <p className="text-sm text-text-secondary">{formatDate(row.original.createdAt)}</p>
       ),
     },
     {
-      key: 'file',
+      id: 'file',
       header: getText('columnFile'),
-      render: (item) => (
+      cell: ({ row }) => (
         <div className="flex flex-col gap-1">
           <p className="text-sm text-text-primary truncate max-w-xs">
-            {item.originalFileName}
+            {row.original.originalFileName}
           </p>
           <p className="text-xs text-text-secondary">
-            {formatFileSize(item.fileSize)} • v{item.currentVersion}
+            {formatFileSize(row.original.fileSize)} • v{row.original.currentVersion}
           </p>
         </div>
       ),
     },
     {
-      key: 'actions',
-      header: getText('columnActions'),
-      align: 'right',
-      render: (item) => (
-        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => handlePreview(item)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
-          >
-            <Eye size={16} />
-          </button>
-          {item.status === 'ARCHIVED' ? (
+      id: 'actions',
+      header: () => <div className="text-right">{getText('columnActions')}</div>,
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={() => handleRestore(item.id)}
+              onClick={() => handlePreview(item)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
             >
-              <RotateCcw size={16} />
+              <Eye size={16} />
             </button>
-          ) : (
+            {item.status === 'ARCHIVED' ? (
+              <button
+                onClick={() => handleRestore(item.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+              >
+                <RotateCcw size={16} />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleArchive(item.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+              >
+                <Archive size={16} />
+              </button>
+            )}
             <button
-              onClick={() => handleArchive(item.id)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+              onClick={() => handleDelete(item.id)}
+              disabled={deleteContent.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-status-error/10 transition-colors"
             >
-              <Archive size={16} />
+              <Trash2 size={16} className="text-status-error" />
             </button>
-          )}
-          <button
-            onClick={() => handleDelete(item.id)}
-            disabled={deleteContent.isPending}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-status-error/10 transition-colors"
-          >
-            <Trash2 size={16} className="text-status-error" />
-          </button>
-        </div>
-      ),
+          </div>
+        );
+      },
     },
-  ];
+  ], [language, deleteContent.isPending]);
 
   const cardLabels = {
     view: getText('view'),
@@ -399,7 +376,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           {/* View Toggle & Count */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
-              {sortedContents.length}{getText('contentCount')}
+              {contents.length}{getText('contentCount')}
             </p>
             <ViewToggle
               viewMode={viewMode}
@@ -427,7 +404,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           )}
 
           {/* Empty State - 검색/필터 결과가 없는 경우 */}
-          {!isLoading && sortedContents.length === 0 && (searchQuery || typeFilter !== 'all' || statusFilter !== 'all') && (
+          {!isLoading && contents.length === 0 && (searchQuery || typeFilter !== 'all' || statusFilter !== 'all') && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -435,9 +412,9 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           )}
 
           {/* Content Grid View */}
-          {!isLoading && viewMode === 'grid' && sortedContents.length > 0 && (
+          {!isLoading && viewMode === 'grid' && contents.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sortedContents.map((content) => (
+              {contents.map((content) => (
                 <ContentCard
                   key={content.id}
                   content={content}
@@ -453,15 +430,16 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           )}
 
           {/* Content List View */}
-          {!isLoading && viewMode === 'list' && sortedContents.length > 0 && (
-            <SimpleTable
-              data={sortedContents}
+          {!isLoading && viewMode === 'list' && contents.length > 0 && (
+            <DataTable
               columns={columns}
-              keyExtractor={(item) => item.id}
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSort}
+              data={contents}
+              showColumnToggle={false}
+              showPagination={false}
               onRowClick={(item) => navigate(`/tu/teaching/content/${item.id}`)}
+              labels={{
+                noResults: getText('noResults'),
+              }}
             />
           )}
 
