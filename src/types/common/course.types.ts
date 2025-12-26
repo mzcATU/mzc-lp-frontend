@@ -27,6 +27,9 @@ export interface CourseResponse {
   type: CourseType | null;
   estimatedHours: number | null;
   categoryId: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +66,9 @@ export interface CourseDetailResponse {
   type: CourseType | null;
   estimatedHours: number | null;
   categoryId: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  tags: string[];
   items: CourseItemResponse[];
   itemCount: number;
   createdAt: string;
@@ -82,6 +88,9 @@ export interface CreateCourseRequest {
   estimatedHours?: number;
   categoryId?: number;
   thumbnailUrl?: string;
+  startDate?: string;
+  endDate?: string;
+  tags?: string[];
 }
 
 /** 강의 수정 요청 */
@@ -93,6 +102,9 @@ export interface UpdateCourseRequest {
   estimatedHours?: number;
   categoryId?: number;
   thumbnailUrl?: string;
+  startDate?: string;
+  endDate?: string;
+  tags?: string[];
 }
 
 // ============================================
