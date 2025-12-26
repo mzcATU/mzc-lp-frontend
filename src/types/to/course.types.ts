@@ -18,6 +18,8 @@ export type {
   UpdateCourseRequest,
 } from '../common/course.types';
 
+import type { CourseLevel } from '../common/course.types';
+
 export {
   COURSE_LEVEL_LABELS,
   COURSE_TYPE_LABELS,
@@ -69,16 +71,16 @@ export interface MultiLanguageSettings {
 
 /**
  * 강의 폼 데이터 (UI 전용)
- * @deprecated CreateCourseRequest 사용 권장
+ * 백엔드 CreateCourseRequest와 필드명 일치
  */
 export interface CourseFormData {
-  courseName: string;
-  courseDescription: string;
+  title: string;
+  description: string;
   startDate: string;
   endDate: string;
-  category: string;
+  categoryId: number | null;
   tags: string[];
-  difficulty: CourseDifficulty;
+  level: CourseLevel | '';
   lessons: LessonData[];
   isDraft: boolean;
   lastSaved?: string;

@@ -22,6 +22,12 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenants/${id}`,
   },
 
+  // Categories (TO)
+  CATEGORIES: {
+    BASE: '/categories',
+    BY_ID: (id: number) => `/categories/${id}`,
+  },
+
   // Courses (TO, TU)
   COURSES: {
     BASE: '/courses',
