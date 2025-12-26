@@ -13,7 +13,7 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import ComponentShowcase from '@/pages/ComponentShowcase';
+import ComponentShowcase from '@/pages/dev/ComponentShowcase';
 import {
   SuperAdminLayout,
   TenantAdminLayout,
