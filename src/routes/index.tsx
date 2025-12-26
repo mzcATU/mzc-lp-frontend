@@ -14,7 +14,7 @@ import {
   SettingsAppearancePage,
 } from '@/pages/common';
 import { LoginPage, RegisterPage } from '@/pages/auth';
-import ComponentShowcase from '@/pages/ComponentShowcase';
+import ComponentShowcase from '@/pages/dev/ComponentShowcase';
 import {
   SuperAdminLayout,
   TenantAdminLayout,
