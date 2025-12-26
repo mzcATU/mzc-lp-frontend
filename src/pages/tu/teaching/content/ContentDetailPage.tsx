@@ -19,22 +19,22 @@ import {
   Link,
   Calendar,
   HardDrive,
-  History,
   Loader2,
   AlertCircle,
   Check,
+  History,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import {
   useContent,
-  useContentVersions,
   useUpdateContent,
   useReplaceFile,
   useArchiveContent,
   useRestoreContent,
   useDeleteContent,
+  useContentVersions,
   useRestoreVersion,
 } from '@/hooks/tu';
 import { contentService } from '@/services/tu';
@@ -282,6 +282,12 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
     }
   };
 
+  // 다운로드
+  const handleDownload = () => {
+    const downloadUrl = contentService.getDownloadUrl(contentId);
+    window.open(downloadUrl, '_blank');
+  };
+
   // 버전 복원
   const handleVersionRestore = async (versionNumber: number) => {
     if (!confirm(getText('confirmVersionRestore'))) return;
@@ -291,12 +297,6 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
     } catch (err) {
       console.error('Version restore failed:', err);
     }
-  };
-
-  // 다운로드
-  const handleDownload = () => {
-    const downloadUrl = contentService.getDownloadUrl(contentId);
-    window.open(downloadUrl, '_blank');
   };
 
   // 로딩 상태
@@ -627,35 +627,34 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
           </div>
 
           {/* Version History Section */}
-          {!isExternalLink && (
-            <div className="bg-bg-default border border-border rounded-lg p-6">
-              <h2 className="text-text-primary text-lg font-medium flex items-center gap-2 mb-4">
-                <History size={20} />
-                {getText('versionHistory')}
-              </h2>
+          <div className="bg-bg-default border border-border rounded-lg p-6">
+            <h2 className="text-text-primary text-lg font-medium flex items-center gap-2 mb-4">
+              <History size={20} />
+              {getText('versionHistory')}
+            </h2>
 
-              {versionsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 size={24} className="animate-spin text-text-secondary" />
-                </div>
-              ) : versions && versions.length > 0 ? (
-                <div className="space-y-3">
-                  {versions.map((version) => (
-                    <VersionCard
-                      key={version.id}
-                      version={version}
-                      isCurrentVersion={version.versionNumber === content.currentVersion}
-                      getText={getText}
-                      onRestore={() => handleVersionRestore(version.versionNumber)}
-                      isRestoring={restoreVersion.isPending}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-text-secondary text-center py-8">버전 기록이 없습니다.</p>
-              )}
-            </div>
-          )}
+            {versionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={24} className="animate-spin text-text-secondary" />
+              </div>
+            ) : versions && versions.length > 0 ? (
+              <div className="space-y-3">
+                {versions.map((version) => (
+                  <VersionCard
+                    key={version.id}
+                    version={version}
+                    isCurrentVersion={version.versionNumber === content.currentVersion}
+                    isExternalLink={isExternalLink}
+                    getText={getText}
+                    onRestore={() => handleVersionRestore(version.versionNumber)}
+                    isRestoring={restoreVersion.isPending}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-text-secondary text-center py-8">버전 기록이 없습니다.</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -675,6 +674,7 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
 interface VersionCardProps {
   version: ContentVersionResponse;
   isCurrentVersion: boolean;
+  isExternalLink: boolean;
   getText: (key: keyof typeof t) => string;
   onRestore: () => void;
   isRestoring: boolean;
@@ -683,6 +683,7 @@ interface VersionCardProps {
 function VersionCard({
   version,
   isCurrentVersion,
+  isExternalLink,
   getText,
   onRestore,
   isRestoring,
@@ -716,11 +717,18 @@ function VersionCard({
             </Badge>
           </div>
           <p className="text-sm text-text-primary mb-1">
-            {version.uploadedFileName || version.originalFileName}
+            {version.originalFileName}
           </p>
-          <p className="text-xs text-text-secondary mb-1">
-            {formatFileSize(version.fileSize)}
-          </p>
+          {!isExternalLink && version.uploadedFileName && (
+            <p className="text-xs text-text-secondary mb-1">
+              {version.uploadedFileName}
+            </p>
+          )}
+          {!isExternalLink && version.fileSize && (
+            <p className="text-xs text-text-secondary mb-1">
+              {formatFileSize(version.fileSize)}
+            </p>
+          )}
           {version.changeSummary && (
             <p className="text-sm text-text-secondary">{version.changeSummary}</p>
           )}

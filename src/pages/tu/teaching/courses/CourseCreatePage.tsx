@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Save, FileText, Upload, Plus, GripVertical, ChevronDown, ChevronRight, Trash2, Link as LinkIcon, Globe, X, Pencil, CheckCircle2, AlertTriangle, BookOpen, Calendar, Tag } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Input, Textarea, NativeSelect, TagInput, Label, Checkbox, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
-import type { CourseFormData, LessonData, ContentAttachment, CourseDifficulty, LanguageVersion } from '@/types';
+import { courseService, categoryService } from '@/services/common';
+import type { CourseFormData, LessonData, ContentAttachment, LanguageVersion, CourseLevel } from '@/types';
+import type { CategoryResponse, CreateCourseRequest } from '@/types/common';
 
 const t = {
   title: { ko: '강의 등록', en: 'Create Course' },
@@ -79,34 +81,26 @@ interface CourseCreatePageProps {
   language?: 'ko' | 'en';
 }
 
-const categoryOptions = [
-  { value: '', label: '카테고리 선택' },
-  { value: '프로그래밍', label: '프로그래밍' },
-  { value: '백엔드', label: '백엔드' },
-  { value: '프론트엔드', label: '프론트엔드' },
-  { value: '개발 도구', label: '개발 도구' },
-  { value: '데이터베이스', label: '데이터베이스' },
-];
-
-const difficultyOptions = [
+const levelOptions = [
   { value: '', label: '난이도 선택' },
-  { value: 'beginner', label: '입문' },
-  { value: 'elementary', label: '초급' },
-  { value: 'intermediate', label: '중급' },
-  { value: 'advanced', label: '고급' },
+  { value: 'BEGINNER', label: '초급' },
+  { value: 'INTERMEDIATE', label: '중급' },
+  { value: 'ADVANCED', label: '고급' },
 ];
 
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<CourseFormData>({
-    courseName: '',
-    courseDescription: '',
+    title: '',
+    description: '',
     startDate: '',
     endDate: '',
-    category: '',
+    categoryId: null,
     tags: [],
-    difficulty: '',
+    level: '',
     lessons: [],
     isDraft: false,
     multiLanguage: {
@@ -117,6 +111,19 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+
+  // 카테고리 목록 조회
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('카테고리 목록 조회 실패:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const totalSteps = 3;
 
@@ -131,9 +138,34 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   };
 
   const handleClose = () => navigate('/tu/teaching/courses');
-  const handleSubmit = () => {
-    alert('강의가 등록되었습니다!');
-    navigate('/tu/teaching/courses');
+
+  const handleSubmit = async () => {
+    if (!formData.title) {
+      alert('강의명을 입력해주세요.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const request: CreateCourseRequest = {
+        title: formData.title,
+        description: formData.description || undefined,
+        level: formData.level || undefined,
+        categoryId: formData.categoryId ?? undefined,
+        startDate: formData.startDate || undefined,
+        endDate: formData.endDate || undefined,
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
+      };
+
+      await courseService.create(request);
+      alert('강의가 등록되었습니다!');
+      navigate('/tu/teaching/courses');
+    } catch (error) {
+      console.error('강의 등록 실패:', error);
+      alert('강의 등록에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Step 2 functions
@@ -271,40 +303,43 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           {currentStep === 1 && (
             <div className="flex flex-col gap-6">
               <div className="space-y-2">
-                <Label htmlFor="courseName">{getText('courseName')}</Label>
+                <Label htmlFor="title">{getText('courseName')}</Label>
                 <Input
-                  id="courseName"
-                  value={formData.courseName}
-                  onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder={getText('courseNamePlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="courseDescription">{getText('courseDescription')}</Label>
+                <Label htmlFor="description">{getText('courseDescription')}</Label>
                 <Textarea
-                  id="courseDescription"
-                  value={formData.courseDescription}
-                  onChange={(e) => setFormData({ ...formData, courseDescription: e.target.value })}
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder={getText('courseDescriptionPlaceholder')}
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <NativeSelect
-                  id="category"
+                  id="categoryId"
                   label={getText('category')}
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  options={categoryOptions}
+                  value={formData.categoryId?.toString() ?? ''}
+                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value ? Number(e.target.value) : null })}
+                  options={[
+                    { value: '', label: getText('selectCategory') },
+                    ...categories.map((cat) => ({ value: cat.id.toString(), label: cat.name })),
+                  ]}
                 />
 
                 <NativeSelect
-                  id="difficulty"
+                  id="level"
                   label={getText('difficulty')}
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as CourseDifficulty })}
-                  options={difficultyOptions}
+                  value={formData.level}
+                  onChange={(e) => setFormData({ ...formData, level: e.target.value as CourseLevel | '' })}
+                  options={levelOptions}
                 />
               </div>
 
@@ -539,8 +574,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
               {/* 경고 메시지 또는 완료 메시지 */}
               {(() => {
                 const warnings: string[] = [];
-                if (!formData.courseName) warnings.push(getText('warningCourse'));
-                if (!formData.category) warnings.push(getText('warningCategory'));
+                if (!formData.title) warnings.push(getText('warningCourse'));
+                if (!formData.categoryId) warnings.push(getText('warningCategory'));
                 if (formData.lessons.length === 0) warnings.push(getText('warningLesson'));
 
                 if (warnings.length > 0) {
@@ -589,7 +624,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                     <div className="md:col-span-2">
                       <Label className="text-text-secondary text-sm">{getText('courseName')}</Label>
                       <p className="text-text-primary mt-1 mb-0">
-                        {formData.courseName || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                        {formData.title || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
                       </p>
                     </div>
 
@@ -597,7 +632,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                     <div className="md:col-span-2">
                       <Label className="text-text-secondary text-sm">{getText('courseDescription')}</Label>
                       <p className="text-text-primary mt-1 mb-0 whitespace-pre-wrap">
-                        {formData.courseDescription || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                        {formData.description || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
                       </p>
                     </div>
 
@@ -605,7 +640,11 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                     <div>
                       <Label className="text-text-secondary text-sm">{getText('category')}</Label>
                       <p className="text-text-primary mt-1 mb-0">
-                        {formData.category || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                        {formData.categoryId ? (
+                          categories.find((cat) => cat.id === formData.categoryId)?.name
+                        ) : (
+                          <span className="text-text-tertiary italic">{getText('notEntered')}</span>
+                        )}
                       </p>
                     </div>
 
@@ -613,8 +652,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                     <div>
                       <Label className="text-text-secondary text-sm">{getText('difficulty')}</Label>
                       <p className="text-text-primary mt-1 mb-0">
-                        {formData.difficulty ? (
-                          difficultyOptions.find(opt => opt.value === formData.difficulty)?.label
+                        {formData.level ? (
+                          levelOptions.find((opt) => opt.value === formData.level)?.label
                         ) : (
                           <span className="text-text-tertiary italic">{getText('notEntered')}</span>
                         )}
@@ -782,9 +821,9 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 <ArrowRight size={18} />
               </Button>
             ) : (
-              <Button onClick={handleSubmit}>
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
                 <Upload size={18} />
-                {getText('submit')}
+                {isSubmitting ? '등록 중...' : getText('submit')}
               </Button>
             )}
           </div>

@@ -7,47 +7,38 @@ import {
   Eye,
   Trash2,
   FileText,
-  Calendar,
   ChevronDown,
-  Video,
-  Music,
-  Image,
-  Link,
   Archive,
   RotateCcw,
   Loader2,
+  Video,
+  FileIcon,
+  Image,
+  Link,
+  LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge } from '@/components/common';
-import type { BadgeColor } from '@/components/common/Badge/Badge.types';
+import { Button, Badge, ViewToggle, SimpleTable, IconStatCard } from '@/components/common';
+import type { SimpleTableColumn, SortOrder } from '@/components/common';
 import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent } from '@/hooks/tu';
-import { ContentPreviewModal } from '@/components/domain/tu/content';
+import {
+  ContentCard,
+  ContentPreviewModal,
+  contentTypeBadgeColor,
+  formatFileSize,
+  formatDate,
+} from '@/components/domain/tu/content';
 import type { ContentType, ContentStatus, ContentListResponse, ContentFilterParams } from '@/types/tu';
 
 // [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제
 import { DevLoginButton } from '@/components/dev/DevLoginButton';
 
-// 콘텐츠 타입별 Badge 컬러 매핑
-const contentTypeBadgeColor: Record<ContentType, BadgeColor> = {
-  VIDEO: 'blue',
-  AUDIO: 'purple',
-  DOCUMENT: 'orange',
-  IMAGE: 'green',
-  EXTERNAL_LINK: 'gray',
-};
-
-// 콘텐츠 타입별 아이콘
-const contentTypeIcon: Record<ContentType, React.ElementType> = {
-  VIDEO: Video,
-  AUDIO: Music,
-  DOCUMENT: FileText,
-  IMAGE: Image,
-  EXTERNAL_LINK: Link,
-};
-
 interface MyContentPageProps {
   language?: 'ko' | 'en';
 }
+
+type ViewMode = 'grid' | 'list';
+type SortField = 'title' | 'type' | 'date';
 
 const t = {
   title: { ko: '내 콘텐츠', en: 'My Content' },
@@ -71,31 +62,22 @@ const t = {
   archive: { ko: '보관', en: 'Archive' },
   restore: { ko: '복원', en: 'Restore' },
   noResults: { ko: '검색 결과가 없습니다.', en: 'No results found.' },
+  noContent: { ko: '콘텐츠가 없습니다.', en: 'No content.' },
+  noContentDescription: { ko: '새 콘텐츠를 등록해 보세요.', en: 'Try adding new content.' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   confirmDelete: { ko: '정말 삭제하시겠습니까?', en: 'Are you sure you want to delete?' },
   prev: { ko: '이전', en: 'Prev' },
   next: { ko: '다음', en: 'Next' },
+  contentCount: { ko: '개의 콘텐츠', en: ' contents' },
+  gridView: { ko: '카드', en: 'Card' },
+  listView: { ko: '리스트', en: 'List' },
+  columnTitle: { ko: '제목', en: 'Title' },
+  columnType: { ko: '유형', en: 'Type' },
+  columnDate: { ko: '등록일', en: 'Date' },
+  columnFile: { ko: '파일', en: 'File' },
+  columnActions: { ko: '액션', en: 'Actions' },
 };
-
-// 파일 크기 포맷팅
-function formatFileSize(bytes: number | null | undefined): string {
-  if (bytes === null || bytes === undefined) return '-';
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
-
-// 날짜 포맷팅
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-}
 
 export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>) {
   const navigate = useNavigate();
@@ -104,6 +86,9 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   const [statusFilter, setStatusFilter] = useState<ContentStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   // 미리보기 모달 상태
   const [previewModal, setPreviewModal] = useState<{
@@ -140,6 +125,32 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     DOCUMENT: contents.filter((c) => c.contentType === 'DOCUMENT').length,
     IMAGE: contents.filter((c) => c.contentType === 'IMAGE').length,
     EXTERNAL_LINK: contents.filter((c) => c.contentType === 'EXTERNAL_LINK').length,
+  };
+
+  // 정렬된 콘텐츠
+  const sortedContents = [...contents].sort((a, b) => {
+    if (sortField === 'title') {
+      return sortOrder === 'asc'
+        ? a.originalFileName.localeCompare(b.originalFileName)
+        : b.originalFileName.localeCompare(a.originalFileName);
+    } else if (sortField === 'type') {
+      return sortOrder === 'asc'
+        ? a.contentType.localeCompare(b.contentType)
+        : b.contentType.localeCompare(a.contentType);
+    } else {
+      return sortOrder === 'asc'
+        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+  });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field as SortField);
+      setSortOrder('asc');
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -180,6 +191,96 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null });
   };
 
+  // 리스트뷰 컬럼 정의
+  const columns: SimpleTableColumn<ContentListResponse>[] = [
+    {
+      key: 'title',
+      header: getText('columnTitle'),
+      sortable: true,
+      render: (item) => (
+        <p className="text-sm text-text-primary max-w-md truncate">
+          {item.originalFileName}
+        </p>
+      ),
+    },
+    {
+      key: 'type',
+      header: getText('columnType'),
+      sortable: true,
+      render: (item) => (
+        <Badge variant={contentTypeBadgeColor[item.contentType]}>
+          {getText(item.contentType)}
+        </Badge>
+      ),
+    },
+    {
+      key: 'date',
+      header: getText('columnDate'),
+      sortable: true,
+      render: (item) => (
+        <p className="text-sm text-text-secondary">{formatDate(item.createdAt)}</p>
+      ),
+    },
+    {
+      key: 'file',
+      header: getText('columnFile'),
+      render: (item) => (
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-text-primary truncate max-w-xs">
+            {item.originalFileName}
+          </p>
+          <p className="text-xs text-text-secondary">
+            {formatFileSize(item.fileSize)} • v{item.currentVersion}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: getText('columnActions'),
+      align: 'right',
+      render: (item) => (
+        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => handlePreview(item)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+          >
+            <Eye size={16} />
+          </button>
+          {item.status === 'ARCHIVED' ? (
+            <button
+              onClick={() => handleRestore(item.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+            >
+              <RotateCcw size={16} />
+            </button>
+          ) : (
+            <button
+              onClick={() => handleArchive(item.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+            >
+              <Archive size={16} />
+            </button>
+          )}
+          <button
+            onClick={() => handleDelete(item.id)}
+            disabled={deleteContent.isPending}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-status-error/10 transition-colors"
+          >
+            <Trash2 size={16} className="text-status-error" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const cardLabels = {
+    view: getText('view'),
+    edit: language === 'ko' ? '수정' : 'Edit',
+    registrationDate: getText('registrationDate'),
+    archived: getText('ARCHIVED'),
+  };
+
   if (error) {
     return (
       <div className="h-full flex items-center justify-center bg-bg-app">
@@ -193,8 +294,8 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
 
   return (
     <div className="h-full flex flex-col bg-bg-app">
-      {/* Top Bar */}
-      <div className="border-b border-border bg-bg-default sticky top-0 z-10">
+      {/* Top Bar - 배경 통일, border 제거 */}
+      <div className="sticky top-0 z-10 bg-bg-app">
         <div className="p-6 px-8">
           {/* [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제 */}
           <DevLoginButton />
@@ -222,7 +323,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
                   setSearchQuery(e.target.value);
                   setPage(0);
                 }}
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-action-primary"
+                className="w-full pl-10 pr-4 py-2.5 bg-bg-default border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-btn-neutral"
               />
             </div>
             <Button variant="ghost" onClick={() => setShowFilters(!showFilters)} className="border border-border">
@@ -285,14 +386,27 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
 
       {/* Content List */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8">
+        <div className="p-6 px-8 pt-0">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            <StatCard label={getText('totalContent')} value={contentStats.total} />
-            <StatCard label={getText('VIDEO')} value={contentStats.VIDEO} />
-            <StatCard label={getText('DOCUMENT')} value={contentStats.DOCUMENT} />
-            <StatCard label={getText('IMAGE')} value={contentStats.IMAGE} />
-            <StatCard label={getText('EXTERNAL_LINK')} value={contentStats.EXTERNAL_LINK} />
+            <IconStatCard icon={<LayoutGrid size={20} />} label={getText('totalContent')} value={contentStats.total} />
+            <IconStatCard icon={<Video size={20} />} label={getText('VIDEO')} value={contentStats.VIDEO} />
+            <IconStatCard icon={<FileIcon size={20} />} label={getText('DOCUMENT')} value={contentStats.DOCUMENT} />
+            <IconStatCard icon={<Image size={20} />} label={getText('IMAGE')} value={contentStats.IMAGE} />
+            <IconStatCard icon={<Link size={20} />} label={getText('EXTERNAL_LINK')} value={contentStats.EXTERNAL_LINK} />
+          </div>
+
+          {/* View Toggle & Count */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-text-secondary">
+              {sortedContents.length}{getText('contentCount')}
+            </p>
+            <ViewToggle
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              gridLabel={getText('gridView')}
+              listLabel={getText('listView')}
+            />
           </div>
 
           {/* Loading State */}
@@ -303,30 +417,52 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
             </div>
           )}
 
-          {/* Content Grid */}
-          {!isLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {contents.length === 0 ? (
-                <div className="col-span-full text-center py-12 text-text-secondary">
-                  <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
-                  <p>{getText('noResults')}</p>
-                </div>
-              ) : (
-                contents.map((content) => (
-                  <ContentCard
-                    key={content.id}
-                    content={content}
-                    getText={getText}
-                    onPreview={() => handlePreview(content)}
-                    onArchive={() => handleArchive(content.id)}
-                    onRestore={() => handleRestore(content.id)}
-                    onDelete={() => handleDelete(content.id)}
-                    onNavigateDetail={() => navigate(`/tu/teaching/content/${content.id}`)}
-                    isDeleting={deleteContent.isPending}
-                  />
-                ))
-              )}
+          {/* Empty State - 콘텐츠 자체가 없는 경우 */}
+          {!isLoading && totalElements === 0 && !searchQuery && typeFilter === 'all' && statusFilter === 'all' && (
+            <div className="text-center py-12 text-text-secondary">
+              <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
+              <p className="mb-1">{getText('noContent')}</p>
+              <p className="text-sm">{getText('noContentDescription')}</p>
             </div>
+          )}
+
+          {/* Empty State - 검색/필터 결과가 없는 경우 */}
+          {!isLoading && sortedContents.length === 0 && (searchQuery || typeFilter !== 'all' || statusFilter !== 'all') && (
+            <div className="text-center py-12 text-text-secondary">
+              <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
+              <p>{getText('noResults')}</p>
+            </div>
+          )}
+
+          {/* Content Grid View */}
+          {!isLoading && viewMode === 'grid' && sortedContents.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedContents.map((content) => (
+                <ContentCard
+                  key={content.id}
+                  content={content}
+                  labels={cardLabels}
+                  onPreview={() => handlePreview(content)}
+                  onEdit={() => navigate(`/tu/teaching/content/${content.id}/edit`)}
+                  onDelete={() => handleDelete(content.id)}
+                  onNavigateDetail={() => navigate(`/tu/teaching/content/${content.id}`)}
+                  isDeleting={deleteContent.isPending}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Content List View */}
+          {!isLoading && viewMode === 'list' && sortedContents.length > 0 && (
+            <SimpleTable
+              data={sortedContents}
+              columns={columns}
+              keyExtractor={(item) => item.id}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
+              onRowClick={(item) => navigate(`/tu/teaching/content/${item.id}`)}
+            />
           )}
 
           {/* Pagination */}
@@ -368,112 +504,3 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   );
 }
 
-// 통계 카드 컴포넌트
-function StatCard({ label, value }: Readonly<{ label: string; value: number }>) {
-  return (
-    <div className="bg-bg-default border border-border rounded-lg p-4">
-      <p className="text-sm text-text-secondary mb-1">{label}</p>
-      <p className="text-2xl text-text-primary font-semibold m-0">{value}</p>
-    </div>
-  );
-}
-
-// 콘텐츠 카드 컴포넌트
-interface ContentCardProps {
-  content: ContentListResponse;
-  getText: (key: keyof typeof t) => string;
-  onPreview: () => void;
-  onArchive: () => void;
-  onRestore: () => void;
-  onDelete: () => void;
-  onNavigateDetail: () => void;
-  isDeleting: boolean;
-}
-
-function ContentCard({
-  content,
-  getText,
-  onPreview,
-  onArchive,
-  onRestore,
-  onDelete,
-  onNavigateDetail,
-  isDeleting,
-}: Readonly<ContentCardProps>) {
-  const IconComponent = contentTypeIcon[content.contentType];
-  const isArchived = content.status === 'ARCHIVED';
-
-  return (
-    <div
-      className={cn(
-        'bg-bg-default border border-border rounded-lg p-5 transition-shadow hover:shadow-md cursor-pointer',
-        isArchived && 'opacity-60'
-      )}
-      onClick={onNavigateDetail}
-    >
-      {/* Content Header */}
-      <div className="mb-3">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-text-primary text-base leading-snug flex-1 truncate">
-            {content.originalFileName}
-          </h3>
-          {isArchived && (
-            <Badge variant="gray" className="ml-2 shrink-0">
-              {getText('ARCHIVED')}
-            </Badge>
-          )}
-        </div>
-        <Badge variant={contentTypeBadgeColor[content.contentType]}>
-          {getText(content.contentType)}
-        </Badge>
-      </div>
-
-      {/* File Info */}
-      <div className="mb-4 p-3 rounded-lg bg-bg-app">
-        <div className="flex items-center gap-2 mb-2">
-          <IconComponent size={16} className="text-text-secondary" />
-          <span className="text-sm text-text-primary truncate">{content.originalFileName}</span>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-text-secondary">
-          <span>{formatFileSize(content.fileSize)}</span>
-          {content.duration && (
-            <>
-              <span>•</span>
-              <span>{Math.floor(content.duration / 60)}:{String(content.duration % 60).padStart(2, '0')}</span>
-            </>
-          )}
-          <span>•</span>
-          <span>v{content.currentVersion}</span>
-        </div>
-      </div>
-
-      {/* Registration Date */}
-      <div className="flex items-center gap-2 mb-4 text-sm text-text-secondary">
-        <Calendar size={16} />
-        <span>{getText('registrationDate')}: {formatDate(content.createdAt)}</span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <Button variant="ghost" size="sm" className="flex-1 border border-border" onClick={onPreview}>
-          <Eye size={16} />
-          <span>{getText('view')}</span>
-        </Button>
-        {isArchived ? (
-          <Button variant="ghost" size="sm" className="flex-1 border border-border" onClick={onRestore}>
-            <RotateCcw size={16} />
-            <span>{getText('restore')}</span>
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" className="flex-1 border border-border" onClick={onArchive}>
-            <Archive size={16} />
-            <span>{getText('archive')}</span>
-          </Button>
-        )}
-        <Button variant="destructive" size="sm" className="px-3" onClick={onDelete} disabled={isDeleting}>
-          <Trash2 size={16} />
-        </Button>
-      </div>
-    </div>
-  );
-}
