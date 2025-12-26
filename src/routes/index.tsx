@@ -6,6 +6,8 @@ import {
   TuContentCreatePage,
   ContentDetailPage,
   SettingsLanguagePage,
+  CatalogPage,
+  CatalogDetailPage,
 } from '@/pages/tu';
 import {
   SettingsPage,
@@ -153,7 +155,8 @@ export function AppRoutes() {
         <Route path="teaching/content/:id" element={<ContentDetailPage />} />
         <Route path="teaching/assignments" element={<PlaceholderPage title="내 과제" />} />
         {/* 교육 과정 탐색 */}
-        <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
+        <Route path="catalog" element={<CatalogPage />} />
+        <Route path="catalog/:id" element={<CatalogDetailPage />} />
         <Route path="learning" element={<PlaceholderPage title="내 학습" />} />
         {/* 성과 및 인증 */}
         <Route path="progress" element={<PlaceholderPage title="학습 진도" />} />
