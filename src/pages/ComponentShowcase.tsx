@@ -91,7 +91,7 @@ import {
   PopoverTrigger,
 } from "@/components/common/Popover";
 import { Progress } from "@/components/common/Progress";
-import { RadioGroup, RadioGroupItem } from "@/components/common/RadioGroup";
+import { RadioOptionCard } from "@/components/common/RadioOptionCard";
 import { ScrollArea } from "@/components/common/ScrollArea";
 import {
   Select,
@@ -215,6 +215,7 @@ export default function ComponentShowcase() {
   const [progress, setProgress] = useState(45);
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
   const [stepperStep, setStepperStep] = useState(1);
+  const [notificationPref, setNotificationPref] = useState("email");
 
   return (
     <TooltipProvider>
@@ -544,23 +545,35 @@ export default function ComponentShowcase() {
                 <Label htmlFor="terms">Accept terms and conditions</Label>
               </div>
 
-              {/* Radio Group */}
+              {/* Radio (Simple variant - RadioGroup 대체) */}
               <div className="space-y-2">
                 <Label>Notification preference</Label>
-                <RadioGroup defaultValue="email">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="email" id="email" />
-                    <Label htmlFor="email">Email</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="sms" id="sms" />
-                    <Label htmlFor="sms">SMS</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="push" id="push" />
-                    <Label htmlFor="push">Push Notification</Label>
-                  </div>
-                </RadioGroup>
+                <div className="grid gap-2">
+                  <RadioOptionCard
+                    variant="simple"
+                    name="notification"
+                    value="email"
+                    label="Email"
+                    isSelected={notificationPref === "email"}
+                    onChange={setNotificationPref}
+                  />
+                  <RadioOptionCard
+                    variant="simple"
+                    name="notification"
+                    value="sms"
+                    label="SMS"
+                    isSelected={notificationPref === "sms"}
+                    onChange={setNotificationPref}
+                  />
+                  <RadioOptionCard
+                    variant="simple"
+                    name="notification"
+                    value="push"
+                    label="Push Notification"
+                    isSelected={notificationPref === "push"}
+                    onChange={setNotificationPref}
+                  />
+                </div>
               </div>
 
               {/* Switch */}
