@@ -111,6 +111,12 @@ export const API_ENDPOINTS = {
     SNAPSHOT: (id: number) => `/programs/${id}/snapshot`,
   },
 
+  // Instructor Assignments (TU - 내 배정)
+  INSTRUCTOR_ASSIGNMENTS: {
+    MY: '/users/me/instructor-assignments',
+    MY_STATISTICS: '/users/me/instructor-statistics',
+  },
+
   // Snapshots (TO)
   SNAPSHOTS: {
     BASE: '/snapshots',
