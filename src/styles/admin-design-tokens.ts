@@ -59,6 +59,7 @@ export const designTokens = {
   },
 
   // --- Badge Colors (태그/카테고리용 - 뮤트 톤) ---
+  // 용도: 태그, 카테고리, 상태 표시, 설정 카드 아이콘 컨테이너 등
   badge: {
     red: { text: '#9E3A3A', bg: '#FAECEC' },
     orange: { text: '#B5663A', bg: '#FDF3EC' },

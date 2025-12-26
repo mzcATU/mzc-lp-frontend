@@ -24,7 +24,6 @@ import {
   Activity,
   FileText,
   Shield,
-  Bell,
   Server,
   Layout,
   Paintbrush,
@@ -104,10 +103,7 @@ export const superAdminMenuData: MenuItem[] = [
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    subItems: [
-      { id: 'account-security', label: { ko: '계정 및 보안', en: 'Account & Security' }, icon: Shield, path: '/sa/settings/security' },
-      { id: 'notification-settings', label: { ko: '알림', en: 'Notifications' }, icon: Bell, path: '/sa/settings/notifications' },
-    ],
+    path: '/sa/settings',
   },
 ];
 
@@ -164,10 +160,7 @@ export const tenantAdminMenuData: MenuItem[] = [
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    subItems: [
-      { id: 'account-security', label: { ko: '계정 및 보안', en: 'Account & Security' }, icon: Shield, path: '/ta/settings/security' },
-      { id: 'notification-settings', label: { ko: '알림', en: 'Notifications' }, icon: Bell, path: '/ta/settings/notifications' },
-    ],
+    path: '/ta/settings',
   },
 ];
 
@@ -221,10 +214,7 @@ export const tenantOperatorMenuData: MenuItem[] = [
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    subItems: [
-      { id: 'account-security', label: { ko: '계정 및 보안', en: 'Account & Security' }, icon: Shield, path: '/to/settings/security' },
-      { id: 'notification-settings', label: { ko: '알림', en: 'Notifications' }, icon: Bell, path: '/to/settings/notifications' },
-    ],
+    path: '/to/settings',
   },
 ];
 
@@ -270,10 +260,7 @@ export const tenantUserMenuData: MenuItem[] = [
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    subItems: [
-      { id: 'account-security', label: { ko: '계정 및 보안', en: 'Account & Security' }, icon: Shield, path: '/tu/settings/security' },
-      { id: 'notification-settings', label: { ko: '알림', en: 'Notifications' }, icon: Bell, path: '/tu/settings/notifications' },
-    ],
+    path: '/tu/settings',
   },
 ];
 

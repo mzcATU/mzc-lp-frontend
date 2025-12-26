@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TenantUserSidebar } from './TenantUserSidebar';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { tenantUserMenuData } from '@/config/sidebar-menus';
+import { useUIStore } from '@/store/common/uiStore';
 
 interface TenantUserLayoutProps {
   children: ReactNode;
@@ -10,9 +11,7 @@ interface TenantUserLayoutProps {
 
 export function TenantUserLayout({ children }: TenantUserLayoutProps) {
   const navigate = useNavigate();
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState<'ko' | 'en'>('ko');
+  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items
@@ -39,12 +38,10 @@ export function TenantUserLayout({ children }: TenantUserLayoutProps) {
     >
       <TenantUserSidebar
         isExpanded={isSidebarExpanded}
-        onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        onToggle={toggleSidebar}
         onMenuItemClick={handleMenuItemClick}
         isDarkMode={isDarkMode}
-        onThemeToggle={() => setIsDarkMode(!isDarkMode)}
         language={language}
-        onLanguageChange={setLanguage}
       />
 
       <main className="flex-1 overflow-auto">{children}</main>
