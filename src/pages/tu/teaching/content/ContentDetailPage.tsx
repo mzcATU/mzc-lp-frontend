@@ -19,22 +19,22 @@ import {
   Link,
   Calendar,
   HardDrive,
-  History,
   Loader2,
   AlertCircle,
   Check,
+  History,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import {
   useContent,
-  useContentVersions,
   useUpdateContent,
   useReplaceFile,
   useArchiveContent,
   useRestoreContent,
   useDeleteContent,
+  useContentVersions,
   useRestoreVersion,
 } from '@/hooks/tu';
 import { contentService } from '@/services/tu';
@@ -282,6 +282,12 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
     }
   };
 
+  // 다운로드
+  const handleDownload = () => {
+    const downloadUrl = contentService.getDownloadUrl(contentId);
+    window.open(downloadUrl, '_blank');
+  };
+
   // 버전 복원
   const handleVersionRestore = async (versionNumber: number) => {
     if (!confirm(getText('confirmVersionRestore'))) return;
@@ -291,12 +297,6 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
     } catch (err) {
       console.error('Version restore failed:', err);
     }
-  };
-
-  // 다운로드
-  const handleDownload = () => {
-    const downloadUrl = contentService.getDownloadUrl(contentId);
-    window.open(downloadUrl, '_blank');
   };
 
   // 로딩 상태
