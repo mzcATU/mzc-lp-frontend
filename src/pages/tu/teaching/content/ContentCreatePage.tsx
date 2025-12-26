@@ -21,9 +21,10 @@ export function ContentCreatePage() {
           name: data.title, // 콘텐츠 제목을 name으로 사용
         });
       } else if (data.uploadedFile) {
-        // 파일 업로드
+        // 파일 업로드 (제목이 있으면 originalFileName으로 전달)
         await uploadContent.mutateAsync({
           file: data.uploadedFile,
+          originalFileName: data.title && data.title !== data.uploadedFile.name ? data.title : undefined,
         });
       }
 

@@ -283,9 +283,14 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   };
 
   // 다운로드
-  const handleDownload = () => {
-    const downloadUrl = contentService.getDownloadUrl(contentId);
-    window.open(downloadUrl, '_blank');
+  const handleDownload = async () => {
+    if (!content) return;
+    try {
+      await contentService.downloadFile(contentId, content.originalFileName);
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert('다운로드에 실패했습니다.');
+    }
   };
 
   // 버전 복원

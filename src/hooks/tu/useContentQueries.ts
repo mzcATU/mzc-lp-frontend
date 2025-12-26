@@ -80,8 +80,8 @@ export const useUploadContent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ file, folderId }: { file: File; folderId?: number }) =>
-      contentService.uploadFile(file, folderId),
+    mutationFn: ({ file, folderId, originalFileName }: { file: File; folderId?: number; originalFileName?: string }) =>
+      contentService.uploadFile(file, folderId, originalFileName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });

@@ -24,14 +24,17 @@ interface PageResponse<T> {
 
 export const contentService = {
   // 파일 업로드
-  async uploadFile(file: File, folderId?: number): Promise<ContentResponse> {
+  async uploadFile(file: File, folderId?: number, originalFileName?: string): Promise<ContentResponse> {
     const formData = new FormData();
     formData.append('file', file);
     if (folderId) {
       formData.append('folderId', String(folderId));
     }
+    if (originalFileName) {
+      formData.append('originalFileName', originalFileName);
+    }
 
-    const { data } = await axiosInstance.post<ContentResponse>(
+    const { data } = await axiosInstance.post<{ data: ContentResponse }>(
       API_ENDPOINTS.CONTENTS.UPLOAD,
       formData,
       {
@@ -40,16 +43,16 @@ export const contentService = {
         },
       }
     );
-    return data;
+    return data.data;
   },
 
   // 외부 링크 생성
   async createExternalLink(request: CreateExternalLinkRequest): Promise<ContentResponse> {
-    const { data } = await axiosInstance.post<ContentResponse>(
+    const { data } = await axiosInstance.post<{ data: ContentResponse }>(
       API_ENDPOINTS.CONTENTS.EXTERNAL_LINK,
       request
     );
-    return data;
+    return data.data;
   },
 
   // 콘텐츠 목록 조회
@@ -138,6 +141,24 @@ export const contentService = {
   getDownloadUrl(id: number): string {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     return `${baseUrl}${API_ENDPOINTS.CONTENTS.DOWNLOAD(id)}`;
+  },
+
+  // 파일 다운로드 (Blob 방식 - 인증 토큰 포함)
+  async downloadFile(id: number, fileName: string): Promise<void> {
+    const response = await axiosInstance.get(
+      API_ENDPOINTS.CONTENTS.DOWNLOAD(id),
+      { responseType: 'blob' }
+    );
+
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   },
 
   // 미리보기 URL 반환
