@@ -7,17 +7,10 @@ import {
   LandingFooter,
 } from '@/components/landing';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useTranslation } from '@/store/common/languageStore';
 
-// 정적 데이터
-const categories = [
-  { id: 'all', label: '전체' },
-  { id: 'cloud', label: '클라우드' },
-  { id: 'dev', label: '개발' },
-  { id: 'ai', label: 'AI' },
-  { id: 'data', label: '데이터' },
-  { id: 'security', label: '보안' },
-  { id: 'devops', label: 'DevOps' },
-];
+// 카테고리 ID 목록
+const categoryIds = ['all', 'cloud', 'dev', 'ai', 'data', 'security', 'devops'] as const;
 
 const courses = [
   {
@@ -138,7 +131,13 @@ const courses = [
 export function LandingPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const { theme } = useThemeStore();
+  const { t } = useTranslation();
   const isDark = theme === 'dark';
+
+  // 카테고리 레이블을 번역으로 가져오기
+  const getCategoryLabel = (id: string) => {
+    return t.landing[id as keyof typeof t.landing] as string;
+  };
 
   const filteredCourses =
     activeCategory === 'all'
@@ -160,19 +159,19 @@ export function LandingPage() {
         <div className="w-full px-4 md:px-8 lg:px-16 py-12">
           {/* Quick Category Chips */}
           <div className="flex flex-wrap items-center gap-3">
-            {categories.map((cat) => (
+            {categoryIds.map((catId) => (
               <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+                key={catId}
+                onClick={() => setActiveCategory(catId)}
                 className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300
                   ${
-                    activeCategory === cat.id
+                    activeCategory === catId
                       ? 'landing-btn-primary shadow-lg'
                       : 'landing-chip-inactive'
                   }
                 `}
               >
-                {cat.label}
+                {getCategoryLabel(catId)}
               </button>
             ))}
           </div>
@@ -184,16 +183,16 @@ export function LandingPage() {
             <div>
               <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">
                 {activeCategory === 'all'
-                  ? '지금 주목해야 할 강의'
-                  : `${categories.find((c) => c.id === activeCategory)?.label} 관련 강의`}
+                  ? t.landing.featuredCourses
+                  : `${getCategoryLabel(activeCategory)} ${t.landing.relatedCourses}`}
               </h2>
-              <p className="landing-text-muted text-sm mt-2">성장을 위한 최고의 선택</p>
+              <p className="landing-text-muted text-sm mt-2">{t.landing.featuredCoursesDesc}</p>
             </div>
             <a
               href="/tu/catalog"
               className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
             >
-              전체보기 <ChevronRight className="w-4 h-4" />
+              {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
             </a>
           </div>
 
@@ -202,7 +201,7 @@ export function LandingPage() {
               filteredCourses.map((course) => <LandingCourseCard key={course.id} {...course} />)
             ) : (
               <p className="col-span-5 text-center landing-text-muted py-10">
-                해당 카테고리에 강의가 없습니다.
+                {t.landing.noCoursesInCategory}
               </p>
             )}
           </div>
@@ -213,14 +212,14 @@ export function LandingPage() {
           <div className="w-full px-4 md:px-8 lg:px-16">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">따끈따끈 신규 강의</h2>
-                <p className="landing-text-muted text-sm mt-2">매일 업데이트되는 새로운 배움</p>
+                <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">{t.landing.newCourses}</h2>
+                <p className="landing-text-muted text-sm mt-2">{t.landing.newCoursesDesc}</p>
               </div>
               <a
                 href="/tu/catalog"
                 className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
               >
-                전체보기 <ChevronRight className="w-4 h-4" />
+                {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
               </a>
             </div>
 
@@ -236,14 +235,14 @@ export function LandingPage() {
         <section className="w-full px-4 md:px-8 lg:px-16 py-20">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">왕초보도 할 수 있어요</h2>
-              <p className="landing-text-muted text-sm mt-2">시작이 반! 기초부터 탄탄하게</p>
+              <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">{t.landing.beginnerCourses}</h2>
+              <p className="landing-text-muted text-sm mt-2">{t.landing.beginnerCoursesDesc}</p>
             </div>
             <a
               href="/tu/catalog"
               className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
             >
-              전체보기 <ChevronRight className="w-4 h-4" />
+              {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
             </a>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
+import { useTranslation } from '@/store/common/languageStore';
 
 interface LandingCourseCardProps {
   id: number;
@@ -23,6 +24,22 @@ export function LandingCourseCard({
   image,
   tags,
 }: LandingCourseCardProps) {
+  const { t, language } = useTranslation();
+
+  // 태그 번역 매핑
+  const getTagLabel = (tag: string) => {
+    if (tag === 'NEW') return t.landing.tagNew;
+    if (tag === '베스트') return t.landing.tagBest;
+    if (tag === '할인중') return t.landing.tagSale;
+    return tag;
+  };
+
+  // 수강생 수 포맷
+  const formatStudentCount = (count: number) => {
+    const displayCount = count > 100 ? '100+' : count.toString();
+    return language === 'ko' ? `+${displayCount}명` : `${displayCount}+ students`;
+  };
+
   return (
     <Link to={`/tu/catalog/${id}`} className="group block h-full">
       <div className="h-full card-hover rounded-xl overflow-hidden landing-card-bg border landing-card-border">
@@ -47,7 +64,7 @@ export function LandingCourseCard({
                         : 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
                   }`}
                 >
-                  {tag}
+                  {getTagLabel(tag)}
                 </span>
               ))}
             </div>
@@ -79,7 +96,7 @@ export function LandingCourseCard({
             <span className="font-bold text-[#6778ff] text-lg">{price}</span>
             <div className="flex gap-1.5">
               <span className="landing-badge-bg landing-text-muted text-[10px] px-2 py-1 rounded-full">
-                +{reviewCount > 100 ? '100' : reviewCount}명
+                {formatStudentCount(reviewCount)}
               </span>
             </div>
           </div>

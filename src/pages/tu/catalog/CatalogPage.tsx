@@ -28,16 +28,11 @@ import {
   PaginationPrevious,
 } from '@/components/common';
 import { useCatalogPrograms } from '@/hooks/tu';
+import { useTranslation } from '@/store/common/languageStore';
 import type { CatalogFilterParams, CatalogProgram } from '@/services/tu/catalogService';
 
 type ViewMode = 'grid' | 'list';
 type Difficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'all';
-
-const difficultyLabels: Record<string, string> = {
-  BEGINNER: '입문',
-  INTERMEDIATE: '중급',
-  ADVANCED: '고급',
-};
 
 const difficultyColors: Record<string, 'green' | 'blue' | 'orange'> = {
   BEGINNER: 'green',
@@ -45,7 +40,13 @@ const difficultyColors: Record<string, 'green' | 'blue' | 'orange'> = {
   ADVANCED: 'orange',
 };
 
-function ProgramCard({ program, onClick }: { program: CatalogProgram; onClick: () => void }) {
+function ProgramCard({ program, onClick, t }: { program: CatalogProgram; onClick: () => void; t: ReturnType<typeof useTranslation>['t'] }) {
+  const difficultyLabels: Record<string, string> = {
+    BEGINNER: t.catalog.beginner,
+    INTERMEDIATE: t.catalog.intermediate,
+    ADVANCED: t.catalog.advanced,
+  };
+
   return (
     <Card
       className="cursor-pointer transition-all hover:shadow-md"
@@ -113,13 +114,13 @@ function ProgramCard({ program, onClick }: { program: CatalogProgram; onClick: (
           {program.duration && (
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {Math.floor(program.duration / 60)}시간 {program.duration % 60}분
+              {Math.floor(program.duration / 60)}{t.catalog.hours} {program.duration % 60}{t.catalog.minutes}
             </span>
           )}
           {program.enrollmentCount !== undefined && (
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
-              {program.enrollmentCount.toLocaleString()}명
+              {program.enrollmentCount.toLocaleString()}{t.catalog.students}
             </span>
           )}
           {program.rating !== undefined && (
@@ -134,7 +135,13 @@ function ProgramCard({ program, onClick }: { program: CatalogProgram; onClick: (
   );
 }
 
-function ProgramListItem({ program, onClick }: { program: CatalogProgram; onClick: () => void }) {
+function ProgramListItem({ program, onClick, t }: { program: CatalogProgram; onClick: () => void; t: ReturnType<typeof useTranslation>['t'] }) {
+  const difficultyLabels: Record<string, string> = {
+    BEGINNER: t.catalog.beginner,
+    INTERMEDIATE: t.catalog.intermediate,
+    ADVANCED: t.catalog.advanced,
+  };
+
   return (
     <div
       className="flex gap-4 p-4 rounded-lg cursor-pointer transition-all hover:bg-opacity-80"
@@ -201,13 +208,13 @@ function ProgramListItem({ program, onClick }: { program: CatalogProgram; onClic
           {program.duration && (
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {Math.floor(program.duration / 60)}시간 {program.duration % 60}분
+              {Math.floor(program.duration / 60)}{t.catalog.hours} {program.duration % 60}{t.catalog.minutes}
             </span>
           )}
           {program.enrollmentCount !== undefined && (
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
-              {program.enrollmentCount.toLocaleString()}명
+              {program.enrollmentCount.toLocaleString()}{t.catalog.students}
             </span>
           )}
           {program.rating !== undefined && (
@@ -223,6 +230,13 @@ function ProgramListItem({ program, onClick }: { program: CatalogProgram; onClic
 }
 
 export function CatalogPage() {
+  const { t } = useTranslation();
+
+  const difficultyLabels: Record<string, string> = {
+    BEGINNER: t.catalog.beginner,
+    INTERMEDIATE: t.catalog.intermediate,
+    ADVANCED: t.catalog.advanced,
+  };
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<Difficulty>('all');
@@ -270,10 +284,10 @@ export function CatalogPage() {
               marginBottom: '8px',
             }}
           >
-            강의 카탈로그
+            {t.catalog.title}
           </h1>
           <p style={{ color: designTokens.text.secondary, fontSize: '14px' }}>
-            수강 가능한 강의를 탐색하고 수강신청하세요
+            {t.catalog.description}
           </p>
         </div>
 
@@ -288,7 +302,7 @@ export function CatalogPage() {
               />
               <Input
                 type="text"
-                placeholder="강의 검색..."
+                placeholder={t.catalog.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -303,7 +317,7 @@ export function CatalogPage() {
             className="gap-2"
           >
             <Filter className="w-4 h-4" />
-            필터
+            {t.catalog.filter}
             <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </Button>
 
@@ -342,7 +356,7 @@ export function CatalogPage() {
                   className="block text-sm font-medium mb-2"
                   style={{ color: designTokens.text.secondary }}
                 >
-                  난이도
+                  {t.catalog.difficulty}
                 </label>
                 <div className="flex gap-2">
                   {(['all', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'] as Difficulty[]).map((level) => (
@@ -355,7 +369,7 @@ export function CatalogPage() {
                         setPage(0);
                       }}
                     >
-                      {level === 'all' ? '전체' : difficultyLabels[level]}
+                      {level === 'all' ? t.landing.all : difficultyLabels[level]}
                     </Button>
                   ))}
                 </div>
@@ -367,7 +381,7 @@ export function CatalogPage() {
         {/* Results Count */}
         {data && (
           <p className="mb-4 text-sm" style={{ color: designTokens.text.secondary }}>
-            총 <span style={{ color: designTokens.text.primary, fontWeight: 600 }}>{data.totalElements}</span>개의 강의
+            {t.catalog.totalCourses} <span style={{ color: designTokens.text.primary, fontWeight: 600 }}>{data.totalElements}</span> {t.catalog.courses}
           </p>
         )}
 
@@ -382,7 +396,7 @@ export function CatalogPage() {
         {isError && (
           <div className="text-center py-20">
             <p style={{ color: designTokens.status.error_text }}>
-              데이터를 불러오는 중 오류가 발생했습니다.
+              {t.catalog.loadError}
             </p>
           </div>
         )}
@@ -395,10 +409,10 @@ export function CatalogPage() {
               className="text-lg font-medium mb-2"
               style={{ color: designTokens.text.primary }}
             >
-              강의가 없습니다
+              {t.catalog.noCourses}
             </h3>
             <p style={{ color: designTokens.text.secondary }}>
-              검색 조건을 변경해 보세요
+              {t.catalog.changeFilter}
             </p>
           </div>
         )}
@@ -413,6 +427,7 @@ export function CatalogPage() {
                     key={program.id}
                     program={program}
                     onClick={() => handleProgramClick(program.id)}
+                    t={t}
                   />
                 ))}
               </div>
@@ -423,6 +438,7 @@ export function CatalogPage() {
                     key={program.id}
                     program={program}
                     onClick={() => handleProgramClick(program.id)}
+                    t={t}
                   />
                 ))}
               </div>

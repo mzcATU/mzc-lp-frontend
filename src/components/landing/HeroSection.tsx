@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, Rocket, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '@/store/common/languageStore';
 
-const slides = [
+const slideData = [
   {
     id: 1,
     title: 'Empower Your',
     highlight: 'Future',
-    subtitle: '클라우드 전문가로 성장하는\n가장 빠른 길',
-    description: 'MZC Learn과 함께 시작하세요.',
+    subtitleKey: 'slide1Subtitle' as const,
+    descKey: 'slide1Desc' as const,
     badge: 'MZC LEARN',
     icon: Sparkles,
     gradientClass: 'gradient-text',
@@ -17,8 +18,8 @@ const slides = [
     id: 2,
     title: 'Build Your',
     highlight: 'Career',
-    subtitle: '나만의 커리어 로드맵\n지금 설계하세요',
-    description: '초보자부터 전문가까지, 단계별 학습 가이드',
+    subtitleKey: 'slide2Subtitle' as const,
+    descKey: 'slide2Desc' as const,
     badge: 'ROADMAP',
     icon: Rocket,
     gradientClass: 'gradient-text-purple',
@@ -27,8 +28,8 @@ const slides = [
     id: 3,
     title: 'Master',
     highlight: 'Cloud',
-    subtitle: 'AWS, Azure, GCP\n클라우드 완전 정복',
-    description: '현직자가 알려주는 실무 클라우드 노하우',
+    subtitleKey: 'slide3Subtitle' as const,
+    descKey: 'slide3Desc' as const,
     badge: 'CLOUD',
     icon: Zap,
     gradientClass: 'gradient-text',
@@ -39,13 +40,14 @@ export function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
+  const { t } = useTranslation();
 
   useEffect(() => {
     const timer = setInterval(() => {
       setDirection('right');
       setIsAnimating(true);
       setTimeout(() => {
-        setCurrentSlide((prev) => (prev + 1) % slides.length);
+        setCurrentSlide((prev) => (prev + 1) % slideData.length);
         setIsAnimating(false);
       }, 300);
     }, 5000);
@@ -67,7 +69,7 @@ export function HeroSection() {
     setDirection('left');
     setIsAnimating(true);
     setTimeout(() => {
-      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+      setCurrentSlide((prev) => (prev - 1 + slideData.length) % slideData.length);
       setIsAnimating(false);
     }, 300);
   };
@@ -77,12 +79,12 @@ export function HeroSection() {
     setDirection('right');
     setIsAnimating(true);
     setTimeout(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      setCurrentSlide((prev) => (prev + 1) % slideData.length);
       setIsAnimating(false);
     }, 300);
   };
 
-  const slide = slides[currentSlide];
+  const slide = slideData[currentSlide];
   const IconComponent = slide.icon;
 
   return (
@@ -120,24 +122,24 @@ export function HeroSection() {
           </div>
 
           <p className="text-xl md:text-2xl font-medium text-gray-300 whitespace-pre-line leading-relaxed">
-            {slide.subtitle}
+            {t.hero[slide.subtitleKey]}
           </p>
 
-          <p className="text-base md:text-lg text-gray-500">{slide.description}</p>
+          <p className="text-base md:text-lg text-gray-500">{t.hero[slide.descKey]}</p>
 
           <div className="flex gap-4 pt-4">
             <Link
               to="/tu/catalog"
               className="landing-btn-primary px-8 py-4 rounded-full text-white font-bold text-base flex items-center gap-2"
             >
-              시작하기
+              {t.hero.getStarted}
               <ChevronRight className="w-5 h-5" />
             </Link>
             <Link
               to="/tu/learning"
               className="landing-btn-outline px-8 py-4 rounded-full text-white font-medium text-base"
             >
-              둘러보기
+              {t.hero.explore}
             </Link>
           </div>
         </div>
@@ -161,14 +163,14 @@ export function HeroSection() {
         <button
           onClick={prevSlide}
           className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full glass hover:bg-white/20 transition-all"
-          aria-label="이전 슬라이드"
+          aria-label={t.hero.prevSlide}
         >
           <ChevronLeft className="w-6 h-6 text-white" />
         </button>
         <button
           onClick={nextSlide}
           className="absolute right-4 lg:right-[380px] top-1/2 -translate-y-1/2 p-3 rounded-full glass hover:bg-white/20 transition-all"
-          aria-label="다음 슬라이드"
+          aria-label={t.hero.nextSlide}
         >
           <ChevronRight className="w-6 h-6 text-white" />
         </button>
@@ -176,11 +178,11 @@ export function HeroSection() {
 
       {/* Dots */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
-        {slides.map((_, index) => (
+        {slideData.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            aria-label={`슬라이드 ${index + 1}로 이동`}
+            aria-label={`${t.hero.goToSlide} ${index + 1}`}
             className={`h-2 rounded-full transition-all duration-300 ${
               index === currentSlide
                 ? 'w-8 bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
