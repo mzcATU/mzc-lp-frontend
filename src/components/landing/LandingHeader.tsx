@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Bell, Menu, X, LogOut, User, Sun, Moon } from 'lucide-react';
+import { Search, ShoppingCart, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, PlusCircle, Shield, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/common/auth';
+import { useMyProfile } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useTranslation } from '@/store/common/languageStore';
 
 export function LandingHeader() {
   const [showBanner, setShowBanner] = useState(true);
@@ -10,8 +12,18 @@ export function LandingHeader() {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { data: profile } = useMyProfile();
   const { theme, toggleTheme } = useThemeStore();
+  const { t } = useTranslation();
   const isDark = theme === 'dark';
+
+  // 프로필 이미지 URL 생성
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
+  const profileImageUrl = profile?.profileImageUrl
+    ? profile.profileImageUrl.startsWith('http')
+      ? profile.profileImageUrl
+      : `${apiBaseUrl}${profile.profileImageUrl}`
+    : null;
 
   const handleLogout = () => {
     logout();
@@ -30,11 +42,11 @@ export function LandingHeader() {
       {/* Top Notification Banner - Gradient */}
       {showBanner && (
         <div className="bg-gradient-to-r from-[#6778ff] via-[#a855f7] to-[#6bc2f0] text-white text-xs md:text-sm py-2.5 px-4 text-center font-medium flex justify-center items-center gap-2 relative">
-          <span>MZC Learn Platform - 클라우드 교육의 새로운 시작</span>
+          <span>{t.landing.banner}</span>
           <button
             onClick={() => setShowBanner(false)}
             className="absolute right-4 text-white/70 hover:text-white text-lg transition-colors"
-            aria-label="배너 닫기"
+            aria-label={t.landing.closeBanner}
           >
             <X className="w-4 h-4" />
           </button>
@@ -72,7 +84,7 @@ export function LandingHeader() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="배우고 싶은 지식을 입력해보세요."
+              placeholder={t.landing.searchPlaceholder}
               className="w-full bg-white/5 border border-white/10 rounded-full pl-5 pr-12 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#6778ff] focus:border-[#6778ff] transition-all"
             />
             <button
@@ -90,7 +102,7 @@ export function LandingHeader() {
               <button
                 onClick={toggleTheme}
                 className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+                aria-label={isDark ? t.landing.switchToLight : t.landing.switchToDark}
               >
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
@@ -113,8 +125,12 @@ export function LandingHeader() {
                     onClick={() => setShowDropdown(!showDropdown)}
                     className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] flex items-center justify-center">
-                      <User className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] flex items-center justify-center overflow-hidden">
+                      {profileImageUrl ? (
+                        <img src={profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-4 h-4 text-white" />
+                      )}
                     </div>
                     <span className="text-sm text-white font-medium max-w-[100px] truncate">
                       {user.name}
@@ -123,27 +139,109 @@ export function LandingHeader() {
 
                   {/* Dropdown Menu */}
                   {showDropdown && (
-                    <div className="absolute right-0 top-12 w-64 glass rounded-xl p-4 shadow-xl border border-white/10">
-                      <Link
-                        to="/tu/settings"
-                        onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-3 pb-3 border-b border-white/10 hover:opacity-80 transition-opacity"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] flex items-center justify-center">
-                          <User className="w-5 h-5 text-white" />
+                    <div className={`absolute right-0 top-12 w-64 rounded-xl p-4 shadow-xl border ${
+                      isDark
+                        ? 'bg-[#1a1a2e]/95 backdrop-blur-md border-white/10'
+                        : 'bg-white border-gray-200'
+                    }`}>
+                      {/* 프로필 정보 */}
+                      <div className={`flex items-center gap-3 pb-3 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] flex items-center justify-center overflow-hidden">
+                          {profileImageUrl ? (
+                            <img src={profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-5 h-5 text-white" />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-white font-medium truncate">{user.name}</p>
-                          <p className="text-gray-400 text-xs truncate">{user.email}</p>
+                          <p className={`font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.name}</p>
+                          <p className={`text-xs truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
                         </div>
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full mt-3 flex items-center gap-2 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-sm"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        로그아웃
-                      </button>
+                      </div>
+
+                      {/* 메뉴 항목들 */}
+                      <div className="py-2 space-y-1">
+                        <Link
+                          to="/mypage"
+                          onClick={() => setShowDropdown(false)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                            isDark
+                              ? 'text-gray-300 hover:text-white hover:bg-white/10'
+                              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                          }`}
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          {t.landing.mypage}
+                        </Link>
+                        <Link
+                          to="/mypage/teaching"
+                          onClick={() => setShowDropdown(false)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                            isDark
+                              ? 'text-gray-300 hover:text-white hover:bg-white/10'
+                              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                          }`}
+                        >
+                          <PlusCircle className="w-4 h-4" />
+                          {t.landing.createCourse}
+                        </Link>
+                      </div>
+
+                      {/* 설정 메뉴 */}
+                      <div className={`py-2 border-t space-y-1 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                        <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.landing.settings}</p>
+                        <Link
+                          to="/mypage/profile"
+                          onClick={() => setShowDropdown(false)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
+                            isDark
+                              ? 'text-gray-300 hover:text-white hover:bg-white/10'
+                              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Shield className="w-4 h-4" />
+                          {t.landing.profileSecurity}
+                        </Link>
+                        <Link
+                          to="/mypage/notifications"
+                          onClick={() => setShowDropdown(false)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
+                            isDark
+                              ? 'text-gray-300 hover:text-white hover:bg-white/10'
+                              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Bell className="w-4 h-4" />
+                          {t.landing.notifications}
+                        </Link>
+                        <Link
+                          to="/mypage/language"
+                          onClick={() => setShowDropdown(false)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
+                            isDark
+                              ? 'text-gray-300 hover:text-white hover:bg-white/10'
+                              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Globe className="w-4 h-4" />
+                          {t.landing.languageRegion}
+                        </Link>
+                      </div>
+
+                      {/* 로그아웃 */}
+                      <div className={`pt-2 border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                        <button
+                          onClick={handleLogout}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                            isDark
+                              ? 'text-red-400 hover:bg-red-500/10'
+                              : 'text-red-500 hover:bg-red-50'
+                          }`}
+                        >
+                          <LogOut className="w-4 h-4" />
+                          {t.common.logout}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -154,19 +252,19 @@ export function LandingHeader() {
                     to="/login"
                     className="hidden md:flex px-4 py-2 landing-btn-outline text-white rounded-full text-sm font-medium"
                   >
-                    로그인
+                    {t.common.login}
                   </Link>
                   <Link
                     to="/register"
                     className="hidden md:flex px-4 py-2 landing-btn-primary text-white font-bold rounded-full text-sm"
                   >
-                    회원가입
+                    {t.common.signup}
                   </Link>
                 </>
               )}
 
               {/* Mobile Menu Toggle */}
-              <button className="p-2 md:hidden text-gray-400" aria-label="메뉴 열기">
+              <button className="p-2 md:hidden text-gray-400" aria-label={t.landing.openMenu}>
                 <Menu className="h-6 w-6" />
               </button>
             </div>
