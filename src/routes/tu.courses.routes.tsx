@@ -8,6 +8,8 @@ import {
   TuContentCreatePage,
   ContentDetailPage,
   SettingsLanguagePage,
+  MyLearningPage,
+  LearningDetailPage,
 } from '@/pages/tu';
 import {
   SettingsPage,
@@ -42,7 +44,8 @@ export const tuCoursesRoutes = (
 
     {/* 교육 과정 탐색 */}
     <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
-    <Route path="learning" element={<PlaceholderPage title="내 학습" />} />
+    <Route path="learning" element={<MyLearningPage />} />
+    <Route path="learning/:enrollmentId" element={<LearningDetailPage />} />
 
     {/* 성과 및 인증 */}
     <Route path="progress" element={<PlaceholderPage title="학습 진도" />} />

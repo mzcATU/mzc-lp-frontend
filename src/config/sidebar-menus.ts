@@ -265,6 +265,44 @@ export const tenantUserMenuData: MenuItem[] = [
 ];
 
 /**
+ * MyPage 메뉴 (일반 사용자용)
+ */
+export const myPageMenuData: MenuItem[] = [
+  {
+    id: 'mypage-home',
+    label: { ko: '마이페이지', en: 'My Page' },
+    icon: Home,
+    path: '/mypage',
+  },
+  {
+    id: 'my-enrollments',
+    label: { ko: '내 수강 강의', en: 'My Enrollments' },
+    icon: BookOpen,
+    subItems: [
+      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/mypage/learning' },
+      { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/mypage/completed' },
+      { id: 'certifications', label: { ko: '인증서', en: 'Certifications' }, icon: Award, path: '/mypage/certifications' },
+    ],
+  },
+  {
+    id: 'my-teaching',
+    label: { ko: '내 강의 관리', en: 'My Teaching' },
+    icon: Briefcase,
+    path: '/mypage/teaching',
+  },
+  {
+    id: 'mypage-settings',
+    label: { ko: '설정', en: 'Settings' },
+    icon: Settings,
+    subItems: [
+      { id: 'profile-security', label: { ko: '프로필 및 보안', en: 'Profile & Security' }, icon: Shield, path: '/mypage/profile' },
+      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Mail, path: '/mypage/notifications' },
+      { id: 'language', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/mypage/language' },
+    ],
+  },
+];
+
+/**
  * 역할별 라벨
  */
 export const roleLabels = {
@@ -272,4 +310,5 @@ export const roleLabels = {
   tenantAdmin: { ko: '테넌트 어드민', en: 'Tenant Admin' },
   tenantOperator: { ko: '교육 운영자', en: 'Operator' },
   tenantUser: { ko: 'Enterprise LMS', en: 'Enterprise LMS' },
+  myPage: { ko: '마이페이지', en: 'My Page' },
 };

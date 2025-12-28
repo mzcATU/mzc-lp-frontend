@@ -17,3 +17,7 @@ export { TenantOperatorSidebar } from './to/TenantOperatorSidebar';
 // TU (Tenant User)
 export { TenantUserLayout } from './tu/TenantUserLayout';
 export { TenantUserSidebar } from './tu/TenantUserSidebar';
+
+// MyPage
+export { MyPageLayout } from './mypage/MyPageLayout';
+export { MyPageSidebar } from './mypage/MyPageSidebar';

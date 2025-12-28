@@ -93,8 +93,8 @@ export const ROLE_REDIRECT_PATH: Record<TenantRole, string> = {
   SYSTEM_ADMIN: '/sa',
   TENANT_ADMIN: '/ta',
   OPERATOR: '/to',
-  DESIGNER: '/tu/teaching',
-  USER: '/tu',
+  DESIGNER: '/',
+  USER: '/',
 };
 
 // --- Legacy (하위 호환용) ---

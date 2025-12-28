@@ -46,10 +46,10 @@ export const userService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await axiosInstance.post<ApiResponse<{ profileImageUrl: string }>>(
+    // FormData 전송 시 headers를 생략하여 브라우저가 boundary 포함한 Content-Type 자동 설정
+    const response = await axiosInstance.postForm<ApiResponse<{ profileImageUrl: string }>>(
       API_ENDPOINTS.USERS.ME_PROFILE_IMAGE,
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      formData
     );
     return response.data.data;
   },
