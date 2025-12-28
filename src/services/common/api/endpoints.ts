@@ -143,11 +143,28 @@ export const API_ENDPOINTS = {
       `/snapshots/${snapshotId}/relations/${relationId}`,
   },
 
-  // Course Times (차수) - TU Catalog
+  // Course Times (차수) - TO 관리 + TU Catalog
   TIMES: {
     BASE: '/times',
     BY_ID: (id: number) => `/times/${id}`,
+    // CRUD
+    CLONE: (id: number) => `/times/${id}/clone`,
+    // 상태 전이
+    OPEN: (id: number) => `/times/${id}/open`,
+    START: (id: number) => `/times/${id}/start`,
+    CLOSE: (id: number) => `/times/${id}/close`,
+    ARCHIVE: (id: number) => `/times/${id}/archive`,
+    // 조회
+    CAPACITY: (id: number) => `/times/${id}/capacity`,
+    PRICE: (id: number) => `/times/${id}/price`,
+    // 수강신청 (TU)
     ENROLLMENTS: (id: number) => `/times/${id}/enrollments`,
+    // 강사 배정 (TO)
+    INSTRUCTORS: (timeId: number) => `/times/${timeId}/instructors`,
+    INSTRUCTOR_BY_ID: (timeId: number, assignmentId: number) =>
+      `/times/${timeId}/instructors/${assignmentId}`,
+    INSTRUCTOR_REPLACE: (timeId: number, assignmentId: number) =>
+      `/times/${timeId}/instructors/${assignmentId}/replace`,
   },
 
   // Enrollments (수강 신청) - TU
