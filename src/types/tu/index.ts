@@ -44,3 +44,21 @@ export {
   INSTRUCTOR_ROLE_LABELS,
   ASSIGNMENT_STATUS_LABELS,
 } from './instructorAssignment.types';
+
+// Learning Player
+export type {
+  PlayerContentType,
+  UpdateProgressRequest,
+  MarkItemCompleteRequest,
+  ProgressRecordResponse,
+  EnrollmentWithCurriculumResponse,
+  PlayerState,
+  VideoPlayerProps,
+  CurriculumSidebarProps,
+} from './learningPlayer.types';
+
+export {
+  initialPlayerState,
+  COMPLETION_THRESHOLD,
+  AUTO_SAVE_INTERVAL,
+} from './learningPlayer.types';

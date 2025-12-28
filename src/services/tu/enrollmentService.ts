@@ -1,5 +1,9 @@
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
+import type {
+  UpdateProgressRequest,
+  EnrollmentWithCurriculumResponse,
+} from '@/types/tu';
 
 /**
  * 수강 신청 상태
@@ -98,6 +102,35 @@ export const enrollmentService = {
    */
   cancelEnrollment: async (id: number): Promise<void> => {
     await axiosInstance.post(API_ENDPOINTS.ENROLLMENTS.CANCEL(id));
+  },
+
+  /**
+   * 수강 상세 + 커리큘럼 조회 (학습 플레이어용)
+   */
+  getEnrollmentWithCurriculum: async (id: number): Promise<EnrollmentWithCurriculumResponse> => {
+    const response = await axiosInstance.get<ApiResponse<EnrollmentWithCurriculumResponse>>(
+      API_ENDPOINTS.ENROLLMENTS.CURRICULUM(id)
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 학습 진도 업데이트
+   */
+  updateProgress: async (enrollmentId: number, request: UpdateProgressRequest): Promise<void> => {
+    await axiosInstance.patch(
+      API_ENDPOINTS.ENROLLMENTS.PROGRESS(enrollmentId),
+      request
+    );
+  },
+
+  /**
+   * 차시 완료 처리
+   */
+  markItemComplete: async (enrollmentId: number, itemId: number): Promise<void> => {
+    await axiosInstance.post(
+      API_ENDPOINTS.ENROLLMENTS.ITEM_COMPLETE(enrollmentId, itemId)
+    );
   },
 };
 

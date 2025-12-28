@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Sun, Moon, Globe } from 'lucide-react';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
+import { useAuthStore } from '@/store/common/authStore';
 import type { MenuItem } from '@/types';
 
 interface MyPageSidebarProps {
@@ -19,8 +20,18 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
+  const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
+
+  // 현재 유저 롤로 subItem 필터링
+  const filterSubItemsByRole = (subItems?: MenuItem['subItems']) => {
+    if (!subItems) return [];
+    return subItems.filter((item) => {
+      if (!item.roles || item.roles.length === 0) return true;
+      return user?.role && item.roles.includes(user.role);
+    });
+  };
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus((prev) =>
@@ -75,13 +86,19 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
         {/* Sub Items */}
         {hasSubItems && isExpanded && (
           <div className="mt-1 ml-4 pl-4 border-l-2" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb' }}>
-            {item.subItems?.map((subItem) => {
+            {filterSubItemsByRole(item.subItems).map((subItem) => {
               const subActive = isActive(subItem.path);
               const SubIcon = subItem.icon;
               return (
                 <button
                   key={subItem.id}
-                  onClick={() => subItem.path && onMenuItemClick?.(subItem.id)}
+                  onClick={() => {
+                    // 강의 개설하기 클릭 시 DESIGNER role 부여
+                    if (subItem.id === 'create-course') {
+                      updateUser({ role: 'DESIGNER' });
+                    }
+                    subItem.path && onMenuItemClick?.(subItem.id);
+                  }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm ${
                     subActive
                       ? isDark

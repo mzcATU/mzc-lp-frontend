@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Bell, Globe, Palette, LucideIcon } from 'lucide-react';
-import { SettingsCard } from '@/components/common';
+import { Shield, Bell, Globe, Palette, LucideIcon, ArrowLeft } from 'lucide-react';
+import { SettingsCard, Button } from '@/components/common';
 
 type UserRole = 'USER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SUPER_ADMIN';
 
@@ -16,10 +16,21 @@ interface SettingsPageProps {
 }
 
 // 역할별 카드 설정 (개인 설정만 - 관리 기능은 사이드바 메뉴에서 접근)
-// 새 카드 추가 시 색상은 자동으로 순환됨 (SettingsCard 컴포넌트에서 처리)
 const getSettingCards = (userRole: UserRole): SettingCardData[] => {
-  // 공통 카드 (모든 역할) - 개인 설정
-  const commonCards: SettingCardData[] = [
+  // USER는 언어 및 지역 설정만 표시
+  if (userRole === 'USER') {
+    return [
+      {
+        id: 'language',
+        icon: Globe,
+        title: '언어 및 지역',
+        description: '언어, 시간대 및 날짜 형식',
+      },
+    ];
+  }
+
+  // 관리자용 공통 카드
+  return [
     {
       id: 'security',
       icon: Shield,
@@ -39,23 +50,6 @@ const getSettingCards = (userRole: UserRole): SettingCardData[] => {
       description: '테마, 사이드바 및 표시 옵션',
     },
   ];
-
-  // USER 전용 카드 (언어 및 지역 설정)
-  const userOnlyCards: SettingCardData[] = [
-    {
-      id: 'language',
-      icon: Globe,
-      title: '언어 및 지역',
-      description: '언어, 시간대 및 날짜 형식',
-    },
-  ];
-
-  // USER만 언어 설정 추가, 나머지 역할은 공통 카드만
-  if (userRole === 'USER') {
-    return [...commonCards, ...userOnlyCards];
-  }
-
-  return commonCards;
 };
 
 // URL 경로에서 역할 추출
@@ -81,9 +75,14 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
   const detectedRole = userRole || getRoleFromPath(location.pathname);
   const basePath = getBasePath(location.pathname);
   const settingCards = getSettingCards(detectedRole);
+  const isUser = detectedRole === 'USER';
 
   const handleCardClick = (cardId: string) => {
     navigate(`${basePath}/settings/${cardId}`);
+  };
+
+  const handleBack = () => {
+    navigate(-1);
   };
 
   return (
@@ -91,11 +90,22 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
       <div className="max-w-[1200px] mx-auto">
         {/* Header */}
         <div className="mb-8">
+          {isUser && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="mb-4 -ml-2 text-text-secondary hover:text-text-primary"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              뒤로가기
+            </Button>
+          )}
           <h1 className="text-text-primary text-2xl font-semibold mb-2">
             설정
           </h1>
           <p className="text-text-secondary text-sm">
-            계정 설정 및 환경 설정을 관리하세요
+            {isUser ? '언어 및 지역 설정을 관리하세요' : '계정 설정 및 환경 설정을 관리하세요'}
           </p>
         </div>
 

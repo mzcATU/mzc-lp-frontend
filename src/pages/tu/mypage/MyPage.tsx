@@ -222,7 +222,7 @@ export function MyPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/tu/learning')}
+              onClick={() => navigate('/mypage/learning')}
               className={isDark ? 'text-gray-400 hover:text-white' : ''}
             >
               전체보기
@@ -244,7 +244,7 @@ export function MyPage() {
                       ? 'bg-white/5 border-white/10 hover:bg-white/10'
                       : 'bg-white hover:shadow-md'
                   }`}
-                  onClick={() => navigate(`/tu/learning/${enrollment.id}`)}
+                  onClick={() => navigate(`/mypage/learning/${enrollment.id}`)}
                 >
                   <CardContent className="p-5">
                     <Badge variant={statusColors[enrollment.status]} className="text-xs mb-3">
@@ -319,7 +319,7 @@ export function MyPage() {
               icon={<BookOpen className="w-5 h-5" />}
               title="내 학습"
               description="수강 중인 강의를 확인하세요"
-              onClick={() => navigate('/tu/learning')}
+              onClick={() => navigate('/mypage/learning')}
               isDark={isDark}
             />
             <QuickMenuItem

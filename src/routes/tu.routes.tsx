@@ -8,6 +8,7 @@ import {
   ProfilePage,
   MyLearningPage,
   LearningDetailPage,
+  LearningPlayerPage,
   SettingsLanguagePage,
   MyTeachingPage,
 } from '@/pages/tu';
@@ -42,10 +43,13 @@ export const tuRoutes = (
       {/* 내 수강 강의 */}
       <Route path="learning" element={<MyLearningPage />} />
       <Route path="learning/:enrollmentId" element={<LearningDetailPage />} />
+      <Route path="learning/:enrollmentId/player" element={<LearningPlayerPage />} />
+      <Route path="learning/:enrollmentId/player/:itemId" element={<LearningPlayerPage />} />
       <Route path="completed" element={<PlaceholderPage title="완료한 강의" />} />
       <Route path="certifications" element={<PlaceholderPage title="인증서" />} />
       {/* 내 강의 관리 */}
       <Route path="teaching" element={<MyTeachingPage />} />
+      <Route path="teaching/stats" element={<PlaceholderPage title="내 강의 통계" />} />
       {/* 설정 */}
       <Route path="security" element={<Navigate to="/mypage/profile" replace />} />
       <Route path="notifications" element={<SettingsNotificationsPage />} />

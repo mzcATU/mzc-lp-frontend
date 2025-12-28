@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Plus,
@@ -17,6 +18,9 @@ import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { useAuth } from '@/hooks/common/auth';
+import { userService } from '@/services/common/userService';
+import { useAuthStore } from '@/store/common/authStore';
+import { courseService } from '@/services/common/courseService';
 import {
   Button,
   Card,
@@ -31,19 +35,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/common';
-
-// TODO: 실제 API hook으로 교체
-// import { useMyCreatedCourses, useRequestDesignerRole } from '@/hooks/tu';
-
-// 임시 데이터 타입
-interface CreatedCourse {
-  id: string;
-  title: string;
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-  createdAt: string;
-  updatedAt: string;
-  enrollmentCount: number;
-}
 
 const statusIcons = {
   DRAFT: Edit,
@@ -80,10 +71,13 @@ export function MyTeachingPage() {
   // 사용자가 DESIGNER 역할을 가지고 있는지 확인
   const isDesigner = user?.role === 'DESIGNER' || user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN';
 
-  // TODO: 실제 API 연동
-  // const { data: courses, isLoading } = useMyCreatedCourses();
-  const isLoading = false;
-  const courses: CreatedCourse[] = []; // 빈 배열로 시작 (개설한 강의 없음 상태)
+  // 내 강의 목록 조회
+  const { data: coursesData, isLoading } = useQuery({
+    queryKey: ['myCourses'],
+    queryFn: () => courseService.getMyCourses(),
+    enabled: isDesigner,
+  });
+  const courses = coursesData?.content || [];
 
   const handleCreateCourse = () => {
     if (isDesigner) {
@@ -98,19 +92,32 @@ export function MyTeachingPage() {
   const handleGrantDesignerRole = async () => {
     setIsGrantingRole(true);
     try {
-      // TODO: 실제 API 연동 - DESIGNER 역할 부여 요청
-      // await requestDesignerRole();
+      // DESIGNER 역할 부여 API 호출
+      await userService.applyDesignerRole();
 
-      // 시뮬레이션: 1초 후 역할 부여 완료
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 사용자 정보 다시 조회하여 역할 업데이트
+      const updatedUser = await userService.getMe();
+      useAuthStore.getState().updateUser({ role: updatedUser.role });
 
       toast.success('강의 개설 권한이 부여되었습니다.');
       setShowRoleDialog(false);
 
       // 권한 부여 후 강의 개설 페이지로 이동
       navigate('/tu/teaching/courses/create');
-    } catch {
-      toast.error('권한 부여에 실패했습니다. 다시 시도해주세요.');
+    } catch (error) {
+      // 409 Conflict = 이미 DESIGNER 역할을 가지고 있음
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
+        // 이미 권한이 있으므로 사용자 정보 업데이트 후 진행
+        const updatedUser = await userService.getMe();
+        useAuthStore.getState().updateUser({ role: updatedUser.role });
+
+        toast.success('이미 강의 개설 권한이 있습니다.');
+        setShowRoleDialog(false);
+        navigate('/tu/teaching/courses/create');
+      } else {
+        toast.error('권한 부여에 실패했습니다. 다시 시도해주세요.');
+      }
     } finally {
       setIsGrantingRole(false);
     }
@@ -208,11 +215,13 @@ export function MyTeachingPage() {
         ) : (
           <div className="space-y-4">
             {courses.map((course) => {
-              const StatusIcon = statusIcons[course.status];
+              // Course API에는 status가 없으므로 기본값 DRAFT 사용
+              const courseStatus = 'DRAFT' as const;
+              const StatusIcon = statusIcons[courseStatus];
 
               return (
                 <Card
-                  key={course.id}
+                  key={course.courseId}
                   className={`transition-all hover:scale-[1.01] ${
                     isDark
                       ? 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -224,9 +233,9 @@ export function MyTeachingPage() {
                       {/* 강의 정보 */}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Badge variant={statusVariants[course.status]} className="text-xs">
+                          <Badge variant={statusVariants[courseStatus]} className="text-xs">
                             <StatusIcon className="w-3 h-3 mr-1" />
-                            {statusLabels[course.status]}
+                            {statusLabels[courseStatus]}
                           </Badge>
                         </div>
                         <h3
@@ -235,9 +244,6 @@ export function MyTeachingPage() {
                           {course.title}
                         </h3>
                         <div className={`flex items-center gap-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                          <span>
-                            {t.teaching.students} {course.enrollmentCount}
-                          </span>
                           <span>
                             {t.teaching.lastModified}: {new Date(course.updatedAt).toLocaleDateString()}
                           </span>
@@ -249,23 +255,21 @@ export function MyTeachingPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleViewCourse(course.id)}
+                          onClick={() => handleViewCourse(String(course.courseId))}
                           className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           {t.common.view}
                         </Button>
-                        {(course.status === 'DRAFT' || course.status === 'REJECTED') && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditCourse(course.id)}
-                            className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
-                          >
-                            <Edit className="w-4 h-4 mr-1" />
-                            {t.common.edit}
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditCourse(String(course.courseId))}
+                          className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          {t.common.edit}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -293,19 +297,21 @@ export function MyTeachingPage() {
               </div>
               <AlertDialogTitle>{t.teaching.grantPermission}</AlertDialogTitle>
             </div>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                {t.teaching.grantPermissionDesc.split('Designer')[0]}
-                <strong>{t.teaching.designer}</strong>
-                {t.teaching.grantPermissionDesc.split('Designer')[1] || ''}
-              </p>
-              <p>
-                {t.teaching.grantPermissionConfirm}
-              </p>
-              <div className="mt-4 p-3 rounded-lg bg-orange-50 border border-orange-200">
-                <p className="text-sm text-orange-800">
-                  {t.teaching.grantPermissionWarning}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-muted-foreground text-sm">
+                <p>
+                  {t.teaching.grantPermissionDesc.split('Designer')[0]}
+                  <strong>{t.teaching.designer}</strong>
+                  {t.teaching.grantPermissionDesc.split('Designer')[1] || ''}
                 </p>
+                <p>
+                  {t.teaching.grantPermissionConfirm}
+                </p>
+                <div className="mt-4 p-3 rounded-lg bg-orange-50 border border-orange-200">
+                  <p className="text-sm text-orange-800">
+                    {t.teaching.grantPermissionWarning}
+                  </p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>

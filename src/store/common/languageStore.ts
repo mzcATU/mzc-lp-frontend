@@ -277,6 +277,24 @@ type TranslationKeys = {
     enrollmentPeriod: string;
     enrolledDate: string;
   };
+  // 학습 플레이어
+  player: {
+    backToCourse: string;
+    previous: string;
+    next: string;
+    markComplete: string;
+    autoSaved: string;
+    saveFailed: string;
+    loading: string;
+    error: string;
+    retry: string;
+    skipToNext: string;
+    completed: string;
+    curriculum: string;
+    selectContent: string;
+    defaultTitle: string;
+    demoModeBanner: string;
+  };
 };
 
 // 한국어 번역
@@ -515,6 +533,23 @@ const ko: TranslationKeys = {
     enrollmentPeriod: '수강 기간',
     enrolledDate: '신청일',
   },
+  player: {
+    backToCourse: '강의로 돌아가기',
+    previous: '이전',
+    next: '다음',
+    markComplete: '완료 표시',
+    autoSaved: '자동 저장됨',
+    saveFailed: '저장 실패',
+    loading: '로딩 중...',
+    error: '콘텐츠를 불러오는 중 오류가 발생했습니다',
+    retry: '다시 시도',
+    skipToNext: '다음으로 건너뛰기',
+    completed: '완료됨',
+    curriculum: '커리큘럼',
+    selectContent: '학습할 콘텐츠를 선택하세요',
+    defaultTitle: '학습 플레이어',
+    demoModeBanner: '데모 모드 - 실제 데이터가 아닌 샘플 데이터로 표시됩니다',
+  },
 };
 
 // 영어 번역
@@ -752,6 +787,23 @@ const en: TranslationKeys = {
     minutes: 'min',
     enrollmentPeriod: 'Enrollment Period',
     enrolledDate: 'Enrolled Date',
+  },
+  player: {
+    backToCourse: 'Back to Course',
+    previous: 'Previous',
+    next: 'Next',
+    markComplete: 'Mark Complete',
+    autoSaved: 'Auto saved',
+    saveFailed: 'Save failed',
+    loading: 'Loading...',
+    error: 'An error occurred while loading content',
+    retry: 'Retry',
+    skipToNext: 'Skip to Next',
+    completed: 'Completed',
+    curriculum: 'Curriculum',
+    selectContent: 'Select content to learn',
+    defaultTitle: 'Learning Player',
+    demoModeBanner: 'Demo Mode - Displaying sample data, not real data',
   },
 };
 

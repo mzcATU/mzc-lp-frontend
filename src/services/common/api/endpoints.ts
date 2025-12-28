@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
   // Courses (TO, TU)
   COURSES: {
     BASE: '/courses',
+    MY: '/courses/my',
     BY_ID: (id: number) => `/courses/${id}`,
     // Course Items
     ITEMS: (courseId: number) => `/courses/${courseId}/items`,
@@ -173,5 +174,8 @@ export const API_ENDPOINTS = {
     MY: '/enrollments/my',
     BY_ID: (id: number) => `/enrollments/${id}`,
     CANCEL: (id: number) => `/enrollments/${id}/cancel`,
+    PROGRESS: (id: number) => `/enrollments/${id}/progress`,
+    ITEM_COMPLETE: (id: number, itemId: number) => `/enrollments/${id}/items/${itemId}/complete`,
+    CURRICULUM: (id: number) => `/enrollments/${id}/curriculum`,
   },
 } as const;

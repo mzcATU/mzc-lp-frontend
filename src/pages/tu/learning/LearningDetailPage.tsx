@@ -152,15 +152,16 @@ export function LearningDetailPage() {
     try {
       await cancelEnrollment.mutateAsync(enrollment.id);
       setCancelDialogOpen(false);
-      navigate('/tu/learning');
+      navigate('/mypage/learning');
     } catch (error) {
       console.error('Failed to cancel enrollment:', error);
     }
   };
 
   const handleContinueLearning = () => {
-    // TODO: 학습 플레이어 페이지로 이동
-    console.log('Continue learning');
+    // 미완료 아이템 중 첫 번째 아이템으로 이동, 없으면 첫 아이템
+    const nextItem = mockCurriculum.find((item) => !item.completed) || mockCurriculum[0];
+    navigate(`/mypage/learning/${enrollmentId}/player/${nextItem?.id || ''}`);
   };
 
   // Loading State
@@ -186,7 +187,7 @@ export function LearningDetailPage() {
         <h3 className="text-lg font-medium mb-2" style={{ color: designTokens.text.primary }}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate('/tu/learning')}>
+        <Button onClick={() => navigate('/mypage/learning')}>
           {t.learning.backToLearning}
         </Button>
       </div>
@@ -209,7 +210,7 @@ export function LearningDetailPage() {
         <Button
           variant="ghost"
           className="mb-6 gap-2"
-          onClick={() => navigate('/tu/learning')}
+          onClick={() => navigate('/mypage/learning')}
         >
           <ArrowLeft className="w-4 h-4" />
           {t.learning.backToLearning}

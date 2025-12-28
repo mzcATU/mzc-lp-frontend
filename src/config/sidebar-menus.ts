@@ -40,12 +40,10 @@ import {
   BookOpen,
   BookCheck,
   Home,
-  Compass,
   Award,
   PenTool,
   CheckSquare,
   Briefcase,
-  Target,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -227,6 +225,12 @@ export const tenantUserMenuData: MenuItem[] = [
     label: { ko: '홈', en: 'Home' },
     icon: Home,
     path: '/tu/dashboard',
+},
+  {
+    id: 'mypage',
+    label: { ko: '마이페이지', en: 'My Page' },
+    icon: Users,
+    path: '/mypage',
   },
   {
     id: 'my-teaching',
@@ -236,24 +240,6 @@ export const tenantUserMenuData: MenuItem[] = [
       { id: 'my-courses', label: { ko: '내 강좌', en: 'My Courses' }, icon: BookOpen, path: '/tu/teaching/courses' },
       { id: 'my-content', label: { ko: '내 콘텐츠', en: 'My Content' }, icon: PenTool, path: '/tu/teaching/content' },
       { id: 'my-assignments', label: { ko: '내 과제', en: 'My Assignments' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
-    ],
-  },
-  {
-    id: 'course-catalog',
-    label: { ko: '교육 과정 탐색', en: 'Course Catalog' },
-    icon: Compass,
-    subItems: [
-      { id: 'browse-courses', label: { ko: '과정 둘러보기', en: 'Browse Courses' }, icon: Search, path: '/tu/catalog' },
-      { id: 'my-learning', label: { ko: '내 학습', en: 'My Learning' }, icon: BookOpen, path: '/tu/learning' },
-    ],
-  },
-  {
-    id: 'performance-certifications',
-    label: { ko: '성과 및 인증', en: 'Performance & Certifications' },
-    icon: Target,
-    subItems: [
-      { id: 'my-progress', label: { ko: '학습 진도', en: 'My Progress' }, icon: TrendingUp, path: '/tu/progress' },
-      { id: 'certifications', label: { ko: '인증서', en: 'Certifications' }, icon: Award, path: '/tu/certifications' },
     ],
   },
   {
@@ -288,7 +274,11 @@ export const myPageMenuData: MenuItem[] = [
     id: 'my-teaching',
     label: { ko: '내 강의 관리', en: 'My Teaching' },
     icon: Briefcase,
-    path: '/mypage/teaching',
+    subItems: [
+      { id: 'my-courses', label: { ko: '내 강의', en: 'My Courses' }, icon: BookOpen, path: '/mypage/teaching' },
+      { id: 'create-course', label: { ko: '강의 개설하기', en: 'Create Course' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
+      { id: 'teaching-stats', label: { ko: '내 강의 통계', en: 'Teaching Stats' }, icon: TrendingUp, path: '/mypage/teaching/stats' },
+    ],
   },
   {
     id: 'mypage-settings',
