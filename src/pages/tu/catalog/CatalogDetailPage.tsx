@@ -23,13 +23,8 @@ import {
   Skeleton,
 } from '@/components/common';
 import { useCatalogProgram, useCatalogCourseTimes, useEnroll } from '@/hooks/tu';
+import { useTranslation } from '@/store/common/languageStore';
 import type { CatalogCourseTime } from '@/services/tu/catalogService';
-
-const difficultyLabels: Record<string, string> = {
-  BEGINNER: '입문',
-  INTERMEDIATE: '중급',
-  ADVANCED: '고급',
-};
 
 const difficultyColors: Record<string, 'green' | 'blue' | 'orange'> = {
   BEGINNER: 'green',
@@ -49,10 +44,12 @@ function CourseTimeCard({
   courseTime,
   onEnroll,
   isEnrolling,
+  t,
 }: {
   courseTime: CatalogCourseTime;
   onEnroll: (id: number) => void;
   isEnrolling: boolean;
+  t: ReturnType<typeof useTranslation>['t'];
 }) {
   const isFull = courseTime.capacity && courseTime.currentEnrollment
     ? courseTime.currentEnrollment >= courseTime.capacity
@@ -90,10 +87,10 @@ function CourseTimeCard({
               <div className="flex items-center gap-2 text-sm" style={{ color: designTokens.text.secondary }}>
                 <Users className="w-4 h-4" />
                 <span>
-                  {courseTime.currentEnrollment || 0} / {courseTime.capacity}명
+                  {courseTime.currentEnrollment || 0} / {courseTime.capacity}
                 </span>
                 {isFull && (
-                  <Badge variant="red" className="text-xs">마감</Badge>
+                  <Badge variant="red" className="text-xs">{t.catalog.closed}</Badge>
                 )}
               </div>
             )}
@@ -101,7 +98,7 @@ function CourseTimeCard({
             {/* 수강 신청 기간 */}
             {courseTime.enrollmentStartDate && courseTime.enrollmentEndDate && (
               <p className="mt-2 text-xs" style={{ color: designTokens.text.placeholder }}>
-                신청기간: {formatDate(courseTime.enrollmentStartDate)} ~ {formatDate(courseTime.enrollmentEndDate)}
+                {t.catalog.enrollmentPeriod}: {formatDate(courseTime.enrollmentStartDate)} ~ {formatDate(courseTime.enrollmentEndDate)}
               </p>
             )}
           </div>
@@ -116,14 +113,14 @@ function CourseTimeCard({
               {isEnrolling ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  처리 중...
+                  {t.catalog.processing}
                 </>
               ) : isFull ? (
-                '마감됨'
+                t.catalog.closedStatus
               ) : !courseTime.isEnrollable ? (
-                '신청 불가'
+                t.catalog.notAvailable
               ) : (
-                '수강신청'
+                t.catalog.enroll
               )}
             </Button>
           </div>
@@ -136,7 +133,14 @@ function CourseTimeCard({
 export function CatalogDetailPage() {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const id = Number(programId);
+
+  const difficultyLabels: Record<string, string> = {
+    BEGINNER: t.catalog.beginner,
+    INTERMEDIATE: t.catalog.intermediate,
+    ADVANCED: t.catalog.advanced,
+  };
 
   const { data: program, isLoading: isProgramLoading, isError: isProgramError } = useCatalogProgram(id);
   const { data: courseTimes, isLoading: isTimesLoading } = useCatalogCourseTimes(id);
@@ -149,9 +153,9 @@ export function CatalogDetailPage() {
   const handleEnroll = async (courseTimeId: number) => {
     try {
       await enrollMutation.mutateAsync(courseTimeId);
-      alert('수강신청이 완료되었습니다.');
+      alert(t.catalog.enrollSuccess);
     } catch {
-      alert('수강신청에 실패했습니다. 다시 시도해주세요.');
+      alert(t.catalog.enrollFail);
     }
   };
 
@@ -189,16 +193,16 @@ export function CatalogDetailPage() {
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <Button variant="ghost" onClick={handleBack} className="mb-6 gap-2">
             <ArrowLeft className="w-5 h-5" />
-            카탈로그로 돌아가기
+            {t.catalog.backToCatalog}
           </Button>
 
           <div className="text-center py-20">
             <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: designTokens.status.error_text }} />
             <h3 className="text-lg font-medium mb-2" style={{ color: designTokens.text.primary }}>
-              강의를 찾을 수 없습니다
+              {t.catalog.courseNotFound}
             </h3>
             <p style={{ color: designTokens.text.secondary }}>
-              요청하신 강의가 존재하지 않거나 접근할 수 없습니다.
+              {t.catalog.courseNotFoundDesc}
             </p>
           </div>
         </div>
@@ -218,7 +222,7 @@ export function CatalogDetailPage() {
         {/* Back Button */}
         <Button variant="ghost" onClick={handleBack} className="mb-6 gap-2">
           <ArrowLeft className="w-5 h-5" />
-          카탈로그로 돌아가기
+          {t.catalog.backToCatalog}
         </Button>
 
         {/* Hero Section */}
@@ -273,13 +277,13 @@ export function CatalogDetailPage() {
               {program.duration && (
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
-                  <span>{Math.floor(program.duration / 60)}시간 {program.duration % 60}분</span>
+                  <span>{Math.floor(program.duration / 60)}{t.catalog.hours} {program.duration % 60}{t.catalog.minutes}</span>
                 </div>
               )}
               {program.enrollmentCount !== undefined && (
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  <span>{program.enrollmentCount.toLocaleString()}명 수강</span>
+                  <span>{program.enrollmentCount.toLocaleString()} {t.catalog.enrolled}</span>
                 </div>
               )}
               {program.rating !== undefined && (
@@ -296,7 +300,7 @@ export function CatalogDetailPage() {
         {program.description && (
           <Card className="mb-8" style={{ backgroundColor: designTokens.bg.default }}>
             <CardHeader>
-              <CardTitle className="text-lg">강의 소개</CardTitle>
+              <CardTitle className="text-lg">{t.catalog.courseIntro}</CardTitle>
             </CardHeader>
             <CardContent>
               <p
@@ -314,7 +318,7 @@ export function CatalogDetailPage() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              수강 가능한 차수
+              {t.catalog.availableSessions}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -331,6 +335,7 @@ export function CatalogDetailPage() {
                     courseTime={courseTime}
                     onEnroll={handleEnroll}
                     isEnrolling={enrollMutation.isPending}
+                    t={t}
                   />
                 ))}
               </div>
@@ -343,7 +348,7 @@ export function CatalogDetailPage() {
               >
                 <AlertCircle className="w-5 h-5" style={{ color: designTokens.status.warning_text }} />
                 <AlertDescription style={{ color: designTokens.status.warning_text }}>
-                  현재 수강 가능한 차수가 없습니다.
+                  {t.catalog.noAvailableSessions}
                 </AlertDescription>
               </Alert>
             )}

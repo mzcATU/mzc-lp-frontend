@@ -1,6 +1,9 @@
 import { Youtube, Instagram } from 'lucide-react';
+import { useTranslation } from '@/store/common/languageStore';
 
 export function LandingFooter() {
+  const { t } = useTranslation();
+
   return (
     <footer className="landing-footer-wrapper landing-text-secondary text-sm py-16">
       <div className="w-full px-4 md:px-8 lg:px-16">
@@ -12,10 +15,10 @@ export function LandingFooter() {
                 <span className="text-2xl font-bold gradient-text">MEGAZONECLOUD</span>
               </div>
               <div className="text-[12px] landing-text-muted leading-relaxed space-y-1">
-                <p>메가존클라우드(주) | 대표이사: 이주완, 조원우</p>
-                <p>사업자등록번호: 232-88-00982</p>
-                <p>서울시 강남구 논현로85길 46 메가존빌딩</p>
-                <p>대표전화: 1644-2243 | Email: cloud@megazone.com</p>
+                <p>{t.footer.company} | {t.footer.ceo}</p>
+                <p>{t.footer.businessNo}</p>
+                <p>{t.footer.address}</p>
+                <p>{t.footer.phone}</p>
               </div>
             </div>
 
@@ -70,13 +73,13 @@ export function LandingFooter() {
         <div className="landing-border-top pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-wrap gap-6 text-[12px] landing-text-muted">
             <a href="#" className="landing-link-hover transition-colors">
-              개인정보처리방침
+              {t.footer.privacyPolicy}
             </a>
             <a href="#" className="landing-link-hover transition-colors">
-              이용약관
+              {t.footer.terms}
             </a>
             <a href="#" className="landing-link-hover transition-colors">
-              이메일무단수집거부
+              {t.footer.emailPolicy}
             </a>
           </div>
           <p className="text-[12px] landing-text-muted">
