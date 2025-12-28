@@ -108,7 +108,7 @@ export function LearningPlayerPage() {
   const demoCurriculumItems = useMemo(() => DEMO_CURRICULUM_ITEMS, []);
 
   // 현재 아이템 인덱스 및 이전/다음 아이템 계산
-  const { currentIndex, hasPrevious, hasNext, previousItem, nextItem } = useMemo(() => {
+  const { hasPrevious, hasNext, previousItem, nextItem } = useMemo(() => {
     const items = isDemoMode ? demoCurriculumItems : [];
     const index = items.findIndex((item) => item.itemId === currentItemId);
     return {

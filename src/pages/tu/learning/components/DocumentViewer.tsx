@@ -34,7 +34,8 @@ export function DocumentViewer({
   const [hasError, setHasError] = useState(false);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  // TODO: setTotalPages will be used when implementing proper PDF page detection
+  const [totalPages] = useState(1);
   const [zoom, setZoom] = useState(100);
   const [viewedPages, setViewedPages] = useState<Set<number>>(new Set([1]));
 
