@@ -136,7 +136,7 @@ export function HeroSection() {
               <ChevronRight className="w-5 h-5" />
             </Link>
             <Link
-              to="/tu/learning"
+              to="/mypage/learning"
               className="landing-btn-outline px-8 py-4 rounded-full text-white font-medium text-base"
             >
               {t.hero.explore}

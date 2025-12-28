@@ -60,6 +60,17 @@ export const courseService = {
     return data;
   },
 
+  /** 내 강의 목록 조회 */
+  async getMyCourses(
+    params?: CourseFilterParams
+  ): Promise<PageResponse<CourseResponse>> {
+    const { data } = await axiosInstance.get<PageResponse<CourseResponse>>(
+      API_ENDPOINTS.COURSES.MY,
+      { params }
+    );
+    return data;
+  },
+
   /** 강의 상세 조회 */
   async getCourse(id: number): Promise<CourseDetailResponse> {
     const { data } = await axiosInstance.get<CourseDetailResponse>(

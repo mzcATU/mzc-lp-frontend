@@ -175,7 +175,7 @@ export function MyLearningPage() {
   ) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
-    navigate(`/tu/learning/${enrollmentId}`);
+    navigate(`/mypage/learning/${enrollmentId}`);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -194,16 +194,27 @@ export function MyLearningPage() {
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         {/* Header */}
         <div className="mb-8">
-          <h1
-            style={{
-              color: designTokens.text.primary,
-              fontSize: '28px',
-              fontWeight: 600,
-              marginBottom: '8px',
-            }}
-          >
-            {t.learning.title}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1
+              style={{
+                color: designTokens.text.primary,
+                fontSize: '28px',
+                fontWeight: 600,
+                marginBottom: '8px',
+              }}
+            >
+              {t.learning.title}
+            </h1>
+            {/* 데모 버튼 (테스트용 - 숨김) */}
+            <button
+              onClick={() => navigate('/mypage/learning/demo/player')}
+              className="opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded"
+              style={{ color: designTokens.text.placeholder }}
+              title="Demo Mode"
+            >
+              [demo]
+            </button>
+          </div>
           <p style={{ color: designTokens.text.secondary, fontSize: '14px' }}>
             {t.learning.description}
           </p>

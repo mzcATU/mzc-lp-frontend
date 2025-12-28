@@ -30,13 +30,14 @@ export const useMyEnrollments = (params?: EnrollmentFilterParams) => {
 /**
  * 수강 신청 상세 조회 훅
  */
-export const useEnrollment = (id: number) => {
+export const useEnrollment = (id: number, options?: { enabled?: boolean }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const externalEnabled = options?.enabled ?? true;
 
   return useQuery({
     queryKey: enrollmentKeys.detail(id),
     queryFn: () => enrollmentService.getEnrollment(id),
-    enabled: isAuthenticated && !!id,
+    enabled: externalEnabled && isAuthenticated && !!id,
   });
 };
 

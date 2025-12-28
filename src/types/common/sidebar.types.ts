@@ -17,6 +17,7 @@ export interface SubMenuItem {
   icon: LucideIcon;
   path?: string;
   instructorOnly?: boolean;
+  roles?: string[]; // 특정 롤에만 표시 (예: ['DESIGNER'])
 }
 
 /**

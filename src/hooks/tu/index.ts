@@ -58,3 +58,11 @@ export {
   useEnroll,
   useCancelEnrollment,
 } from './useEnrollmentQueries';
+
+// Learning Player Hooks
+export {
+  learningPlayerKeys,
+  useEnrollmentWithCurriculum,
+  useUpdateProgress,
+  useMarkItemComplete,
+} from './useLearningPlayerQueries';
