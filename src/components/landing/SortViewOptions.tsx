@@ -1,5 +1,5 @@
 import { Grid, List, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 
 export type SortOption = 'latest' | 'popular' | 'name';
 export type ViewMode = 'grid' | 'list';
