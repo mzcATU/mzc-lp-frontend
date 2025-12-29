@@ -27,25 +27,23 @@ export const programKeys = {
 
 /** 프로그램 목록 조회 */
 export const usePrograms = (params?: ProgramFilterParams) => {
-  // TODO: 테스트 후 isAuthenticated로 원복
-  // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: programKeys.list(params),
     queryFn: () => programService.getPrograms(params),
-    enabled: true, // 임시: isAuthenticated
+    enabled: isAuthenticated,
   });
 };
 
 /** 승인된 프로그램 목록 조회 (차수 생성용) */
 export const useApprovedPrograms = () => {
-  // TODO: 테스트 후 isAuthenticated로 원복
-  // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: programKeys.list({ status: 'APPROVED' }),
     queryFn: () => programService.getPrograms({ status: 'APPROVED', size: 100 }),
-    enabled: true, // 임시: isAuthenticated
+    enabled: isAuthenticated,
   });
 };
 
@@ -62,13 +60,12 @@ export const useProgram = (id: number) => {
 export const usePendingPrograms = (
   params?: Pick<ProgramFilterParams, 'page' | 'size' | 'sort'>
 ) => {
-  // TODO: 테스트 후 isAuthenticated로 원복
-  // const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: programKeys.pendingList(params),
     queryFn: () => programService.getPendingPrograms(params),
-    enabled: true, // 임시: isAuthenticated
+    enabled: isAuthenticated,
   });
 };
 
