@@ -73,3 +73,14 @@ export {
   useMyAssignments,
   useMyInstructorStatistics,
 } from './useMyAssignmentQueries';
+
+// Course Hooks
+export {
+  courseKeys,
+  useCourses,
+  useMyCourses,
+  useCourse,
+  useCourseItemsHierarchy,
+  useUpdateCourse,
+  useDeleteCourse,
+} from './useCourseQueries';
