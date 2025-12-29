@@ -1,15 +1,18 @@
+import { type ReactNode } from 'react';
 import { type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/common/Button';
+
+interface ActionItem {
+  label: string;
+  icon?: LucideIcon;
+  onClick: () => void;
+  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive';
+}
 
 interface AdminPageHeaderProps {
   title: string;
   description?: string;
-  actions?: {
-    label: string;
-    icon?: LucideIcon;
-    onClick: () => void;
-    variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive';
-  }[];
+  actions?: ActionItem[] | ReactNode;
   breadcrumb?: {
     label: string;
     href?: string;
@@ -53,21 +56,23 @@ export function AdminPageHeader({
           )}
         </div>
 
-        {actions && actions.length > 0 && (
+        {actions && (
           <div className="flex items-center gap-2">
-            {actions.map((action, index) => {
-              const Icon = action.icon;
-              return (
-                <Button
-                  key={index}
-                  variant={action.variant || 'default'}
-                  onClick={action.onClick}
-                >
-                  {Icon && <Icon className="w-4 h-4 mr-2" />}
-                  {action.label}
-                </Button>
-              );
-            })}
+            {Array.isArray(actions)
+              ? actions.map((action, index) => {
+                  const Icon = action.icon;
+                  return (
+                    <Button
+                      key={index}
+                      variant={action.variant || 'default'}
+                      onClick={action.onClick}
+                    >
+                      {Icon && <Icon className="w-4 h-4 mr-2" />}
+                      {action.label}
+                    </Button>
+                  );
+                })
+              : actions}
           </div>
         )}
       </div>
