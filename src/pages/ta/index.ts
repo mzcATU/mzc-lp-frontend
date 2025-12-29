@@ -1,2 +1,2 @@
 // Tenant Admin pages
-export { BrandingPage } from './branding';
+export { UsersPage } from './users';
