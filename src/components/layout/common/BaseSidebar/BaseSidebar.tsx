@@ -20,13 +20,12 @@ type ViewMode = 'instructor' | 'learner';
 interface ModeSwitcherProps {
   currentMode: ViewMode;
   isExpanded: boolean;
-  isDarkMode: boolean;
   language: 'ko' | 'en';
   colors: SidebarColors;
   onModeChange: (mode: ViewMode) => void;
 }
 
-function ModeSwitcher({ currentMode, isExpanded, isDarkMode, language, colors, onModeChange }: ModeSwitcherProps) {
+function ModeSwitcher({ currentMode, isExpanded, language, colors, onModeChange }: ModeSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const modes = [
@@ -286,7 +285,6 @@ export function BaseSidebar({
           <ModeSwitcher
             currentMode={currentMode}
             isExpanded={isExpanded}
-            isDarkMode={isDarkMode}
             language={language}
             colors={colors}
             onModeChange={handleModeChange}
