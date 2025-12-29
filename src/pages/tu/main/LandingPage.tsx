@@ -5,12 +5,129 @@ import {
   HeroSection,
   LandingCourseCard,
   LandingFooter,
+  TagFilter,
+  BannerCarousel,
+  type Tag,
+  type BannerItem,
 } from '@/components/landing';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 
-// 카테고리 ID 목록
+// 테넌트 모드 타입 (실제로는 테넌트 설정에서 가져옴)
+type TenantMode = 'B2C' | 'B2B';
+
+// 카테고리 ID 목록 (B2C용)
 const categoryIds = ['all', 'cloud', 'dev', 'ai', 'data', 'security', 'devops'] as const;
+
+// B2B용 해시태그 (실제로는 API에서 가져옴)
+const b2bTags: Tag[] = [
+  { id: 'leadership', label: '리더십', count: 24 },
+  { id: 'communication', label: '커뮤니케이션', count: 18 },
+  { id: 'compliance', label: '컴플라이언스', count: 32 },
+  { id: 'security', label: '보안교육', count: 15 },
+  { id: 'onboarding', label: '신입사원', count: 21 },
+  { id: 'digital', label: '디지털전환', count: 12 },
+  { id: 'excel', label: 'Excel', count: 28 },
+  { id: 'presentation', label: '프레젠테이션', count: 9 },
+];
+
+// B2B용 배너 (실제로는 TA가 관리하는 데이터)
+const b2bBanners: BannerItem[] = [
+  {
+    id: '1',
+    title: '2024년 필수 컴플라이언스 교육 안내',
+    imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop',
+    hiddenTags: ['컴플라이언스', '필수교육'],
+  },
+  {
+    id: '2',
+    title: '신입사원 온보딩 프로그램',
+    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=400&fit=crop',
+    hiddenTags: ['신입사원', '온보딩'],
+  },
+  {
+    id: '3',
+    title: '리더십 역량 강화 과정 오픈',
+    imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&h=400&fit=crop',
+    hiddenTags: ['리더십', '매니저'],
+  },
+];
+
+// B2B용 콘텐츠 (실제로는 API에서 가져옴)
+const b2bContents = [
+  {
+    id: 101,
+    title: '2024 정보보안 필수교육',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=250&fit=crop',
+    tags: ['보안교육', '필수'],
+    contentType: 'VOD' as const,
+    duration: 60,
+    enrollmentCount: 1234,
+  },
+  {
+    id: 102,
+    title: '효과적인 비즈니스 커뮤니케이션',
+    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
+    tags: ['커뮤니케이션', '소프트스킬'],
+    contentType: 'VOD' as const,
+    duration: 45,
+    enrollmentCount: 892,
+  },
+  {
+    id: 103,
+    title: 'Excel 실무 활용 가이드',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop',
+    tags: ['Excel', '업무효율'],
+    contentType: 'DOCUMENT' as const,
+    duration: 30,
+    enrollmentCount: 2156,
+  },
+  {
+    id: 104,
+    title: '신입사원 온보딩 필수 과정',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=250&fit=crop',
+    tags: ['신입사원', '온보딩'],
+    contentType: 'VOD' as const,
+    duration: 90,
+    enrollmentCount: 567,
+  },
+  {
+    id: 105,
+    title: '리더를 위한 팀 매니지먼트',
+    image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=250&fit=crop',
+    tags: ['리더십', '매니지먼트'],
+    contentType: 'EBOOK' as const,
+    duration: 120,
+    enrollmentCount: 334,
+  },
+  {
+    id: 106,
+    title: '컴플라이언스 기초 교육',
+    image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&h=250&fit=crop',
+    tags: ['컴플라이언스', '필수'],
+    contentType: 'VOD' as const,
+    duration: 40,
+    enrollmentCount: 3421,
+  },
+  {
+    id: 107,
+    title: '디지털 전환 시대의 업무 혁신',
+    image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=250&fit=crop',
+    tags: ['디지털전환', 'DX'],
+    contentType: 'VOD' as const,
+    duration: 55,
+    enrollmentCount: 723,
+  },
+  {
+    id: 108,
+    title: '프레젠테이션 스킬 향상',
+    image: 'https://images.unsplash.com/photo-1558403194-611308249627?w=400&h=250&fit=crop',
+    tags: ['프레젠테이션', '소프트스킬'],
+    contentType: 'VOD' as const,
+    duration: 35,
+    enrollmentCount: 445,
+  },
+];
 
 const courses = [
   {
@@ -126,19 +243,26 @@ const courses = [
 ];
 
 /**
- * 랜딩 페이지 - 다크/라이트 테마 LMS 메인
+ * 랜딩 페이지 - B2C/B2B 겸용 LMS 메인
+ * - B2C: 히어로 슬라이드 + 카테고리 칩 + 가격/별점 표시
+ * - B2B: 이미지 배너 + 해시태그 필터 + 콘텐츠타입/수강인원 표시
  */
 export function LandingPage() {
+  // TODO: 실제로는 테넌트 설정에서 가져옴
+  const tenantMode: TenantMode = 'B2B'; // 'B2C' | 'B2B'
+
   const [activeCategory, setActiveCategory] = useState('all');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
 
-  // 카테고리 레이블을 번역으로 가져오기
+  // 카테고리 레이블을 번역으로 가져오기 (B2C)
   const getCategoryLabel = (id: string) => {
     return t.landing[id as keyof typeof t.landing] as string;
   };
 
+  // B2C 필터링
   const filteredCourses =
     activeCategory === 'all'
       ? courses
@@ -147,6 +271,156 @@ export function LandingPage() {
   const featuredCourses = courses.filter((c) => c.tags.includes('베스트')).slice(0, 5);
   const newCourses = courses.filter((c) => c.tags.includes('NEW')).slice(0, 5);
 
+  // B2B 필터링
+  const filteredB2BContents =
+    selectedTags.length === 0
+      ? b2bContents
+      : b2bContents.filter((content) =>
+          content.tags.some((tag) => selectedTags.includes(tag))
+        );
+
+  // B2B 모드 렌더링
+  if (tenantMode === 'B2B') {
+    return (
+      <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
+        <LandingHeader />
+
+        <main>
+          {/* Banner Carousel (TA 관리) */}
+          <div className="w-full px-4 md:px-8 lg:px-16 pt-8">
+            <BannerCarousel banners={b2bBanners} />
+          </div>
+
+          {/* Tag Filter (해시태그 스타일) */}
+          <div className="w-full px-4 md:px-8 lg:px-16 py-8">
+            <TagFilter
+              tags={b2bTags}
+              selectedTags={selectedTags}
+              onTagChange={setSelectedTags}
+              variant="HASHTAG"
+              multiSelect
+              showCount
+            />
+          </div>
+
+          {/* 전체 콘텐츠 */}
+          <section className="w-full px-4 md:px-8 lg:px-16 pb-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold landing-text-primary">
+                  {selectedTags.length > 0
+                    ? `#${selectedTags.join(' #')} 관련 콘텐츠`
+                    : '전체 콘텐츠'}
+                </h2>
+                <p className="landing-text-muted text-sm mt-1">
+                  총 {filteredB2BContents.length}개의 학습 콘텐츠
+                </p>
+              </div>
+              <a
+                href="/tu/catalog"
+                className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
+              >
+                {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
+              </a>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredB2BContents.map((content) => (
+                <LandingCourseCard
+                  key={content.id}
+                  id={content.id}
+                  title={content.title}
+                  image={content.image}
+                  tags={content.tags}
+                  contentType={content.contentType}
+                  duration={content.duration}
+                  enrollmentCount={content.enrollmentCount}
+                  tagStyle="HASHTAG"
+                />
+              ))}
+            </div>
+
+            {filteredB2BContents.length === 0 && (
+              <p className="text-center landing-text-muted py-10">
+                선택한 태그에 해당하는 콘텐츠가 없습니다.
+              </p>
+            )}
+          </section>
+
+          {/* 필수 교육 섹션 */}
+          <section className="landing-section-alt py-12">
+            <div className="w-full px-4 md:px-8 lg:px-16">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-bold landing-text-primary">
+                    📌 필수 교육
+                  </h2>
+                  <p className="landing-text-muted text-sm mt-1">
+                    이번 달 완료해야 하는 필수 교육입니다
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {b2bContents
+                  .filter((c) => c.tags.includes('필수'))
+                  .map((content) => (
+                    <LandingCourseCard
+                      key={`required-${content.id}`}
+                      id={content.id}
+                      title={content.title}
+                      image={content.image}
+                      tags={content.tags}
+                      contentType={content.contentType}
+                      duration={content.duration}
+                      enrollmentCount={content.enrollmentCount}
+                      tagStyle="HASHTAG"
+                    />
+                  ))}
+              </div>
+            </div>
+          </section>
+
+          {/* 인기 콘텐츠 섹션 */}
+          <section className="w-full px-4 md:px-8 lg:px-16 py-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold landing-text-primary">
+                  🔥 인기 콘텐츠
+                </h2>
+                <p className="landing-text-muted text-sm mt-1">
+                  동료들이 가장 많이 수강한 콘텐츠
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...b2bContents]
+                .sort((a, b) => b.enrollmentCount - a.enrollmentCount)
+                .slice(0, 4)
+                .map((content) => (
+                  <LandingCourseCard
+                    key={`popular-${content.id}`}
+                    id={content.id}
+                    title={content.title}
+                    image={content.image}
+                    tags={content.tags}
+                    contentType={content.contentType}
+                    duration={content.duration}
+                    enrollmentCount={content.enrollmentCount}
+                    tagStyle="HASHTAG"
+                  />
+                ))}
+            </div>
+          </section>
+        </main>
+
+        <LandingFooter />
+      </div>
+    );
+  }
+
+  // B2C 모드 렌더링 (기존)
   return (
     <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
       <LandingHeader />
