@@ -186,7 +186,7 @@ export const tenantOperatorMenuData: MenuItem[] = [
     label: { ko: '교육 운영 관리', en: 'Program Management' },
     icon: Layers,
     subItems: [
-      { id: 'session-management', label: { ko: '차수 관리', en: 'Session Management' }, icon: Calendar, path: '/to/sessions' },
+      { id: 'time-management', label: { ko: '차수 관리', en: 'Course Time Management' }, icon: Calendar, path: '/to/times' },
       { id: 'instructor-assignment', label: { ko: '강사 배정', en: 'Instructor Assignment' }, icon: UserCheck, path: '/to/instructors' },
     ],
   },
