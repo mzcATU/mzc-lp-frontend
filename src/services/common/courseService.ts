@@ -73,10 +73,10 @@ export const courseService = {
 
   /** 강의 상세 조회 */
   async getCourse(id: number): Promise<CourseDetailResponse> {
-    const { data } = await axiosInstance.get<CourseDetailResponse>(
+    const { data } = await axiosInstance.get<{ data: CourseDetailResponse }>(
       API_ENDPOINTS.COURSES.BY_ID(id)
     );
-    return data;
+    return data.data;
   },
 
   /** 강의 수정 */
@@ -84,11 +84,11 @@ export const courseService = {
     id: number,
     request: UpdateCourseRequest
   ): Promise<CourseResponse> {
-    const { data } = await axiosInstance.put<CourseResponse>(
+    const { data } = await axiosInstance.put<{ data: CourseResponse }>(
       API_ENDPOINTS.COURSES.BY_ID(id),
       request
     );
-    return data;
+    return data.data;
   },
 
   /** 강의 삭제 */
@@ -128,10 +128,10 @@ export const courseService = {
   async getItemsHierarchy(
     courseId: number
   ): Promise<CourseItemHierarchyResponse[]> {
-    const { data } = await axiosInstance.get<CourseItemHierarchyResponse[]>(
+    const { data } = await axiosInstance.get<{ data: CourseItemHierarchyResponse[] }>(
       API_ENDPOINTS.COURSES.ITEMS_HIERARCHY(courseId)
     );
-    return data;
+    return data.data;
   },
 
   /** 순서대로 차시 조회 */

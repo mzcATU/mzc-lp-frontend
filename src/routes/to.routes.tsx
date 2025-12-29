@@ -7,6 +7,11 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
+import {
+  CourseTimesPage,
+  CourseTimeCreatePage,
+  CourseTimeDetailPage,
+} from '@/pages/to/time';
 import { DashboardPage, PlaceholderPage } from './pages';
 
 function TenantOperatorWrapper() {
@@ -27,8 +32,11 @@ export const toRoutes = (
     <Route path="courses" element={<PlaceholderPage title="과정 목록" />} />
     <Route path="courses/create" element={<PlaceholderPage title="과정 생성" />} />
     <Route path="courses/:id" element={<PlaceholderPage title="과정 상세" />} />
-    {/* 교육 운영 관리 */}
-    <Route path="sessions" element={<PlaceholderPage title="차수 관리" />} />
+    {/* 교육 운영 관리 - 차수(CourseTime) */}
+    <Route path="times" element={<CourseTimesPage />} />
+    <Route path="times/create" element={<CourseTimeCreatePage />} />
+    <Route path="times/:id" element={<CourseTimeDetailPage />} />
+    {/* 강사 배정 */}
     <Route path="instructors" element={<PlaceholderPage title="강사 배정" />} />
     {/* 콘텐츠 관리 */}
     <Route path="content" element={<PlaceholderPage title="콘텐츠 풀" />} />

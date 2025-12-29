@@ -12,9 +12,6 @@ import {
 } from '@/components/domain/tu/assignment';
 import type { AssignmentStatus } from '@/types/tu';
 
-// [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제
-import { DevLoginButton } from '@/components/dev/DevLoginButton';
-
 interface MyAssignmentsPageProps {
   language?: 'ko' | 'en';
 }
@@ -72,9 +69,6 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
       {/* Header */}
       <div className="sticky top-0 z-10 bg-bg-app">
         <div className="p-6 px-8">
-          {/* [DEV] 임시 로그인 버튼 */}
-          <DevLoginButton />
-
           <div className="mb-6">
             <h1 className="text-text-primary mb-1">{getText('title')}</h1>
             <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
