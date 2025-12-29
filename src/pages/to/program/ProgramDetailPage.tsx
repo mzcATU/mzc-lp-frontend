@@ -10,6 +10,9 @@ import {
   User,
   Loader2,
   AlertCircle,
+  Clock,
+  BookOpen,
+  Layers,
 } from 'lucide-react';
 import { Button, Badge, Card, Label, Textarea } from '@/components/common';
 import {
@@ -71,8 +74,10 @@ const t = {
   confirm: { ko: '확인', en: 'Confirm' },
   notSet: { ko: '미설정', en: 'Not set' },
   hours: { ko: '시간', en: 'hours' },
-  dateInfo: { ko: '날짜 정보', en: 'Date Info' },
-  creatorInfo: { ko: '생성자 정보', en: 'Creator Info' },
+  creatorId: { ko: '생성자 ID', en: 'Creator ID' },
+  noSnapshot: { ko: '연결된 스냅샷이 없습니다.', en: 'No snapshot linked.' },
+  courseDetails: { ko: '과정 세부 정보', en: 'Course Details' },
+  metadata: { ko: '메타데이터', en: 'Metadata' },
 };
 
 const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -177,23 +182,14 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
   return (
     <div className="h-full flex flex-col bg-bg-app">
       {/* Header */}
-      <div className="bg-bg-default border-b border-border px-6 py-4">
-        <div className="max-w-5xl mx-auto">
+      <div className="sticky top-0 z-10 bg-bg-default border-b border-border px-6 py-4">
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/to/courses')}>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/to/courses')}>
                 <ArrowLeft size={18} />
                 {getText('back')}
               </Button>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-text-primary m-0">{program.title}</h1>
-                  <Badge variant={statusBadgeVariant[program.status]}>
-                    {PROGRAM_STATUS_LABELS[program.status]}
-                  </Badge>
-                </div>
-                <p className="text-text-secondary text-sm mt-1">ID: {program.id}</p>
-              </div>
             </div>
 
             {/* Action Buttons */}
@@ -202,18 +198,20 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 <>
                   <Button
                     variant="ghost"
+                    size="sm"
                     onClick={() => setShowRejectModal(true)}
                     disabled={rejectProgram.isPending}
-                    className="border border-status-error text-status-error hover:bg-status-error/10"
+                    className="border border-status-error text-status-error hover:bg-status-error-bg"
                   >
-                    <XCircle size={18} />
+                    <XCircle size={16} />
                     {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
                   </Button>
                   <Button
+                    size="sm"
                     onClick={() => setShowApproveModal(true)}
                     disabled={approveProgram.isPending}
                   >
-                    <CheckCircle size={18} />
+                    <CheckCircle size={16} />
                     {approveProgram.isPending ? getText('approving') : getText('approve')}
                   </Button>
                 </>
@@ -221,11 +219,12 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
               {(program.status === 'APPROVED' || program.status === 'DRAFT') && (
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={handleClose}
                   disabled={closeProgram.isPending}
                   className="border border-border"
                 >
-                  <Archive size={18} />
+                  <Archive size={16} />
                   {closeProgram.isPending ? getText('closing') : getText('close')}
                 </Button>
               )}
@@ -236,196 +235,223 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Info */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Basic Info Card */}
-              <Card>
-                <div className="p-6">
-                  <h2 className="text-lg font-medium text-text-primary mb-4">
-                    {getText('basicInfo')}
-                  </h2>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-text-secondary">{getText('title')}</Label>
-                      <p className="text-text-primary mt-1">{program.title}</p>
-                    </div>
-                    <div>
-                      <Label className="text-text-secondary">{getText('description')}</Label>
-                      <p className="text-text-primary mt-1 whitespace-pre-wrap">
-                        {program.description || getText('notSet')}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-text-secondary">{getText('level')}</Label>
-                        <p className="text-text-primary mt-1">
-                          {program.level ? PROGRAM_LEVEL_LABELS[program.level] : getText('notSet')}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-text-secondary">{getText('type')}</Label>
-                        <p className="text-text-primary mt-1">
-                          {program.type ? PROGRAM_TYPE_LABELS[program.type] : getText('notSet')}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-text-secondary">{getText('estimatedHours')}</Label>
-                      <p className="text-text-primary mt-1">
-                        {program.estimatedHours
-                          ? `${program.estimatedHours} ${getText('hours')}`
-                          : getText('notSet')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Approval Info */}
-              {program.status === 'APPROVED' && program.approvedAt && (
-                <Card>
-                  <div className="p-6">
-                    <h2 className="text-lg font-medium text-text-primary mb-4 flex items-center gap-2">
-                      <CheckCircle size={20} className="text-status-success" />
-                      {getText('approvalInfo')}
-                    </h2>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-text-secondary">{getText('approvedBy')}</Label>
-                          <p className="text-text-primary mt-1">
-                            {program.approvedBy || getText('notSet')}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-text-secondary">{getText('approvedAt')}</Label>
-                          <p className="text-text-primary mt-1">
-                            {formatDate(program.approvedAt)}
-                          </p>
-                        </div>
-                      </div>
-                      {program.approvalComment && (
-                        <div>
-                          <Label className="text-text-secondary">{getText('approvalComment')}</Label>
-                          <p className="text-text-primary mt-1 whitespace-pre-wrap">
-                            {program.approvalComment}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              {/* Rejection Info */}
-              {program.status === 'REJECTED' && program.rejectedAt && (
-                <Card>
-                  <div className="p-6">
-                    <h2 className="text-lg font-medium text-text-primary mb-4 flex items-center gap-2">
-                      <XCircle size={20} className="text-status-error" />
-                      {getText('rejectionInfo')}
-                    </h2>
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-text-secondary">{getText('rejectedAt')}</Label>
-                        <p className="text-text-primary mt-1">
-                          {formatDate(program.rejectedAt)}
-                        </p>
-                      </div>
-                      <div>
-                        <Label className="text-text-secondary">{getText('rejectionReason')}</Label>
-                        <p className="text-text-primary mt-1 whitespace-pre-wrap">
-                          {program.rejectionReason || getText('notSet')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )}
-            </div>
-
-            {/* Sidebar Info */}
-            <div className="space-y-6">
-              {/* Dates Card */}
-              <Card>
-                <div className="p-6">
-                  <h3 className="text-sm font-medium text-text-primary mb-4 flex items-center gap-2">
-                    <Calendar size={16} />
-                    {getText('dateInfo')}
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-text-secondary text-xs">{getText('createdAt')}</Label>
-                      <p className="text-text-primary text-sm mt-0.5">
-                        {formatDate(program.createdAt)}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-text-secondary text-xs">{getText('updatedAt')}</Label>
-                      <p className="text-text-primary text-sm mt-0.5">
-                        {formatDate(program.updatedAt)}
-                      </p>
-                    </div>
-                    {program.submittedAt && (
-                      <div>
-                        <Label className="text-text-secondary text-xs">{getText('submittedAt')}</Label>
-                        <p className="text-text-primary text-sm mt-0.5">
-                          {formatDate(program.submittedAt)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-
-              {/* Creator Card */}
-              <Card>
-                <div className="p-6">
-                  <h3 className="text-sm font-medium text-text-primary mb-4 flex items-center gap-2">
-                    <User size={16} />
-                    {getText('creatorInfo')}
-                  </h3>
-                  <div>
-                    <Label className="text-text-secondary text-xs">Creator ID</Label>
-                    <p className="text-text-primary text-sm mt-0.5">{program.creatorId}</p>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Snapshot Card */}
-              {program.snapshotId && (
-                <Card>
-                  <div className="p-6">
-                    <h3 className="text-sm font-medium text-text-primary mb-4 flex items-center gap-2">
-                      <FileText size={16} />
-                      {getText('snapshotInfo')}
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-text-secondary text-xs">{getText('snapshotId')}</Label>
-                        <p className="text-text-primary text-sm mt-0.5">{program.snapshotId}</p>
-                      </div>
-                      {program.snapshotName && (
-                        <div>
-                          <Label className="text-text-secondary text-xs">{getText('snapshotName')}</Label>
-                          <p className="text-text-primary text-sm mt-0.5">{program.snapshotName}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              )}
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+          {/* Title Section */}
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-semibold text-text-primary m-0">
+                  {program.title}
+                </h1>
+                <Badge variant={statusBadgeVariant[program.status]} className="text-sm">
+                  {PROGRAM_STATUS_LABELS[program.status]}
+                </Badge>
+              </div>
+              <p className="text-text-secondary text-sm">ID: {program.id}</p>
             </div>
           </div>
+
+          {/* Description */}
+          {program.description && (
+            <Card>
+              <div className="p-5">
+                <p className="text-text-primary whitespace-pre-wrap leading-relaxed">
+                  {program.description}
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* Course Details Grid */}
+          <Card>
+            <div className="p-5">
+              <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
+                <BookOpen size={18} className="text-text-secondary" />
+                {getText('courseDetails')}
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('level')}
+                  </Label>
+                  <p className="text-text-primary mt-1 font-medium">
+                    {program.level ? PROGRAM_LEVEL_LABELS[program.level] : getText('notSet')}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('type')}
+                  </Label>
+                  <p className="text-text-primary mt-1 font-medium">
+                    {program.type ? PROGRAM_TYPE_LABELS[program.type] : getText('notSet')}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('estimatedHours')}
+                  </Label>
+                  <p className="text-text-primary mt-1 font-medium flex items-center gap-1">
+                    <Clock size={14} className="text-text-secondary" />
+                    {program.estimatedHours
+                      ? `${program.estimatedHours} ${getText('hours')}`
+                      : getText('notSet')}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('creatorId')}
+                  </Label>
+                  <p className="text-text-primary mt-1 font-medium flex items-center gap-1">
+                    <User size={14} className="text-text-secondary" />
+                    {program.creatorId}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Metadata */}
+          <Card>
+            <div className="p-5">
+              <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
+                <Calendar size={18} className="text-text-secondary" />
+                {getText('metadata')}
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                <div>
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('createdAt')}
+                  </Label>
+                  <p className="text-text-primary mt-1 text-sm">
+                    {formatDate(program.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('updatedAt')}
+                  </Label>
+                  <p className="text-text-primary mt-1 text-sm">
+                    {formatDate(program.updatedAt)}
+                  </p>
+                </div>
+                {program.submittedAt && (
+                  <div>
+                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                      {getText('submittedAt')}
+                    </Label>
+                    <p className="text-text-primary mt-1 text-sm">
+                      {formatDate(program.submittedAt)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Snapshot Info */}
+          <Card>
+            <div className="p-5">
+              <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
+                <Layers size={18} className="text-text-secondary" />
+                {getText('snapshotInfo')}
+              </h2>
+              {program.snapshotId ? (
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                      {getText('snapshotId')}
+                    </Label>
+                    <p className="text-text-primary mt-1 font-medium">{program.snapshotId}</p>
+                  </div>
+                  {program.snapshotName && (
+                    <div>
+                      <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                        {getText('snapshotName')}
+                      </Label>
+                      <p className="text-text-primary mt-1 font-medium">{program.snapshotName}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-text-secondary text-sm">{getText('noSnapshot')}</p>
+              )}
+            </div>
+          </Card>
+
+          {/* Approval Info */}
+          {program.status === 'APPROVED' && program.approvedAt && (
+            <Card className="border-l-4 border-l-status-success">
+              <div className="p-5">
+                <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
+                  <CheckCircle size={18} className="text-status-success" />
+                  {getText('approvalInfo')}
+                </h2>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                      {getText('approvedBy')}
+                    </Label>
+                    <p className="text-text-primary mt-1">
+                      {program.approvedBy || getText('notSet')}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                      {getText('approvedAt')}
+                    </Label>
+                    <p className="text-text-primary mt-1 text-sm">
+                      {formatDate(program.approvedAt)}
+                    </p>
+                  </div>
+                </div>
+                {program.approvalComment && (
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                      {getText('approvalComment')}
+                    </Label>
+                    <p className="text-text-primary mt-1 whitespace-pre-wrap">
+                      {program.approvalComment}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* Rejection Info */}
+          {program.status === 'REJECTED' && program.rejectedAt && (
+            <Card className="border-l-4 border-l-status-error">
+              <div className="p-5">
+                <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
+                  <XCircle size={18} className="text-status-error" />
+                  {getText('rejectionInfo')}
+                </h2>
+                <div className="mb-4">
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('rejectedAt')}
+                  </Label>
+                  <p className="text-text-primary mt-1 text-sm">
+                    {formatDate(program.rejectedAt)}
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-border">
+                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
+                    {getText('rejectionReason')}
+                  </Label>
+                  <p className="text-text-primary mt-1 whitespace-pre-wrap">
+                    {program.rejectionReason || getText('notSet')}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
 
       {/* Approve Modal */}
       {showApproveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <h3 className="text-lg font-medium text-text-primary mb-4 flex items-center gap-2">
               <CheckCircle size={20} className="text-status-success" />
               {getText('confirmApprove')}
@@ -460,7 +486,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
       {/* Reject Modal */}
       {showRejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <h3 className="text-lg font-medium text-text-primary mb-4 flex items-center gap-2">
               <AlertCircle size={20} className="text-status-error" />
               {getText('confirmReject')}
@@ -487,7 +513,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
               <Button
                 onClick={handleReject}
                 disabled={rejectProgram.isPending || !rejectReason.trim()}
-                className="bg-status-error hover:bg-status-error/90"
+                className="bg-status-error hover:bg-status-error/90 text-white"
               >
                 {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
               </Button>

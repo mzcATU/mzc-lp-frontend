@@ -12,6 +12,9 @@ import {
   XCircle,
   LayoutGrid,
   Eye,
+  MoreHorizontal,
+  Archive,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -20,8 +23,19 @@ import {
   DataTable,
   DataTableColumnHeader,
   IconStatCard,
+  Label,
+  Textarea,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
 } from '@/components/common';
-import { usePrograms } from '@/hooks/to/useProgramQueries';
+import {
+  usePrograms,
+  useApproveProgram,
+  useRejectProgram,
+  useCloseProgram,
+} from '@/hooks/to/useProgramQueries';
 import type { ProgramResponse, ProgramStatus } from '@/types/common';
 import {
   PROGRAM_STATUS_LABELS,
@@ -64,8 +78,24 @@ const t = {
   columnType: { ko: '타입', en: 'Type' },
   columnCreatedAt: { ko: '생성일', en: 'Created' },
   columnActions: { ko: '액션', en: 'Actions' },
-  view: { ko: '상세', en: 'View' },
+  view: { ko: '상세보기', en: 'View Details' },
   notSet: { ko: '미설정', en: 'Not set' },
+  approve: { ko: '승인', en: 'Approve' },
+  reject: { ko: '반려', en: 'Reject' },
+  close: { ko: '종료', en: 'Close' },
+  approving: { ko: '승인 중...', en: 'Approving...' },
+  rejecting: { ko: '반려 중...', en: 'Rejecting...' },
+  closing: { ko: '종료 중...', en: 'Closing...' },
+  confirmApprove: { ko: '이 프로그램을 승인하시겠습니까?', en: 'Approve this program?' },
+  confirmReject: { ko: '반려 사유를 입력하세요.', en: 'Enter rejection reason.' },
+  confirmClose: { ko: '이 프로그램을 종료하시겠습니까?', en: 'Close this program?' },
+  rejectReasonRequired: { ko: '반려 사유를 입력해주세요.', en: 'Rejection reason is required.' },
+  rejectReasonPlaceholder: { ko: '반려 사유를 입력하세요...', en: 'Enter rejection reason...' },
+  approveCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Approval comment (optional)' },
+  approvalComment: { ko: '승인 코멘트', en: 'Approval Comment' },
+  rejectionReason: { ko: '반려 사유', en: 'Rejection Reason' },
+  cancel: { ko: '취소', en: 'Cancel' },
+  confirm: { ko: '확인', en: 'Confirm' },
 };
 
 const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -83,6 +113,13 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
+  // Modal states
+  const [selectedProgram, setSelectedProgram] = useState<ProgramResponse | null>(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [approveComment, setApproveComment] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   // API 파라미터 구성
@@ -94,6 +131,9 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
 
   // React Query 훅 사용
   const { data, isLoading, error } = usePrograms(params);
+  const approveProgram = useApproveProgram();
+  const rejectProgram = useRejectProgram();
+  const closeProgram = useCloseProgram();
 
   const programs = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
@@ -121,6 +161,142 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
     });
   };
 
+  // Action handlers
+  const handleApproveClick = (program: ProgramResponse) => {
+    setSelectedProgram(program);
+    setShowApproveModal(true);
+  };
+
+  const handleRejectClick = (program: ProgramResponse) => {
+    setSelectedProgram(program);
+    setShowRejectModal(true);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedProgram) return;
+    try {
+      await approveProgram.mutateAsync({
+        id: selectedProgram.id,
+        request: approveComment ? { comment: approveComment } : undefined,
+      });
+      setShowApproveModal(false);
+      setSelectedProgram(null);
+      setApproveComment('');
+    } catch (err) {
+      console.error('Approve failed:', err);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedProgram) return;
+    if (!rejectReason.trim()) {
+      alert(getText('rejectReasonRequired'));
+      return;
+    }
+    try {
+      await rejectProgram.mutateAsync({
+        id: selectedProgram.id,
+        request: { reason: rejectReason },
+      });
+      setShowRejectModal(false);
+      setSelectedProgram(null);
+      setRejectReason('');
+    } catch (err) {
+      console.error('Reject failed:', err);
+    }
+  };
+
+  const handleClose = async (program: ProgramResponse) => {
+    if (!confirm(getText('confirmClose'))) return;
+    try {
+      await closeProgram.mutateAsync(program.id);
+    } catch (err) {
+      console.error('Close failed:', err);
+    }
+  };
+
+  // 상태별 Primary Action 렌더링
+  // - PENDING: 승인 버튼 (운영자 주요 액션)
+  // - APPROVED: 종료 버튼
+  // - DRAFT, REJECTED, CLOSED: Primary Action 없음 (Row Click으로 상세보기)
+  const renderPrimaryAction = (item: ProgramResponse) => {
+    switch (item.status) {
+      case 'PENDING':
+        return (
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleApproveClick(item);
+            }}
+            disabled={approveProgram.isPending}
+            className="h-8"
+          >
+            <CheckCircle size={14} />
+            {getText('approve')}
+          </Button>
+        );
+      case 'APPROVED':
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose(item);
+            }}
+            disabled={closeProgram.isPending}
+            className="h-8 border border-border"
+          >
+            <Archive size={14} />
+            {getText('close')}
+          </Button>
+        );
+      default:
+        // DRAFT, REJECTED, CLOSED: Primary Action 없음
+        return null;
+    }
+  };
+
+  // 더보기 메뉴 렌더링
+  // 모든 상태에 ... 메뉴 표시 (시각적 일관성)
+  // 상태별 메뉴 아이템:
+  // - PENDING: 반려, 상세보기
+  // - APPROVED: 상세보기
+  // - DRAFT, REJECTED, CLOSED: 상세보기
+  const renderMoreMenu = (item: ProgramResponse) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-bg-secondary transition-colors"
+          >
+            <MoreHorizontal size={16} className="text-text-secondary" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          {/* 상세보기 - 모든 상태 */}
+          <DropdownMenuItem onClick={() => navigate(`/to/courses/${item.id}`)}>
+            <Eye size={14} />
+            {getText('view')}
+          </DropdownMenuItem>
+
+          {/* 반려 - PENDING 상태만 */}
+          {item.status === 'PENDING' && (
+            <DropdownMenuItem
+              onClick={() => handleRejectClick(item)}
+              variant="destructive"
+            >
+              <XCircle size={14} />
+              {getText('reject')}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   // 리스트뷰 컬럼 정의
   const columns: ColumnDef<ProgramResponse>[] = useMemo(
     () => [
@@ -130,7 +306,7 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
           <DataTableColumnHeader column={column} title={getText('columnTitle')} />
         ),
         cell: ({ row }) => (
-          <div className="max-w-md">
+          <div className="min-w-0">
             <p className="text-sm font-medium text-text-primary truncate">
               {row.original.title}
             </p>
@@ -157,7 +333,7 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
           <DataTableColumnHeader column={column} title={getText('columnLevel')} />
         ),
         cell: ({ row }) => (
-          <span className="text-sm text-text-secondary">
+          <span className="text-sm text-text-secondary whitespace-nowrap">
             {row.original.level ? PROGRAM_LEVEL_LABELS[row.original.level] : getText('notSet')}
           </span>
         ),
@@ -168,7 +344,7 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
           <DataTableColumnHeader column={column} title={getText('columnType')} />
         ),
         cell: ({ row }) => (
-          <span className="text-sm text-text-secondary">
+          <span className="text-sm text-text-secondary whitespace-nowrap">
             {row.original.type ? PROGRAM_TYPE_LABELS[row.original.type] : getText('notSet')}
           </span>
         ),
@@ -179,34 +355,30 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
           <DataTableColumnHeader column={column} title={getText('columnCreatedAt')} />
         ),
         cell: ({ row }) => (
-          <span className="text-sm text-text-secondary">
+          <span className="text-sm text-text-secondary whitespace-nowrap">
             {formatDate(row.original.createdAt)}
           </span>
         ),
       },
       {
         id: 'actions',
-        header: () => <div className="text-right">{getText('columnActions')}</div>,
+        header: () => <span className="sr-only">{getText('columnActions')}</span>,
         cell: ({ row }) => {
           const item = row.original;
           return (
             <div
-              className="flex items-center justify-end gap-2"
+              className="flex items-center justify-end gap-1"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => navigate(`/to/courses/${item.id}`)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
-                title={getText('view')}
-              >
-                <Eye size={16} />
-              </button>
+              {renderPrimaryAction(item)}
+              {renderMoreMenu(item)}
             </div>
           );
         },
+        size: 130,
       },
     ],
-    [language, navigate]
+    [language, navigate, approveProgram.isPending, closeProgram.isPending]
   );
 
   if (error) {
@@ -393,6 +565,88 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
           )}
         </div>
       </div>
+
+      {/* Approve Modal */}
+      {showApproveModal && selectedProgram && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <CheckCircle size={20} className="text-status-success" />
+              {getText('confirmApprove')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedProgram.title}
+            </p>
+            <div className="mb-4">
+              <Label className="text-text-secondary mb-2">{getText('approvalComment')}</Label>
+              <Textarea
+                value={approveComment}
+                onChange={(e) => setApproveComment(e.target.value)}
+                placeholder={getText('approveCommentPlaceholder')}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowApproveModal(false);
+                  setSelectedProgram(null);
+                  setApproveComment('');
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button onClick={handleApprove} disabled={approveProgram.isPending}>
+                {approveProgram.isPending ? getText('approving') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && selectedProgram && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <AlertCircle size={20} className="text-status-error" />
+              {getText('confirmReject')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedProgram.title}
+            </p>
+            <div className="mb-4">
+              <Label className="text-text-secondary mb-2">{getText('rejectionReason')} *</Label>
+              <Textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder={getText('rejectReasonPlaceholder')}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setSelectedProgram(null);
+                  setRejectReason('');
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleReject}
+                disabled={rejectProgram.isPending || !rejectReason.trim()}
+                className="bg-status-error hover:bg-status-error/90 text-white"
+              >
+                {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
