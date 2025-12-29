@@ -7,8 +7,11 @@ import {
   LandingFooter,
   TagFilter,
   BannerCarousel,
+  SortViewOptions,
   type Tag,
   type BannerItem,
+  type SortOption,
+  type ViewMode,
 } from '@/components/landing';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
@@ -253,6 +256,8 @@ export function LandingPage() {
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<SortOption>('latest');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
@@ -271,13 +276,32 @@ export function LandingPage() {
   const featuredCourses = courses.filter((c) => c.tags.includes('베스트')).slice(0, 5);
   const newCourses = courses.filter((c) => c.tags.includes('NEW')).slice(0, 5);
 
-  // B2B 필터링
-  const filteredB2BContents =
-    selectedTags.length === 0
-      ? b2bContents
-      : b2bContents.filter((content) =>
-          content.tags.some((tag) => selectedTags.includes(tag))
-        );
+  // B2B 필터링 및 정렬
+  const filteredB2BContents = (() => {
+    let filtered =
+      selectedTags.length === 0
+        ? b2bContents
+        : b2bContents.filter((content) =>
+            content.tags.some((tag) => selectedTags.includes(tag))
+          );
+
+    // 정렬 적용
+    switch (sortBy) {
+      case 'popular':
+        filtered = [...filtered].sort((a, b) => b.enrollmentCount - a.enrollmentCount);
+        break;
+      case 'name':
+        filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'latest':
+      default:
+        // 기본: id 역순 (최신순)
+        filtered = [...filtered].sort((a, b) => b.id - a.id);
+        break;
+    }
+
+    return filtered;
+  })();
 
   // B2B 모드 렌더링
   if (tenantMode === 'B2B') {
@@ -316,29 +340,78 @@ export function LandingPage() {
                   총 {filteredB2BContents.length}개의 학습 콘텐츠
                 </p>
               </div>
-              <a
-                href="/tu/catalog"
-                className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
-              >
-                {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
-              </a>
+              <div className="flex items-center gap-4">
+                <SortViewOptions
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
+                <a
+                  href="/tu/catalog"
+                  className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
+                >
+                  {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
+                </a>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredB2BContents.map((content) => (
-                <LandingCourseCard
-                  key={content.id}
-                  id={content.id}
-                  title={content.title}
-                  image={content.image}
-                  tags={content.tags}
-                  contentType={content.contentType}
-                  duration={content.duration}
-                  enrollmentCount={content.enrollmentCount}
-                  tagStyle="HASHTAG"
-                />
-              ))}
-            </div>
+            {/* 그리드 뷰 */}
+            {viewMode === 'grid' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {filteredB2BContents.map((content) => (
+                  <LandingCourseCard
+                    key={content.id}
+                    id={content.id}
+                    title={content.title}
+                    image={content.image}
+                    tags={content.tags}
+                    contentType={content.contentType}
+                    duration={content.duration}
+                    enrollmentCount={content.enrollmentCount}
+                    tagStyle="HASHTAG"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* 리스트 뷰 */}
+            {viewMode === 'list' && (
+              <div className="flex flex-col gap-4">
+                {filteredB2BContents.map((content) => (
+                  <div
+                    key={content.id}
+                    className="flex gap-4 p-4 rounded-xl landing-card-bg border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow"
+                  >
+                    <img
+                      src={content.image}
+                      alt={content.title}
+                      className="w-40 h-24 object-cover rounded-lg flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold landing-text-primary truncate">
+                        {content.title}
+                      </h3>
+                      <div className="flex gap-2 mt-2">
+                        {content.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-xs landing-text-secondary"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4 mt-3 text-sm landing-text-muted">
+                        <span>{content.contentType}</span>
+                        <span>{content.duration}분</span>
+                        <span>{content.enrollmentCount.toLocaleString()}명 수강</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {filteredB2BContents.length === 0 && (
               <p className="text-center landing-text-muted py-10">

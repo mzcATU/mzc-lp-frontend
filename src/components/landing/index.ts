@@ -6,3 +6,5 @@ export { TagFilter } from './TagFilter';
 export type { Tag } from './TagFilter';
 export { BannerCarousel } from './BannerCarousel';
 export type { BannerItem } from './BannerCarousel';
+export { SortViewOptions } from './SortViewOptions';
+export type { SortOption, ViewMode } from './SortViewOptions';
