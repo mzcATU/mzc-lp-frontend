@@ -32,9 +32,13 @@ export {
 /** 콘텐츠 첨부 타입 */
 export interface ContentAttachment {
   id: string;
-  type: 'upload' | 'link';
+  type: 'upload' | 'link' | 'existing';
   name: string;
   url: string;
+  contentId?: number;
+  contentType?: string;
+  status?: 'pending' | 'uploading' | 'completed' | 'error';
+  uploadProgress?: number;
 }
 
 /** 회차(레슨) 데이터 타입 */
