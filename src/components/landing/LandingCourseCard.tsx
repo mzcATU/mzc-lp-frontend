@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Video, BookOpen, FileText, Clock, Users, Heart } from 'lucide-react';
+import { Star, Heart, Video, BookOpen, FileText, Clock, Users } from 'lucide-react';
 import { useTranslation } from '@/store/common/languageStore';
 
 type ContentType = 'VOD' | 'EBOOK' | 'DOCUMENT';
