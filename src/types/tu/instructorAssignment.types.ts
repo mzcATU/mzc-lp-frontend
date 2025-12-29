@@ -77,3 +77,61 @@ export const ASSIGNMENT_STATUS_LABELS: Record<AssignmentStatus, { ko: string; en
   REPLACED: { ko: '교체됨', en: 'Replaced' },
   CANCELLED: { ko: '취소됨', en: 'Cancelled' },
 };
+
+// ========== 수강생 관련 타입 (배정 상세용) ==========
+
+/**
+ * 수강생 상태
+ */
+export type StudentEnrollmentStatus = 'ENROLLED' | 'IN_PROGRESS' | 'COMPLETED' | 'DROPPED';
+
+/**
+ * 차수 수강생 목록 아이템
+ */
+export interface CourseTimeEnrollmentItem {
+  enrollmentId: number;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  status: StudentEnrollmentStatus;
+  progress: number;
+  enrolledAt: string;
+  completedAt: string | null;
+  lastAccessedAt: string | null;
+}
+
+/**
+ * 수강 통계
+ */
+export interface EnrollmentStats {
+  totalCount: number;
+  enrolledCount: number;
+  inProgressCount: number;
+  completedCount: number;
+  droppedCount: number;
+  averageProgress: number;
+  completionRate: number;
+}
+
+/**
+ * 차수 수강생 목록 응답
+ */
+export interface CourseTimeEnrollmentsResponse {
+  timeId: number;
+  timeName: string;
+  programName: string;
+  startDate: string;
+  endDate: string;
+  enrollments: CourseTimeEnrollmentItem[];
+  stats: EnrollmentStats;
+}
+
+/**
+ * 수강생 상태 라벨
+ */
+export const STUDENT_ENROLLMENT_STATUS_LABELS: Record<StudentEnrollmentStatus, { ko: string; en: string }> = {
+  ENROLLED: { ko: '수강 대기', en: 'Enrolled' },
+  IN_PROGRESS: { ko: '수강 중', en: 'In Progress' },
+  COMPLETED: { ko: '수료', en: 'Completed' },
+  DROPPED: { ko: '중도 포기', en: 'Dropped' },
+};
