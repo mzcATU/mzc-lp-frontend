@@ -217,20 +217,14 @@ export const tenantOperatorMenuData: MenuItem[] = [
 ];
 
 /**
- * Tenant User (TU) 메뉴
+ * Tenant User (TU) 메뉴 - 강사/콘텐츠 제작자 공간
  */
 export const tenantUserMenuData: MenuItem[] = [
   {
-    id: 'home',
-    label: { ko: '홈', en: 'Home' },
-    icon: Home,
+    id: 'dashboard',
+    label: { ko: '대시보드', en: 'Dashboard' },
+    icon: LayoutDashboard,
     path: '/tu/dashboard',
-},
-  {
-    id: 'mypage',
-    label: { ko: '마이페이지', en: 'My Page' },
-    icon: Users,
-    path: '/mypage',
   },
   {
     id: 'my-teaching',
@@ -243,15 +237,15 @@ export const tenantUserMenuData: MenuItem[] = [
     ],
   },
   {
-    id: 'settings',
-    label: { ko: '설정', en: 'Settings' },
-    icon: Settings,
-    path: '/tu/settings',
+    id: 'catalog',
+    label: { ko: '과정 둘러보기', en: 'Course Catalog' },
+    icon: Library,
+    path: '/tu/catalog',
   },
 ];
 
 /**
- * MyPage 메뉴 (일반 사용자용)
+ * MyPage 메뉴 (일반 사용자용 - 학습자 개인 공간)
  */
 export const myPageMenuData: MenuItem[] = [
   {
@@ -284,11 +278,7 @@ export const myPageMenuData: MenuItem[] = [
     id: 'mypage-settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    subItems: [
-      { id: 'profile-security', label: { ko: '프로필 및 보안', en: 'Profile & Security' }, icon: Shield, path: '/mypage/profile' },
-      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Mail, path: '/mypage/notifications' },
-      { id: 'language', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/mypage/language' },
-    ],
+    path: '/mypage/settings',
   },
 ];
 
