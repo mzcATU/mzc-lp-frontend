@@ -286,7 +286,7 @@ export const myPageMenuData: MenuItem[] = [
  * 역할별 라벨
  */
 export const roleLabels = {
-  superAdmin: { ko: '슈퍼 어드민', en: 'Super Admin' },
+  superAdmin: { ko: '시스템 어드민', en: 'System Admin' },
   tenantAdmin: { ko: '테넌트 어드민', en: 'Tenant Admin' },
   tenantOperator: { ko: '교육 운영자', en: 'Operator' },
   tenantUser: { ko: 'Enterprise LMS', en: 'Enterprise LMS' },

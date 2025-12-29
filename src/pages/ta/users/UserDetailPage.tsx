@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Save,
@@ -11,6 +11,8 @@ import {
   Building,
   Calendar,
   Activity,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import {
   AdminPageHeader,
@@ -31,59 +33,26 @@ import {
 } from '@/components/common/Select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/Avatar';
 import { Progress } from '@/components/common/Progress';
-import type { UserStatus, SystemRole } from '@/components/domain/admin';
+import { Skeleton } from '@/components/common/Skeleton';
+import { useUser, useUpdateUser, useUpdateUserRole, useDeleteUser } from '@/hooks/ta';
+import type { UserStatus, SystemRole, UserDetail, UserEnrollment, UserActivityLog } from '@/types/admin';
 
 // Mock 데이터
-interface CourseEnrollment {
-  id: number;
-  title: string;
-  progress: number;
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'NOT_STARTED';
-  enrolledAt: string;
-  completedAt?: string;
-}
-
-interface ActivityLog {
-  id: number;
-  action: string;
-  description: string;
-  timestamp: string;
-  type: 'login' | 'course' | 'assessment' | 'profile';
-}
-
-interface UserDetail {
-  id: number;
-  name: string;
-  email: string;
-  status: UserStatus;
-  role: SystemRole;
-  department?: string;
-  phone?: string;
-  position?: string;
-  createdAt: string;
-  lastActiveAt: string;
-  stats: {
-    totalCourses: number;
-    completedCourses: number;
-    inProgressCourses: number;
-    totalLearningTime: number; // hours
-    averageScore: number;
-  };
-  enrollments: CourseEnrollment[];
-  activityLogs: ActivityLog[];
-}
-
-const mockUserDetail: UserDetail = {
+const MOCK_USER: UserDetail = {
   id: 1,
-  name: '김민수',
   email: 'minsu.kim@company.com',
+  name: '김민수',
   status: 'ACTIVE',
-  role: 'OPERATOR',
-  department: '개발팀',
-  phone: '010-1234-5678',
-  position: '시니어 개발자',
+  systemRole: 'OPERATOR',
+  courseRoles: [],
+  tenantId: 1,
+  organizationName: '개발팀',
   createdAt: '2025-01-15',
-  lastActiveAt: '2025-12-29',
+  updatedAt: '2025-01-15',
+  lastLoginAt: '2025-12-29',
+  phone: '010-1234-5678',
+  department: '개발팀',
+  position: '시니어 개발자',
   stats: {
     totalCourses: 12,
     completedCourses: 8,
@@ -92,20 +61,63 @@ const mockUserDetail: UserDetail = {
     averageScore: 87,
   },
   enrollments: [
-    { id: 1, title: 'AWS 기초 마스터', progress: 100, status: 'COMPLETED', enrolledAt: '2025-01-20', completedAt: '2025-02-15' },
-    { id: 2, title: 'React 실전 프로젝트', progress: 75, status: 'IN_PROGRESS', enrolledAt: '2025-02-01' },
-    { id: 3, title: 'TypeScript 완벽 가이드', progress: 60, status: 'IN_PROGRESS', enrolledAt: '2025-02-10' },
-    { id: 4, title: 'Docker & Kubernetes', progress: 100, status: 'COMPLETED', enrolledAt: '2025-01-10', completedAt: '2025-01-25' },
-    { id: 5, title: 'Python 데이터 분석', progress: 0, status: 'NOT_STARTED', enrolledAt: '2025-12-20' },
+    { id: 1, courseTitle: 'AWS 기초 마스터', progress: 100, status: 'COMPLETED', enrolledAt: '2025-01-20', completedAt: '2025-02-15' },
+    { id: 2, courseTitle: 'React 실전 프로젝트', progress: 75, status: 'IN_PROGRESS', enrolledAt: '2025-02-01' },
+    { id: 3, courseTitle: 'TypeScript 완벽 가이드', progress: 60, status: 'IN_PROGRESS', enrolledAt: '2025-02-10' },
+    { id: 4, courseTitle: 'Docker & Kubernetes', progress: 100, status: 'COMPLETED', enrolledAt: '2025-01-10', completedAt: '2025-01-25' },
+    { id: 5, courseTitle: 'Python 데이터 분석', progress: 0, status: 'NOT_STARTED', enrolledAt: '2025-12-20' },
   ],
   activityLogs: [
     { id: 1, action: '로그인', description: '시스템에 로그인했습니다.', timestamp: '2025-12-29 09:15:00', type: 'login' },
     { id: 2, action: '강의 수강', description: 'React 실전 프로젝트 - 챕터 5 완료', timestamp: '2025-12-29 10:30:00', type: 'course' },
     { id: 3, action: '평가 완료', description: 'TypeScript 중간 테스트 완료 (85점)', timestamp: '2025-12-28 14:20:00', type: 'assessment' },
     { id: 4, action: '프로필 수정', description: '프로필 정보를 업데이트했습니다.', timestamp: '2025-12-27 16:45:00', type: 'profile' },
-    { id: 5, action: '강의 수강', description: 'AWS 기초 마스터 - 수료', timestamp: '2025-12-25 11:00:00', type: 'course' },
   ],
 };
+
+// 폼 상태용 로컬 타입
+interface UserFormState {
+  name: string;
+  email: string;
+  phone: string;
+  department: string;
+  position: string;
+  status: UserStatus;
+  systemRole: SystemRole;
+  createdAt: string;
+  lastLoginAt: string;
+  stats: {
+    totalCourses: number;
+    completedCourses: number;
+    inProgressCourses: number;
+    totalLearningTime: number;
+    averageScore: number;
+  };
+  enrollments: UserEnrollment[];
+  activityLogs: UserActivityLog[];
+}
+
+// API 데이터를 폼 상태로 변환
+const toFormState = (data: UserDetail): UserFormState => ({
+  name: data.name,
+  email: data.email,
+  phone: data.phone || '',
+  department: data.department || '',
+  position: data.position || '',
+  status: data.status,
+  systemRole: data.systemRole,
+  createdAt: data.createdAt,
+  lastLoginAt: data.lastLoginAt || '',
+  stats: data.stats || {
+    totalCourses: 0,
+    completedCourses: 0,
+    inProgressCourses: 0,
+    totalLearningTime: 0,
+    averageScore: 0,
+  },
+  enrollments: data.enrollments || [],
+  activityLogs: data.activityLogs || [],
+});
 
 const courseStatusLabels = {
   IN_PROGRESS: '진행 중',
@@ -126,33 +138,169 @@ const activityIcons = {
   profile: User,
 };
 
+// 로딩 스켈레톤
+function UserDetailSkeleton() {
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <Skeleton className="h-8 w-48 mb-2" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-6">
+            <Skeleton className="h-20 w-20 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Card key={i}>
+            <CardContent className="pt-6 text-center">
+              <Skeleton className="h-8 w-12 mx-auto mb-2" />
+              <Skeleton className="h-4 w-16 mx-auto" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// 에러 UI
+function UserDetailError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="p-6">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium mb-2">데이터를 불러올 수 없습니다</h3>
+            <p className="text-text-secondary mb-4">{message}</p>
+            <Button onClick={onRetry}>다시 시도</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function UserDetailPage() {
-  const { id: _id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const userId = Number(id);
 
-  // 실제로는 API에서 id를 사용해 데이터를 가져옴
-  const [user, setUser] = useState<UserDetail>(mockUserDetail);
+  // 데모 모드 체크 (?demo=true)
+  const isDemoMode = searchParams.get('demo') === 'true';
 
-  const handleSave = () => {
-    console.log('Save user:', user);
+  // API 호출
+  const { data: userData, isLoading, isError, error, refetch } = useUser(userId);
+  const updateMutation = useUpdateUser();
+  const updateRoleMutation = useUpdateUserRole();
+  const deleteMutation = useDeleteUser();
+
+  // 실제 데이터 또는 Mock 데이터
+  const effectiveData = useMemo(() => {
+    if (isDemoMode) return MOCK_USER;
+    return userData;
+  }, [isDemoMode, userData]);
+
+  // 폼 상태
+  const [formState, setFormState] = useState<UserFormState | null>(null);
+
+  // 데이터 로드 시 폼 상태 초기화
+  useEffect(() => {
+    if (effectiveData) {
+      setFormState(toFormState(effectiveData));
+    }
+  }, [effectiveData]);
+
+  const handleSave = async () => {
+    if (!formState) return;
+
+    try {
+      await updateMutation.mutateAsync({
+        id: userId,
+        request: {
+          name: formState.name,
+          phone: formState.phone || undefined,
+          department: formState.department || undefined,
+          position: formState.position || undefined,
+          status: formState.status,
+          systemRole: formState.systemRole,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to save user:', err);
+    }
   };
 
   const handleStatusChange = (status: UserStatus) => {
-    setUser({ ...user, status });
+    if (formState) setFormState({ ...formState, status });
   };
 
-  const handleRoleChange = (role: SystemRole) => {
-    setUser({ ...user, role });
+  const handleRoleChange = async (role: SystemRole) => {
+    if (formState) {
+      setFormState({ ...formState, systemRole: role });
+      try {
+        await updateRoleMutation.mutateAsync({
+          id: userId,
+          request: { systemRole: role },
+        });
+      } catch (err) {
+        console.error('Failed to update role:', err);
+      }
+    }
   };
+
+  const handleDelete = async () => {
+    if (!window.confirm('정말 이 사용자를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await deleteMutation.mutateAsync(userId);
+      navigate('/ta/users');
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+    }
+  };
+
+  // 로딩 상태 (데모 모드가 아닐 때만)
+  if (!isDemoMode && isLoading) {
+    return <UserDetailSkeleton />;
+  }
+
+  // 에러 상태 (데모 모드가 아닐 때만)
+  if (!isDemoMode && isError) {
+    return (
+      <UserDetailError
+        message={error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'}
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
+  // 데이터 없음
+  if (!formState) {
+    return <UserDetailSkeleton />;
+  }
+
+  const isSaving = updateMutation.isPending || updateRoleMutation.isPending;
 
   return (
     <div className="p-6">
       <AdminPageHeader
-        title={user.name}
-        description={user.email}
+        title={formState.name}
+        description={formState.email}
         breadcrumb={[
           { label: '사용자 관리', href: '/ta/users' },
-          { label: user.name },
+          { label: formState.name },
         ]}
         actions={
           <div className="flex gap-2">
@@ -160,8 +308,12 @@ export function UserDetailPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               목록으로
             </Button>
-            <Button onClick={handleSave}>
-              <Save className="mr-2 h-4 w-4" />
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               저장
             </Button>
           </div>
@@ -173,31 +325,31 @@ export function UserDetailPage() {
         <CardContent className="pt-6">
           <div className="flex items-start gap-6">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} />
-              <AvatarFallback className="text-2xl">{user.name.slice(0, 2)}</AvatarFallback>
+              <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${formState.name}`} />
+              <AvatarFallback className="text-2xl">{formState.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-xl font-bold">{user.name}</h2>
-                <StatusBadge status={user.status} />
-                <RoleBadge role={user.role} />
+                <h2 className="text-xl font-bold">{formState.name}</h2>
+                <StatusBadge status={formState.status} />
+                <RoleBadge role={formState.systemRole} />
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Mail className="h-4 w-4" />
-                  {user.email}
+                  {formState.email}
                 </div>
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Building className="h-4 w-4" />
-                  {user.department || '-'} {user.position && `/ ${user.position}`}
+                  {formState.department || '-'} {formState.position && `/ ${formState.position}`}
                 </div>
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Calendar className="h-4 w-4" />
-                  가입일: {user.createdAt}
+                  가입일: {formState.createdAt}
                 </div>
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Activity className="h-4 w-4" />
-                  최근 활동: {user.lastActiveAt}
+                  최근 활동: {formState.lastLoginAt || '-'}
                 </div>
               </div>
             </div>
@@ -209,31 +361,31 @@ export function UserDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-brand-primary">{user.stats.totalCourses}</p>
+            <p className="text-3xl font-bold text-brand-primary">{formState.stats.totalCourses}</p>
             <p className="text-sm text-text-secondary">전체 강좌</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-green-600">{user.stats.completedCourses}</p>
+            <p className="text-3xl font-bold text-green-600">{formState.stats.completedCourses}</p>
             <p className="text-sm text-text-secondary">완료</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-blue-600">{user.stats.inProgressCourses}</p>
+            <p className="text-3xl font-bold text-blue-600">{formState.stats.inProgressCourses}</p>
             <p className="text-sm text-text-secondary">진행 중</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold">{user.stats.totalLearningTime}h</p>
+            <p className="text-3xl font-bold">{formState.stats.totalLearningTime}h</p>
             <p className="text-sm text-text-secondary">총 학습 시간</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-yellow-600">{user.stats.averageScore}점</p>
+            <p className="text-3xl font-bold text-yellow-600">{formState.stats.averageScore}점</p>
             <p className="text-sm text-text-secondary">평균 점수</p>
           </CardContent>
         </Card>
@@ -269,8 +421,8 @@ export function UserDetailPage() {
                   <Label htmlFor="name">이름</Label>
                   <Input
                     id="name"
-                    value={user.name}
-                    onChange={(e) => setUser({ ...user, name: e.target.value })}
+                    value={formState.name}
+                    onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -278,7 +430,7 @@ export function UserDetailPage() {
                   <Input
                     id="email"
                     type="email"
-                    value={user.email}
+                    value={formState.email}
                     disabled
                     className="bg-bg-secondary"
                   />
@@ -288,8 +440,8 @@ export function UserDetailPage() {
                   <Label htmlFor="phone">연락처</Label>
                   <Input
                     id="phone"
-                    value={user.phone || ''}
-                    onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                    value={formState.phone}
+                    onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
                     placeholder="010-0000-0000"
                   />
                 </div>
@@ -297,21 +449,21 @@ export function UserDetailPage() {
                   <Label htmlFor="department">부서</Label>
                   <Input
                     id="department"
-                    value={user.department || ''}
-                    onChange={(e) => setUser({ ...user, department: e.target.value })}
+                    value={formState.department}
+                    onChange={(e) => setFormState({ ...formState, department: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="position">직책</Label>
                   <Input
                     id="position"
-                    value={user.position || ''}
-                    onChange={(e) => setUser({ ...user, position: e.target.value })}
+                    value={formState.position}
+                    onChange={(e) => setFormState({ ...formState, position: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">상태</Label>
-                  <Select value={user.status} onValueChange={(v) => handleStatusChange(v as UserStatus)}>
+                  <Select value={formState.status} onValueChange={(v) => handleStatusChange(v as UserStatus)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -330,7 +482,7 @@ export function UserDetailPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="role">시스템 역할</Label>
-                    <Select value={user.role} onValueChange={(v) => handleRoleChange(v as SystemRole)}>
+                    <Select value={formState.systemRole} onValueChange={(v) => handleRoleChange(v as SystemRole)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -346,6 +498,34 @@ export function UserDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {/* 위험 영역 */}
+              <div className="border-t pt-6">
+                <h4 className="font-medium mb-4 text-red-600">위험 영역</h4>
+                <div className="p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-red-600">사용자 삭제</p>
+                      <p className="text-sm text-text-secondary">
+                        이 작업은 되돌릴 수 없습니다. 사용자의 모든 데이터가 삭제됩니다.
+                      </p>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <AlertCircle className="mr-2 h-4 w-4" />
+                      )}
+                      사용자 삭제
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -358,33 +538,39 @@ export function UserDetailPage() {
               <CardDescription>사용자가 등록한 강좌와 진도율을 확인합니다.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {user.enrollments.map((enrollment) => (
-                  <div
-                    key={enrollment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-bg-secondary transition-colors"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-medium">{enrollment.title}</h4>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${courseStatusColors[enrollment.status]}`}>
-                          {courseStatusLabels[enrollment.status]}
-                        </span>
+              {formState.enrollments.length === 0 ? (
+                <div className="text-center py-12 text-text-secondary">
+                  수강 중인 강좌가 없습니다.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {formState.enrollments.map((enrollment) => (
+                    <div
+                      key={enrollment.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-bg-secondary transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-medium">{enrollment.courseTitle}</h4>
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${courseStatusColors[enrollment.status]}`}>
+                            {courseStatusLabels[enrollment.status]}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-text-secondary">
+                          <span>등록일: {enrollment.enrolledAt}</span>
+                          {enrollment.completedAt && <span>완료일: {enrollment.completedAt}</span>}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-text-secondary">
-                        <span>등록일: {enrollment.enrolledAt}</span>
-                        {enrollment.completedAt && <span>완료일: {enrollment.completedAt}</span>}
+                      <div className="w-32">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium">{enrollment.progress}%</span>
+                        </div>
+                        <Progress value={enrollment.progress} />
                       </div>
                     </div>
-                    <div className="w-32">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{enrollment.progress}%</span>
-                      </div>
-                      <Progress value={enrollment.progress} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -397,31 +583,37 @@ export function UserDetailPage() {
               <CardDescription>사용자의 최근 활동 내역을 확인합니다.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="relative">
-                {/* Timeline line */}
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-
-                <div className="space-y-6">
-                  {user.activityLogs.map((log) => {
-                    const Icon = activityIcons[log.type];
-                    return (
-                      <div key={log.id} className="relative flex gap-4 pl-10">
-                        {/* Timeline dot */}
-                        <div className="absolute left-0 w-8 h-8 rounded-full bg-bg-secondary border-2 border-border flex items-center justify-center">
-                          <Icon className="w-4 h-4 text-text-secondary" />
-                        </div>
-                        <div className="flex-1 pb-6">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{log.action}</h4>
-                            <span className="text-sm text-text-secondary">{log.timestamp}</span>
-                          </div>
-                          <p className="text-sm text-text-secondary mt-1">{log.description}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+              {formState.activityLogs.length === 0 ? (
+                <div className="text-center py-12 text-text-secondary">
+                  활동 이력이 없습니다.
                 </div>
-              </div>
+              ) : (
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+
+                  <div className="space-y-6">
+                    {formState.activityLogs.map((log) => {
+                      const Icon = activityIcons[log.type];
+                      return (
+                        <div key={log.id} className="relative flex gap-4 pl-10">
+                          {/* Timeline dot */}
+                          <div className="absolute left-0 w-8 h-8 rounded-full bg-bg-secondary border-2 border-border flex items-center justify-center">
+                            <Icon className="w-4 h-4 text-text-secondary" />
+                          </div>
+                          <div className="flex-1 pb-6">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-medium">{log.action}</h4>
+                              <span className="text-sm text-text-secondary">{log.timestamp}</span>
+                            </div>
+                            <p className="text-sm text-text-secondary mt-1">{log.description}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

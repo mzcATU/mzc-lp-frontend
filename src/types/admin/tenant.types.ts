@@ -84,3 +84,29 @@ export interface TenantStats {
     B2B: number;
   };
 }
+
+// Tenant Detail (상세 페이지용)
+export interface TenantDetail extends Tenant {
+  adminEmail: string;
+  adminName: string;
+  branding: TenantBranding;
+  settings: TenantSettings & {
+    maxCourses: number;
+    allowCustomDomain: boolean;
+    allowCustomBranding: boolean;
+    ssoEnabled: boolean;
+    apiAccessEnabled: boolean;
+  };
+}
+
+// Update Tenant Detail Request
+export interface UpdateTenantDetailRequest {
+  name?: string;
+  status?: TenantStatus;
+  plan?: PlanType;
+  customDomain?: string;
+  adminName?: string;
+  adminEmail?: string;
+  branding?: Partial<TenantBranding>;
+  settings?: Partial<TenantSettings>;
+}

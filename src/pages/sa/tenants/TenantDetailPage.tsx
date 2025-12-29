@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Building2,
@@ -9,6 +9,8 @@ import {
   Settings,
   Palette,
   Info,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import {
   AdminPageHeader,
@@ -28,60 +30,42 @@ import {
   SelectValue,
 } from '@/components/common/Select';
 import { Switch } from '@/components/common/Switch';
-import type { TenantStatus, PlanType } from '@/types/admin';
+import { Skeleton } from '@/components/common/Skeleton';
+import { useTenant, useUpdateTenant, useDeleteTenant } from '@/hooks/sa';
+import type { TenantStatus, PlanType, TenantDetail } from '@/types/admin';
 
 // Mock 데이터
-interface TenantDetail {
-  id: number;
-  code: string;
-  name: string;
-  status: TenantStatus;
-  plan: PlanType;
-  userCount: number;
-  courseCount: number;
-  createdAt: string;
-  adminEmail: string;
-  adminName: string;
-  domain?: string;
-  branding: {
-    logoUrl?: string;
-    primaryColor: string;
-    secondaryColor: string;
-    faviconUrl?: string;
-  };
-  settings: {
-    maxUsers: number;
-    maxCourses: number;
-    maxStorage: number; // GB
-    allowCustomDomain: boolean;
-    allowCustomBranding: boolean;
-    ssoEnabled: boolean;
-    apiAccessEnabled: boolean;
-  };
-}
-
-const mockTenantDetail: TenantDetail = {
+const MOCK_TENANT: TenantDetail = {
   id: 1,
   code: 'mzc',
   name: '메가존클라우드',
+  type: 'B2B',
   status: 'ACTIVE',
   plan: 'ENTERPRISE',
+  subdomain: 'mzc',
+  customDomain: 'learn.megazone.com',
   userCount: 250,
   courseCount: 45,
   createdAt: '2025-01-15',
+  updatedAt: '2025-01-15',
   adminEmail: 'admin@megazone.com',
   adminName: '김관리자',
-  domain: 'learn.megazone.com',
   branding: {
-    logoUrl: '/logos/mzc-logo.png',
+    tenantId: 1,
+    logoUrl: '',
+    faviconUrl: '',
     primaryColor: '#3B82F6',
     secondaryColor: '#1E40AF',
-    faviconUrl: '/favicons/mzc-favicon.ico',
   },
   settings: {
-    maxUsers: 500,
+    tenantId: 1,
+    allowSelfRegistration: true,
+    requireEmailVerification: true,
+    defaultLanguage: 'ko',
+    timezone: 'Asia/Seoul',
+    maxStorageGB: 50,
+    maxUsersCount: 500,
     maxCourses: 100,
-    maxStorage: 50,
     allowCustomDomain: true,
     allowCustomBranding: true,
     ssoEnabled: true,
@@ -89,48 +73,244 @@ const mockTenantDetail: TenantDetail = {
   },
 };
 
+// 폼 상태용 로컬 타입
+interface TenantFormState {
+  name: string;
+  code: string;
+  status: TenantStatus;
+  plan: PlanType;
+  customDomain: string;
+  createdAt: string;
+  adminName: string;
+  adminEmail: string;
+  userCount: number;
+  courseCount: number;
+  branding: {
+    logoUrl: string;
+    primaryColor: string;
+    secondaryColor: string;
+    faviconUrl: string;
+  };
+  settings: {
+    maxUsersCount: number;
+    maxCourses: number;
+    maxStorageGB: number;
+    allowCustomDomain: boolean;
+    allowCustomBranding: boolean;
+    ssoEnabled: boolean;
+    apiAccessEnabled: boolean;
+  };
+}
+
+// API 데이터를 폼 상태로 변환
+const toFormState = (data: TenantDetail): TenantFormState => ({
+  name: data.name,
+  code: data.code,
+  status: data.status,
+  plan: data.plan,
+  customDomain: data.customDomain || '',
+  createdAt: data.createdAt,
+  adminName: data.adminName,
+  adminEmail: data.adminEmail,
+  userCount: data.userCount || 0,
+  courseCount: data.courseCount || 0,
+  branding: {
+    logoUrl: data.branding?.logoUrl || '',
+    primaryColor: data.branding?.primaryColor || '#3B82F6',
+    secondaryColor: data.branding?.secondaryColor || '#1E40AF',
+    faviconUrl: data.branding?.faviconUrl || '',
+  },
+  settings: {
+    maxUsersCount: data.settings?.maxUsersCount || 100,
+    maxCourses: data.settings?.maxCourses || 50,
+    maxStorageGB: data.settings?.maxStorageGB || 10,
+    allowCustomDomain: data.settings?.allowCustomDomain || false,
+    allowCustomBranding: data.settings?.allowCustomBranding || false,
+    ssoEnabled: data.settings?.ssoEnabled || false,
+    apiAccessEnabled: data.settings?.apiAccessEnabled || false,
+  },
+});
+
+// 로딩 스켈레톤
+function TenantDetailSkeleton() {
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <Skeleton className="h-8 w-48 mb-2" />
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardContent className="pt-6">
+              <Skeleton className="h-4 w-16 mb-2" />
+              <Skeleton className="h-8 w-24" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// 에러 UI
+function TenantDetailError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="p-6">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium mb-2">데이터를 불러올 수 없습니다</h3>
+            <p className="text-text-secondary mb-4">{message}</p>
+            <Button onClick={onRetry}>다시 시도</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function TenantDetailPage() {
-  const { id: _id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const tenantId = Number(id);
 
-  // 실제로는 API에서 id를 사용해 데이터를 가져옴
-  const [tenant, setTenant] = useState<TenantDetail>(mockTenantDetail);
+  // 데모 모드 체크 (?demo=true)
+  const isDemoMode = searchParams.get('demo') === 'true';
 
-  const handleSave = () => {
-    // API 호출
-    console.log('Save tenant:', tenant);
+  // API 호출 (데모 모드가 아닐 때만)
+  const { data: tenantData, isLoading, isError, error, refetch } = useTenant(tenantId);
+  const updateMutation = useUpdateTenant();
+  const deleteMutation = useDeleteTenant();
+
+  // 실제 데이터 또는 Mock 데이터
+  const effectiveData = useMemo(() => {
+    if (isDemoMode) return MOCK_TENANT;
+    return tenantData;
+  }, [isDemoMode, tenantData]);
+
+  // 폼 상태
+  const [formState, setFormState] = useState<TenantFormState | null>(null);
+
+  // 데이터 로드 시 폼 상태 초기화
+  useEffect(() => {
+    if (effectiveData) {
+      setFormState(toFormState(effectiveData));
+    }
+  }, [effectiveData]);
+
+  const handleSave = async () => {
+    if (!formState) return;
+
+    try {
+      await updateMutation.mutateAsync({
+        id: tenantId,
+        request: {
+          name: formState.name,
+          status: formState.status,
+          plan: formState.plan,
+          customDomain: formState.customDomain || undefined,
+          adminName: formState.adminName,
+          adminEmail: formState.adminEmail,
+          branding: {
+            tenantId: tenantId,
+            logoUrl: formState.branding.logoUrl || undefined,
+            faviconUrl: formState.branding.faviconUrl || undefined,
+            primaryColor: formState.branding.primaryColor,
+            secondaryColor: formState.branding.secondaryColor || undefined,
+          },
+          settings: {
+            tenantId: tenantId,
+            allowSelfRegistration: false,
+            requireEmailVerification: false,
+            defaultLanguage: 'ko',
+            timezone: 'Asia/Seoul',
+            maxStorageGB: formState.settings.maxStorageGB,
+            maxUsersCount: formState.settings.maxUsersCount,
+          },
+        },
+      });
+    } catch (err) {
+      console.error('Failed to save tenant:', err);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('정말 이 테넌트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      await deleteMutation.mutateAsync(tenantId);
+      navigate('/sa/tenants');
+    } catch (err) {
+      console.error('Failed to delete tenant:', err);
+    }
   };
 
   const handleStatusChange = (status: TenantStatus) => {
-    setTenant({ ...tenant, status });
+    if (formState) setFormState({ ...formState, status });
   };
 
   const handlePlanChange = (plan: PlanType) => {
-    setTenant({ ...tenant, plan });
+    if (formState) setFormState({ ...formState, plan });
   };
 
-  const handleBrandingChange = (key: keyof TenantDetail['branding'], value: string) => {
-    setTenant({
-      ...tenant,
-      branding: { ...tenant.branding, [key]: value },
-    });
+  const handleBrandingChange = (key: keyof TenantFormState['branding'], value: string) => {
+    if (formState) {
+      setFormState({
+        ...formState,
+        branding: { ...formState.branding, [key]: value },
+      });
+    }
   };
 
-  const handleSettingChange = (key: keyof TenantDetail['settings'], value: boolean | number) => {
-    setTenant({
-      ...tenant,
-      settings: { ...tenant.settings, [key]: value },
-    });
+  const handleSettingChange = (key: keyof TenantFormState['settings'], value: boolean | number) => {
+    if (formState) {
+      setFormState({
+        ...formState,
+        settings: { ...formState.settings, [key]: value },
+      });
+    }
   };
+
+  // 로딩 상태 (데모 모드가 아닐 때만)
+  if (!isDemoMode && isLoading) {
+    return <TenantDetailSkeleton />;
+  }
+
+  // 에러 상태 (데모 모드가 아닐 때만)
+  if (!isDemoMode && isError) {
+    return (
+      <TenantDetailError
+        message={error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'}
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
+  // 데이터 없음
+  if (!formState) {
+    return <TenantDetailSkeleton />;
+  }
 
   return (
     <div className="p-6">
       <AdminPageHeader
-        title={tenant.name}
-        description={`테넌트 코드: ${tenant.code}`}
+        title={formState.name}
+        description={`테넌트 코드: ${formState.code}`}
         breadcrumb={[
           { label: '테넌트 관리', href: '/sa/tenants' },
-          { label: tenant.name },
+          { label: formState.name },
         ]}
         actions={
           <div className="flex gap-2">
@@ -138,8 +318,12 @@ export function TenantDetailPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               목록으로
             </Button>
-            <Button onClick={handleSave}>
-              <Save className="mr-2 h-4 w-4" />
+            <Button onClick={handleSave} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               저장
             </Button>
           </div>
@@ -154,7 +338,7 @@ export function TenantDetailPage() {
               <div>
                 <p className="text-sm text-text-secondary">상태</p>
                 <div className="mt-1">
-                  <StatusBadge status={tenant.status} />
+                  <StatusBadge status={formState.status} />
                 </div>
               </div>
               <Building2 className="h-8 w-8 text-text-secondary opacity-50" />
@@ -167,7 +351,7 @@ export function TenantDetailPage() {
               <div>
                 <p className="text-sm text-text-secondary">플랜</p>
                 <div className="mt-1">
-                  <PlanBadge plan={tenant.plan} />
+                  <PlanBadge plan={formState.plan} />
                 </div>
               </div>
             </div>
@@ -178,9 +362,9 @@ export function TenantDetailPage() {
             <div>
               <p className="text-sm text-text-secondary">사용자</p>
               <p className="text-2xl font-bold mt-1">
-                {tenant.userCount.toLocaleString()}
+                {formState.userCount.toLocaleString()}
                 <span className="text-sm font-normal text-text-secondary ml-1">
-                  / {tenant.settings.maxUsers.toLocaleString()}
+                  / {formState.settings.maxUsersCount.toLocaleString()}
                 </span>
               </p>
             </div>
@@ -191,9 +375,9 @@ export function TenantDetailPage() {
             <div>
               <p className="text-sm text-text-secondary">강좌</p>
               <p className="text-2xl font-bold mt-1">
-                {tenant.courseCount}
+                {formState.courseCount}
                 <span className="text-sm font-normal text-text-secondary ml-1">
-                  / {tenant.settings.maxCourses}
+                  / {formState.settings.maxCourses}
                 </span>
               </p>
             </div>
@@ -231,15 +415,15 @@ export function TenantDetailPage() {
                   <Label htmlFor="name">테넌트명</Label>
                   <Input
                     id="name"
-                    value={tenant.name}
-                    onChange={(e) => setTenant({ ...tenant, name: e.target.value })}
+                    value={formState.name}
+                    onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="code">테넌트 코드</Label>
                   <Input
                     id="code"
-                    value={tenant.code}
+                    value={formState.code}
                     disabled
                     className="bg-bg-secondary"
                   />
@@ -247,7 +431,7 @@ export function TenantDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">상태</Label>
-                  <Select value={tenant.status} onValueChange={(v) => handleStatusChange(v as TenantStatus)}>
+                  <Select value={formState.status} onValueChange={(v) => handleStatusChange(v as TenantStatus)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -261,7 +445,7 @@ export function TenantDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="plan">플랜</Label>
-                  <Select value={tenant.plan} onValueChange={(v) => handlePlanChange(v as PlanType)}>
+                  <Select value={formState.plan} onValueChange={(v) => handlePlanChange(v as PlanType)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -276,8 +460,8 @@ export function TenantDetailPage() {
                   <Label htmlFor="domain">커스텀 도메인</Label>
                   <Input
                     id="domain"
-                    value={tenant.domain || ''}
-                    onChange={(e) => setTenant({ ...tenant, domain: e.target.value })}
+                    value={formState.customDomain}
+                    onChange={(e) => setFormState({ ...formState, customDomain: e.target.value })}
                     placeholder="learn.example.com"
                   />
                 </div>
@@ -285,7 +469,7 @@ export function TenantDetailPage() {
                   <Label htmlFor="createdAt">생성일</Label>
                   <Input
                     id="createdAt"
-                    value={tenant.createdAt}
+                    value={formState.createdAt}
                     disabled
                     className="bg-bg-secondary"
                   />
@@ -299,8 +483,8 @@ export function TenantDetailPage() {
                     <Label htmlFor="adminName">관리자명</Label>
                     <Input
                       id="adminName"
-                      value={tenant.adminName}
-                      onChange={(e) => setTenant({ ...tenant, adminName: e.target.value })}
+                      value={formState.adminName}
+                      onChange={(e) => setFormState({ ...formState, adminName: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -308,8 +492,8 @@ export function TenantDetailPage() {
                     <Input
                       id="adminEmail"
                       type="email"
-                      value={tenant.adminEmail}
-                      onChange={(e) => setTenant({ ...tenant, adminEmail: e.target.value })}
+                      value={formState.adminEmail}
+                      onChange={(e) => setFormState({ ...formState, adminEmail: e.target.value })}
                     />
                   </div>
                 </div>
@@ -331,9 +515,9 @@ export function TenantDetailPage() {
                 <Label>로고</Label>
                 <div className="flex items-start gap-6">
                   <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-bg-secondary">
-                    {tenant.branding.logoUrl ? (
+                    {formState.branding.logoUrl ? (
                       <img
-                        src={tenant.branding.logoUrl}
+                        src={formState.branding.logoUrl}
                         alt="Logo"
                         className="max-w-full max-h-full object-contain"
                       />
@@ -346,7 +530,7 @@ export function TenantDetailPage() {
                       <Upload className="mr-2 h-4 w-4" />
                       로고 업로드
                     </Button>
-                    {tenant.branding.logoUrl && (
+                    {formState.branding.logoUrl && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -369,9 +553,9 @@ export function TenantDetailPage() {
                 <Label>파비콘</Label>
                 <div className="flex items-start gap-6">
                   <div className="w-16 h-16 border-2 border-dashed rounded-lg flex items-center justify-center bg-bg-secondary">
-                    {tenant.branding.faviconUrl ? (
+                    {formState.branding.faviconUrl ? (
                       <img
-                        src={tenant.branding.faviconUrl}
+                        src={formState.branding.faviconUrl}
                         alt="Favicon"
                         className="max-w-full max-h-full object-contain"
                       />
@@ -398,11 +582,11 @@ export function TenantDetailPage() {
                   <div className="flex gap-2">
                     <div
                       className="w-10 h-10 rounded-lg border cursor-pointer"
-                      style={{ backgroundColor: tenant.branding.primaryColor }}
+                      style={{ backgroundColor: formState.branding.primaryColor }}
                     />
                     <Input
                       id="primaryColor"
-                      value={tenant.branding.primaryColor}
+                      value={formState.branding.primaryColor}
                       onChange={(e) => handleBrandingChange('primaryColor', e.target.value)}
                       placeholder="#3B82F6"
                     />
@@ -413,11 +597,11 @@ export function TenantDetailPage() {
                   <div className="flex gap-2">
                     <div
                       className="w-10 h-10 rounded-lg border cursor-pointer"
-                      style={{ backgroundColor: tenant.branding.secondaryColor }}
+                      style={{ backgroundColor: formState.branding.secondaryColor }}
                     />
                     <Input
                       id="secondaryColor"
-                      value={tenant.branding.secondaryColor}
+                      value={formState.branding.secondaryColor}
                       onChange={(e) => handleBrandingChange('secondaryColor', e.target.value)}
                       placeholder="#1E40AF"
                     />
@@ -431,20 +615,20 @@ export function TenantDetailPage() {
                 <div className="p-4 border rounded-lg">
                   <div
                     className="h-12 rounded-lg flex items-center px-4 text-white font-medium"
-                    style={{ backgroundColor: tenant.branding.primaryColor }}
+                    style={{ backgroundColor: formState.branding.primaryColor }}
                   >
-                    {tenant.name} 학습 플랫폼
+                    {formState.name} 학습 플랫폼
                   </div>
                   <div className="mt-4 flex gap-2">
                     <button
                       className="px-4 py-2 rounded-lg text-white text-sm"
-                      style={{ backgroundColor: tenant.branding.primaryColor }}
+                      style={{ backgroundColor: formState.branding.primaryColor }}
                     >
                       주 버튼
                     </button>
                     <button
                       className="px-4 py-2 rounded-lg text-white text-sm"
-                      style={{ backgroundColor: tenant.branding.secondaryColor }}
+                      style={{ backgroundColor: formState.branding.secondaryColor }}
                     >
                       보조 버튼
                     </button>
@@ -472,11 +656,11 @@ export function TenantDetailPage() {
                     <Input
                       id="maxUsers"
                       type="number"
-                      value={tenant.settings.maxUsers}
-                      onChange={(e) => handleSettingChange('maxUsers', parseInt(e.target.value))}
+                      value={formState.settings.maxUsersCount}
+                      onChange={(e) => handleSettingChange('maxUsersCount', parseInt(e.target.value))}
                     />
                     <p className="text-xs text-text-secondary">
-                      현재: {tenant.userCount}명 사용 중
+                      현재: {formState.userCount}명 사용 중
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -484,11 +668,11 @@ export function TenantDetailPage() {
                     <Input
                       id="maxCourses"
                       type="number"
-                      value={tenant.settings.maxCourses}
+                      value={formState.settings.maxCourses}
                       onChange={(e) => handleSettingChange('maxCourses', parseInt(e.target.value))}
                     />
                     <p className="text-xs text-text-secondary">
-                      현재: {tenant.courseCount}개 사용 중
+                      현재: {formState.courseCount}개 사용 중
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -496,8 +680,8 @@ export function TenantDetailPage() {
                     <Input
                       id="maxStorage"
                       type="number"
-                      value={tenant.settings.maxStorage}
-                      onChange={(e) => handleSettingChange('maxStorage', parseInt(e.target.value))}
+                      value={formState.settings.maxStorageGB}
+                      onChange={(e) => handleSettingChange('maxStorageGB', parseInt(e.target.value))}
                     />
                   </div>
                 </div>
@@ -515,7 +699,7 @@ export function TenantDetailPage() {
                       </p>
                     </div>
                     <Switch
-                      checked={tenant.settings.allowCustomDomain}
+                      checked={formState.settings.allowCustomDomain}
                       onCheckedChange={(checked) => handleSettingChange('allowCustomDomain', checked)}
                     />
                   </div>
@@ -527,7 +711,7 @@ export function TenantDetailPage() {
                       </p>
                     </div>
                     <Switch
-                      checked={tenant.settings.allowCustomBranding}
+                      checked={formState.settings.allowCustomBranding}
                       onCheckedChange={(checked) => handleSettingChange('allowCustomBranding', checked)}
                     />
                   </div>
@@ -539,7 +723,7 @@ export function TenantDetailPage() {
                       </p>
                     </div>
                     <Switch
-                      checked={tenant.settings.ssoEnabled}
+                      checked={formState.settings.ssoEnabled}
                       onCheckedChange={(checked) => handleSettingChange('ssoEnabled', checked)}
                     />
                   </div>
@@ -551,7 +735,7 @@ export function TenantDetailPage() {
                       </p>
                     </div>
                     <Switch
-                      checked={tenant.settings.apiAccessEnabled}
+                      checked={formState.settings.apiAccessEnabled}
                       onCheckedChange={(checked) => handleSettingChange('apiAccessEnabled', checked)}
                     />
                   </div>
@@ -569,8 +753,17 @@ export function TenantDetailPage() {
                         이 작업은 되돌릴 수 없습니다. 모든 데이터가 영구적으로 삭제됩니다.
                       </p>
                     </div>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="mr-2 h-4 w-4" />
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                    >
+                      {deleteMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-2 h-4 w-4" />
+                      )}
                       테넌트 삭제
                     </Button>
                   </div>
