@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Sun, Moon, Globe, Briefcase, BookOpen, Check } from 'lucide-react';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import type { MenuItem } from '@/types';
+
+// 역할 전환 모드 타입
+type ViewMode = 'instructor' | 'learner';
 
 interface MyPageSidebarProps {
   isExpanded: boolean;
@@ -15,14 +18,122 @@ interface MyPageSidebarProps {
   language?: 'ko' | 'en';
 }
 
+// 역할 전환 컴포넌트
+function ModeSwitcher({
+  isDark,
+  language,
+  onModeChange
+}: {
+  isDark: boolean;
+  language: 'ko' | 'en';
+  onModeChange: (mode: ViewMode) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const currentMode: ViewMode = 'learner';
+
+  const modes = [
+    {
+      id: 'instructor' as ViewMode,
+      label: { ko: '강사 모드', en: 'Instructor Mode' },
+      icon: Briefcase,
+    },
+    {
+      id: 'learner' as ViewMode,
+      label: { ko: '학습자 모드', en: 'Learner Mode' },
+      icon: BookOpen,
+    },
+  ];
+
+  const currentModeData = modes.find(m => m.id === currentMode)!;
+  const CurrentIcon = currentModeData.icon;
+
+  return (
+    <div className="relative mb-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all ${
+          isDark
+            ? 'bg-white/10 hover:bg-white/15 text-white'
+            : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+        }`}
+      >
+        <CurrentIcon className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+        <span className="flex-1 text-left text-sm font-medium">
+          {currentModeData.label[language]}
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''} ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+        />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
+            role="button"
+            tabIndex={0}
+            aria-label="Close dropdown"
+          />
+          {/* Dropdown */}
+          <div
+            className={`absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-lg z-50 py-1 ${
+              isDark
+                ? 'bg-[#1a1a2e] border-white/10'
+                : 'bg-white border-gray-200'
+            }`}
+          >
+            {modes.map((mode) => {
+              const Icon = mode.icon;
+              const isActive = mode.id === currentMode;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => {
+                    onModeChange(mode.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 transition-all ${
+                    isActive
+                      ? isDark
+                        ? 'bg-[#6778ff]/20 text-white'
+                        : 'bg-blue-50 text-blue-600'
+                      : isDark
+                        ? 'text-gray-300 hover:bg-white/5'
+                        : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? (isDark ? 'text-[#6778ff]' : 'text-blue-600') : ''}`} />
+                  <span className="flex-1 text-left text-sm">{mode.label[language]}</span>
+                  {isActive && <Check className="w-4 h-4" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
+
+  const handleModeChange = (mode: ViewMode) => {
+    if (mode === 'instructor') {
+      navigate('/tu/dashboard');
+    }
+    // learner 모드는 이미 /mypage에 있으므로 아무것도 안함
+  };
 
   // 현재 유저 롤로 subItem 필터링
   const filterSubItemsByRole = (subItems?: MenuItem['subItems']) => {
@@ -134,6 +245,13 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
+        {/* 역할 전환 */}
+        <ModeSwitcher
+          isDark={isDark}
+          language={language}
+          onModeChange={handleModeChange}
+        />
+
         {/* 메뉴 리스트 */}
         <nav className="space-y-1 flex-1">
           {myPageMenuData.map(renderMenuItem)}

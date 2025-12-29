@@ -7,14 +7,7 @@ import {
   CourseCreatePage,
   TuContentCreatePage,
   ContentDetailPage,
-  SettingsLanguagePage,
 } from '@/pages/tu';
-import {
-  SettingsPage,
-  SettingsSecurityPage,
-  SettingsNotificationsPage,
-  SettingsAppearancePage,
-} from '@/pages/common';
 import { DashboardPage, PlaceholderPage } from './pages';
 
 function TenantUserWrapper() {
@@ -42,16 +35,5 @@ export const tuCoursesRoutes = (
 
     {/* 교육 과정 탐색 */}
     <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
-
-    {/* 성과 및 인증 */}
-    <Route path="progress" element={<PlaceholderPage title="학습 진도" />} />
-    <Route path="certifications" element={<PlaceholderPage title="인증서" />} />
-
-    {/* 설정 */}
-    <Route path="settings" element={<SettingsPage />} />
-    <Route path="settings/security" element={<SettingsSecurityPage />} />
-    <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
-    <Route path="settings/language" element={<SettingsLanguagePage />} />
-    <Route path="settings/appearance" element={<SettingsAppearancePage />} />
   </Route>
 );

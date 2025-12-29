@@ -1,14 +1,136 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown,
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
   GraduationCap,
+  Briefcase,
+  BookOpen,
+  Check,
 } from 'lucide-react';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
+
+// 역할 전환 모드 타입
+type ViewMode = 'instructor' | 'learner';
+
+interface ModeSwitcherProps {
+  currentMode: ViewMode;
+  isExpanded: boolean;
+  isDarkMode: boolean;
+  language: 'ko' | 'en';
+  colors: SidebarColors;
+  onModeChange: (mode: ViewMode) => void;
+}
+
+function ModeSwitcher({ currentMode, isExpanded, isDarkMode, language, colors, onModeChange }: ModeSwitcherProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const modes = [
+    {
+      id: 'instructor' as ViewMode,
+      label: { ko: '강사 모드', en: 'Instructor Mode' },
+      icon: Briefcase,
+    },
+    {
+      id: 'learner' as ViewMode,
+      label: { ko: '학습자 모드', en: 'Learner Mode' },
+      icon: BookOpen,
+    },
+  ];
+
+  const currentModeData = modes.find(m => m.id === currentMode)!;
+  const CurrentIcon = currentModeData.icon;
+
+  if (!isExpanded) {
+    return (
+      <button
+        onClick={() => onModeChange(currentMode === 'instructor' ? 'learner' : 'instructor')}
+        className="w-10 h-10 rounded-lg flex items-center justify-center transition-all"
+        style={{ backgroundColor: colors.hover }}
+        title={currentModeData.label[language]}
+      >
+        <CurrentIcon className="w-5 h-5" style={{ color: colors.textPrimary }} />
+      </button>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all"
+        style={{
+          backgroundColor: colors.hover,
+          color: colors.textPrimary,
+        }}
+      >
+        <CurrentIcon className="w-4 h-4" style={{ color: colors.textSecondary }} />
+        <span className="flex-1 text-left text-sm font-medium">
+          {currentModeData.label[language]}
+        </span>
+        <ChevronDown
+          className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")}
+          style={{ color: colors.textSecondary }}
+        />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          {/* Dropdown */}
+          <div
+            className="absolute left-0 right-0 top-full mt-1 rounded-lg border shadow-lg z-50 py-1"
+            style={{
+              backgroundColor: colors.tooltipBg,
+              borderColor: colors.border,
+            }}
+          >
+            {modes.map((mode) => {
+              const Icon = mode.icon;
+              const isActive = mode.id === currentMode;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => {
+                    onModeChange(mode.id);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 transition-all"
+                  style={{
+                    backgroundColor: isActive ? colors.activeBg : 'transparent',
+                    color: isActive ? colors.activeText : colors.textPrimary,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = colors.hover;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <Icon className="w-4 h-4" style={{ color: isActive ? colors.activeText : colors.textSecondary }} />
+                  <span className="flex-1 text-left text-sm">{mode.label[language]}</span>
+                  {isActive && <Check className="w-4 h-4" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function BaseSidebar({
   isExpanded,
@@ -18,9 +140,20 @@ export function BaseSidebar({
   language = 'ko',
   menuData,
   roleLabel,
-}: BaseSidebarProps) {
+  showModeSwitcher = false,
+  currentMode = 'instructor',
+}: BaseSidebarProps & { showModeSwitcher?: boolean; currentMode?: ViewMode }) {
+  const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
+
+  const handleModeChange = (mode: ViewMode) => {
+    if (mode === 'learner') {
+      navigate('/mypage');
+    } else {
+      navigate('/tu/dashboard');
+    }
+  };
 
   // Color tokens - Dynamic based on theme
   const colors: SidebarColors = isDarkMode
@@ -92,7 +225,7 @@ export function BaseSidebar({
       <div
         style={{
           padding: isExpanded ? '20px 16px' : '20px 12px',
-          borderBottom: `1px solid ${colors.border}`,
+          borderBottom: showModeSwitcher ? 'none' : `1px solid ${colors.border}`,
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
@@ -126,19 +259,40 @@ export function BaseSidebar({
             >
               Learning Hub
             </h1>
-            <p
-              style={{
-                color: colors.textSecondary,
-                margin: 0,
-                fontSize: '12px',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {roleLabel[language]}
-            </p>
+            {!showModeSwitcher && (
+              <p
+                style={{
+                  color: colors.textSecondary,
+                  margin: 0,
+                  fontSize: '12px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {roleLabel[language]}
+              </p>
+            )}
           </div>
         )}
       </div>
+
+      {/* Mode Switcher (TU only) */}
+      {showModeSwitcher && (
+        <div
+          style={{
+            padding: isExpanded ? '0 16px 16px' : '0 12px 16px',
+            borderBottom: `1px solid ${colors.border}`,
+          }}
+        >
+          <ModeSwitcher
+            currentMode={currentMode}
+            isExpanded={isExpanded}
+            isDarkMode={isDarkMode}
+            language={language}
+            colors={colors}
+            onModeChange={handleModeChange}
+          />
+        </div>
+      )}
 
       {/* Navigation Menu */}
       <div

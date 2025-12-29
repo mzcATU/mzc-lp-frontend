@@ -15,6 +15,8 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
       {...props}
       menuData={tenantUserMenuData}
       roleLabel={roleLabels.tenantUser}
+      showModeSwitcher={true}
+      currentMode="instructor"
     />
   );
 }
