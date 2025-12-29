@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Building2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import {
@@ -60,11 +61,11 @@ const mockTenants: TenantRow[] = [
 ];
 
 export function TenantsPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantRow | null>(null);
 
   // 필터링된 데이터
@@ -166,8 +167,7 @@ export function TenantsPage() {
   ];
 
   const handleViewDetail = (tenant: TenantRow) => {
-    setSelectedTenant(tenant);
-    setIsDetailDialogOpen(true);
+    navigate(`/sa/tenants/${tenant.id}`);
   };
 
   const handleEdit = (tenant: TenantRow) => {
@@ -335,64 +335,6 @@ export function TenantsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 테넌트 상세 다이얼로그 */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>테넌트 상세 정보</DialogTitle>
-          </DialogHeader>
-          {selectedTenant && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-4 pb-4 border-b">
-                <div className="w-12 h-12 rounded-lg bg-brand-primary/10 flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-brand-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedTenant.name}</h3>
-                  <p className="text-sm text-text-secondary">{selectedTenant.code}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-text-secondary">상태</p>
-                  <div className="mt-1">
-                    <StatusBadge status={selectedTenant.status} />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">플랜</p>
-                  <div className="mt-1">
-                    <PlanBadge plan={selectedTenant.plan} />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">사용자 수</p>
-                  <p className="font-medium">{selectedTenant.userCount.toLocaleString()}명</p>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">강좌 수</p>
-                  <p className="font-medium">{selectedTenant.courseCount}개</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-text-secondary">생성일</p>
-                  <p className="font-medium">{selectedTenant.createdAt}</p>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
-              닫기
-            </Button>
-            <Button onClick={() => {
-              setIsDetailDialogOpen(false);
-              if (selectedTenant) handleEdit(selectedTenant);
-            }}>
-              수정
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

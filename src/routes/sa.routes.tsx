@@ -7,7 +7,7 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import { DashboardPage, TenantsPage } from '@/pages/sa';
+import { DashboardPage, TenantsPage, TenantDetailPage } from '@/pages/sa';
 import { PlaceholderPage } from './pages';
 
 function SuperAdminWrapper() {
@@ -26,6 +26,7 @@ export const saRoutes = (
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 테넌트 관리 */}
     <Route path="tenants" element={<TenantsPage />} />
+    <Route path="tenants/:id" element={<TenantDetailPage />} />
     <Route path="tenants/billing" element={<PlaceholderPage title="요금제 및 라이선스 관리" />} />
     <Route path="tenants/status" element={<PlaceholderPage title="전체 현황 조회" />} />
     {/* 시스템 환경 관리 */}
