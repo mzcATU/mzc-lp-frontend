@@ -58,7 +58,7 @@ export const contentService = {
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': undefined, // 브라우저가 boundary 포함하여 자동 설정
         },
       }
     );
@@ -121,7 +121,7 @@ export const contentService = {
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': undefined, // 브라우저가 boundary 포함하여 자동 설정
         },
       }
     );
