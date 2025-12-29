@@ -7,7 +7,8 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import { DashboardPage, PlaceholderPage } from './pages';
+import { DashboardPage, UsersPage } from '@/pages/ta';
+import { PlaceholderPage } from './pages';
 
 function TenantAdminWrapper() {
   return (
@@ -31,6 +32,7 @@ export const taRoutes = (
     <Route path="branding/design" element={<PlaceholderPage title="브랜딩 관리" />} />
     <Route path="branding/navigation" element={<PlaceholderPage title="네비게이션 구성 관리" />} />
     {/* 사용자 및 권한 */}
+    <Route path="users" element={<UsersPage />} />
     <Route path="users/operators" element={<PlaceholderPage title="운영자 관리" />} />
     <Route path="users/groups" element={<PlaceholderPage title="사용자 그룹 및 역할 관리" />} />
     <Route path="users/permissions" element={<PlaceholderPage title="접근 권한 설정" />} />
