@@ -11,12 +11,14 @@ import {
   LearningPlayerPage,
   SettingsLanguagePage,
   MyTeachingPage,
+  TeachingStatsPage,
+  CompletedCoursesPage,
+  CertificationsPage,
 } from '@/pages/tu';
 import { MyPageLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import { SettingsNotificationsPage } from '@/pages/common';
 import { tuCoursesRoutes } from './tu.courses.routes';
-import { PlaceholderPage } from './pages';
 
 function MyPageWrapper() {
   return (
@@ -45,11 +47,11 @@ export const tuRoutes = (
       <Route path="learning/:enrollmentId" element={<LearningDetailPage />} />
       <Route path="learning/:enrollmentId/player" element={<LearningPlayerPage />} />
       <Route path="learning/:enrollmentId/player/:itemId" element={<LearningPlayerPage />} />
-      <Route path="completed" element={<PlaceholderPage title="완료한 강의" />} />
-      <Route path="certifications" element={<PlaceholderPage title="인증서" />} />
+      <Route path="completed" element={<CompletedCoursesPage />} />
+      <Route path="certifications" element={<CertificationsPage />} />
       {/* 내 강의 관리 */}
       <Route path="teaching" element={<MyTeachingPage />} />
-      <Route path="teaching/stats" element={<PlaceholderPage title="내 강의 통계" />} />
+      <Route path="teaching/stats" element={<TeachingStatsPage />} />
       {/* 설정 */}
       <Route path="security" element={<Navigate to="/mypage/profile" replace />} />
       <Route path="notifications" element={<SettingsNotificationsPage />} />

@@ -133,14 +133,14 @@ export function MyTeachingPage() {
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
       </div>
     );
   }
 
   return (
-    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-5xl mx-auto">
         {/* 헤더 */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">

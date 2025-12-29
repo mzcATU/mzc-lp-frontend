@@ -47,6 +47,7 @@ type TranslationKeys = {
     signup: string;
     darkMode: string;
     lightMode: string;
+    comingSoon: string;
   };
   // 마이페이지
   mypage: {
@@ -57,6 +58,9 @@ type TranslationKeys = {
     learningStatus: string;
     inProgress: string;
     completed: string;
+    completedDesc: string;
+    completedCourses: string;
+    completedComingSoon: string;
     pending: string;
     total: string;
     recentLearning: string;
@@ -66,6 +70,8 @@ type TranslationKeys = {
     myLearningDesc: string;
     certificates: string;
     certificatesDesc: string;
+    certificatesList: string;
+    certificatesComingSoon: string;
     profileSecurityDesc: string;
     notifications: string;
     notificationsDesc: string;
@@ -102,6 +108,10 @@ type TranslationKeys = {
     rejected: string;
     students: string;
     lastModified: string;
+    stats: string;
+    statsDesc: string;
+    statsOverview: string;
+    statsComingSoon: string;
   };
   // 프로필 및 보안
   profileSecurity: {
@@ -144,6 +154,9 @@ type TranslationKeys = {
     selectLanguage: string;
     korean: string;
     english: string;
+    notificationsDesc: string;
+    notificationSettings: string;
+    notificationsComingSoon: string;
   };
   // 랜딩 페이지
   landing: {
@@ -318,6 +331,7 @@ const ko: TranslationKeys = {
     signup: '회원가입',
     darkMode: '다크 모드',
     lightMode: '라이트 모드',
+    comingSoon: '개발 예정',
   },
   mypage: {
     title: '마이페이지',
@@ -326,7 +340,10 @@ const ko: TranslationKeys = {
     profileDescription: '프로필 정보를 수정하고 프로필 이미지를 변경하세요',
     learningStatus: '학습 현황',
     inProgress: '수강 중',
-    completed: '완료',
+    completed: '완료한 강의',
+    completedDesc: '완료한 강의 목록을 확인하세요',
+    completedCourses: '완료한 강의 목록',
+    completedComingSoon: '완료한 강의 기능은 현재 개발 중입니다. 곧 완료한 강의 목록과 수료증을 확인할 수 있습니다.',
     pending: '승인 대기',
     total: '전체',
     recentLearning: '최근 학습',
@@ -336,6 +353,8 @@ const ko: TranslationKeys = {
     myLearningDesc: '수강 중인 강의를 확인하세요',
     certificates: '인증서',
     certificatesDesc: '취득한 인증서를 확인하세요',
+    certificatesList: '인증서 목록',
+    certificatesComingSoon: '인증서 기능은 현재 개발 중입니다. 곧 취득한 인증서를 확인하고 다운로드할 수 있습니다.',
     profileSecurityDesc: '프로필 정보 및 보안 설정',
     notifications: '알림 설정',
     notificationsDesc: '알림 설정을 관리하세요',
@@ -371,6 +390,10 @@ const ko: TranslationKeys = {
     rejected: '반려됨',
     students: '수강생',
     lastModified: '최종 수정',
+    stats: '내 강의 통계',
+    statsDesc: '내 강의의 수강생 및 학습 통계를 확인하세요',
+    statsOverview: '통계 개요',
+    statsComingSoon: '강의 통계 기능은 현재 개발 중입니다. 곧 수강생 현황, 학습 완료율 등 다양한 통계를 확인할 수 있습니다.',
   },
   profileSecurity: {
     title: '프로필 및 보안',
@@ -411,6 +434,9 @@ const ko: TranslationKeys = {
     selectLanguage: '언어 선택',
     korean: '한국어',
     english: 'English',
+    notificationsDesc: '알림 수신 방법을 설정하세요',
+    notificationSettings: '알림 설정',
+    notificationsComingSoon: '알림 설정 기능은 현재 개발 중입니다. 곧 다양한 알림 옵션을 제공할 예정입니다.',
   },
   landing: {
     banner: 'MZC Learn Platform - 클라우드 교육의 새로운 시작',
@@ -573,6 +599,7 @@ const en: TranslationKeys = {
     signup: 'Sign up',
     darkMode: 'Dark Mode',
     lightMode: 'Light Mode',
+    comingSoon: 'Coming Soon',
   },
   mypage: {
     title: 'My Page',
@@ -581,7 +608,10 @@ const en: TranslationKeys = {
     profileDescription: 'Edit your profile information and change your profile image',
     learningStatus: 'Learning Status',
     inProgress: 'In Progress',
-    completed: 'Completed',
+    completed: 'Completed Courses',
+    completedDesc: 'View your completed courses',
+    completedCourses: 'Completed Courses List',
+    completedComingSoon: 'Completed courses feature is currently under development. You will soon be able to view your completed courses and certificates.',
     pending: 'Pending',
     total: 'Total',
     recentLearning: 'Recent Learning',
@@ -591,6 +621,8 @@ const en: TranslationKeys = {
     myLearningDesc: 'Check your enrolled courses',
     certificates: 'Certificates',
     certificatesDesc: 'View your earned certificates',
+    certificatesList: 'Certificates List',
+    certificatesComingSoon: 'Certificates feature is currently under development. You will soon be able to view and download your earned certificates.',
     profileSecurityDesc: 'Profile and security settings',
     notifications: 'Notifications',
     notificationsDesc: 'Manage your notification settings',
@@ -626,6 +658,10 @@ const en: TranslationKeys = {
     rejected: 'Rejected',
     students: 'Students',
     lastModified: 'Last Modified',
+    stats: 'Course Statistics',
+    statsDesc: 'View student and learning statistics for your courses',
+    statsOverview: 'Statistics Overview',
+    statsComingSoon: 'Course statistics feature is currently under development. You will soon be able to view student enrollment, completion rates, and other statistics.',
   },
   profileSecurity: {
     title: 'Profile & Security',
@@ -666,6 +702,9 @@ const en: TranslationKeys = {
     selectLanguage: 'Select Language',
     korean: '한국어',
     english: 'English',
+    notificationsDesc: 'Configure how you receive notifications',
+    notificationSettings: 'Notification Settings',
+    notificationsComingSoon: 'Notification settings are currently under development. Various notification options will be available soon.',
   },
   landing: {
     banner: 'MZC Learn Platform - A New Beginning in Cloud Education',
