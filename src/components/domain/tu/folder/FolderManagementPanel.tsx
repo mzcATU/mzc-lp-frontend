@@ -57,12 +57,28 @@ const t = {
   rename: { ko: '변경', en: 'Rename' },
   delete: { ko: '삭제', en: 'Delete' },
   deleteConfirm: {
-    ko: '이 폴더를 삭제하시겠습니까? 하위 폴더와 콘텐츠 분류가 해제됩니다.',
-    en: 'Delete this folder? Subfolders and content will be uncategorized.',
+    ko: '이 폴더를 삭제하시겠습니까?',
+    en: 'Delete this folder?',
+  },
+  deleteConfirmDetail: {
+    ko: '하위 폴더도 함께 삭제되고, 폴더 내 콘텐츠는 미분류로 이동됩니다.',
+    en: 'Subfolders will be deleted and contents will be moved to uncategorized.',
   },
   creating: { ko: '생성 중...', en: 'Creating...' },
   renaming: { ko: '변경 중...', en: 'Renaming...' },
   deleting: { ko: '삭제 중...', en: 'Deleting...' },
+  folderNotEmpty: {
+    ko: '폴더에 콘텐츠가 있어 삭제할 수 없습니다. 먼저 콘텐츠를 이동하거나 삭제해주세요.',
+    en: 'Cannot delete folder with contents. Please move or delete contents first.',
+  },
+  duplicateName: {
+    ko: '같은 위치에 동일한 이름의 폴더가 있습니다.',
+    en: 'A folder with this name already exists in this location.',
+  },
+  unknownError: {
+    ko: '오류가 발생했습니다. 다시 시도해주세요.',
+    en: 'An error occurred. Please try again.',
+  },
 };
 
 export function FolderManagementPanel({
@@ -74,8 +90,19 @@ export function FolderManagementPanel({
 }: FolderManagementPanelProps) {
   const [modalState, setModalState] = useState<ModalState>({ type: 'none' });
   const [folderName, setFolderName] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
+
+  const getErrorMessage = (error: unknown): string => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { code?: string } } }).response;
+      const code = response?.data?.code;
+      if (code === 'LO004') return getText('folderNotEmpty');
+      if (code === 'LO003') return getText('duplicateName');
+    }
+    return getText('unknownError');
+  };
 
   // Queries & Mutations
   const { data: folders = [], isLoading } = useContentFolderTree();
@@ -85,15 +112,18 @@ export function FolderManagementPanel({
 
   const handleCreateFolder = (parentId: number | null) => {
     setFolderName('');
+    setErrorMessage(null);
     setModalState({ type: 'create', parentId });
   };
 
   const handleRenameFolder = (folder: ContentFolderTreeNode) => {
     setFolderName(folder.folderName);
+    setErrorMessage(null);
     setModalState({ type: 'rename', folder });
   };
 
   const handleDeleteFolder = (folder: ContentFolderTreeNode) => {
+    setErrorMessage(null);
     setModalState({ type: 'delete', folder });
   };
 
@@ -101,6 +131,7 @@ export function FolderManagementPanel({
     if (modalState.type !== 'create' || !folderName.trim()) return;
 
     try {
+      setErrorMessage(null);
       await createFolder.mutateAsync({
         folderName: folderName.trim(),
         parentId: modalState.parentId,
@@ -108,6 +139,7 @@ export function FolderManagementPanel({
       setModalState({ type: 'none' });
     } catch (error) {
       console.error('Failed to create folder:', error);
+      setErrorMessage(getErrorMessage(error));
     }
   };
 
@@ -115,6 +147,7 @@ export function FolderManagementPanel({
     if (modalState.type !== 'rename' || !folderName.trim()) return;
 
     try {
+      setErrorMessage(null);
       await updateFolder.mutateAsync({
         id: modalState.folder.id,
         request: { folderName: folderName.trim() },
@@ -122,6 +155,7 @@ export function FolderManagementPanel({
       setModalState({ type: 'none' });
     } catch (error) {
       console.error('Failed to rename folder:', error);
+      setErrorMessage(getErrorMessage(error));
     }
   };
 
@@ -129,6 +163,7 @@ export function FolderManagementPanel({
     if (modalState.type !== 'delete') return;
 
     try {
+      setErrorMessage(null);
       await deleteFolder.mutateAsync(modalState.folder.id);
       // 삭제된 폴더가 선택되어 있었다면 전체 콘텐츠로 이동
       if (selectedFolderId === modalState.folder.id) {
@@ -137,12 +172,14 @@ export function FolderManagementPanel({
       setModalState({ type: 'none' });
     } catch (error) {
       console.error('Failed to delete folder:', error);
+      setErrorMessage(getErrorMessage(error));
     }
   };
 
   const closeModal = () => {
     setModalState({ type: 'none' });
     setFolderName('');
+    setErrorMessage(null);
   };
 
   return (
@@ -178,7 +215,7 @@ export function FolderManagementPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>{getText('createFolder')}</AlertDialogTitle>
           </AlertDialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-3">
             <Input
               label={getText('folderName')}
               placeholder={getText('folderNamePlaceholder')}
@@ -187,6 +224,9 @@ export function FolderManagementPanel({
               onKeyDown={(e) => e.key === 'Enter' && handleConfirmCreate()}
               autoFocus
             />
+            {errorMessage && (
+              <p className="text-sm text-status-error">{errorMessage}</p>
+            )}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeModal}>
@@ -211,7 +251,7 @@ export function FolderManagementPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>{getText('renameFolder')}</AlertDialogTitle>
           </AlertDialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-3">
             <Input
               label={getText('folderName')}
               placeholder={getText('folderNamePlaceholder')}
@@ -220,6 +260,9 @@ export function FolderManagementPanel({
               onKeyDown={(e) => e.key === 'Enter' && handleConfirmRename()}
               autoFocus
             />
+            {errorMessage && (
+              <p className="text-sm text-status-error">{errorMessage}</p>
+            )}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeModal}>
@@ -244,9 +287,12 @@ export function FolderManagementPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>{getText('deleteFolder')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {getText('deleteConfirm')}
+              {getText('deleteConfirm')} {getText('deleteConfirmDetail')}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {errorMessage && (
+            <p className="text-sm text-status-error px-1">{errorMessage}</p>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeModal}>
               {getText('cancel')}
