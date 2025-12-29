@@ -7,8 +7,8 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import { DashboardPage, PlaceholderPage } from './pages';
-import { UsersPage } from '@/pages/ta';
+import { DashboardPage, UsersPage } from '@/pages/ta';
+import { PlaceholderPage } from './pages';
 
 function TenantAdminWrapper() {
   return (
