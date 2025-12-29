@@ -71,6 +71,8 @@ const t = {
   confirm: { ko: '확인', en: 'Confirm' },
   notSet: { ko: '미설정', en: 'Not set' },
   hours: { ko: '시간', en: 'hours' },
+  dateInfo: { ko: '날짜 정보', en: 'Date Info' },
+  creatorInfo: { ko: '생성자 정보', en: 'Creator Info' },
 };
 
 const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -351,7 +353,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 <div className="p-6">
                   <h3 className="text-sm font-medium text-text-primary mb-4 flex items-center gap-2">
                     <Calendar size={16} />
-                    날짜 정보
+                    {getText('dateInfo')}
                   </h3>
                   <div className="space-y-3">
                     <div>
@@ -383,7 +385,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 <div className="p-6">
                   <h3 className="text-sm font-medium text-text-primary mb-4 flex items-center gap-2">
                     <User size={16} />
-                    생성자 정보
+                    {getText('creatorInfo')}
                   </h3>
                   <div>
                     <Label className="text-text-secondary text-xs">Creator ID</Label>
