@@ -17,10 +17,13 @@ import {
   Image,
   Link,
   LayoutGrid,
+  FolderTree,
+  X,
+  Folder,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, ViewToggle, DataTable, DataTableColumnHeader, IconStatCard } from '@/components/common';
-import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent } from '@/hooks/tu';
+import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent, useContentFolderTree } from '@/hooks/tu';
 import {
   ContentCard,
   ContentPreviewModal,
@@ -28,10 +31,20 @@ import {
   formatFileSize,
   formatDate,
 } from '@/components/domain/tu/content';
-import type { ContentType, ContentStatus, ContentListResponse, ContentFilterParams } from '@/types/tu';
+import { FolderManagementPanel } from '@/components/domain/tu/folder';
+import type { ContentType, ContentStatus, ContentListResponse, ContentFilterParams, ContentFolderTreeNode } from '@/types/tu';
 
-// [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제
-import { DevLoginButton } from '@/components/dev/DevLoginButton';
+// 폴더 트리에서 ID로 폴더 찾기
+function findFolderById(folders: ContentFolderTreeNode[], id: number): ContentFolderTreeNode | null {
+  for (const folder of folders) {
+    if (folder.id === id) return folder;
+    if (folder.children.length > 0) {
+      const found = findFolderById(folder.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 interface MyContentPageProps {
   language?: 'ko' | 'en';
@@ -76,6 +89,7 @@ const t = {
   columnDate: { ko: '등록일', en: 'Date' },
   columnFile: { ko: '파일', en: 'File' },
   columnActions: { ko: '액션', en: 'Actions' },
+  organizeManage: { ko: '분류 및 관리', en: 'Organize' },
 };
 
 export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>) {
@@ -95,6 +109,10 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     fileName: string | null;
   }>({ isOpen: false, contentId: null, contentType: null, fileName: null });
 
+  // 폴더 관리 패널 상태
+  const [isFolderPanelOpen, setIsFolderPanelOpen] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   // API 파라미터 구성
@@ -104,13 +122,18 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     ...(typeFilter !== 'all' && { contentType: typeFilter }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
     ...(searchQuery && { keyword: searchQuery }),
+    ...(selectedFolderId && { folderId: selectedFolderId }),
   };
 
   // React Query 훅 사용
   const { data, isLoading, error } = useMyContents(params);
+  const { data: folderTree = [] } = useContentFolderTree();
   const deleteContent = useDeleteContent();
   const archiveContent = useArchiveContent();
   const restoreContent = useRestoreContent();
+
+  // 선택된 폴더 정보
+  const selectedFolder = selectedFolderId ? findFolderById(folderTree, selectedFolderId) : null;
 
   const contents = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
@@ -274,18 +297,26 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       {/* Top Bar - 배경 통일, border 제거 */}
       <div className="sticky top-0 z-10 bg-bg-app">
         <div className="p-6 px-8">
-          {/* [DEV] 임시 로그인 버튼 - TODO: 실제 로그인 구현 후 삭제 */}
-          <DevLoginButton />
 
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-text-primary mb-1">{getText('title')}</h1>
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
-            <Button onClick={() => navigate('/tu/teaching/content/create')}>
-              <Plus size={20} />
-              <span>{getText('createContent')}</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                className="border border-border"
+                onClick={() => setIsFolderPanelOpen(true)}
+              >
+                <FolderTree size={20} />
+                <span>{getText('organizeManage')}</span>
+              </Button>
+              <Button onClick={() => navigate('/tu/teaching/content/create')}>
+                <Plus size={20} />
+                <span>{getText('createContent')}</span>
+              </Button>
+            </div>
           </div>
 
           {/* Search and Filter Bar */}
@@ -309,6 +340,28 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               <ChevronDown size={16} className={cn('transition-transform', showFilters && 'rotate-180')} />
             </Button>
           </div>
+
+          {/* 선택된 폴더 표시 */}
+          {selectedFolder && (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm text-text-secondary">
+                {language === 'ko' ? '폴더:' : 'Folder:'}
+              </span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-btn-neutral/10 border border-btn-neutral/30 rounded-full">
+                <Folder size={14} className="text-btn-neutral" />
+                <span className="text-sm text-text-primary">{selectedFolder.folderName}</span>
+                <button
+                  onClick={() => {
+                    setSelectedFolderId(null);
+                    setPage(0);
+                  }}
+                  className="ml-1 p-0.5 hover:bg-btn-neutral/20 rounded-full transition-colors"
+                >
+                  <X size={14} className="text-text-secondary" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Filter Options */}
           {showFilters && (
@@ -395,7 +448,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           )}
 
           {/* Empty State - 콘텐츠 자체가 없는 경우 */}
-          {!isLoading && totalElements === 0 && !searchQuery && typeFilter === 'all' && statusFilter === 'all' && (
+          {!isLoading && totalElements === 0 && !searchQuery && typeFilter === 'all' && statusFilter === 'all' && !selectedFolderId && (
             <div className="text-center py-12 text-text-secondary">
               <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p className="mb-1">{getText('noContent')}</p>
@@ -404,7 +457,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           )}
 
           {/* Empty State - 검색/필터 결과가 없는 경우 */}
-          {!isLoading && contents.length === 0 && (searchQuery || typeFilter !== 'all' || statusFilter !== 'all') && (
+          {!isLoading && contents.length === 0 && (searchQuery || typeFilter !== 'all' || statusFilter !== 'all' || selectedFolderId) && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -477,6 +530,15 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
         contentId={previewModal.contentId}
         contentType={previewModal.contentType}
         fileName={previewModal.fileName ?? undefined}
+      />
+
+      {/* 폴더 관리 슬라이드 패널 */}
+      <FolderManagementPanel
+        isOpen={isFolderPanelOpen}
+        onClose={() => setIsFolderPanelOpen(false)}
+        selectedFolderId={selectedFolderId}
+        onSelectFolder={setSelectedFolderId}
+        language={language}
       />
     </div>
   );
