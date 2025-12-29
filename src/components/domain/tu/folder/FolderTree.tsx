@@ -14,6 +14,7 @@ import {
   MoreVertical,
   FolderPlus,
   Loader2,
+  MoveRight,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common/Button';
@@ -32,6 +33,7 @@ interface FolderTreeProps {
   onCreateFolder: (parentId: number | null) => void;
   onRenameFolder: (folder: ContentFolderTreeNode) => void;
   onDeleteFolder: (folder: ContentFolderTreeNode) => void;
+  onMoveFolder?: (folder: ContentFolderTreeNode) => void;
   isLoading?: boolean;
   language?: 'ko' | 'en';
 }
@@ -46,6 +48,7 @@ interface FolderNodeProps {
   onCreateFolder: (parentId: number) => void;
   onRenameFolder: (folder: ContentFolderTreeNode) => void;
   onDeleteFolder: (folder: ContentFolderTreeNode) => void;
+  onMoveFolder?: (folder: ContentFolderTreeNode) => void;
   language: 'ko' | 'en';
 }
 
@@ -54,6 +57,7 @@ const t = {
   createFolder: { ko: '폴더 생성', en: 'Create Folder' },
   createSubfolder: { ko: '하위 폴더 생성', en: 'Create Subfolder' },
   rename: { ko: '이름 변경', en: 'Rename' },
+  move: { ko: '이동', en: 'Move' },
   delete: { ko: '삭제', en: 'Delete' },
   items: { ko: '개 항목', en: ' items' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
@@ -71,6 +75,7 @@ function FolderNode({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
+  onMoveFolder,
   language,
 }: FolderNodeProps) {
   const isExpanded = expandedIds.has(node.id);
@@ -151,6 +156,12 @@ function FolderNode({
               <Pencil size={14} className="mr-2" />
               {getText('rename')}
             </DropdownMenuItem>
+            {onMoveFolder && (
+              <DropdownMenuItem onClick={() => onMoveFolder(node)}>
+                <MoveRight size={14} className="mr-2" />
+                {getText('move')}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={() => onDeleteFolder(node)}
               className="text-status-error focus:text-status-error"
@@ -177,6 +188,7 @@ function FolderNode({
               onCreateFolder={onCreateFolder}
               onRenameFolder={onRenameFolder}
               onDeleteFolder={onDeleteFolder}
+              onMoveFolder={onMoveFolder}
               language={language}
             />
           ))}
@@ -193,6 +205,7 @@ export function FolderTree({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
+  onMoveFolder,
   isLoading = false,
   language = 'ko',
 }: FolderTreeProps) {
@@ -266,6 +279,7 @@ export function FolderTree({
             onCreateFolder={onCreateFolder}
             onRenameFolder={onRenameFolder}
             onDeleteFolder={onDeleteFolder}
+            onMoveFolder={onMoveFolder}
             language={language}
           />
         ))

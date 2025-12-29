@@ -11,6 +11,8 @@ import {
   SheetDescription,
 } from '@/components/common/Sheet';
 import { Input } from '@/components/common/Input';
+import { Folder, ChevronRight } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +29,7 @@ import {
   useCreateContentFolder,
   useUpdateContentFolder,
   useDeleteContentFolder,
+  useMoveContentFolder,
 } from '@/hooks/tu';
 import type { ContentFolderTreeNode } from '@/types/tu';
 
@@ -42,7 +45,8 @@ type ModalState =
   | { type: 'none' }
   | { type: 'create'; parentId: number | null }
   | { type: 'rename'; folder: ContentFolderTreeNode }
-  | { type: 'delete'; folder: ContentFolderTreeNode };
+  | { type: 'delete'; folder: ContentFolderTreeNode }
+  | { type: 'move'; folder: ContentFolderTreeNode };
 
 const t = {
   title: { ko: '분류 및 관리', en: 'Organize & Manage' },
@@ -67,6 +71,12 @@ const t = {
   creating: { ko: '생성 중...', en: 'Creating...' },
   renaming: { ko: '변경 중...', en: 'Renaming...' },
   deleting: { ko: '삭제 중...', en: 'Deleting...' },
+  moveFolder: { ko: '폴더 이동', en: 'Move Folder' },
+  moveTarget: { ko: '이동할 위치 선택', en: 'Select destination' },
+  move: { ko: '이동', en: 'Move' },
+  moving: { ko: '이동 중...', en: 'Moving...' },
+  rootFolder: { ko: '최상위', en: 'Root' },
+  cannotMoveToSelf: { ko: '자기 자신이나 하위 폴더로 이동할 수 없습니다.', en: 'Cannot move to self or subfolder.' },
   folderNotEmpty: {
     ko: '폴더에 콘텐츠가 있어 삭제할 수 없습니다. 먼저 콘텐츠를 이동하거나 삭제해주세요.',
     en: 'Cannot delete folder with contents. Please move or delete contents first.',
@@ -91,6 +101,7 @@ export function FolderManagementPanel({
   const [modalState, setModalState] = useState<ModalState>({ type: 'none' });
   const [folderName, setFolderName] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [targetParentId, setTargetParentId] = useState<number | null>(null);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -109,6 +120,7 @@ export function FolderManagementPanel({
   const createFolder = useCreateContentFolder();
   const updateFolder = useUpdateContentFolder();
   const deleteFolder = useDeleteContentFolder();
+  const moveFolder = useMoveContentFolder();
 
   const handleCreateFolder = (parentId: number | null) => {
     setFolderName('');
@@ -125,6 +137,12 @@ export function FolderManagementPanel({
   const handleDeleteFolder = (folder: ContentFolderTreeNode) => {
     setErrorMessage(null);
     setModalState({ type: 'delete', folder });
+  };
+
+  const handleMoveFolder = (folder: ContentFolderTreeNode) => {
+    setErrorMessage(null);
+    setTargetParentId(folder.parentId);
+    setModalState({ type: 'move', folder });
   };
 
   const handleConfirmCreate = async () => {
@@ -176,10 +194,33 @@ export function FolderManagementPanel({
     }
   };
 
+  const handleConfirmMove = async () => {
+    if (modalState.type !== 'move') return;
+
+    // 자기 자신이나 하위 폴더로 이동 불가 체크
+    if (targetParentId === modalState.folder.id) {
+      setErrorMessage(getText('cannotMoveToSelf'));
+      return;
+    }
+
+    try {
+      setErrorMessage(null);
+      await moveFolder.mutateAsync({
+        id: modalState.folder.id,
+        request: { targetParentId },
+      });
+      setModalState({ type: 'none' });
+    } catch (error) {
+      console.error('Failed to move folder:', error);
+      setErrorMessage(getErrorMessage(error));
+    }
+  };
+
   const closeModal = () => {
     setModalState({ type: 'none' });
     setFolderName('');
     setErrorMessage(null);
+    setTargetParentId(null);
   };
 
   return (
@@ -199,6 +240,7 @@ export function FolderManagementPanel({
               onCreateFolder={handleCreateFolder}
               onRenameFolder={handleRenameFolder}
               onDeleteFolder={handleDeleteFolder}
+              onMoveFolder={handleMoveFolder}
               isLoading={isLoading}
               language={language}
             />
@@ -307,6 +349,108 @@ export function FolderManagementPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 폴더 이동 다이얼로그 */}
+      <AlertDialog
+        open={modalState.type === 'move'}
+        onOpenChange={(open) => !open && closeModal()}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{getText('moveFolder')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {modalState.type === 'move' && (
+                <>
+                  <span className="font-medium">{modalState.folder.folderName}</span>
+                  {' '}{getText('moveTarget')}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4 space-y-2 max-h-64 overflow-y-auto">
+            {/* 최상위(루트) 옵션 */}
+            <button
+              type="button"
+              onClick={() => setTargetParentId(null)}
+              className={cn(
+                'w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors',
+                targetParentId === null
+                  ? 'bg-action-primary/10 text-action-primary'
+                  : 'hover:bg-bg-secondary'
+              )}
+            >
+              <Folder size={16} className="text-text-secondary" />
+              <span className="text-sm">{getText('rootFolder')}</span>
+            </button>
+            {/* 폴더 목록 */}
+            {renderMoveTargetFolders(folders, 0)}
+          </div>
+          {errorMessage && (
+            <p className="text-sm text-status-error">{errorMessage}</p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={closeModal}>
+              {getText('cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmMove}
+              disabled={moveFolder.isPending}
+            >
+              {moveFolder.isPending ? getText('moving') : getText('move')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
+
+  // 이동 대상 폴더 렌더링 (재귀)
+  function renderMoveTargetFolders(folderList: ContentFolderTreeNode[], depth: number): React.ReactNode {
+    if (modalState.type !== 'move') return null;
+
+    return folderList.map((folder) => {
+      // 이동 대상에서 자기 자신과 하위 폴더는 제외
+      const isCurrentFolder = folder.id === modalState.folder.id;
+      const isDescendant = isDescendantOf(folder, modalState.folder.id);
+      const isDisabled = isCurrentFolder || isDescendant;
+      // 이동 후 depth가 2를 초과하면 비활성화 (최대 3단계)
+      const wouldExceedMaxDepth = depth >= 2;
+
+      return (
+        <div key={folder.id}>
+          <button
+            type="button"
+            onClick={() => !isDisabled && !wouldExceedMaxDepth && setTargetParentId(folder.id)}
+            disabled={isDisabled || wouldExceedMaxDepth}
+            className={cn(
+              'w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors',
+              targetParentId === folder.id
+                ? 'bg-action-primary/10 text-action-primary'
+                : isDisabled || wouldExceedMaxDepth
+                  ? 'opacity-40 cursor-not-allowed'
+                  : 'hover:bg-bg-secondary'
+            )}
+            style={{ paddingLeft: `${(depth + 1) * 16 + 12}px` }}
+          >
+            <ChevronRight size={12} className="text-text-tertiary" />
+            <Folder size={16} className="text-amber-500" />
+            <span className="text-sm truncate">{folder.folderName}</span>
+          </button>
+          {folder.children && folder.children.length > 0 && (
+            renderMoveTargetFolders(folder.children, depth + 1)
+          )}
+        </div>
+      );
+    });
+  }
+
+  // 특정 폴더가 다른 폴더의 하위인지 확인
+  function isDescendantOf(folder: ContentFolderTreeNode, targetId: number): boolean {
+    if (!folder.children) return false;
+    for (const child of folder.children) {
+      if (child.id === targetId) return true;
+      if (isDescendantOf(child, targetId)) return true;
+    }
+    return false;
+  }
 }

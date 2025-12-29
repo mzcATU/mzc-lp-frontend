@@ -42,5 +42,5 @@ export interface UpdateContentFolderRequest {
 
 // 폴더 이동 요청
 export interface MoveContentFolderRequest {
-  parentId: number | null;
+  targetParentId: number | null;
 }
