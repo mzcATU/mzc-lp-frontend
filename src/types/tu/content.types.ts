@@ -102,6 +102,7 @@ export interface ContentFilterParams {
   contentType?: ContentType;
   keyword?: string;
   status?: ContentStatus;
+  folderId?: number;
   page?: number;
   size?: number;
   sort?: string;
