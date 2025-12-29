@@ -181,6 +181,7 @@ type TranslationKeys = {
     tagNew: string;
     tagBest: string;
     tagSale: string;
+    clearFilter: string;
   };
   // 히어로 섹션
   hero: {
@@ -444,6 +445,7 @@ const ko: TranslationKeys = {
     tagNew: 'NEW',
     tagBest: '베스트',
     tagSale: '할인중',
+    clearFilter: '초기화',
   },
   hero: {
     getStarted: '시작하기',
@@ -699,6 +701,7 @@ const en: TranslationKeys = {
     tagNew: 'NEW',
     tagBest: 'BEST',
     tagSale: 'SALE',
+    clearFilter: 'Clear',
   },
   hero: {
     getStarted: 'Get Started',
