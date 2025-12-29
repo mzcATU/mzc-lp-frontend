@@ -66,3 +66,10 @@ export {
   useUpdateProgress,
   useMarkItemComplete,
 } from './useLearningPlayerQueries';
+
+// My Assignment Hooks
+export {
+  myAssignmentKeys,
+  useMyAssignments,
+  useMyInstructorStatistics,
+} from './useMyAssignmentQueries';
