@@ -1,2 +1,2 @@
-// Super Admin pages will be exported here
-// export { DashboardPage } from './DashboardPage';
+// Super Admin pages
+export { DashboardPage } from "./dashboard";

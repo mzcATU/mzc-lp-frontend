@@ -24,7 +24,7 @@ interface LessonCardProps {
   onToggle: () => void;
   onUpdate: (updates: Partial<LessonData>) => void;
   onDelete: () => void;
-  onAddContent: (type: 'upload' | 'link') => void;
+  onAddContent: (type: 'upload' | 'link' | 'existing') => void;
   onDeleteContent: (contentId: string) => void;
   onDragStart: () => void;
   onDragOver: (e: React.DragEvent) => void;
@@ -122,13 +122,15 @@ export function LessonCard({
                   <div key={content.id} className="p-3 bg-bg-secondary rounded-md flex items-center gap-3">
                     {content.type === 'upload' ? (
                       <Upload size={18} className="text-text-secondary" />
+                    ) : content.type === 'existing' ? (
+                      <FileText size={18} className="text-text-secondary" />
                     ) : (
                       <LinkIcon size={18} className="text-text-secondary" />
                     )}
                     <div className="flex-1">
                       <span className="text-text-primary text-sm">{content.name}</span>
                       <span className="text-text-secondary text-xs ml-2">
-                        ({content.type === 'upload' ? '파일 업로드' : '외부 링크'})
+                        ({content.type === 'upload' ? '파일 업로드' : content.type === 'existing' ? getText('existingContent') : '외부 링크'})
                       </span>
                     </div>
                     <button
@@ -177,7 +179,7 @@ export function LessonCard({
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  alert('기존 콘텐츠 불러오기 기능은 추후 구현됩니다.');
+                  onAddContent('existing');
                 }}
                 className="border border-border"
               >
