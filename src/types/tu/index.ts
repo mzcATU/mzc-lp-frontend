@@ -38,11 +38,16 @@ export type {
   InstructorAssignmentResponse,
   CourseTimeStatResponse,
   InstructorDetailStatResponse,
+  StudentEnrollmentStatus,
+  CourseTimeEnrollmentItem,
+  EnrollmentStats,
+  CourseTimeEnrollmentsResponse,
 } from './instructorAssignment.types';
 
 export {
   INSTRUCTOR_ROLE_LABELS,
   ASSIGNMENT_STATUS_LABELS,
+  STUDENT_ENROLLMENT_STATUS_LABELS,
 } from './instructorAssignment.types';
 
 // Learning Player

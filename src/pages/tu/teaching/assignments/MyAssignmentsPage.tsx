@@ -2,6 +2,7 @@
  * 내 배정 페이지 (TU - 강사 본인용)
  */
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Loader2, CalendarDays, FileText } from 'lucide-react';
 import { Button } from '@/components/common';
 import { useMyAssignments, useMyInstructorStatistics } from '@/hooks/tu';
@@ -38,6 +39,7 @@ const t = {
 type StatusFilter = AssignmentStatus | 'all';
 
 export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPageProps>) {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const getText = (key: keyof typeof t) => t[key][language];
@@ -147,6 +149,7 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                       key={assignment.id}
                       assignment={assignment}
                       language={language}
+                      onClick={() => navigate(`/tu/teaching/assignments/${assignment.id}`)}
                     />
                   ))}
                 </div>

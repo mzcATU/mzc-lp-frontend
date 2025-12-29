@@ -72,4 +72,5 @@ export {
   myAssignmentKeys,
   useMyAssignments,
   useMyInstructorStatistics,
+  useCourseTimeEnrollments,
 } from './useMyAssignmentQueries';
