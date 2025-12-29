@@ -1,2 +1,2 @@
-// Tenant Admin pages will be exported here
-// export { DashboardPage } from './DashboardPage';
+// Tenant Admin pages
+export { BrandingPage } from './branding';
