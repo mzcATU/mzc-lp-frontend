@@ -9,5 +9,8 @@ export { Step1BasicInfo } from './Step1BasicInfo';
 export { Step2Curriculum } from './Step2Curriculum';
 export { Step3Review } from './Step3Review';
 export { LessonCard } from './LessonCard';
+export { FileUploadModal } from './FileUploadModal';
+export { ExternalLinkModal } from './ExternalLinkModal';
+export { ExistingContentModal } from './ExistingContentModal';
 export { translations, levelOptions } from './courseCreate.constants';
 export type { TranslationKey } from './courseCreate.constants';
