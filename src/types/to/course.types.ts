@@ -18,7 +18,7 @@ export type {
   UpdateCourseRequest,
 } from '../common/course.types';
 
-import type { CourseLevel } from '../common/course.types';
+import type { CourseLevel, CourseType } from '../common/course.types';
 
 export {
   COURSE_LEVEL_LABELS,
@@ -39,6 +39,10 @@ export interface ContentAttachment {
   contentType?: string;
   status?: 'pending' | 'uploading' | 'completed' | 'error';
   uploadProgress?: number;
+  /** 강의 내 표시용 이름 (CourseItem.displayName) */
+  displayName?: string;
+  /** 강의 내 표시용 설명 (CourseItem.description) */
+  description?: string;
 }
 
 /** 회차(레슨) 데이터 타입 */
@@ -85,6 +89,7 @@ export interface CourseFormData {
   categoryId: number | null;
   tags: string[];
   level: CourseLevel | '';
+  type: CourseType | '';
   lessons: LessonData[];
   isDraft: boolean;
   lastSaved?: string;

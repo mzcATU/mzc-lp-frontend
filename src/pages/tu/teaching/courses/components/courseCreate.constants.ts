@@ -22,6 +22,11 @@ export const translations = {
   selectCategory: { ko: '카테고리 선택', en: 'Select category' },
   difficulty: { ko: '난이도', en: 'Difficulty' },
   selectDifficulty: { ko: '난이도 선택', en: 'Select difficulty' },
+  courseType: { ko: '유형', en: 'Type' },
+  selectType: { ko: '유형 선택', en: 'Select type' },
+  online: { ko: '온라인', en: 'Online' },
+  offline: { ko: '오프라인', en: 'Offline' },
+  blended: { ko: '블렌디드', en: 'Blended' },
   beginner: { ko: '입문', en: 'Beginner' },
   elementary: { ko: '초급', en: 'Elementary' },
   intermediate: { ko: '중급', en: 'Intermediate' },
@@ -98,6 +103,11 @@ export const translations = {
   noContentFound: { ko: '콘텐츠가 없습니다', en: 'No content found' },
   select: { ko: '선택', en: 'Select' },
   existingContent: { ko: '기존 콘텐츠', en: 'Existing Content' },
+  // 콘텐츠 표시 정보
+  contentDisplayName: { ko: '강의 내 표시 이름', en: 'Display Name in Course' },
+  contentDisplayNamePlaceholder: { ko: '강의에서 표시할 이름 (미입력 시 원본 이름 사용)', en: 'Name to display in course (uses original name if empty)' },
+  contentDescription: { ko: '강의 내 설명', en: 'Description in Course' },
+  contentDescriptionPlaceholder: { ko: '강의에서 표시할 설명', en: 'Description to display in course' },
   // 공통
   cancel: { ko: '취소', en: 'Cancel' },
   processing: { ko: '처리 중...', en: 'Processing...' },
@@ -110,4 +120,11 @@ export const levelOptions = [
   { value: 'BEGINNER', label: '초급' },
   { value: 'INTERMEDIATE', label: '중급' },
   { value: 'ADVANCED', label: '고급' },
+];
+
+export const typeOptions = [
+  { value: '', label: '유형 선택' },
+  { value: 'ONLINE', label: '온라인' },
+  { value: 'OFFLINE', label: '오프라인' },
+  { value: 'BLENDED', label: '블렌디드' },
 ];

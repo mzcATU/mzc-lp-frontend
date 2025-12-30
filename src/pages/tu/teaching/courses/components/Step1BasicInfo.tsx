@@ -17,9 +17,9 @@ import {
   Alert,
   AlertDescription,
 } from '@/components/common';
-import type { CourseFormData, LanguageVersion, CourseLevel } from '@/types';
+import type { CourseFormData, LanguageVersion, CourseLevel, CourseType } from '@/types';
 import type { CategoryResponse } from '@/types/common';
-import { translations, levelOptions, type TranslationKey } from './courseCreate.constants';
+import { translations, levelOptions, typeOptions, type TranslationKey } from './courseCreate.constants';
 
 interface Step1BasicInfoProps {
   language: 'ko' | 'en';
@@ -89,7 +89,7 @@ export function Step1BasicInfo({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <NativeSelect
           id="categoryId"
           label={getText('category')}
@@ -109,6 +109,14 @@ export function Step1BasicInfo({
           value={formData.level}
           onChange={(e) => onFormDataChange({ level: e.target.value as CourseLevel | '' })}
           options={levelOptions}
+        />
+
+        <NativeSelect
+          id="type"
+          label={getText('courseType')}
+          value={formData.type}
+          onChange={(e) => onFormDataChange({ type: e.target.value as CourseType | '' })}
+          options={typeOptions}
         />
       </div>
 

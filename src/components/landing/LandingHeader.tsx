@@ -53,26 +53,26 @@ export function LandingHeader() {
         </div>
       )}
 
-      {/* Main Navigation - Dark Glass Effect */}
-      <div className="w-full glass-dark sticky top-0 z-50">
+      {/* Main Navigation */}
+      <div className={`w-full sticky top-0 z-50 border-b ${isDark ? 'glass-dark border-white/10' : 'border-gray-200'}`} style={{ backgroundColor: isDark ? undefined : '#fafafa' }}>
         <div className="w-full px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between gap-6">
           {/* Left: Logo & Menu */}
           <div className="flex items-center gap-8 ml-2 md:ml-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
+            <Link to="/" className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
               <span className="text-2xl">M</span>
               <span className="gradient-text">MZC Learn</span>
             </Link>
 
             {/* Desktop Nav Links */}
-            <nav className="hidden md:flex items-center gap-8 text-gray-300 font-medium text-[15px]">
-              <Link to="/tu/main/page1" className="hover:text-white transition-colors">
+            <nav className={`hidden md:flex items-center gap-8 font-medium text-[15px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <Link to="/tu/main/page1" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 1페이지
               </Link>
-              <Link to="/tu/main/page2" className="hover:text-white transition-colors">
+              <Link to="/tu/main/page2" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 2페이지
               </Link>
-              <Link to="/tu/main/page3" className="hover:text-white transition-colors">
+              <Link to="/tu/main/page3" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 3페이지
               </Link>
             </nav>
@@ -85,7 +85,12 @@ export function LandingHeader() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.landing.searchPlaceholder}
-              className="w-full bg-white/5 border border-white/10 rounded-full pl-5 pr-12 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#6778ff] focus:border-[#6778ff] transition-all"
+              className={`w-full rounded-full pl-5 pr-12 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#6778ff] focus:border-[#6778ff] transition-all ${
+                isDark
+                  ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500'
+                  : 'border border-gray-300 text-gray-900 placeholder-gray-400'
+              }`}
+              style={{ backgroundColor: isDark ? undefined : '#fafafa' }}
             />
             <button
               type="submit"
@@ -101,20 +106,32 @@ export function LandingHeader() {
               {/* Theme Toggle Button */}
               <button
                 onClick={toggleTheme}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className={`p-2 rounded-lg transition-colors ${
+                  isDark
+                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
                 aria-label={isDark ? t.landing.switchToLight : t.landing.switchToDark}
               >
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
               <Link
                 to="/tu/cart"
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors relative"
+                className={`p-2 rounded-lg transition-colors relative ${
+                  isDark
+                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               >
                 <ShoppingCart className="h-5 w-5" />
               </Link>
               <Link
                 to="/tu/notifications"
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors relative"
+                className={`p-2 rounded-lg transition-colors relative ${
+                  isDark
+                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               >
                 <Bell className="h-5 w-5" />
               </Link>
@@ -123,7 +140,11 @@ export function LandingHeader() {
                 <div className="relative">
                   <button
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                    className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
+                      isDark
+                        ? 'bg-white/5 hover:bg-white/10'
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] flex items-center justify-center overflow-hidden">
                       {profileImageUrl ? (
@@ -132,7 +153,7 @@ export function LandingHeader() {
                         <User className="w-4 h-4 text-white" />
                       )}
                     </div>
-                    <span className="text-sm text-white font-medium max-w-[100px] truncate">
+                    <span className={`text-sm font-medium max-w-[100px] truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {user.name}
                     </span>
                   </button>
@@ -141,7 +162,7 @@ export function LandingHeader() {
                   {showDropdown && (
                     <div className={`absolute right-0 top-12 w-64 rounded-xl p-4 shadow-xl border ${
                       isDark
-                        ? 'bg-[#1a1a2e]/95 backdrop-blur-md border-white/10'
+                        ? 'bg-[#151515] border-white/10'
                         : 'bg-white border-gray-200'
                     }`}>
                       {/* 프로필 정보 */}
@@ -250,7 +271,11 @@ export function LandingHeader() {
                 <>
                   <Link
                     to="/login"
-                    className="hidden md:flex px-4 py-2 landing-btn-outline text-white rounded-full text-sm font-medium"
+                    className={`hidden md:flex px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      isDark
+                        ? 'landing-btn-outline text-white'
+                        : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     {t.common.login}
                   </Link>
@@ -264,7 +289,7 @@ export function LandingHeader() {
               )}
 
               {/* Mobile Menu Toggle */}
-              <button className="p-2 md:hidden text-gray-400" aria-label={t.landing.openMenu}>
+              <button className={`p-2 md:hidden ${isDark ? 'text-gray-400' : 'text-gray-500'}`} aria-label={t.landing.openMenu}>
                 <Menu className="h-6 w-6" />
               </button>
             </div>

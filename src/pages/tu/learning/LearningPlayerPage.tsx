@@ -275,7 +275,7 @@ export function LearningPlayerPage() {
   // 로딩 상태 (데모 모드에서는 스킵)
   if (!isDemoMode && isLoading) {
     return (
-      <div className={`flex items-center justify-center min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+      <div className={`flex items-center justify-center min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
       </div>
     );
@@ -284,7 +284,7 @@ export function LearningPlayerPage() {
   // 에러 상태 (데모 모드에서는 스킵)
   if (!isDemoMode && (isError || !enrollment)) {
     return (
-      <div className={`flex flex-col items-center justify-center min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+      <div className={`flex flex-col items-center justify-center min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <BookOpen className={`w-16 h-16 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
@@ -297,7 +297,7 @@ export function LearningPlayerPage() {
   }
 
   return (
-    <div className={`flex flex-col h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`flex flex-col h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       {/* 데모 모드 배너 */}
       {isDemoMode && (
         <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">

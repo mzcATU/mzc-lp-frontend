@@ -35,6 +35,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     categoryId: null,
     tags: [],
     level: '',
+    type: '',
     lessons: [],
     isDraft: false,
     multiLanguage: {
@@ -84,6 +85,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         title: formData.title,
         description: formData.description || undefined,
         level: formData.level || undefined,
+        type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
         startDate: formData.startDate || undefined,
         endDate: formData.endDate || undefined,
@@ -94,12 +96,28 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       const courseResponse = await courseService.create(request);
       const courseId = courseResponse.courseId;
 
-      // 2. 회차(폴더) 생성
+      // 2. 회차(폴더) 및 콘텐츠(차시) 생성
       if (formData.lessons.length > 0) {
         for (const lesson of formData.lessons) {
-          await courseService.createFolder(courseId, {
+          // 폴더 생성
+          const folderResponse = await courseService.createFolder(courseId, {
             folderName: lesson.title || `회차 ${lesson.order}`,
           });
+          const folderId = folderResponse.itemId;
+
+          // 해당 폴더 내 콘텐츠(차시) 생성
+          for (const content of lesson.contents) {
+            if (content.contentId) {
+              // LO가 연결된 콘텐츠인 경우 차시 생성
+              await courseService.createItem(courseId, {
+                itemName: content.name,
+                parentId: folderId,
+                learningObjectId: content.contentId,
+                displayName: content.displayName || undefined,
+                description: content.description || undefined,
+              });
+            }
+          }
         }
       }
 
