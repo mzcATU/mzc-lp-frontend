@@ -67,3 +67,113 @@ export {
   COMPLETION_THRESHOLD,
   AUTO_SAVE_INTERVAL,
 } from './learningPlayer.types';
+
+// Course Detail (강의 상세)
+export type {
+  CourseLecture,
+  CurriculumSection,
+  CourseInstructor,
+  CourseTag,
+  CourseCategory,
+  CourseDetail,
+  CourseDetailResponse,
+  CourseFilterParams,
+  CourseCard,
+} from './courseDetail.types';
+
+export {
+  CATEGORY_LABELS,
+  TAG_STYLES,
+} from './courseDetail.types';
+
+// Roadmap Detail (로드맵 상세)
+export type {
+  RoadmapCourse,
+  RoadmapAuthor,
+  RoadmapReview,
+  RoadmapDetail,
+  RoadmapDetailResponse,
+  RoadmapFilterParams,
+  RoadmapCard,
+  RoadmapTab,
+  CreateReviewRequest,
+  ReviewPageResponse,
+} from './roadmapDetail.types';
+
+// Cart (장바구니)
+export type {
+  CartItem,
+  CartResponse,
+  CartSummary,
+  Coupon,
+  ApplyCouponRequest,
+  ApplyCouponResponse,
+  AddToCartRequest,
+  RemoveFromCartRequest,
+} from './cart.types';
+
+// Wishlist (찜 목록)
+export type {
+  WishlistItem,
+  WishlistResponse,
+  AddToWishlistRequest,
+  RemoveFromWishlistRequest,
+  AddAllToCartRequest,
+} from './wishlist.types';
+
+// Notification (알림)
+export type {
+  NotificationType,
+  NotificationItem,
+  NotificationListResponse,
+  MarkAsReadRequest,
+  DeleteNotificationRequest,
+  NotificationFilter,
+} from './notification.types';
+
+export { NOTIFICATION_TYPE_LABELS } from './notification.types';
+
+// Course Explore (강의 탐색)
+export type {
+  CourseExploreItem,
+  CourseExploreResponse,
+  ExploreCourseCategory,
+  CourseCategoryResponse,
+  CourseExploreFilter,
+} from './courseExplore.types';
+
+export {
+  COURSE_LEVEL_LABELS,
+  COURSE_SORT_OPTIONS,
+} from './courseExplore.types';
+
+// Roadmap Explore (로드맵 탐색)
+export type {
+  RoadmapExploreItem,
+  RoadmapExploreResponse,
+  RoadmapCategory,
+  RoadmapCategoryResponse,
+  RoadmapExploreFilter,
+} from './roadmapExplore.types';
+
+export {
+  ROADMAP_LEVEL_LABELS,
+  ROADMAP_SORT_OPTIONS,
+} from './roadmapExplore.types';
+
+// Community (커뮤니티)
+export type {
+  PostType,
+  CommunityPost,
+  CommunityPostListResponse,
+  CommunityCategory,
+  CommunityCategoryResponse,
+  CommunityFilter,
+  CreatePostRequest,
+  UpdatePostRequest,
+} from './community.types';
+
+export {
+  POST_TYPE_LABELS,
+  COMMUNITY_SORT_OPTIONS,
+} from './community.types';

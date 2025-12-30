@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
+import { Eye, EyeOff, LogIn, Sun, Moon } from 'lucide-react';
 import { Checkbox } from '@/components/common/Checkbox';
-import { designTokens } from '@/styles/admin-design-tokens';
 import { useLogin } from '@/hooks/common';
 import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
+import { useThemeStore } from '@/store/common/themeStore';
 
 /**
  * 로그인 페이지
- * 디자인 토큰 준수: admin-design-tokens.ts, 01-DESIGN-TOKENS-COMMON.md
+ * 다크/라이트 모드 지원
  */
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -20,6 +18,8 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const { theme, toggleTheme } = useThemeStore();
+  const isDark = theme === 'dark';
 
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
@@ -59,48 +59,43 @@ export const LoginPage = () => {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ backgroundColor: designTokens.bg.app_default }}
-    >
-      <div
-        className="w-full max-w-[400px] rounded-lg p-8"
-        style={{
-          backgroundColor: designTokens.bg.default,
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        }}
+    <div className={`min-h-screen flex items-center justify-center p-4 ${
+      isDark ? 'bg-[#0a0a0a]' : 'bg-gray-50'
+    }`}>
+      {/* Theme Toggle */}
+      <button
+        onClick={toggleTheme}
+        className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+          isDark
+            ? 'text-gray-400 hover:text-white hover:bg-white/10'
+            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+        }`}
+        aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
       >
+        {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
+      <div className={`w-full max-w-[400px] rounded-xl p-8 border ${
+        isDark
+          ? 'bg-[#1a1a1a] border-white/10'
+          : 'bg-white border-gray-200 shadow-lg'
+      }`}>
         {/* 로고 영역 */}
         <div className="text-center mb-8">
-          <div
-            className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center"
-            style={{ backgroundColor: designTokens.button.brand_default }}
-          >
+          <div className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center bg-gradient-to-r from-[#6778ff] to-[#a855f7]">
             <LogIn className="w-6 h-6 text-white" />
           </div>
-          <h1
-            className="text-2xl font-semibold"
-            style={{ color: designTokens.text.primary }}
-          >
+          <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             로그인
           </h1>
-          <p
-            className="text-sm mt-2"
-            style={{ color: designTokens.text.secondary }}
-          >
+          <p className={`text-sm mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             계정에 로그인하여 학습을 시작하세요
           </p>
         </div>
 
         {/* 에러 메시지 */}
         {errors.general && (
-          <div
-            className="mb-4 p-3 rounded-md text-sm"
-            style={{
-              backgroundColor: designTokens.status.error_background,
-              color: designTokens.status.error_text,
-            }}
-          >
+          <div className="mb-4 p-3 rounded-md text-sm bg-red-500/10 text-red-500 border border-red-500/20">
             {errors.general}
           </div>
         )}
@@ -109,23 +104,31 @@ export const LoginPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* 이메일 입력 */}
           <div>
-            <Input
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              이메일
+            </label>
+            <input
               type="email"
-              label="이메일"
               placeholder="example@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              error={errors.email}
               disabled={loginMutation.isPending}
+              className={`w-full h-10 px-3 rounded-lg border text-sm transition-colors outline-none focus:ring-2 focus:ring-[#6778ff] disabled:opacity-50 disabled:cursor-not-allowed ${
+                errors.email
+                  ? 'border-red-500 focus:ring-red-500/20'
+                  : isDark
+                    ? 'bg-white/5 border-white/10 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+              }`}
             />
+            {errors.email && (
+              <p className="text-sm mt-1 text-red-500">{errors.email}</p>
+            )}
           </div>
 
           {/* 비밀번호 입력 */}
           <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              style={{ color: designTokens.text.primary }}
-            >
+            <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               비밀번호
             </label>
             <div className="relative">
@@ -135,33 +138,27 @@ export const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loginMutation.isPending}
-                className={`w-full h-9 px-3 py-1 pr-10 rounded-md border text-sm transition-colors outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full h-10 px-3 pr-10 rounded-lg border text-sm transition-colors outline-none focus:ring-2 focus:ring-[#6778ff] disabled:opacity-50 disabled:cursor-not-allowed ${
                   errors.password
-                    ? 'border-status-error ring-status-error/20'
-                    : 'border-border focus:ring-action-primary'
+                    ? 'border-red-500 focus:ring-red-500/20'
+                    : isDark
+                      ? 'bg-white/5 border-white/10 text-white placeholder-gray-500'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                 }`}
-                style={{
-                  backgroundColor: designTokens.bg.default,
-                  color: designTokens.text.primary,
-                }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5"
-                style={{ color: designTokens.text.secondary }}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 p-0.5 ${
+                  isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                }`}
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             {errors.password && (
-              <p
-                className="text-sm mt-1"
-                style={{ color: designTokens.status.error_text }}
-              >
-                {errors.password}
-              </p>
+              <p className="text-sm mt-1 text-red-500">{errors.password}</p>
             )}
           </div>
 
@@ -176,47 +173,36 @@ export const LoginPage = () => {
               />
               <label
                 htmlFor="remember"
-                className="text-sm cursor-pointer"
-                style={{ color: designTokens.text.secondary }}
+                className={`text-sm cursor-pointer ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
               >
                 로그인 유지
               </label>
             </div>
             <Link
               to="/auth/forgot-password"
-              className="text-sm hover:underline"
-              style={{ color: designTokens.button.brand_default }}
+              className="text-sm text-[#6778ff] hover:underline"
             >
               비밀번호 찾기
             </Link>
           </div>
 
           {/* 로그인 버튼 */}
-          <Button
+          <button
             type="submit"
-            className="w-full"
-            size="md"
             disabled={loginMutation.isPending}
-            style={{
-              backgroundColor: designTokens.button.neutral_default,
-              color: designTokens.button.neutral_text,
-            }}
+            className="w-full py-3 rounded-lg font-medium text-white bg-gradient-to-r from-[#6778ff] to-[#a855f7] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loginMutation.isPending ? '로그인 중...' : '로그인'}
-          </Button>
+          </button>
         </form>
 
         {/* 회원가입 링크 */}
         <div className="mt-6 text-center">
-          <p
-            className="text-sm"
-            style={{ color: designTokens.text.secondary }}
-          >
+          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             계정이 없으신가요?{' '}
             <Link
               to="/register"
-              className="font-medium hover:underline"
-              style={{ color: designTokens.button.brand_default }}
+              className="font-medium text-[#6778ff] hover:underline"
             >
               회원가입
             </Link>

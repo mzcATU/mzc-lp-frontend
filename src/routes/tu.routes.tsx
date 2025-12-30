@@ -4,6 +4,14 @@ import {
   Page1,
   Page2,
   Page3,
+  CoursesExplorePage,
+  RoadmapExplorePage,
+  RoadmapDetailPage,
+  CommunityPage,
+  CartPage,
+  WishlistPage,
+  NotificationsPage,
+  CourseDetailPage,
   MyPageHome,
   ProfilePage,
   MyLearningPage,
@@ -71,6 +79,14 @@ export const tuRoutes = (
     </Route>
 
     {/* 메인 페이지 (사이드바 없음) */}
+    <Route path="/tu/main/courses" element={<CoursesExplorePage />} />
+    <Route path="/tu/main/courses/:id" element={<CourseDetailPage />} />
+    <Route path="/tu/main/roadmap" element={<RoadmapExplorePage />} />
+    <Route path="/tu/main/roadmap/:id" element={<RoadmapDetailPage />} />
+    <Route path="/tu/main/community" element={<CommunityPage />} />
+    <Route path="/tu/cart" element={<CartPage />} />
+    <Route path="/tu/wishlist" element={<WishlistPage />} />
+    <Route path="/tu/notifications" element={<NotificationsPage />} />
     <Route path="/tu/main/page1" element={<Page1 />} />
     <Route path="/tu/main/page2" element={<Page2 />} />
     <Route path="/tu/main/page3" element={<Page3 />} />
