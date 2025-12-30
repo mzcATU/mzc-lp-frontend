@@ -17,15 +17,29 @@ function CurriculumTreeItem({
   const paddingLeft = depth * 24;
   const Icon = item.isFolder ? Folder : FileText;
   const iconColor = item.isFolder ? 'text-amber-500' : 'text-text-secondary';
+  // displayName이 있으면 우선 표시, 없으면 itemName 사용
+  const displayName = item.displayName || item.itemName;
 
   return (
     <div>
       <div
-        className="flex items-center gap-2 py-2 px-3 hover:bg-bg-secondary rounded-md transition-colors"
+        className="flex items-start gap-2 py-2 px-3 hover:bg-bg-secondary rounded-md transition-colors"
         style={{ paddingLeft: `${paddingLeft + 12}px` }}
       >
-        <Icon size={16} className={iconColor} />
-        <span className="text-text-primary text-sm">{item.itemName}</span>
+        <Icon size={16} className={`${iconColor} mt-0.5 flex-shrink-0`} />
+        <div className="flex-1 min-w-0">
+          <span className="text-text-primary text-sm block">{displayName}</span>
+          {item.displayName && item.displayName !== item.itemName && (
+            <span className="text-text-tertiary text-xs block truncate">
+              원본: {item.itemName}
+            </span>
+          )}
+          {item.description && (
+            <span className="text-text-secondary text-xs block mt-0.5">
+              {item.description}
+            </span>
+          )}
+        </div>
       </div>
       {item.children && item.children.length > 0 && (
         <div>

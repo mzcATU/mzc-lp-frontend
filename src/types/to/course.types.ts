@@ -39,6 +39,10 @@ export interface ContentAttachment {
   contentType?: string;
   status?: 'pending' | 'uploading' | 'completed' | 'error';
   uploadProgress?: number;
+  /** 강의 내 표시용 이름 (CourseItem.displayName) */
+  displayName?: string;
+  /** 강의 내 표시용 설명 (CourseItem.description) */
+  description?: string;
 }
 
 /** 회차(레슨) 데이터 타입 */

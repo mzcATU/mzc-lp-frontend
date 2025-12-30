@@ -97,6 +97,20 @@ export function Step2Curriculum({
     onFormDataChange({ lessons: updatedLessons });
   };
 
+  const updateContent = (lessonId: string, contentId: string, updates: Partial<ContentAttachment>) => {
+    const updatedLessons = formData.lessons.map((lesson) =>
+      lesson.id === lessonId
+        ? {
+            ...lesson,
+            contents: lesson.contents.map((c) =>
+              c.id === contentId ? { ...c, ...updates } : c
+            ),
+          }
+        : lesson
+    );
+    onFormDataChange({ lessons: updatedLessons });
+  };
+
   const handleDragStart = (lessonId: string) => setDraggedItem(lessonId);
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
@@ -143,6 +157,7 @@ export function Step2Curriculum({
                   onDelete={() => deleteLesson(lesson.id)}
                   onAddContent={(type) => openContentModal(lesson.id, type)}
                   onDeleteContent={(contentId) => deleteContent(lesson.id, contentId)}
+                  onUpdateContent={(contentId, updates) => updateContent(lesson.id, contentId, updates)}
                   onDragStart={() => handleDragStart(lesson.id)}
                   onDragOver={handleDragOver}
                   onDrop={() => handleDrop(lesson.id)}

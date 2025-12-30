@@ -42,6 +42,8 @@ export interface CourseItemResponse {
   parentId: number | null;
   learningObjectId: number | null;
   isFolder: boolean;
+  displayName: string | null;
+  description: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +55,8 @@ export interface CourseItemHierarchyResponse {
   depth: number;
   learningObjectId: number | null;
   isFolder: boolean;
+  displayName: string | null;
+  description: string | null;
   children: CourseItemHierarchyResponse[];
 }
 
@@ -116,6 +120,8 @@ export interface CreateItemRequest {
   itemName: string;
   parentId?: number | null;
   learningObjectId: number;
+  displayName?: string;
+  description?: string;
 }
 
 /** 폴더 생성 요청 */
@@ -139,6 +145,12 @@ export interface UpdateItemNameRequest {
 /** 학습 객체 변경 요청 */
 export interface UpdateLearningObjectRequest {
   learningObjectId: number;
+}
+
+/** 표시 정보 변경 요청 */
+export interface UpdateDisplayInfoRequest {
+  displayName?: string;
+  description?: string;
 }
 
 // ============================================
