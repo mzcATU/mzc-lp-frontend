@@ -104,8 +104,11 @@ export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingP
     return programs.filter((program) => program.title.toLowerCase().includes(query));
   }, [programs, searchQuery]);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
