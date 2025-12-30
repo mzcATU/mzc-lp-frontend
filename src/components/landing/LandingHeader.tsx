@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, PlusCircle, Shield, Globe } from 'lucide-react';
+import { Search, ShoppingCart, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, PlusCircle, Shield, Globe, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -66,14 +66,14 @@ export function LandingHeader() {
 
             {/* Desktop Nav Links */}
             <nav className={`hidden md:flex items-center gap-8 font-medium text-[15px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              <Link to="/tu/main/page1" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                1페이지
+              <Link to="/tu/main/courses" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+                강의 탐색
               </Link>
-              <Link to="/tu/main/page2" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                2페이지
+              <Link to="/tu/main/roadmap" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+                로드맵
               </Link>
-              <Link to="/tu/main/page3" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                3페이지
+              <Link to="/tu/main/community" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+                커뮤니티
               </Link>
             </nav>
           </div>
@@ -124,6 +124,16 @@ export function LandingHeader() {
                 }`}
               >
                 <ShoppingCart className="h-5 w-5" />
+              </Link>
+              <Link
+                to="/tu/wishlist"
+                className={`p-2 rounded-lg transition-colors relative ${
+                  isDark
+                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <Heart className="h-5 w-5" />
               </Link>
               <Link
                 to="/tu/notifications"
