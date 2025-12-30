@@ -137,7 +137,7 @@ export { NOTIFICATION_TYPE_LABELS } from './notification.types';
 export type {
   CourseExploreItem,
   CourseExploreResponse,
-  CourseCategory,
+  ExploreCourseCategory,
   CourseCategoryResponse,
   CourseExploreFilter,
 } from './courseExplore.types';

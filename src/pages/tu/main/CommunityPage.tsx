@@ -5,7 +5,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useCommunityPosts, useCommunityCategories } from '@/hooks/tu';
-import type { CommunityPost, CommunityCategory, PostType } from '@/types/tu';
+import type { CommunityPost, CommunityCategory } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
 const USE_API = false;
@@ -25,12 +25,12 @@ const getCategoryIcon = (categoryId: string) => {
 };
 
 // 더미 카테고리 데이터
-const MOCK_CATEGORIES: (CommunityCategory & { icon?: typeof MessageSquare })[] = [
-  { id: 'all', name: '전체', count: 6, icon: MessageSquare },
-  { id: 'question', name: 'Q&A', count: 2, icon: HelpCircle },
-  { id: 'tip', name: '학습 팁', count: 2, icon: Lightbulb },
-  { id: 'review', name: '강의 후기', count: 1, icon: TrendingUp },
-  { id: 'discussion', name: '스터디 모집', count: 1, icon: Users },
+const MOCK_CATEGORIES: CommunityCategory[] = [
+  { id: 'all', name: '전체', count: 6 },
+  { id: 'question', name: 'Q&A', count: 2 },
+  { id: 'tip', name: '학습 팁', count: 2 },
+  { id: 'review', name: '강의 후기', count: 1 },
+  { id: 'discussion', name: '스터디 모집', count: 1 },
 ];
 
 // 더미 게시글 데이터

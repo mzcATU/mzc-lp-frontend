@@ -215,13 +215,12 @@ const USE_API = false;
  */
 interface CurriculumSectionProps {
   section: CurriculumSection;
-  sectionIndex: number;
   isExpanded: boolean;
   onToggle: () => void;
   isDark: boolean;
 }
 
-function CurriculumSectionItem({ section, sectionIndex, isExpanded, onToggle, isDark }: CurriculumSectionProps) {
+function CurriculumSectionItem({ section, isExpanded, onToggle, isDark }: CurriculumSectionProps) {
   return (
     <div className={`rounded-xl overflow-hidden border ${
       isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
@@ -630,7 +629,6 @@ export function CourseDetailPage() {
                 <CurriculumSectionItem
                   key={section.id}
                   section={section}
-                  sectionIndex={sectionIndex}
                   isExpanded={expandedSections.includes(sectionIndex)}
                   onToggle={() => toggleSection(sectionIndex)}
                   isDark={isDark}

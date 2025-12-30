@@ -31,8 +31,8 @@ export interface CourseExploreResponse {
   totalPages: number;
 }
 
-// 카테고리 정보
-export interface CourseCategory {
+// 카테고리 정보 (탐색 페이지용)
+export interface ExploreCourseCategory {
   id: string;
   name: string;
   count: number;
@@ -41,7 +41,7 @@ export interface CourseCategory {
 
 // 카테고리 목록 응답
 export interface CourseCategoryResponse {
-  categories: CourseCategory[];
+  categories: ExploreCourseCategory[];
 }
 
 // 강의 탐색 필터

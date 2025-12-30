@@ -1,7 +1,6 @@
 import axiosInstance from '@/services/common/api/axiosInstance';
 import type {
   CourseDetail,
-  CourseDetailResponse,
   CourseCard,
   CourseFilterParams,
 } from '@/types/tu';

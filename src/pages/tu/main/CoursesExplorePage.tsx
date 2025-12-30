@@ -2,17 +2,16 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, SlidersHorizontal, Star, Loader2 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
-import { useTranslation } from '@/store/common/languageStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useCourseExplore, useCourseCategories } from '@/hooks/tu';
-import type { CourseExploreItem, CourseCategory } from '@/types/tu';
+import type { CourseExploreItem, ExploreCourseCategory } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
 const USE_API = false;
 
 // 더미 카테고리 데이터
-const MOCK_CATEGORIES: CourseCategory[] = [
+const MOCK_CATEGORIES: ExploreCourseCategory[] = [
   { id: 'all', name: '전체', count: 12 },
   { id: 'dev', name: '개발', count: 4 },
   { id: 'ai', name: 'AI', count: 2 },
@@ -333,7 +332,6 @@ export function CoursesExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'newest' | 'rating' | 'price_low' | 'price_high'>('popular');
   const { theme } = useThemeStore();
-  const { t } = useTranslation();
   const isDark = theme === 'dark';
 
   // React Query 훅 (API 모드일 때만 활성화)

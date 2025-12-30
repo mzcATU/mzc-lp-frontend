@@ -44,7 +44,7 @@ export interface CommunityCategory {
   name: string;
   description?: string;
   count: number;
-  icon?: string;
+  icon?: string; // 서버에서 오는 아이콘 이름 (문자열)
 }
 
 // 카테고리 목록 응답

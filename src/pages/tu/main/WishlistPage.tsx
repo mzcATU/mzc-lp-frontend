@@ -4,8 +4,7 @@ import { Trash2, Heart, ChevronRight, ShoppingCart, Star, Clock, Users, Loader2 
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useWishlist, useRemoveFromWishlist, useAddAllToCart } from '@/hooks/tu';
-import { useAddToCart } from '@/hooks/tu';
+import { useWishlist, useWishlistRemoveItem, useAddAllToCart, useCartAddItem } from '@/hooks/tu';
 import type { WishlistItem } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
@@ -77,9 +76,9 @@ export function WishlistPage() {
 
   // React Query 훅 (API 모드일 때만 활성화)
   const { data: apiWishlistData, isLoading, error } = useWishlist(USE_API);
-  const removeFromWishlistMutation = useRemoveFromWishlist();
+  const removeFromWishlistMutation = useWishlistRemoveItem();
   const addAllToCartMutation = useAddAllToCart();
-  const addToCartMutation = useAddToCart();
+  const addToCartMutation = useCartAddItem();
 
   // 로컬 상태 (Mock 모드에서 사용)
   const [mockWishlistItems, setMockWishlistItems] = useState(MOCK_WISHLIST_ITEMS);

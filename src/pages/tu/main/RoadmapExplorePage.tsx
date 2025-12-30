@@ -119,16 +119,7 @@ const MOCK_ROADMAPS: RoadmapExploreItem[] = [
   },
 ];
 
-// 레벨 및 기간 텍스트 변환
-const getLevelText = (level: 'beginner' | 'intermediate' | 'advanced'): string => {
-  switch (level) {
-    case 'beginner': return '입문 → 실무';
-    case 'intermediate': return '중급 → 고급';
-    case 'advanced': return '고급 → 전문가';
-    default: return '입문';
-  }
-};
-
+// 기간 텍스트 변환
 const getDurationText = (hours: number): string => {
   const months = Math.ceil(hours / 30);
   return `${months}개월`;
