@@ -156,14 +156,14 @@ export function MyPageHome() {
     .slice(0, 3) ?? [];
 
   return (
-    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-5xl mx-auto">
         {/* 프로필 섹션 */}
         <section className="mb-8">
           <div
             className={`rounded-2xl p-6 sm:p-8 ${
               isDark
-                ? 'bg-gradient-to-r from-[#1a1a2e] to-[#16162a] border border-white/10'
+                ? 'bg-[#1e1e1e] border border-white/10'
                 : 'bg-white shadow-sm border border-gray-200'
             }`}
           >
@@ -215,7 +215,7 @@ export function MyPageHome() {
               <Button
                 variant="outline"
                 onClick={() => navigate('/mypage/profile')}
-                className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                className={isDark ? 'border-white/30 text-white bg-white/10 hover:bg-white/20' : ''}
               >
                 {t.mypage.editProfile}
               </Button>

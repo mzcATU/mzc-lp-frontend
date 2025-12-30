@@ -102,7 +102,7 @@ export function MyPage() {
   // 로그인하지 않은 경우
   if (!isAuthenticated || !user) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+      <div className={`min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <LandingHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -122,7 +122,7 @@ export function MyPage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <LandingHeader />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">

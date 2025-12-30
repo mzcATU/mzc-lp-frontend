@@ -35,7 +35,7 @@ export function MyPageLayout({ children }: MyPageLayoutProps) {
   };
 
   return (
-    <div className={`flex flex-col min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`flex flex-col min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
       {/* 상단 헤더 */}
       <LandingHeader />
 

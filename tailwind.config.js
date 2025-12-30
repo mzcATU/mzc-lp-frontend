@@ -117,6 +117,10 @@ export default {
           'active-bg': 'var(--sidebar-light-active-bg)',
           'active-text': 'var(--sidebar-light-active-text)',
         },
+
+        // TU Theme Colors
+        'tu-bg-light': 'var(--tu-bg-light)',
+        'tu-bg-dark': 'var(--tu-bg-dark)',
       },
       borderRadius: {
         sm: 'var(--radius-sm)',
