@@ -178,7 +178,7 @@ export const tenantOperatorMenuData: MenuItem[] = [
     icon: Library,
     subItems: [
       { id: 'course-search', label: { ko: '과정 검색 및 상세 조회', en: 'Course Search & Details' }, icon: Search, path: '/to/courses' },
-      { id: 'course-registration', label: { ko: '과정 등록/수정', en: 'Course Registration & Edit' }, icon: FolderEdit, path: '/to/courses/create' },
+      { id: 'course-registration', label: { ko: '과정 등록/수정', en: 'Course Registration & Edit' }, icon: FolderEdit, path: '/to/courses/pending' },
     ],
   },
   {
