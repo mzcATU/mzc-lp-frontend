@@ -53,6 +53,8 @@ export const API_ENDPOINTS = {
       `/courses/${courseId}/items/${itemId}/name`,
     ITEM_LEARNING_OBJECT: (courseId: number, itemId: number) =>
       `/courses/${courseId}/items/${itemId}/learning-object`,
+    ITEM_DISPLAY_INFO: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}/display-info`,
     // Course Folders
     FOLDERS: (courseId: number) => `/courses/${courseId}/folders`,
   },
