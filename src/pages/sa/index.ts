@@ -1,3 +1,3 @@
 // Super Admin pages
 export { DashboardPage } from "./dashboard";
-export { TenantsPage } from "./tenants";
+export { TenantsPage, TenantDetailPage } from "./tenants";
