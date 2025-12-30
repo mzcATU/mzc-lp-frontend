@@ -32,25 +32,27 @@ export type EnrollmentMethod =
 // Response Types
 // ============================================
 
-/** 차수 목록 조회 응답 */
+/** 차수 목록 조회 응답 (백엔드 CourseTimeResponse 매칭) */
 export interface CourseTimeResponse {
   id: number;
-  programId: number;
   cmCourseId: number;
+  cmCourseVersionId: number | null;
   title: string;
-  status: CourseTimeStatus;
   deliveryType: DeliveryType;
-  enrollmentMethod: EnrollmentMethod;
-  enrollmentStartDate: string;
-  enrollmentEndDate: string;
-  startDate: string;
-  endDate: string;
+  status: CourseTimeStatus;
+  enrollStartDate: string; // 모집 시작일
+  enrollEndDate: string; // 모집 종료일
+  classStartDate: string; // 학습 시작일
+  classEndDate: string; // 학습 종료일
   capacity: number | null; // null = 무제한
   currentEnrollment: number;
   availableSeats: number | null; // null = 무제한
-  price: number | null; // null = 무료
+  enrollmentMethod: EnrollmentMethod;
+  price: string | null; // BigDecimal -> string
+  isFree: boolean;
+  allowLateEnrollment: boolean;
   createdAt: string;
-  updatedAt: string;
+  instructors: CourseTimeInstructor[];
 }
 
 /** 강사 정보 (상세 조회용) */
@@ -92,21 +94,25 @@ export interface PriceResponse {
 // Request Types
 // ============================================
 
-/** 차수 생성 요청 */
+/** 차수 생성 요청 (백엔드 CreateCourseTimeRequest 매칭) */
 export interface CreateCourseTimeRequest {
   programId: number;
-  cmCourseId: number;
+  cmCourseId?: number; // deprecated
+  cmCourseVersionId?: number; // deprecated
   title: string;
   deliveryType: DeliveryType;
-  enrollmentMethod: EnrollmentMethod;
-  enrollmentStartDate: string;
-  enrollmentEndDate: string;
-  startDate: string;
-  endDate: string;
+  enrollStartDate: string; // LocalDate (YYYY-MM-DD)
+  enrollEndDate: string; // LocalDate (YYYY-MM-DD)
+  classStartDate: string; // LocalDate (YYYY-MM-DD)
+  classEndDate: string; // LocalDate (YYYY-MM-DD)
   capacity?: number | null;
-  price?: number | null;
-  description?: string;
-  location?: string;
+  maxWaitingCount?: number | null;
+  enrollmentMethod: EnrollmentMethod;
+  minProgressForCompletion: number; // 0-100
+  price: string; // BigDecimal -> string
+  isFree: boolean;
+  locationInfo?: string;
+  allowLateEnrollment?: boolean;
 }
 
 /** 차수 수정 요청 */
