@@ -81,8 +81,8 @@ export const tuRoutes = (
     {/* 메인 페이지 (사이드바 없음) */}
     <Route path="/tu/main/courses" element={<CoursesExplorePage />} />
     <Route path="/tu/main/courses/:id" element={<CourseDetailPage />} />
-    <Route path="/tu/main/roadmap" element={<RoadmapExplorePage />} />
-    <Route path="/tu/main/roadmap/:id" element={<RoadmapDetailPage />} />
+    <Route path="/tu/main/roadmaps" element={<RoadmapExplorePage />} />
+    <Route path="/tu/main/roadmaps/:id" element={<RoadmapDetailPage />} />
     <Route path="/tu/main/community" element={<CommunityPage />} />
     <Route path="/tu/cart" element={<CartPage />} />
     <Route path="/tu/wishlist" element={<WishlistPage />} />
