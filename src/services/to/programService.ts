@@ -41,30 +41,30 @@ export const programService = {
   async createProgram(
     request: CreateProgramRequest
   ): Promise<ProgramResponse> {
-    const { data } = await axiosInstance.post<ProgramResponse>(
+    const { data } = await axiosInstance.post<{ data: ProgramResponse }>(
       API_ENDPOINTS.PROGRAMS.BASE,
       request
     );
-    return data;
+    return data.data;
   },
 
   /** 프로그램 목록 조회 */
   async getPrograms(
     params?: ProgramFilterParams
   ): Promise<PageResponse<ProgramResponse>> {
-    const { data } = await axiosInstance.get<PageResponse<ProgramResponse>>(
+    const { data } = await axiosInstance.get<{ data: PageResponse<ProgramResponse> }>(
       API_ENDPOINTS.PROGRAMS.BASE,
       { params }
     );
-    return data;
+    return data.data;
   },
 
   /** 프로그램 상세 조회 */
   async getProgram(id: number): Promise<ProgramDetailResponse> {
-    const { data } = await axiosInstance.get<ProgramDetailResponse>(
+    const { data } = await axiosInstance.get<{ data: ProgramDetailResponse }>(
       API_ENDPOINTS.PROGRAMS.BY_ID(id)
     );
-    return data;
+    return data.data;
   },
 
   /** 프로그램 수정 */
@@ -72,11 +72,11 @@ export const programService = {
     id: number,
     request: UpdateProgramRequest
   ): Promise<ProgramResponse> {
-    const { data } = await axiosInstance.put<ProgramResponse>(
+    const { data } = await axiosInstance.put<{ data: ProgramResponse }>(
       API_ENDPOINTS.PROGRAMS.BY_ID(id),
       request
     );
-    return data;
+    return data.data;
   },
 
   /** 프로그램 삭제 */
@@ -90,20 +90,20 @@ export const programService = {
 
   /** 프로그램 개설 신청 (DRAFT/REJECTED → PENDING) */
   async submitProgram(id: number): Promise<ProgramResponse> {
-    const { data } = await axiosInstance.post<ProgramResponse>(
+    const { data } = await axiosInstance.post<{ data: ProgramResponse }>(
       API_ENDPOINTS.PROGRAMS.SUBMIT(id)
     );
-    return data;
+    return data.data;
   },
 
   /** 검토 대기 프로그램 목록 조회 (OPERATOR용) */
   async getPendingPrograms(
     params?: Pick<ProgramFilterParams, 'page' | 'size' | 'sort'>
   ): Promise<PageResponse<PendingProgramResponse>> {
-    const { data } = await axiosInstance.get<
-      PageResponse<PendingProgramResponse>
-    >(API_ENDPOINTS.PROGRAMS.PENDING, { params });
-    return data;
+    const { data } = await axiosInstance.get<{
+      data: PageResponse<PendingProgramResponse>;
+    }>(API_ENDPOINTS.PROGRAMS.PENDING, { params });
+    return data.data;
   },
 
   /** 프로그램 승인 (PENDING → APPROVED) */
@@ -111,11 +111,11 @@ export const programService = {
     id: number,
     request?: ApproveRequest
   ): Promise<ProgramDetailResponse> {
-    const { data } = await axiosInstance.post<ProgramDetailResponse>(
+    const { data } = await axiosInstance.post<{ data: ProgramDetailResponse }>(
       API_ENDPOINTS.PROGRAMS.APPROVE(id),
       request
     );
-    return data;
+    return data.data;
   },
 
   /** 프로그램 반려 (PENDING → REJECTED) */
@@ -123,19 +123,19 @@ export const programService = {
     id: number,
     request: RejectRequest
   ): Promise<ProgramDetailResponse> {
-    const { data } = await axiosInstance.post<ProgramDetailResponse>(
+    const { data } = await axiosInstance.post<{ data: ProgramDetailResponse }>(
       API_ENDPOINTS.PROGRAMS.REJECT(id),
       request
     );
-    return data;
+    return data.data;
   },
 
   /** 프로그램 종료 (APPROVED/DRAFT → CLOSED) */
   async closeProgram(id: number): Promise<ProgramResponse> {
-    const { data } = await axiosInstance.post<ProgramResponse>(
+    const { data } = await axiosInstance.post<{ data: ProgramResponse }>(
       API_ENDPOINTS.PROGRAMS.CLOSE(id)
     );
-    return data;
+    return data.data;
   },
 
   // ============================================
@@ -147,11 +147,11 @@ export const programService = {
     programId: number,
     snapshotId: number
   ): Promise<ProgramResponse> {
-    const { data } = await axiosInstance.post<ProgramResponse>(
+    const { data } = await axiosInstance.post<{ data: ProgramResponse }>(
       API_ENDPOINTS.PROGRAMS.SNAPSHOT(programId),
       null,
       { params: { snapshotId } }
     );
-    return data;
+    return data.data;
   },
 };

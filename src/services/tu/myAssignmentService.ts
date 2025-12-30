@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from '../common/api/endpoints';
 import type {
   InstructorAssignmentResponse,
   InstructorDetailStatResponse,
+  CourseTimeEnrollmentsResponse,
 } from '@/types/tu';
 
 export const myAssignmentService = {
@@ -36,6 +37,16 @@ export const myAssignmentService = {
       API_ENDPOINTS.INSTRUCTOR_ASSIGNMENTS.MY_STATISTICS,
       { params }
     );
+    return response.data.data;
+  },
+
+  /**
+   * 차수 수강생 목록 조회 (강사용)
+   * GET /api/times/{timeId}/enrollments
+   * @param timeId - 차수 ID
+   */
+  getCourseTimeEnrollments: async (timeId: number): Promise<CourseTimeEnrollmentsResponse> => {
+    const response = await axiosInstance.get(API_ENDPOINTS.TIMES.ENROLLMENTS(timeId));
     return response.data.data;
   },
 };

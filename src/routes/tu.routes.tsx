@@ -25,7 +25,12 @@ import {
 } from '@/pages/tu';
 import { MyPageLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
-import { SettingsNotificationsPage } from '@/pages/common';
+import {
+  SettingsPage,
+  SettingsSecurityPage,
+  SettingsNotificationsPage,
+  SettingsAppearancePage,
+} from '@/pages/common';
 import { tuCoursesRoutes } from './tu.courses.routes';
 
 function MyPageWrapper() {
@@ -61,9 +66,16 @@ export const tuRoutes = (
       <Route path="teaching" element={<MyTeachingPage />} />
       <Route path="teaching/stats" element={<TeachingStatsPage />} />
       {/* 설정 */}
-      <Route path="security" element={<Navigate to="/mypage/profile" replace />} />
-      <Route path="notifications" element={<SettingsNotificationsPage />} />
-      <Route path="language" element={<SettingsLanguagePage />} />
+      <Route path="settings" element={<SettingsPage />} />
+      <Route path="settings/security" element={<SettingsSecurityPage />} />
+      <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
+      <Route path="settings/language" element={<SettingsLanguagePage />} />
+      <Route path="settings/appearance" element={<SettingsAppearancePage />} />
+      {/* 레거시 경로 리다이렉트 */}
+      <Route path="profile" element={<Navigate to="/mypage/settings/security" replace />} />
+      <Route path="security" element={<Navigate to="/mypage/settings/security" replace />} />
+      <Route path="notifications" element={<Navigate to="/mypage/settings/notifications" replace />} />
+      <Route path="language" element={<Navigate to="/mypage/settings/language" replace />} />
     </Route>
 
     {/* 메인 페이지 (사이드바 없음) */}

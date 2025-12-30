@@ -32,10 +32,10 @@ export const useCourseDetail = (id: number, enabled: boolean = true) => {
 };
 
 /**
- * 강의 목록 조회 훅
+ * 강의 목록 조회 훅 (상세 페이지용)
  * @param params 필터 파라미터
  */
-export const useCourses = (params?: CourseFilterParams) => {
+export const useCourseDetailCourses = (params?: CourseFilterParams) => {
   return useQuery({
     queryKey: courseDetailKeys.listFiltered(params),
     queryFn: () => courseDetailService.getCourses(params),

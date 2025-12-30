@@ -4,6 +4,8 @@
 
 export const translations = {
   title: { ko: '강의 등록', en: 'Create Course' },
+  editTitle: { ko: '강의 수정', en: 'Edit Course' },
+  editSubmit: { ko: '수정 완료', en: 'Save Changes' },
   loadTemplate: { ko: '템플릿 불러오기', en: 'Load Template' },
   close: { ko: '닫기', en: 'Close' },
   previous: { ko: '이전', en: 'Previous' },
@@ -22,6 +24,11 @@ export const translations = {
   selectCategory: { ko: '카테고리 선택', en: 'Select category' },
   difficulty: { ko: '난이도', en: 'Difficulty' },
   selectDifficulty: { ko: '난이도 선택', en: 'Select difficulty' },
+  courseType: { ko: '유형', en: 'Type' },
+  selectType: { ko: '유형 선택', en: 'Select type' },
+  online: { ko: '온라인', en: 'Online' },
+  offline: { ko: '오프라인', en: 'Offline' },
+  blended: { ko: '블렌디드', en: 'Blended' },
   beginner: { ko: '입문', en: 'Beginner' },
   elementary: { ko: '초급', en: 'Elementary' },
   intermediate: { ko: '중급', en: 'Intermediate' },
@@ -69,6 +76,43 @@ export const translations = {
   warningLesson: { ko: '최소 1개의 회차가 필요합니다.', en: 'At least one lesson is required.' },
   readyToSubmit: { ko: '강의 등록 준비 완료', en: 'Ready to Submit' },
   readyToSubmitDesc: { ko: '모든 필수 정보가 입력되었습니다. 강의 등록 버튼을 눌러 강의를 등록하세요.', en: 'All required information has been entered. Click Submit to register your course.' },
+  // 파일 업로드 모달
+  fileUploadModalTitle: { ko: '파일 업로드', en: 'File Upload' },
+  fileUploadModalDesc: { ko: '업로드할 파일을 선택하세요', en: 'Select a file to upload' },
+  dragDropText: { ko: '파일을 드래그하거나 클릭하여 선택하세요', en: 'Drag and drop or click to select a file' },
+  uploading: { ko: '업로드 중...', en: 'Uploading...' },
+  uploadComplete: { ko: '업로드 완료', en: 'Upload Complete' },
+  uploadError: { ko: '업로드 실패', en: 'Upload Failed' },
+  upload: { ko: '업로드', en: 'Upload' },
+  // 외부 링크 모달
+  externalLinkModalTitle: { ko: '외부 링크 추가', en: 'Add External Link' },
+  contentName: { ko: '콘텐츠 이름', en: 'Content Name' },
+  contentNamePlaceholder: { ko: '콘텐츠 이름을 입력하세요', en: 'Enter content name' },
+  urlInputLabel: { ko: 'URL', en: 'URL' },
+  urlInputPlaceholder: { ko: 'https://example.com', en: 'https://example.com' },
+  invalidUrl: { ko: '유효한 URL을 입력하세요', en: 'Please enter a valid URL' },
+  add: { ko: '추가', en: 'Add' },
+  // 기존 콘텐츠 모달
+  existingContentModalTitle: { ko: '기존 콘텐츠 불러오기', en: 'Load Existing Content' },
+  searchContent: { ko: '콘텐츠 검색', en: 'Search Content' },
+  searchContentPlaceholder: { ko: '콘텐츠 이름으로 검색', en: 'Search by content name' },
+  filterByType: { ko: '타입 필터', en: 'Filter by Type' },
+  allTypes: { ko: '전체', en: 'All' },
+  video: { ko: '비디오', en: 'Video' },
+  audio: { ko: '오디오', en: 'Audio' },
+  document: { ko: '문서', en: 'Document' },
+  image: { ko: '이미지', en: 'Image' },
+  noContentFound: { ko: '콘텐츠가 없습니다', en: 'No content found' },
+  select: { ko: '선택', en: 'Select' },
+  existingContent: { ko: '기존 콘텐츠', en: 'Existing Content' },
+  // 콘텐츠 표시 정보
+  contentDisplayName: { ko: '강의 내 표시 이름', en: 'Display Name in Course' },
+  contentDisplayNamePlaceholder: { ko: '강의에서 표시할 이름 (미입력 시 원본 이름 사용)', en: 'Name to display in course (uses original name if empty)' },
+  contentDescription: { ko: '강의 내 설명', en: 'Description in Course' },
+  contentDescriptionPlaceholder: { ko: '강의에서 표시할 설명', en: 'Description to display in course' },
+  // 공통
+  cancel: { ko: '취소', en: 'Cancel' },
+  processing: { ko: '처리 중...', en: 'Processing...' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
@@ -78,4 +122,11 @@ export const levelOptions = [
   { value: 'BEGINNER', label: '초급' },
   { value: 'INTERMEDIATE', label: '중급' },
   { value: 'ADVANCED', label: '고급' },
+];
+
+export const typeOptions = [
+  { value: '', label: '유형 선택' },
+  { value: 'ONLINE', label: '온라인' },
+  { value: 'OFFLINE', label: '오프라인' },
+  { value: 'BLENDED', label: '블렌디드' },
 ];

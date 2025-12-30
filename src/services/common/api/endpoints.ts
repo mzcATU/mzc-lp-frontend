@@ -31,6 +31,32 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenants/${id}`,
   },
 
+  // Tenant Settings (TA)
+  TENANT_SETTINGS: {
+    BASE: '/tenant/settings',
+    BRANDING: '/tenant/settings/branding',
+    USER_MANAGEMENT: '/tenant/settings/user-management',
+  },
+
+  // User Groups (TA)
+  GROUPS: {
+    BASE: '/groups',
+    ACTIVE: '/groups/active',
+    BY_ID: (id: number) => `/groups/${id}`,
+    MEMBERS: (groupId: number, userId: number) => `/groups/${groupId}/members/${userId}`,
+  },
+
+  // Notices (SA)
+  NOTICES: {
+    BASE: '/sa/notices',
+    BY_ID: (id: number) => `/sa/notices/${id}`,
+    PUBLISH: (id: number) => `/sa/notices/${id}/publish`,
+    ARCHIVE: (id: number) => `/sa/notices/${id}/archive`,
+    DISTRIBUTE: (id: number) => `/sa/notices/${id}/distribute`,
+    DISTRIBUTE_ALL: (id: number) => `/sa/notices/${id}/distribute-all`,
+    TENANTS: (id: number) => `/sa/notices/${id}/tenants`,
+  },
+
   // Categories (TO)
   CATEGORIES: {
     BASE: '/categories',
@@ -53,6 +79,8 @@ export const API_ENDPOINTS = {
       `/courses/${courseId}/items/${itemId}/name`,
     ITEM_LEARNING_OBJECT: (courseId: number, itemId: number) =>
       `/courses/${courseId}/items/${itemId}/learning-object`,
+    ITEM_DISPLAY_INFO: (courseId: number, itemId: number) =>
+      `/courses/${courseId}/items/${itemId}/display-info`,
     // Course Folders
     FOLDERS: (courseId: number) => `/courses/${courseId}/folders`,
   },

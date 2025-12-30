@@ -11,6 +11,8 @@ export const myAssignmentKeys = {
   list: () => [...myAssignmentKeys.all, 'list'] as const,
   statistics: (startDate?: string, endDate?: string) =>
     [...myAssignmentKeys.all, 'statistics', { startDate, endDate }] as const,
+  courseTimeEnrollments: (timeId: number) =>
+    [...myAssignmentKeys.all, 'course-time-enrollments', timeId] as const,
 };
 
 /**
@@ -91,5 +93,38 @@ export const useMyInstructorStatistics = (startDate?: string, endDate?: string) 
     queryKey: myAssignmentKeys.statistics(startDate, endDate),
     queryFn: () => myAssignmentService.getMyStatistics(startDate, endDate),
     enabled: isAuthenticated,
+  });
+};
+
+/**
+ * 차수 수강생 목록 조회 훅 (강사용)
+ *
+ * @description
+ * 특정 차수의 수강생 목록과 통계를 조회합니다.
+ * 강사가 배정된 차수의 수강생 현황을 확인하는 용도입니다.
+ *
+ * @param timeId - 차수 ID
+ * @returns 수강생 목록 및 통계
+ *
+ * @example
+ * ```tsx
+ * const { data, isLoading } = useCourseTimeEnrollments(1);
+ *
+ * return (
+ *   <div>
+ *     <h2>{data?.programName} - {data?.timeName}</h2>
+ *     <p>총 수강생: {data?.stats.totalCount}명</p>
+ *     <p>수료율: {data?.stats.completionRate}%</p>
+ *   </div>
+ * );
+ * ```
+ */
+export const useCourseTimeEnrollments = (timeId: number) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  return useQuery({
+    queryKey: myAssignmentKeys.courseTimeEnrollments(timeId),
+    queryFn: () => myAssignmentService.getCourseTimeEnrollments(timeId),
+    enabled: isAuthenticated && !!timeId,
   });
 };

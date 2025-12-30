@@ -178,7 +178,7 @@ export const tenantOperatorMenuData: MenuItem[] = [
     icon: Library,
     subItems: [
       { id: 'course-search', label: { ko: '과정 검색 및 상세 조회', en: 'Course Search & Details' }, icon: Search, path: '/to/courses' },
-      { id: 'course-registration', label: { ko: '과정 등록/수정', en: 'Course Registration & Edit' }, icon: FolderEdit, path: '/to/courses/create' },
+      { id: 'course-registration', label: { ko: '과정 등록/수정', en: 'Course Registration & Edit' }, icon: FolderEdit, path: '/to/courses/pending' },
     ],
   },
   {
@@ -186,7 +186,7 @@ export const tenantOperatorMenuData: MenuItem[] = [
     label: { ko: '교육 운영 관리', en: 'Program Management' },
     icon: Layers,
     subItems: [
-      { id: 'session-management', label: { ko: '차수 관리', en: 'Session Management' }, icon: Calendar, path: '/to/sessions' },
+      { id: 'time-management', label: { ko: '차수 관리', en: 'Course Time Management' }, icon: Calendar, path: '/to/times' },
       { id: 'instructor-assignment', label: { ko: '강사 배정', en: 'Instructor Assignment' }, icon: UserCheck, path: '/to/instructors' },
     ],
   },
@@ -217,20 +217,14 @@ export const tenantOperatorMenuData: MenuItem[] = [
 ];
 
 /**
- * Tenant User (TU) 메뉴
+ * Tenant User (TU) 메뉴 - 강사/콘텐츠 제작자 공간
  */
 export const tenantUserMenuData: MenuItem[] = [
   {
-    id: 'home',
-    label: { ko: '홈', en: 'Home' },
-    icon: Home,
+    id: 'dashboard',
+    label: { ko: '대시보드', en: 'Dashboard' },
+    icon: LayoutDashboard,
     path: '/tu/dashboard',
-},
-  {
-    id: 'mypage',
-    label: { ko: '마이페이지', en: 'My Page' },
-    icon: Users,
-    path: '/mypage',
   },
   {
     id: 'my-teaching',
@@ -243,15 +237,15 @@ export const tenantUserMenuData: MenuItem[] = [
     ],
   },
   {
-    id: 'settings',
-    label: { ko: '설정', en: 'Settings' },
-    icon: Settings,
-    path: '/tu/settings',
+    id: 'catalog',
+    label: { ko: '과정 둘러보기', en: 'Course Catalog' },
+    icon: Library,
+    path: '/tu/catalog',
   },
 ];
 
 /**
- * MyPage 메뉴 (일반 사용자용)
+ * MyPage 메뉴 (일반 사용자용 - 학습자 개인 공간)
  */
 export const myPageMenuData: MenuItem[] = [
   {
@@ -284,11 +278,7 @@ export const myPageMenuData: MenuItem[] = [
     id: 'mypage-settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    subItems: [
-      { id: 'profile-security', label: { ko: '프로필 및 보안', en: 'Profile & Security' }, icon: Shield, path: '/mypage/profile' },
-      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Mail, path: '/mypage/notifications' },
-      { id: 'language', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/mypage/language' },
-    ],
+    path: '/mypage/settings',
   },
 ];
 
@@ -296,7 +286,7 @@ export const myPageMenuData: MenuItem[] = [
  * 역할별 라벨
  */
 export const roleLabels = {
-  superAdmin: { ko: '슈퍼 어드민', en: 'Super Admin' },
+  superAdmin: { ko: '시스템 어드민', en: 'System Admin' },
   tenantAdmin: { ko: '테넌트 어드민', en: 'Tenant Admin' },
   tenantOperator: { ko: '교육 운영자', en: 'Operator' },
   tenantUser: { ko: 'Enterprise LMS', en: 'Enterprise LMS' },

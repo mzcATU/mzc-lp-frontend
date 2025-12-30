@@ -8,6 +8,9 @@ import { Button } from '@/components/common';
 import type { CourseFormData, LessonData, ContentAttachment } from '@/types';
 import { translations, type TranslationKey } from './courseCreate.constants';
 import { LessonCard } from './LessonCard';
+import { FileUploadModal } from './FileUploadModal';
+import { ExternalLinkModal } from './ExternalLinkModal';
+import { ExistingContentModal } from './ExistingContentModal';
 
 interface Step2CurriculumProps {
   language: 'ko' | 'en';
@@ -22,6 +25,10 @@ export function Step2Curriculum({
 }: Readonly<Step2CurriculumProps>) {
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(new Set());
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [activeModal, setActiveModal] = useState<{
+    type: 'upload' | 'link' | 'existing' | null;
+    lessonId: string | null;
+  }>({ type: null, lessonId: null });
 
   const getText = (key: TranslationKey) =>
     language === 'ko' ? translations[key].ko : translations[key].en;
@@ -61,23 +68,44 @@ export function Step2Curriculum({
     setExpandedLessons(newExpanded);
   };
 
-  const addContentToLesson = (lessonId: string, type: 'upload' | 'link') => {
-    const newContent: ContentAttachment = {
-      id: Date.now().toString(),
-      type,
-      name: type === 'upload' ? '업로드할 파일' : '링크 URL',
-      url: '',
-    };
-    const updatedLessons = formData.lessons.map((lesson) =>
-      lesson.id === lessonId ? { ...lesson, contents: [...lesson.contents, newContent] } : lesson
-    );
-    onFormDataChange({ lessons: updatedLessons });
+  const openContentModal = (lessonId: string, type: 'upload' | 'link' | 'existing') => {
+    setActiveModal({ type, lessonId });
+  };
+
+  const closeContentModal = () => {
+    setActiveModal({ type: null, lessonId: null });
+  };
+
+  const handleContentAdded = (content: ContentAttachment) => {
+    if (activeModal.lessonId) {
+      const updatedLessons = formData.lessons.map((lesson) =>
+        lesson.id === activeModal.lessonId
+          ? { ...lesson, contents: [...lesson.contents, content] }
+          : lesson
+      );
+      onFormDataChange({ lessons: updatedLessons });
+    }
+    closeContentModal();
   };
 
   const deleteContent = (lessonId: string, contentId: string) => {
     const updatedLessons = formData.lessons.map((lesson) =>
       lesson.id === lessonId
         ? { ...lesson, contents: lesson.contents.filter((c) => c.id !== contentId) }
+        : lesson
+    );
+    onFormDataChange({ lessons: updatedLessons });
+  };
+
+  const updateContent = (lessonId: string, contentId: string, updates: Partial<ContentAttachment>) => {
+    const updatedLessons = formData.lessons.map((lesson) =>
+      lesson.id === lessonId
+        ? {
+            ...lesson,
+            contents: lesson.contents.map((c) =>
+              c.id === contentId ? { ...c, ...updates } : c
+            ),
+          }
         : lesson
     );
     onFormDataChange({ lessons: updatedLessons });
@@ -99,51 +127,76 @@ export function Step2Curriculum({
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-text-primary mb-2">{getText('curriculumTitle')}</h2>
-        <p className="text-text-secondary m-0">{getText('curriculumDesc')}</p>
+    <>
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-text-primary mb-2">{getText('curriculumTitle')}</h2>
+          <p className="text-text-secondary m-0">{getText('curriculumDesc')}</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {formData.lessons.length === 0 ? (
+            <div className="p-12 text-center bg-bg-app border-2 border-dashed border-border rounded-xl">
+              <p className="text-text-secondary mb-4">{getText('noLessons')}</p>
+              <Button onClick={addLesson}>
+                <Plus size={18} />
+                {getText('addFirstLesson')}
+              </Button>
+            </div>
+          ) : (
+            <>
+              {formData.lessons.map((lesson) => (
+                <LessonCard
+                  key={lesson.id}
+                  language={language}
+                  lesson={lesson}
+                  isExpanded={expandedLessons.has(lesson.id)}
+                  isDragged={draggedItem === lesson.id}
+                  onToggle={() => toggleLessonExpand(lesson.id)}
+                  onUpdate={(updates) => updateLesson(lesson.id, updates)}
+                  onDelete={() => deleteLesson(lesson.id)}
+                  onAddContent={(type) => openContentModal(lesson.id, type)}
+                  onDeleteContent={(contentId) => deleteContent(lesson.id, contentId)}
+                  onUpdateContent={(contentId, updates) => updateContent(lesson.id, contentId, updates)}
+                  onDragStart={() => handleDragStart(lesson.id)}
+                  onDragOver={handleDragOver}
+                  onDrop={() => handleDrop(lesson.id)}
+                />
+              ))}
+
+              <button
+                onClick={addLesson}
+                className="p-3.5 bg-bg-default text-text-primary border-2 border-dashed border-border rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:bg-bg-secondary transition-colors"
+              >
+                <Plus size={18} />
+                {getText('addLesson')}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {formData.lessons.length === 0 ? (
-          <div className="p-12 text-center bg-bg-app border-2 border-dashed border-border rounded-xl">
-            <p className="text-text-secondary mb-4">{getText('noLessons')}</p>
-            <Button onClick={addLesson}>
-              <Plus size={18} />
-              {getText('addFirstLesson')}
-            </Button>
-          </div>
-        ) : (
-          <>
-            {formData.lessons.map((lesson) => (
-              <LessonCard
-                key={lesson.id}
-                language={language}
-                lesson={lesson}
-                isExpanded={expandedLessons.has(lesson.id)}
-                isDragged={draggedItem === lesson.id}
-                onToggle={() => toggleLessonExpand(lesson.id)}
-                onUpdate={(updates) => updateLesson(lesson.id, updates)}
-                onDelete={() => deleteLesson(lesson.id)}
-                onAddContent={(type) => addContentToLesson(lesson.id, type)}
-                onDeleteContent={(contentId) => deleteContent(lesson.id, contentId)}
-                onDragStart={() => handleDragStart(lesson.id)}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(lesson.id)}
-              />
-            ))}
+      {/* 콘텐츠 연결 모달들 */}
+      <FileUploadModal
+        isOpen={activeModal.type === 'upload'}
+        onClose={closeContentModal}
+        onUploadComplete={handleContentAdded}
+        language={language}
+      />
 
-            <button
-              onClick={addLesson}
-              className="p-3.5 bg-bg-default text-text-primary border-2 border-dashed border-border rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:bg-bg-secondary transition-colors"
-            >
-              <Plus size={18} />
-              {getText('addLesson')}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+      <ExternalLinkModal
+        isOpen={activeModal.type === 'link'}
+        onClose={closeContentModal}
+        onLinkCreated={handleContentAdded}
+        language={language}
+      />
+
+      <ExistingContentModal
+        isOpen={activeModal.type === 'existing'}
+        onClose={closeContentModal}
+        onContentSelected={handleContentAdded}
+        language={language}
+      />
+    </>
   );
 }

@@ -72,13 +72,25 @@ export {
   myAssignmentKeys,
   useMyAssignments,
   useMyInstructorStatistics,
+  useCourseTimeEnrollments,
 } from './useMyAssignmentQueries';
+
+// Course Hooks
+export {
+  courseKeys,
+  useCourses,
+  useMyCourses,
+  useCourse,
+  useCourseItemsHierarchy,
+  useUpdateCourse,
+  useDeleteCourse,
+} from './useCourseQueries';
 
 // Course Detail Hooks
 export {
   courseDetailKeys,
   useCourseDetail,
-  useCourses,
+  useCourseDetailCourses,
   usePopularCourses,
   useRecommendedCourses,
   useRelatedCourses,

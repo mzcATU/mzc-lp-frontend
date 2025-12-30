@@ -69,7 +69,7 @@ export function LandingHeader() {
               <Link to="/tu/main/courses" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 강의 탐색
               </Link>
-              <Link to="/tu/main/roadmap" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+              <Link to="/tu/main/roadmaps" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 로드맵
               </Link>
               <Link to="/tu/main/community" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
