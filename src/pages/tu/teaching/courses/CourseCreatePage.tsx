@@ -35,6 +35,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     categoryId: null,
     tags: [],
     level: '',
+    type: '',
     lessons: [],
     isDraft: false,
     multiLanguage: {
@@ -84,6 +85,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         title: formData.title,
         description: formData.description || undefined,
         level: formData.level || undefined,
+        type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
         startDate: formData.startDate || undefined,
         endDate: formData.endDate || undefined,
