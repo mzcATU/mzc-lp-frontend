@@ -71,6 +71,7 @@ const t = {
   courseCompletion: { ko: '콘텐츠 완성도', en: 'Course Completion' },
   lessons: { ko: '차시', en: 'Lessons' },
   manageCourse: { ko: '과정 관리', en: 'Manage Course' },
+  editCourse: { ko: '수정', en: 'Edit' },
   noCourses: { ko: '개설한 과정이 없습니다', en: 'No courses created yet' },
   noCoursesDesc: { ko: '새로운 과정을 개설하여 학생들과 지식을 공유하세요', en: 'Create a new course to share knowledge with students' },
   createNewCourse: { ko: '과정 개설하기', en: 'Create Course' },
@@ -165,6 +166,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
               courseCompletion: getText('courseCompletion'),
               lessons: getText('lessons'),
               manageCourse: getText('manageCourse'),
+              editCourse: getText('editCourse'),
             }}
           />
         ))}

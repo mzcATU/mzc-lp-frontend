@@ -41,7 +41,7 @@ export function LandingCourseCard({
   };
 
   return (
-    <Link to={`/tu/catalog/${id}`} className="group block h-full">
+    <Link to={`/tu/main/courses/${id}`} className="group block h-full">
       <div className="h-full card-hover rounded-xl overflow-hidden landing-card-bg border landing-card-border">
         {/* Image Container */}
         <div className="relative aspect-[16/10] overflow-hidden">
