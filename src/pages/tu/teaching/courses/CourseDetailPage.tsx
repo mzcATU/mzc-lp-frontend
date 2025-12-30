@@ -17,7 +17,6 @@ import {
 import { categoryService } from '@/services/common';
 import { CourseInfoSection } from './components/CourseInfoSection';
 import { CourseCurriculumSection } from './components/CourseCurriculumSection';
-import { CourseEditModal } from './components/CourseEditModal';
 import type { CourseLevel, CourseType } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
 
@@ -53,8 +52,6 @@ export function CourseDetailPage() {
   const navigate = useNavigate();
   const id = courseId ? parseInt(courseId, 10) : 0;
 
-  // 모달 상태
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
 
   // React Query hooks
@@ -163,7 +160,7 @@ export function CourseDetailPage() {
                 variant="ghost"
                 size="sm"
                 className="border border-border"
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={() => navigate(`/tu/teaching/courses/${id}/edit`)}
               >
                 <Edit2 size={16} />
                 수정
@@ -195,13 +192,6 @@ export function CourseDetailPage() {
           />
         </div>
       </div>
-
-      {/* 수정 모달 */}
-      <CourseEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        course={course}
-      />
     </div>
   );
 }
