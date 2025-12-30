@@ -15,6 +15,7 @@ import type {
   MoveItemRequest,
   UpdateItemNameRequest,
   UpdateLearningObjectRequest,
+  UpdateDisplayInfoRequest,
 } from '@/types/common/course.types';
 
 // Spring Page 응답 타입
@@ -185,5 +186,18 @@ export const courseService = {
     await axiosInstance.delete(
       API_ENDPOINTS.COURSES.ITEM_BY_ID(courseId, itemId)
     );
+  },
+
+  /** 표시 정보 변경 (displayName, description) */
+  async updateItemDisplayInfo(
+    courseId: number,
+    itemId: number,
+    request: UpdateDisplayInfoRequest
+  ): Promise<CourseItemResponse> {
+    const { data } = await axiosInstance.patch<{ data: CourseItemResponse }>(
+      API_ENDPOINTS.COURSES.ITEM_DISPLAY_INFO(courseId, itemId),
+      request
+    );
+    return data.data;
   },
 };

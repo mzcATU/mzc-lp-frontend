@@ -103,6 +103,11 @@ export const translations = {
   noContentFound: { ko: '콘텐츠가 없습니다', en: 'No content found' },
   select: { ko: '선택', en: 'Select' },
   existingContent: { ko: '기존 콘텐츠', en: 'Existing Content' },
+  // 콘텐츠 표시 정보
+  contentDisplayName: { ko: '강의 내 표시 이름', en: 'Display Name in Course' },
+  contentDisplayNamePlaceholder: { ko: '강의에서 표시할 이름 (미입력 시 원본 이름 사용)', en: 'Name to display in course (uses original name if empty)' },
+  contentDescription: { ko: '강의 내 설명', en: 'Description in Course' },
+  contentDescriptionPlaceholder: { ko: '강의에서 표시할 설명', en: 'Description to display in course' },
   // 공통
   cancel: { ko: '취소', en: 'Cancel' },
   processing: { ko: '처리 중...', en: 'Processing...' },
