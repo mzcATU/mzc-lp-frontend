@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Label, NativeSelect, Textarea } from '@/components/common';
+import { Button, Input, Label, NativeSelect } from '@/components/common';
 import { useCreateTime } from '@/hooks/to/useTimeQueries';
+import { useApprovedPrograms } from '@/hooks/to/useProgramQueries';
 import type {
   CreateCourseTimeRequest,
   DeliveryType,
   EnrollmentMethod,
 } from '@/types/to/time.types';
 import { DELIVERY_TYPE_LABELS, ENROLLMENT_METHOD_LABELS } from '@/types/to/time.types';
+import { PROGRAM_LEVEL_LABELS, PROGRAM_TYPE_LABELS } from '@/types/common/program.types';
+import type { ProgramResponse } from '@/types/common/program.types';
 
 interface CourseTimeCreatePageProps {
   language?: 'ko' | 'en';
@@ -27,32 +30,39 @@ const t = {
   step2: { ko: '기간 설정', en: 'Period' },
   step3: { ko: '정원 및 가격', en: 'Capacity & Price' },
   // Step 1 - Basic Info
-  programId: { ko: '프로그램 ID', en: 'Program ID' },
-  programIdPlaceholder: { ko: '프로그램 ID를 입력하세요', en: 'Enter program ID' },
-  cmCourseId: { ko: '강의 ID', en: 'Course ID' },
-  cmCourseIdPlaceholder: { ko: '강의 ID를 입력하세요', en: 'Enter course ID' },
+  selectProgram: { ko: '교육 과정 선택', en: 'Select Course' },
+  selectProgramPlaceholder: { ko: '교육 과정을 선택하세요', en: 'Select a course' },
+  loadingPrograms: { ko: '교육 과정 불러오는 중...', en: 'Loading courses...' },
+  noApprovedPrograms: { ko: '승인된 교육 과정이 없습니다', en: 'No approved courses available' },
+  selectedProgramInfo: { ko: '선택된 교육 과정 정보', en: 'Selected Course Info' },
+  programLevel: { ko: '레벨', en: 'Level' },
+  programType: { ko: '타입', en: 'Type' },
+  estimatedHours: { ko: '예상 학습 시간', en: 'Estimated Hours' },
+  hours: { ko: '시간', en: 'hours' },
   timeTitle: { ko: '차수명', en: 'Title' },
   timeTitlePlaceholder: { ko: '예: 2025년 1차', en: 'e.g., 2025 Session 1' },
-  description: { ko: '설명', en: 'Description' },
-  descriptionPlaceholder: { ko: '차수에 대한 설명을 입력하세요 (선택)', en: 'Enter description (optional)' },
   deliveryType: { ko: '진행 방식', en: 'Delivery Type' },
   enrollmentMethod: { ko: '수강 신청 방식', en: 'Enrollment Method' },
   location: { ko: '장소', en: 'Location' },
   locationPlaceholder: { ko: '오프라인/블렌디드 진행 시 장소 입력', en: 'Enter location for offline/blended' },
   // Step 2 - Period
   enrollmentPeriod: { ko: '모집 기간', en: 'Enrollment Period' },
-  enrollmentStartDate: { ko: '모집 시작일', en: 'Enrollment Start' },
-  enrollmentEndDate: { ko: '모집 종료일', en: 'Enrollment End' },
+  enrollStartDate: { ko: '모집 시작일', en: 'Enrollment Start' },
+  enrollEndDate: { ko: '모집 종료일', en: 'Enrollment End' },
   learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
-  startDate: { ko: '학습 시작일', en: 'Start Date' },
-  endDate: { ko: '학습 종료일', en: 'End Date' },
+  classStartDate: { ko: '학습 시작일', en: 'Start Date' },
+  classEndDate: { ko: '학습 종료일', en: 'End Date' },
   // Step 3 - Capacity & Price
   capacity: { ko: '정원', en: 'Capacity' },
-  capacityPlaceholder: { ko: '0 입력 시 무제한', en: '0 for unlimited' },
-  capacityHint: { ko: '최대 수강 인원을 설정합니다. 0을 입력하면 무제한입니다.', en: 'Set maximum enrollment. Enter 0 for unlimited.' },
-  price: { ko: '가격', en: 'Price' },
-  pricePlaceholder: { ko: '0 입력 시 무료', en: '0 for free' },
-  priceHint: { ko: '수강료를 설정합니다. 0을 입력하면 무료입니다.', en: 'Set course fee. Enter 0 for free.' },
+  capacityPlaceholder: { ko: '비워두면 무제한', en: 'Leave empty for unlimited' },
+  capacityHint: { ko: '최대 수강 인원을 설정합니다.', en: 'Set maximum enrollment.' },
+  price: { ko: '가격 (원)', en: 'Price (KRW)' },
+  pricePlaceholder: { ko: '0', en: '0' },
+  priceHint: { ko: '수강료를 설정합니다. 0이면 무료입니다.', en: 'Set course fee. 0 means free.' },
+  minProgress: { ko: '수료 기준 (%)', en: 'Completion Criteria (%)' },
+  minProgressPlaceholder: { ko: '80', en: '80' },
+  minProgressHint: { ko: '수료를 위한 최소 진도율입니다.', en: 'Minimum progress for completion.' },
+  allowLateEnrollment: { ko: '중간 합류 허용', en: 'Allow Late Enrollment' },
   // Validation
   required: { ko: '필수 항목입니다.', en: 'This field is required.' },
   createSuccess: { ko: '차수가 생성되었습니다.', en: 'Course time created successfully.' },
@@ -62,26 +72,36 @@ const t = {
 export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCreatePageProps>) {
   const navigate = useNavigate();
   const createTime = useCreateTime();
+  const { data: approvedProgramsData, isLoading: isLoadingPrograms } = useApprovedPrograms();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
+  // 승인된 프로그램 목록
+  const approvedPrograms = useMemo(() => {
+    return approvedProgramsData?.content ?? [];
+  }, [approvedProgramsData]);
+
+  // 선택된 프로그램 정보
+  const [selectedProgram, setSelectedProgram] = useState<ProgramResponse | null>(null);
+
   // Form State
   const [formData, setFormData] = useState<CreateCourseTimeRequest>({
     programId: 0,
-    cmCourseId: 0,
     title: '',
     deliveryType: 'ONLINE',
     enrollmentMethod: 'FIRST_COME',
-    enrollmentStartDate: '',
-    enrollmentEndDate: '',
-    startDate: '',
-    endDate: '',
+    enrollStartDate: '',
+    enrollEndDate: '',
+    classStartDate: '',
+    classEndDate: '',
     capacity: null,
-    price: null,
-    description: '',
-    location: '',
+    price: '0',
+    isFree: true,
+    minProgressForCompletion: 80,
+    locationInfo: '',
+    allowLateEnrollment: false,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateCourseTimeRequest, string>>>({});
@@ -91,17 +111,39 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
     if (step === 1) {
       if (!formData.programId) newErrors.programId = getText('required');
-      if (!formData.cmCourseId) newErrors.cmCourseId = getText('required');
       if (!formData.title.trim()) newErrors.title = getText('required');
     } else if (step === 2) {
-      if (!formData.enrollmentStartDate) newErrors.enrollmentStartDate = getText('required');
-      if (!formData.enrollmentEndDate) newErrors.enrollmentEndDate = getText('required');
-      if (!formData.startDate) newErrors.startDate = getText('required');
-      if (!formData.endDate) newErrors.endDate = getText('required');
+      if (!formData.enrollStartDate) newErrors.enrollStartDate = getText('required');
+      if (!formData.enrollEndDate) newErrors.enrollEndDate = getText('required');
+      if (!formData.classStartDate) newErrors.classStartDate = getText('required');
+      if (!formData.classEndDate) newErrors.classEndDate = getText('required');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // 프로그램 선택 핸들러
+  const handleProgramSelect = (programIdStr: string) => {
+    const programId = parseInt(programIdStr);
+    if (!programId) {
+      setSelectedProgram(null);
+      setFormData((prev) => ({ ...prev, programId: 0 }));
+      return;
+    }
+
+    const program = approvedPrograms.find((p) => p.id === programId);
+    if (program) {
+      setSelectedProgram(program);
+      setFormData((prev) => ({
+        ...prev,
+        programId: program.id,
+      }));
+      // 에러 클리어
+      if (errors.programId) {
+        setErrors((prev) => ({ ...prev, programId: undefined }));
+      }
+    }
   };
 
   const handleNext = () => {
@@ -120,10 +162,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     if (!validateStep(currentStep)) return;
 
     try {
+      const priceNum = parseFloat(formData.price) || 0;
       const request: CreateCourseTimeRequest = {
         ...formData,
         capacity: formData.capacity === 0 ? null : formData.capacity,
-        price: formData.price === 0 ? null : formData.price,
+        price: priceNum.toString(),
+        isFree: priceNum === 0,
+        locationInfo: formData.locationInfo?.trim() || undefined,
       };
 
       await createTime.mutateAsync(request);
@@ -137,7 +182,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   const handleInputChange = (
     field: keyof CreateCourseTimeRequest,
-    value: string | number | null
+    value: string | number | boolean | null
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -199,36 +244,81 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
           {/* Step 1: 기본 정보 */}
           {currentStep === 1 && (
             <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="programId">{getText('programId')} *</Label>
-                  <Input
-                    id="programId"
-                    type="number"
-                    placeholder={getText('programIdPlaceholder')}
-                    value={formData.programId || ''}
-                    onChange={(e) => handleInputChange('programId', parseInt(e.target.value) || 0)}
+              {/* 교육 과정 선택 */}
+              <div className="space-y-2">
+                <Label htmlFor="programSelect">{getText('selectProgram')} *</Label>
+                {isLoadingPrograms ? (
+                  <div className="flex items-center gap-2 text-text-secondary py-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    <span className="text-sm">{getText('loadingPrograms')}</span>
+                  </div>
+                ) : approvedPrograms.length === 0 ? (
+                  <div className="flex items-center gap-2 text-text-secondary py-2">
+                    <Info size={16} />
+                    <span className="text-sm">{getText('noApprovedPrograms')}</span>
+                  </div>
+                ) : (
+                  <NativeSelect
+                    id="programSelect"
+                    value={formData.programId?.toString() || ''}
+                    onChange={(e) => handleProgramSelect(e.target.value)}
+                    options={[
+                      { value: '', label: getText('selectProgramPlaceholder') },
+                      ...approvedPrograms.map((program) => ({
+                        value: program.id.toString(),
+                        label: program.title,
+                      })),
+                    ]}
                     className={errors.programId ? 'border-status-error' : ''}
                   />
-                  {errors.programId && (
-                    <p className="text-sm text-status-error">{errors.programId}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cmCourseId">{getText('cmCourseId')} *</Label>
-                  <Input
-                    id="cmCourseId"
-                    type="number"
-                    placeholder={getText('cmCourseIdPlaceholder')}
-                    value={formData.cmCourseId || ''}
-                    onChange={(e) => handleInputChange('cmCourseId', parseInt(e.target.value) || 0)}
-                    className={errors.cmCourseId ? 'border-status-error' : ''}
-                  />
-                  {errors.cmCourseId && (
-                    <p className="text-sm text-status-error">{errors.cmCourseId}</p>
-                  )}
-                </div>
+                )}
+                {errors.programId && (
+                  <p className="text-sm text-status-error">{errors.programId}</p>
+                )}
               </div>
+
+              {/* 선택된 프로그램 정보 표시 */}
+              {selectedProgram && (
+                <div className="bg-bg-subtle rounded-lg p-4 border border-border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen size={18} className="text-text-secondary" />
+                    <span className="font-medium text-text-primary">
+                      {getText('selectedProgramInfo')}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    {selectedProgram.level && (
+                      <div>
+                        <span className="text-text-secondary">{getText('programLevel')}: </span>
+                        <span className="text-text-primary">
+                          {PROGRAM_LEVEL_LABELS[selectedProgram.level]}
+                        </span>
+                      </div>
+                    )}
+                    {selectedProgram.type && (
+                      <div>
+                        <span className="text-text-secondary">{getText('programType')}: </span>
+                        <span className="text-text-primary">
+                          {PROGRAM_TYPE_LABELS[selectedProgram.type]}
+                        </span>
+                      </div>
+                    )}
+                    {selectedProgram.estimatedHours && (
+                      <div>
+                        <span className="text-text-secondary">{getText('estimatedHours')}: </span>
+                        <span className="text-text-primary">
+                          {selectedProgram.estimatedHours} {getText('hours')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {selectedProgram.description && (
+                    <p className="mt-3 text-sm text-text-secondary line-clamp-2">
+                      {selectedProgram.description}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="title">{getText('timeTitle')} *</Label>
@@ -243,17 +333,6 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 {errors.title && (
                   <p className="text-sm text-status-error">{errors.title}</p>
                 )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">{getText('description')}</Label>
-                <Textarea
-                  id="description"
-                  placeholder={getText('descriptionPlaceholder')}
-                  value={formData.description || ''}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  rows={3}
-                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -281,13 +360,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
               {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
                 <div className="space-y-2">
-                  <Label htmlFor="location">{getText('location')}</Label>
+                  <Label htmlFor="locationInfo">{getText('location')}</Label>
                   <Input
-                    id="location"
+                    id="locationInfo"
                     type="text"
                     placeholder={getText('locationPlaceholder')}
-                    value={formData.location || ''}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    value={formData.locationInfo || ''}
+                    onChange={(e) => handleInputChange('locationInfo', e.target.value)}
                   />
                 </div>
               )}
@@ -305,29 +384,29 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
                   <div className="space-y-2">
-                    <Label htmlFor="enrollmentStartDate">{getText('enrollmentStartDate')} *</Label>
+                    <Label htmlFor="enrollStartDate">{getText('enrollStartDate')} *</Label>
                     <Input
-                      id="enrollmentStartDate"
-                      type="datetime-local"
-                      value={formData.enrollmentStartDate}
-                      onChange={(e) => handleInputChange('enrollmentStartDate', e.target.value)}
-                      className={errors.enrollmentStartDate ? 'border-status-error' : ''}
+                      id="enrollStartDate"
+                      type="date"
+                      value={formData.enrollStartDate}
+                      onChange={(e) => handleInputChange('enrollStartDate', e.target.value)}
+                      className={errors.enrollStartDate ? 'border-status-error' : ''}
                     />
-                    {errors.enrollmentStartDate && (
-                      <p className="text-sm text-status-error">{errors.enrollmentStartDate}</p>
+                    {errors.enrollStartDate && (
+                      <p className="text-sm text-status-error">{errors.enrollStartDate}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="enrollmentEndDate">{getText('enrollmentEndDate')} *</Label>
+                    <Label htmlFor="enrollEndDate">{getText('enrollEndDate')} *</Label>
                     <Input
-                      id="enrollmentEndDate"
-                      type="datetime-local"
-                      value={formData.enrollmentEndDate}
-                      onChange={(e) => handleInputChange('enrollmentEndDate', e.target.value)}
-                      className={errors.enrollmentEndDate ? 'border-status-error' : ''}
+                      id="enrollEndDate"
+                      type="date"
+                      value={formData.enrollEndDate}
+                      onChange={(e) => handleInputChange('enrollEndDate', e.target.value)}
+                      className={errors.enrollEndDate ? 'border-status-error' : ''}
                     />
-                    {errors.enrollmentEndDate && (
-                      <p className="text-sm text-status-error">{errors.enrollmentEndDate}</p>
+                    {errors.enrollEndDate && (
+                      <p className="text-sm text-status-error">{errors.enrollEndDate}</p>
                     )}
                   </div>
                 </div>
@@ -341,29 +420,29 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
                   <div className="space-y-2">
-                    <Label htmlFor="startDate">{getText('startDate')} *</Label>
+                    <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
                     <Input
-                      id="startDate"
-                      type="datetime-local"
-                      value={formData.startDate}
-                      onChange={(e) => handleInputChange('startDate', e.target.value)}
-                      className={errors.startDate ? 'border-status-error' : ''}
+                      id="classStartDate"
+                      type="date"
+                      value={formData.classStartDate}
+                      onChange={(e) => handleInputChange('classStartDate', e.target.value)}
+                      className={errors.classStartDate ? 'border-status-error' : ''}
                     />
-                    {errors.startDate && (
-                      <p className="text-sm text-status-error">{errors.startDate}</p>
+                    {errors.classStartDate && (
+                      <p className="text-sm text-status-error">{errors.classStartDate}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="endDate">{getText('endDate')} *</Label>
+                    <Label htmlFor="classEndDate">{getText('classEndDate')} *</Label>
                     <Input
-                      id="endDate"
-                      type="datetime-local"
-                      value={formData.endDate}
-                      onChange={(e) => handleInputChange('endDate', e.target.value)}
-                      className={errors.endDate ? 'border-status-error' : ''}
+                      id="classEndDate"
+                      type="date"
+                      value={formData.classEndDate}
+                      onChange={(e) => handleInputChange('classEndDate', e.target.value)}
+                      className={errors.classEndDate ? 'border-status-error' : ''}
                     />
-                    {errors.endDate && (
-                      <p className="text-sm text-status-error">{errors.endDate}</p>
+                    {errors.classEndDate && (
+                      <p className="text-sm text-status-error">{errors.classEndDate}</p>
                     )}
                   </div>
                 </div>
@@ -380,7 +459,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   <Input
                     id="capacity"
                     type="number"
-                    min="0"
+                    min="1"
                     placeholder={getText('capacityPlaceholder')}
                     value={formData.capacity ?? ''}
                     onChange={(e) =>
@@ -391,18 +470,46 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="price">{getText('price')}</Label>
+                  <Label htmlFor="price">{getText('price')} *</Label>
                   <Input
                     id="price"
                     type="number"
                     min="0"
                     placeholder={getText('pricePlaceholder')}
-                    value={formData.price ?? ''}
-                    onChange={(e) =>
-                      handleInputChange('price', e.target.value ? parseInt(e.target.value) : null)
-                    }
+                    value={formData.price}
+                    onChange={(e) => handleInputChange('price', e.target.value || '0')}
                   />
                   <p className="text-sm text-text-secondary">{getText('priceHint')}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="minProgressForCompletion">{getText('minProgress')} *</Label>
+                  <Input
+                    id="minProgressForCompletion"
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder={getText('minProgressPlaceholder')}
+                    value={formData.minProgressForCompletion}
+                    onChange={(e) =>
+                      handleInputChange('minProgressForCompletion', parseInt(e.target.value) || 0)
+                    }
+                  />
+                  <p className="text-sm text-text-secondary">{getText('minProgressHint')}</p>
+                </div>
+
+                <div className="space-y-2 flex items-center pt-8">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.allowLateEnrollment ?? false}
+                      onChange={(e) => handleInputChange('allowLateEnrollment', e.target.checked)}
+                      className="w-4 h-4 rounded border-border"
+                    />
+                    <span className="text-sm text-text-primary">{getText('allowLateEnrollment')}</span>
+                  </label>
                 </div>
               </div>
             </div>

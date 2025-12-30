@@ -39,11 +39,11 @@ export const timeService = {
 
   /** 차수 목록 조회 */
   async getTimes(params?: CourseTimeFilterParams): Promise<PageResponse<CourseTimeResponse>> {
-    const { data } = await axiosInstance.get<{ data: PageResponse<CourseTimeResponse> }>(
+    const response = await axiosInstance.get<{ data: PageResponse<CourseTimeResponse> }>(
       API_ENDPOINTS.TIMES.BASE,
       { params }
     );
-    return data.data;
+    return response.data.data;
   },
 
   /** 차수 상세 조회 */

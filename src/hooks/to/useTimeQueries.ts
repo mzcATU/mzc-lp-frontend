@@ -31,12 +31,12 @@ export const timeKeys = {
 
 /** 차수 목록 조회 */
 export const useTimes = (params?: CourseTimeFilterParams) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   return useQuery({
     queryKey: timeKeys.list(params),
     queryFn: () => timeService.getTimes(params),
-    enabled: isAuthenticated,
+    enabled: !!accessToken,
   });
 };
 
