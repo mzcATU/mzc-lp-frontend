@@ -4,7 +4,7 @@ import { Badge } from '@/components/common/Badge';
 type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'error' | 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'indigo' | 'purple' | 'gray';
 
 // 시스템 역할
-export type SystemRole = 'SUPER_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'USER';
+export type SystemRole = 'SUPER_ADMIN' | 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'USER';
 
 // 강의 역할
 export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR' | 'TUTOR' | 'VIEWER';
@@ -18,7 +18,8 @@ const systemRoleConfig: Record<
   SystemRole,
   { label: { ko: string; en: string }; variant: BadgeVariant }
 > = {
-  SUPER_ADMIN: { label: { ko: '시스템 관리자', en: 'System Admin' }, variant: 'purple' },
+  SUPER_ADMIN: { label: { ko: '최고 관리자', en: 'Super Admin' }, variant: 'purple' },
+  SYSTEM_ADMIN: { label: { ko: '시스템 관리자', en: 'System Admin' }, variant: 'purple' },
   TENANT_ADMIN: { label: { ko: '테넌트 관리자', en: 'Tenant Admin' }, variant: 'indigo' },
   OPERATOR: { label: { ko: '운영자', en: 'Operator' }, variant: 'blue' },
   USER: { label: { ko: '사용자', en: 'User' }, variant: 'gray' },
