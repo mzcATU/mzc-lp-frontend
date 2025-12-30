@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Mail, UserPlus } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import {
@@ -62,11 +63,11 @@ const mockUsers: UserRow[] = [
 ];
 
 export function UsersPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
 
@@ -168,8 +169,7 @@ export function UsersPage() {
   ];
 
   const handleViewDetail = (user: UserRow) => {
-    setSelectedUser(user);
-    setIsDetailDialogOpen(true);
+    navigate(`/ta/users/${user.id}`);
   };
 
   const handleEdit = (user: UserRow) => {
@@ -328,70 +328,6 @@ export function UsersPage() {
             </Button>
             <Button onClick={() => setIsCreateDialogOpen(false)}>
               {selectedUser ? '수정' : '생성'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 사용자 상세 다이얼로그 */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>사용자 상세 정보</DialogTitle>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-4 pb-4 border-b">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedUser.name}`} />
-                  <AvatarFallback className="text-xl">{selectedUser.name.slice(0, 2)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedUser.name}</h3>
-                  <p className="text-sm text-text-secondary">{selectedUser.email}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-text-secondary">상태</p>
-                  <div className="mt-1">
-                    <StatusBadge status={selectedUser.status} />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">역할</p>
-                  <div className="mt-1">
-                    <RoleBadge role={selectedUser.role} />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">부서</p>
-                  <p className="font-medium">{selectedUser.department || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">수강 강좌</p>
-                  <p className="font-medium">{selectedUser.coursesEnrolled}개</p>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">최근 활동</p>
-                  <p className="font-medium">{selectedUser.lastActiveAt}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-text-secondary">가입일</p>
-                  <p className="font-medium">{selectedUser.createdAt}</p>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
-              닫기
-            </Button>
-            <Button onClick={() => {
-              setIsDetailDialogOpen(false);
-              if (selectedUser) handleEdit(selectedUser);
-            }}>
-              수정
             </Button>
           </DialogFooter>
         </DialogContent>

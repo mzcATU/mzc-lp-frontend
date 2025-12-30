@@ -75,3 +75,46 @@ export interface UserStats {
   newUsersThisMonth: number;
   activeToday: number;
 }
+
+// User Detail (상세 페이지용)
+export interface UserDetail extends AdminUser {
+  phone?: string;
+  department?: string;
+  position?: string;
+  stats: {
+    totalCourses: number;
+    completedCourses: number;
+    inProgressCourses: number;
+    totalLearningTime: number;
+    averageScore: number;
+  };
+  enrollments: UserEnrollment[];
+  activityLogs: UserActivityLog[];
+}
+
+export interface UserEnrollment {
+  id: number;
+  courseTitle: string;
+  progress: number;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'NOT_STARTED';
+  enrolledAt: string;
+  completedAt?: string;
+}
+
+export interface UserActivityLog {
+  id: number;
+  action: string;
+  description: string;
+  timestamp: string;
+  type: 'login' | 'course' | 'assessment' | 'profile';
+}
+
+// Update User Detail Request
+export interface UpdateUserDetailRequest {
+  name?: string;
+  phone?: string;
+  department?: string;
+  position?: string;
+  status?: UserStatus;
+  systemRole?: SystemRole;
+}

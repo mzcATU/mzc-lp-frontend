@@ -18,7 +18,7 @@ const systemRoleConfig: Record<
   SystemRole,
   { label: { ko: string; en: string }; variant: BadgeVariant }
 > = {
-  SUPER_ADMIN: { label: { ko: '슈퍼 관리자', en: 'Super Admin' }, variant: 'purple' },
+  SUPER_ADMIN: { label: { ko: '시스템 관리자', en: 'System Admin' }, variant: 'purple' },
   TENANT_ADMIN: { label: { ko: '테넌트 관리자', en: 'Tenant Admin' }, variant: 'indigo' },
   OPERATOR: { label: { ko: '운영자', en: 'Operator' }, variant: 'blue' },
   USER: { label: { ko: '사용자', en: 'User' }, variant: 'gray' },
