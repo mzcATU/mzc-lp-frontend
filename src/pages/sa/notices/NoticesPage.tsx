@@ -4,54 +4,153 @@ import {
   Search,
   Edit,
   Trash2,
-  Eye,
   Pin,
   Calendar,
+  Send,
+  Archive,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Badge } from '@/components/common/Badge';
+import { Label } from '@/components/common/Label';
+import { Textarea } from '@/components/common/Textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/common/Dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/common/Select';
+import { Switch } from '@/components/common/Switch';
+import {
+  useNotices,
+  useCreateNotice,
+  useUpdateNotice,
+  useDeleteNotice,
+  usePublishNotice,
+  useArchiveNotice,
+} from '@/hooks/sa';
+import type {
+  Notice,
+  NoticeType,
+  NoticeStatus,
+  CreateNoticeRequest,
+  UpdateNoticeRequest,
+} from '@/types/admin';
 
-// Mock 데이터
-const mockNotices: {
-  id: number;
-  title: string;
-  content: string;
-  category: 'GENERAL' | 'UPDATE' | 'MAINTENANCE' | 'EVENT';
-  status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
-  isPinned: boolean;
-  views: number;
-  publishedAt: string | null;
-  createdAt: string;
-}[] = [
-  { id: 1, title: '2025년 1월 시스템 업데이트 안내', content: '새로운 기능이 추가됩니다...', category: 'UPDATE', status: 'PUBLISHED', isPinned: true, views: 1250, publishedAt: '2025-12-28', createdAt: '2025-12-27' },
-  { id: 2, title: '연말 시스템 점검 안내', content: '12월 31일 시스템 점검...', category: 'MAINTENANCE', status: 'PUBLISHED', isPinned: true, views: 890, publishedAt: '2025-12-25', createdAt: '2025-12-24' },
-  { id: 3, title: '신규 강좌 오픈 이벤트', content: '신규 강좌 50% 할인...', category: 'EVENT', status: 'PUBLISHED', isPinned: false, views: 2340, publishedAt: '2025-12-20', createdAt: '2025-12-19' },
-  { id: 4, title: '이용약관 변경 안내', content: '이용약관이 변경됩니다...', category: 'GENERAL', status: 'SCHEDULED', isPinned: false, views: 0, publishedAt: null, createdAt: '2025-12-29' },
-  { id: 5, title: '새해 맞이 특별 프로모션 (초안)', content: '2026년을 맞아...', category: 'EVENT', status: 'DRAFT', isPinned: false, views: 0, publishedAt: null, createdAt: '2025-12-30' },
-];
-
-const categoryConfig = {
+const typeConfig: Record<NoticeType, { label: string; color: string }> = {
   GENERAL: { label: '일반', color: 'bg-gray-100 text-gray-700' },
   UPDATE: { label: '업데이트', color: 'bg-blue-100 text-blue-700' },
-  MAINTENANCE: { label: '점검', color: 'bg-yellow-100 text-yellow-700' },
+  SYSTEM: { label: '시스템', color: 'bg-yellow-100 text-yellow-700' },
   EVENT: { label: '이벤트', color: 'bg-purple-100 text-purple-700' },
 };
 
-const statusConfig = {
+const statusConfig: Record<NoticeStatus, { label: string; color: string }> = {
   DRAFT: { label: '초안', color: 'bg-gray-100 text-gray-600' },
   PUBLISHED: { label: '게시됨', color: 'bg-green-100 text-green-700' },
-  SCHEDULED: { label: '예약됨', color: 'bg-blue-100 text-blue-700' },
+  ARCHIVED: { label: '보관됨', color: 'bg-orange-100 text-orange-700' },
 };
 
 export function NoticesPage() {
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState<NoticeStatus | 'ALL'>('ALL');
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Notice | null>(null);
 
-  const filteredNotices = mockNotices.filter((notice) =>
-    notice.title.toLowerCase().includes(searchKeyword.toLowerCase())
-  );
+  // Form state
+  const [formData, setFormData] = useState<CreateNoticeRequest>({
+    title: '',
+    content: '',
+    type: 'GENERAL',
+    isPinned: false,
+  });
+
+  // API Hooks
+  const { data: noticesData, isLoading } = useNotices({
+    keyword: searchKeyword || undefined,
+    status: statusFilter !== 'ALL' ? statusFilter : undefined,
+  });
+  const createMutation = useCreateNotice();
+  const updateMutation = useUpdateNotice();
+  const deleteMutation = useDeleteNotice();
+  const publishMutation = usePublishNotice();
+  const archiveMutation = useArchiveNotice();
+
+  const notices = noticesData?.content || [];
+  const totalNotices = noticesData?.totalElements || 0;
+
+  const handleCreateOpen = () => {
+    setFormData({
+      title: '',
+      content: '',
+      type: 'GENERAL',
+      isPinned: false,
+    });
+    setIsCreateOpen(true);
+  };
+
+  const handleEditOpen = (notice: Notice) => {
+    setFormData({
+      title: notice.title,
+      content: notice.content,
+      type: notice.type,
+      isPinned: notice.isPinned,
+    });
+    setEditingNotice(notice);
+  };
+
+  const handleCreate = async () => {
+    if (!formData.title.trim() || !formData.content.trim()) return;
+    await createMutation.mutateAsync(formData);
+    setIsCreateOpen(false);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingNotice || !formData.title.trim() || !formData.content.trim()) return;
+    const request: UpdateNoticeRequest = {
+      title: formData.title,
+      content: formData.content,
+      type: formData.type,
+      isPinned: formData.isPinned,
+    };
+    await updateMutation.mutateAsync({ id: editingNotice.id, request });
+    setEditingNotice(null);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteMutation.mutateAsync(deleteTarget.id);
+    setDeleteTarget(null);
+  };
+
+  const handlePublish = async (id: number) => {
+    await publishMutation.mutateAsync(id);
+  };
+
+  const handleArchive = async (id: number) => {
+    await archiveMutation.mutateAsync(id);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -59,7 +158,7 @@ export function NoticesPage() {
         title="공지사항 관리"
         description="전체 테넌트에 공지사항을 관리합니다"
         actions={
-          <Button>
+          <Button onClick={handleCreateOpen}>
             <Plus className="mr-2 h-4 w-4" />
             공지 작성
           </Button>
@@ -71,59 +170,277 @@ export function NoticesPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>공지사항 목록</CardTitle>
-              <CardDescription>전체 {mockNotices.length}개의 공지사항</CardDescription>
+              <CardDescription>전체 {totalNotices}개의 공지사항</CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
-              <Input
-                placeholder="공지 검색..."
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex items-center gap-3">
+              <Select
+                value={statusFilter}
+                onValueChange={(v) => setStatusFilter(v as NoticeStatus | 'ALL')}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">전체</SelectItem>
+                  <SelectItem value="DRAFT">초안</SelectItem>
+                  <SelectItem value="PUBLISHED">게시됨</SelectItem>
+                  <SelectItem value="ARCHIVED">보관됨</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+                <Input
+                  placeholder="공지 검색..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {filteredNotices.map((notice) => (
-              <div key={notice.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-bg-secondary">
-                <div className="flex items-start gap-3">
-                  {notice.isPinned && <Pin className="h-4 w-4 text-brand-primary mt-1" />}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{notice.title}</h3>
-                      <Badge className={categoryConfig[notice.category].color}>
-                        {categoryConfig[notice.category].label}
-                      </Badge>
-                      <Badge className={statusConfig[notice.status].color}>
-                        {statusConfig[notice.status].label}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-text-secondary">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {notice.publishedAt || notice.createdAt}
-                      </span>
-                      {notice.status === 'PUBLISHED' && (
+            {notices.length === 0 ? (
+              <div className="text-center py-8 text-text-secondary">
+                {searchKeyword ? '검색 결과가 없습니다' : '등록된 공지사항이 없습니다'}
+              </div>
+            ) : (
+              notices.map((notice) => (
+                <div
+                  key={notice.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-bg-secondary"
+                >
+                  <div className="flex items-start gap-3">
+                    {notice.isPinned && <Pin className="h-4 w-4 text-brand-primary mt-1" />}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">{notice.title}</h3>
+                        <Badge className={typeConfig[notice.type].color}>
+                          {typeConfig[notice.type].label}
+                        </Badge>
+                        <Badge className={statusConfig[notice.status].color}>
+                          {statusConfig[notice.status].label}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-text-secondary">
                         <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {notice.views.toLocaleString()} 조회
+                          <Calendar className="h-3 w-3" />
+                          {notice.publishedAt || notice.createdAt}
                         </span>
-                      )}
+                        {notice.status === 'PUBLISHED' && (
+                          <span className="flex items-center gap-1">
+                            배포: {notice.distributionCount}개 테넌트
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-1">
+                    {notice.status === 'DRAFT' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handlePublish(notice.id)}
+                        disabled={publishMutation.isPending}
+                        title="발행"
+                      >
+                        <Send className="h-4 w-4 text-green-600" />
+                      </Button>
+                    )}
+                    {notice.status === 'PUBLISHED' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleArchive(notice.id)}
+                        disabled={archiveMutation.isPending}
+                        title="보관"
+                      >
+                        <Archive className="h-4 w-4 text-orange-600" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditOpen(notice)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500"
+                      onClick={() => setDeleteTarget(notice)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" className="text-red-500"><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>새 공지사항 작성</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>제목 *</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="공지사항 제목을 입력하세요"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>유형</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(v) => setFormData({ ...formData, type: v as NoticeType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GENERAL">일반</SelectItem>
+                    <SelectItem value="UPDATE">업데이트</SelectItem>
+                    <SelectItem value="SYSTEM">시스템</SelectItem>
+                    <SelectItem value="EVENT">이벤트</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <Switch
+                  id="isPinned"
+                  checked={formData.isPinned}
+                  onCheckedChange={(v) => setFormData({ ...formData, isPinned: v })}
+                />
+                <Label htmlFor="isPinned">상단 고정</Label>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>내용 *</Label>
+              <Textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                placeholder="공지사항 내용을 입력하세요"
+                rows={8}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!formData.title.trim() || !formData.content.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? '생성 중...' : '생성'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingNotice} onOpenChange={() => setEditingNotice(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>공지사항 수정</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>제목 *</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="공지사항 제목을 입력하세요"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>유형</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(v) => setFormData({ ...formData, type: v as NoticeType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GENERAL">일반</SelectItem>
+                    <SelectItem value="UPDATE">업데이트</SelectItem>
+                    <SelectItem value="SYSTEM">시스템</SelectItem>
+                    <SelectItem value="EVENT">이벤트</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <Switch
+                  id="isPinnedEdit"
+                  checked={formData.isPinned}
+                  onCheckedChange={(v) => setFormData({ ...formData, isPinned: v })}
+                />
+                <Label htmlFor="isPinnedEdit">상단 고정</Label>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>내용 *</Label>
+              <Textarea
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                placeholder="공지사항 내용을 입력하세요"
+                rows={8}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingNotice(null)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleUpdate}
+              disabled={!formData.title.trim() || !formData.content.trim() || updateMutation.isPending}
+            >
+              {updateMutation.isPending ? '저장 중...' : '저장'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>공지사항 삭제</DialogTitle>
+          </DialogHeader>
+          <p className="py-4">
+            "{deleteTarget?.title}" 공지사항을 삭제하시겠습니까?
+            <br />
+            <span className="text-sm text-text-secondary">
+              이 작업은 되돌릴 수 없습니다.
+            </span>
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Building2,
   Save,
   RotateCcw,
-  Globe,
-  Clock,
-  Bell,
-  Shield,
+  Palette,
+  Users,
+  Settings2,
+  Gauge,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -14,7 +13,6 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Label } from '@/components/common/Label';
 import { Switch } from '@/components/common/Switch';
-import { Textarea } from '@/components/common/Textarea';
 import {
   Select,
   SelectContent,
@@ -22,43 +20,86 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
-
-// Mock 데이터
-const mockTenantSettings = {
-  general: {
-    name: '메가존클라우드',
-    description: '클라우드 전문 교육 플랫폼',
-    contactEmail: 'support@megazone.com',
-    timezone: 'Asia/Seoul',
-    language: 'ko',
-  },
-  features: {
-    allowSelfRegistration: true,
-    requireEmailVerification: true,
-    enableSocialLogin: false,
-    enableCertificates: true,
-    enableDiscussions: true,
-  },
-  notifications: {
-    emailNotifications: true,
-    browserNotifications: true,
-    courseReminders: true,
-    marketingEmails: false,
-  },
-  security: {
-    sessionTimeout: 30,
-    maxLoginAttempts: 5,
-    requireStrongPassword: true,
-    enable2FA: false,
-  },
-};
+import {
+  useTenantSettings,
+  useUpdateTenantSettings,
+} from '@/hooks/ta';
+import type { UpdateTenantSettingsRequest } from '@/types/admin';
 
 export function TenantSettingsPage() {
-  const [settings, setSettings] = useState(mockTenantSettings);
+  const { data: settings, isLoading } = useTenantSettings();
+  const updateMutation = useUpdateTenantSettings();
+
+  const [formData, setFormData] = useState<UpdateTenantSettingsRequest>({
+    logoUrl: null,
+    faviconUrl: null,
+    primaryColor: null,
+    secondaryColor: null,
+    allowSelfRegistration: true,
+    requireEmailVerification: true,
+    defaultUserRole: 'USER',
+    maxUsers: null,
+    maxStorage: null,
+    maxCourses: null,
+    enableDiscussions: true,
+    enableCertificates: true,
+    enableAnalytics: true,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setFormData({
+        logoUrl: settings.logoUrl,
+        faviconUrl: settings.faviconUrl,
+        primaryColor: settings.primaryColor,
+        secondaryColor: settings.secondaryColor,
+        allowSelfRegistration: settings.allowSelfRegistration,
+        requireEmailVerification: settings.requireEmailVerification,
+        defaultUserRole: settings.defaultUserRole,
+        maxUsers: settings.maxUsers,
+        maxStorage: settings.maxStorage,
+        maxCourses: settings.maxCourses,
+        enableDiscussions: settings.enableDiscussions,
+        enableCertificates: settings.enableCertificates,
+        enableAnalytics: settings.enableAnalytics,
+      });
+    }
+  }, [settings]);
+
+  const handleSave = async () => {
+    await updateMutation.mutateAsync(formData);
+  };
 
   const handleReset = () => {
-    setSettings(mockTenantSettings);
+    if (settings) {
+      setFormData({
+        logoUrl: settings.logoUrl,
+        faviconUrl: settings.faviconUrl,
+        primaryColor: settings.primaryColor,
+        secondaryColor: settings.secondaryColor,
+        allowSelfRegistration: settings.allowSelfRegistration,
+        requireEmailVerification: settings.requireEmailVerification,
+        defaultUserRole: settings.defaultUserRole,
+        maxUsers: settings.maxUsers,
+        maxStorage: settings.maxStorage,
+        maxCourses: settings.maxCourses,
+        enableDiscussions: settings.enableDiscussions,
+        enableCertificates: settings.enableCertificates,
+        enableAnalytics: settings.enableAnalytics,
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -71,113 +112,108 @@ export function TenantSettingsPage() {
               <RotateCcw className="mr-2 h-4 w-4" />
               초기화
             </Button>
-            <Button>
+            <Button onClick={handleSave} disabled={updateMutation.isPending}>
               <Save className="mr-2 h-4 w-4" />
-              저장
+              {updateMutation.isPending ? '저장 중...' : '저장'}
             </Button>
           </div>
         }
       />
 
       <div className="space-y-6">
-        {/* General Settings */}
+        {/* Branding Settings */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-brand-primary" />
-              <CardTitle>기본 정보</CardTitle>
+              <Palette className="h-5 w-5 text-brand-primary" />
+              <CardTitle>브랜딩 설정</CardTitle>
             </div>
-            <CardDescription>테넌트 기본 정보를 설정합니다</CardDescription>
+            <CardDescription>로고와 색상을 설정합니다</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>테넌트 이름</Label>
+                <Label>로고 URL</Label>
                 <Input
-                  value={settings.general.name}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    general: { ...settings.general, name: e.target.value },
+                  value={formData.logoUrl || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    logoUrl: e.target.value || null,
                   })}
+                  placeholder="https://example.com/logo.png"
                 />
               </div>
               <div className="space-y-2">
-                <Label>연락처 이메일</Label>
+                <Label>파비콘 URL</Label>
                 <Input
-                  type="email"
-                  value={settings.general.contactEmail}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    general: { ...settings.general, contactEmail: e.target.value },
+                  value={formData.faviconUrl || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    faviconUrl: e.target.value || null,
                   })}
+                  placeholder="https://example.com/favicon.ico"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>설명</Label>
-              <Textarea
-                value={settings.general.description}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  general: { ...settings.general, description: e.target.value },
-                })}
-                rows={3}
-              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  타임존
-                </Label>
-                <Select
-                  value={settings.general.timezone}
-                  onValueChange={(v) => setSettings({
-                    ...settings,
-                    general: { ...settings.general, timezone: v },
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Asia/Seoul">Asia/Seoul (KST)</SelectItem>
-                    <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
-                    <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>기본 색상</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={formData.primaryColor || '#3B82F6'}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      primaryColor: e.target.value,
+                    })}
+                    className="w-12 h-10 p-1"
+                  />
+                  <Input
+                    value={formData.primaryColor || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      primaryColor: e.target.value || null,
+                    })}
+                    placeholder="#3B82F6"
+                    className="flex-1"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Globe className="h-4 w-4" />
-                  기본 언어
-                </Label>
-                <Select
-                  value={settings.general.language}
-                  onValueChange={(v) => setSettings({
-                    ...settings,
-                    general: { ...settings.general, language: v },
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ko">한국어</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="ja">日本語</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>보조 색상</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={formData.secondaryColor || '#10B981'}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      secondaryColor: e.target.value,
+                    })}
+                    className="w-12 h-10 p-1"
+                  />
+                  <Input
+                    value={formData.secondaryColor || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      secondaryColor: e.target.value || null,
+                    })}
+                    placeholder="#10B981"
+                    className="flex-1"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Features */}
+        {/* User Management Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>기능 설정</CardTitle>
-            <CardDescription>테넌트에서 사용할 기능을 설정합니다</CardDescription>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-brand-primary" />
+              <CardTitle>사용자 관리</CardTitle>
+            </div>
+            <CardDescription>사용자 등록 및 인증 설정을 관리합니다</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -186,10 +222,10 @@ export function TenantSettingsPage() {
                 <p className="text-sm text-text-secondary">사용자가 직접 계정을 생성할 수 있습니다</p>
               </div>
               <Switch
-                checked={settings.features.allowSelfRegistration}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  features: { ...settings.features, allowSelfRegistration: v },
+                checked={formData.allowSelfRegistration}
+                onCheckedChange={(v) => setFormData({
+                  ...formData,
+                  allowSelfRegistration: v,
                 })}
               />
             </div>
@@ -199,156 +235,119 @@ export function TenantSettingsPage() {
                 <p className="text-sm text-text-secondary">가입 시 이메일 인증을 요구합니다</p>
               </div>
               <Switch
-                checked={settings.features.requireEmailVerification}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  features: { ...settings.features, requireEmailVerification: v },
+                checked={formData.requireEmailVerification}
+                onCheckedChange={(v) => setFormData({
+                  ...formData,
+                  requireEmailVerification: v,
                 })}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">소셜 로그인</p>
-                <p className="text-sm text-text-secondary">Google, Kakao 등 소셜 로그인 허용</p>
-              </div>
-              <Switch
-                checked={settings.features.enableSocialLogin}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  features: { ...settings.features, enableSocialLogin: v },
+            <div className="space-y-2">
+              <Label>기본 사용자 역할</Label>
+              <Select
+                value={formData.defaultUserRole}
+                onValueChange={(v) => setFormData({
+                  ...formData,
+                  defaultUserRole: v,
                 })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">수료증 발급</p>
-                <p className="text-sm text-text-secondary">강좌 완료 시 수료증을 발급합니다</p>
-              </div>
-              <Switch
-                checked={settings.features.enableCertificates}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  features: { ...settings.features, enableCertificates: v },
-                })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">토론 기능</p>
-                <p className="text-sm text-text-secondary">강좌 내 토론 게시판을 사용합니다</p>
-              </div>
-              <Switch
-                checked={settings.features.enableDiscussions}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  features: { ...settings.features, enableDiscussions: v },
-                })}
-              />
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USER">일반 사용자</SelectItem>
+                  <SelectItem value="OPERATOR">운영자</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
         <div className="grid grid-cols-2 gap-6">
-          {/* Notifications */}
+          {/* Limits */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-brand-primary" />
-                <CardTitle>알림 설정</CardTitle>
+                <Gauge className="h-5 w-5 text-brand-primary" />
+                <CardTitle>제한 설정</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">이메일 알림</span>
-                <Switch
-                  checked={settings.notifications.emailNotifications}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    notifications: { ...settings.notifications, emailNotifications: v },
+              <div className="space-y-2">
+                <Label>최대 사용자 수</Label>
+                <Input
+                  type="number"
+                  value={formData.maxUsers || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    maxUsers: e.target.value ? Number(e.target.value) : null,
                   })}
+                  placeholder="무제한"
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">브라우저 알림</span>
-                <Switch
-                  checked={settings.notifications.browserNotifications}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    notifications: { ...settings.notifications, browserNotifications: v },
+              <div className="space-y-2">
+                <Label>최대 저장 용량 (GB)</Label>
+                <Input
+                  type="number"
+                  value={formData.maxStorage || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    maxStorage: e.target.value ? Number(e.target.value) : null,
                   })}
+                  placeholder="무제한"
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">강좌 리마인더</span>
-                <Switch
-                  checked={settings.notifications.courseReminders}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    notifications: { ...settings.notifications, courseReminders: v },
+              <div className="space-y-2">
+                <Label>최대 강좌 수</Label>
+                <Input
+                  type="number"
+                  value={formData.maxCourses || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    maxCourses: e.target.value ? Number(e.target.value) : null,
                   })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">마케팅 이메일</span>
-                <Switch
-                  checked={settings.notifications.marketingEmails}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    notifications: { ...settings.notifications, marketingEmails: v },
-                  })}
+                  placeholder="무제한"
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* Security */}
+          {/* Features */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-brand-primary" />
-                <CardTitle>보안 설정</CardTitle>
+                <Settings2 className="h-5 w-5 text-brand-primary" />
+                <CardTitle>기능 설정</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>세션 타임아웃 (분)</Label>
-                <Input
-                  type="number"
-                  value={settings.security.sessionTimeout}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    security: { ...settings.security, sessionTimeout: Number(e.target.value) },
-                  })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>최대 로그인 시도</Label>
-                <Input
-                  type="number"
-                  value={settings.security.maxLoginAttempts}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    security: { ...settings.security, maxLoginAttempts: Number(e.target.value) },
+              <div className="flex items-center justify-between">
+                <span className="text-sm">토론 기능</span>
+                <Switch
+                  checked={formData.enableDiscussions}
+                  onCheckedChange={(v) => setFormData({
+                    ...formData,
+                    enableDiscussions: v,
                   })}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">강력한 비밀번호 필수</span>
+                <span className="text-sm">수료증 발급</span>
                 <Switch
-                  checked={settings.security.requireStrongPassword}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    security: { ...settings.security, requireStrongPassword: v },
+                  checked={formData.enableCertificates}
+                  onCheckedChange={(v) => setFormData({
+                    ...formData,
+                    enableCertificates: v,
                   })}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">2단계 인증 (2FA)</span>
+                <span className="text-sm">분석 기능</span>
                 <Switch
-                  checked={settings.security.enable2FA}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    security: { ...settings.security, enable2FA: v },
+                  checked={formData.enableAnalytics}
+                  onCheckedChange={(v) => setFormData({
+                    ...formData,
+                    enableAnalytics: v,
                   })}
                 />
               </div>
