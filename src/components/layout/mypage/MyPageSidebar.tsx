@@ -123,7 +123,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   return (
     <aside
       className={`w-72 flex-shrink-0 p-4 ${
-        isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'
+        isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'
       }`}
     >
       {/* 카드형 사이드바 */}

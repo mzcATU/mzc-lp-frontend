@@ -117,6 +117,10 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+
+  /* === TU Theme Colors === */
+  --tu-bg-light: #f9fafb;
+  --tu-bg-dark: #1e1e1e;
 }
 
 @layer base {
@@ -217,7 +221,7 @@
 }
 
 .glass-dark {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -275,7 +279,7 @@
 }
 
 .animated-bg {
-  background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0a0a0a);
+  background: linear-gradient(-45deg, #1a1a2e, #2a2a4e, #243358, #1a1a2e);
   background-size: 400% 400%;
   animation: bg-gradient 15s ease infinite;
 }
@@ -312,22 +316,22 @@
   --landing-header-bg: rgba(255, 255, 255, 0.9);
   --landing-card-bg: rgba(255, 255, 255, 1);
   --landing-card-border: rgba(0, 0, 0, 0.08);
-  --landing-footer-bg: #F4F4F4;
+  --landing-footer-bg: #fafafa;
 }
 
 /* Dark theme for landing */
 .landing-dark {
-  --landing-bg: #0a0a0a;
-  --landing-bg-secondary: #0f0f1a;
+  --landing-bg: #1e1e1e;
+  --landing-bg-secondary: #252525;
   --landing-bg-card: rgba(255, 255, 255, 0.05);
   --landing-text-primary: #FFFFFF;
   --landing-text-secondary: #D4D4D4;
   --landing-text-muted: #9E9E9E;
   --landing-border: rgba(255, 255, 255, 0.1);
-  --landing-header-bg: rgba(0, 0, 0, 0.6);
+  --landing-header-bg: rgba(30, 30, 30, 0.95);
   --landing-card-bg: rgba(255, 255, 255, 0.05);
   --landing-card-border: rgba(255, 255, 255, 0.1);
-  --landing-footer-bg: #000000;
+  --landing-footer-bg: #1e1e1e;
 }
 
 /* Landing page base styles using CSS variables */
@@ -606,7 +610,7 @@
 
 /* Header glass effect for themes */
 .landing-dark .glass-dark {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -664,13 +668,11 @@
 
 /* Footer theme support */
 .landing-dark .landing-footer-wrapper {
-  background: #000000;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--landing-footer-bg);
 }
 
 .landing-light .landing-footer-wrapper {
-  background: #F4F4F4;
-  border-top: 1px solid #E0E0E0;
+  background: var(--landing-footer-bg);
 }
 
 /* Card background and border utilities */
@@ -739,9 +741,9 @@
   color: #6778ff;
 }
 
-/* Hero section for light mode - medium gradient background */
+/* Hero section for light mode - lighter gradient background */
 .landing-light .animated-bg {
-  background: linear-gradient(135deg, #252542 0%, #3a3a70 50%, #252542 100%);
+  background: linear-gradient(135deg, #4a4a80 0%, #6060a0 50%, #4a4a80 100%);
 }
 
 .landing-light .animated-bg h2.text-white {

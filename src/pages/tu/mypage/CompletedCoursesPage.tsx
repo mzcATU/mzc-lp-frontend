@@ -1,9 +1,9 @@
-import { Bell, Construction } from 'lucide-react';
+import { CheckCircle, Construction } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { Card, CardHeader, CardTitle, CardContent, EmptyState } from '@/components/common';
 
-export function SettingsNotificationsPage() {
+export function CompletedCoursesPage() {
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
@@ -18,20 +18,20 @@ export function SettingsNotificationsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {t.mypage.notifications}
+            {t.mypage.completed}
           </h1>
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-            {t.settings.notificationsDesc}
+            {t.mypage.completedDesc}
           </p>
         </div>
 
-        {/* Notifications Card */}
+        {/* Completed Courses Card */}
         <Card className={cardClass}>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <Bell className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+              <CheckCircle className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
               <CardTitle className={isDark ? 'text-white' : 'text-gray-900'}>
-                {t.settings.notificationSettings}
+                {t.mypage.completedCourses}
               </CardTitle>
             </div>
           </CardHeader>
@@ -40,7 +40,7 @@ export function SettingsNotificationsPage() {
             <EmptyState
               icon={Construction}
               title={t.common.comingSoon}
-              description={t.settings.notificationsComingSoon}
+              description={t.mypage.completedComingSoon}
               className={`border-2 border-dashed rounded-lg ${isDark ? 'border-white/10' : 'border-gray-200'}`}
             />
           </CardContent>
