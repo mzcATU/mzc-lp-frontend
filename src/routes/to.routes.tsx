@@ -12,6 +12,11 @@ import {
   CourseTimeCreatePage,
   CourseTimeDetailPage,
 } from '@/pages/to/time';
+import {
+  ProgramListPage,
+  ProgramPendingPage,
+  ProgramDetailPage,
+} from '@/pages/to/program';
 import { DashboardPage, PlaceholderPage } from './pages';
 
 function TenantOperatorWrapper() {
@@ -29,9 +34,9 @@ export const toRoutes = (
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}
-    <Route path="courses" element={<PlaceholderPage title="과정 목록" />} />
-    <Route path="courses/create" element={<PlaceholderPage title="과정 생성" />} />
-    <Route path="courses/:id" element={<PlaceholderPage title="과정 상세" />} />
+    <Route path="courses" element={<ProgramListPage />} />
+    <Route path="courses/pending" element={<ProgramPendingPage />} />
+    <Route path="courses/:id" element={<ProgramDetailPage />} />
     {/* 교육 운영 관리 - 차수(CourseTime) */}
     <Route path="times" element={<CourseTimesPage />} />
     <Route path="times/create" element={<CourseTimeCreatePage />} />
