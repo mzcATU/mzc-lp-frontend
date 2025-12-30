@@ -1,0 +1,281 @@
+/**
+ * 강의 수정 페이지 - 메인 컨테이너
+ * 담당: 전체 레이아웃, 상태 관리, 네비게이션
+ *
+ * 기존 강의 데이터를 불러와 수정하는 페이지
+ * CourseCreatePage와 동일한 Step 구조 사용
+ */
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Save, Upload, Loader2 } from 'lucide-react';
+import { cn } from '@/utils/cn';
+import { Button } from '@/components/common';
+import { categoryService } from '@/services/common';
+import { useCourse, useUpdateCourse } from '@/hooks/tu/useCourseQueries';
+import type { CourseFormData } from '@/types';
+import type { CategoryResponse, UpdateCourseRequest } from '@/types/common';
+import { Step1BasicInfo, Step2Curriculum, Step3Review, translations } from './components';
+import type { TranslationKey } from './components';
+
+interface CourseEditPageProps {
+  language?: 'ko' | 'en';
+}
+
+export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps>) {
+  const navigate = useNavigate();
+  const { courseId } = useParams<{ courseId: string }>();
+  const courseIdNum = Number(courseId);
+
+  const { data: courseData, isLoading, isError } = useCourse(courseIdNum);
+  const updateCourseMutation = useUpdateCourse();
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [formData, setFormData] = useState<CourseFormData>({
+    title: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    categoryId: null,
+    tags: [],
+    level: '',
+    type: '',
+    lessons: [],
+    isDraft: false,
+    multiLanguage: {
+      enabled: false,
+      languages: [],
+    },
+  });
+
+  const totalSteps = 3;
+
+  const getText = (key: TranslationKey) =>
+    language === 'ko' ? translations[key].ko : translations[key].en;
+
+  // 카테고리 목록 조회
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('카테고리 목록 조회 실패:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // 기존 강의 데이터 로드
+  useEffect(() => {
+    if (courseData && !isInitialized) {
+      setFormData({
+        title: courseData.title,
+        description: courseData.description || '',
+        startDate: courseData.startDate || '',
+        endDate: courseData.endDate || '',
+        categoryId: courseData.categoryId,
+        tags: courseData.tags || [],
+        level: courseData.level || '',
+        type: courseData.type || '',
+        lessons: [], // TODO: items를 lessons로 변환하는 로직 필요
+        isDraft: false,
+        multiLanguage: {
+          enabled: false,
+          languages: [],
+        },
+      });
+      setIsInitialized(true);
+    }
+  }, [courseData, isInitialized]);
+
+  // 네비게이션 핸들러
+  const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
+  const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
+  const handleGoToStep = (step: number) => setCurrentStep(step);
+  const handleClose = () => navigate('/tu/teaching/courses');
+
+  const handleSaveDraft = () => {
+    setFormData({ ...formData, isDraft: true, lastSaved: new Date().toISOString() });
+    alert('임시저장되었습니다.');
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.title) {
+      alert('강의명을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const request: UpdateCourseRequest = {
+        title: formData.title,
+        description: formData.description || undefined,
+        level: formData.level || undefined,
+        type: formData.type || undefined,
+        categoryId: formData.categoryId ?? undefined,
+        startDate: formData.startDate || undefined,
+        endDate: formData.endDate || undefined,
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
+      };
+
+      await updateCourseMutation.mutateAsync({ id: courseIdNum, request });
+
+      alert('강의가 수정되었습니다!');
+      navigate(`/tu/teaching/courses/${courseIdNum}`);
+    } catch (error) {
+      console.error('강의 수정 실패:', error);
+      alert('강의 수정에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  // formData 업데이트 핸들러 (Step 컴포넌트들에서 사용)
+  const handleFormDataChange = (updates: Partial<CourseFormData>) => {
+    setFormData((prev) => ({ ...prev, ...updates }));
+  };
+
+  const stepLabels = [getText('step1'), getText('step2'), getText('step3')];
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <div className="bg-bg-app min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-2 text-text-secondary">
+          <Loader2 className="animate-spin" size={24} />
+          <span>강의 정보를 불러오는 중...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (isError || !courseData) {
+    return (
+      <div className="bg-bg-app min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-text-secondary mb-4">강의 정보를 불러올 수 없습니다.</p>
+          <Button onClick={handleClose}>목록으로 돌아가기</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-bg-app min-h-screen">
+      {/* Header */}
+      <div className="bg-bg-default border-b border-border px-6 py-4">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <h1 className="text-text-primary m-0">{getText('editTitle')}</h1>
+          <div className="flex gap-3 items-center">
+            {formData.lastSaved && (
+              <span className="text-text-secondary text-sm">
+                {getText('lastSaved')}: {new Date(formData.lastSaved).toLocaleString('ko-KR')}
+              </span>
+            )}
+            <Button variant="ghost" onClick={handleClose} className="border border-border">
+              {getText('close')}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Steps */}
+      <div className="bg-bg-default border-b border-border px-6 py-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-2">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex-1 flex items-center gap-2">
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm',
+                    currentStep >= step ? 'bg-btn-neutral text-white' : 'bg-border text-text-secondary'
+                  )}
+                >
+                  {step}
+                </div>
+                <span
+                  className={cn(
+                    'text-sm',
+                    currentStep >= step ? 'text-text-primary' : 'text-text-secondary',
+                    currentStep === step && 'font-medium'
+                  )}
+                >
+                  {stepLabels[step - 1]}
+                </span>
+                {step < 3 && (
+                  <div
+                    className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-neutral' : 'bg-border')}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto p-6">
+        <div className="bg-bg-default rounded-xl p-8 border border-border">
+          {/* Step 1: 기본 정보 */}
+          {currentStep === 1 && (
+            <Step1BasicInfo
+              language={language}
+              formData={formData}
+              categories={categories}
+              onFormDataChange={handleFormDataChange}
+            />
+          )}
+
+          {/* Step 2: 회차 구성 */}
+          {currentStep === 2 && (
+            <Step2Curriculum
+              language={language}
+              formData={formData}
+              onFormDataChange={handleFormDataChange}
+            />
+          )}
+
+          {/* Step 3: 검토 및 저장 */}
+          {currentStep === 3 && (
+            <Step3Review
+              language={language}
+              formData={formData}
+              categories={categories}
+              onGoToStep={handleGoToStep}
+            />
+          )}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-6">
+          <div className="flex gap-3">
+            {currentStep > 1 && (
+              <Button onClick={handlePrevious}>
+                <ArrowLeft size={18} />
+                {getText('previous')}
+              </Button>
+            )}
+            <Button variant="ghost" onClick={handleSaveDraft} className="border border-border">
+              <Save size={18} />
+              {getText('saveDraft')}
+            </Button>
+          </div>
+
+          <div>
+            {currentStep < totalSteps ? (
+              <Button onClick={handleNext}>
+                {getText('next')}
+                <ArrowRight size={18} />
+              </Button>
+            ) : (
+              <Button onClick={handleSubmit} disabled={updateCourseMutation.isPending}>
+                <Upload size={18} />
+                {updateCourseMutation.isPending ? '수정 중...' : getText('editSubmit')}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
