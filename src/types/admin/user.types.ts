@@ -3,7 +3,7 @@
  */
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'BLOCKED';
-export type SystemRole = 'SUPER_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'USER';
+export type SystemRole = 'SUPER_ADMIN' | 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'USER';
 export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR' | 'TUTOR' | 'VIEWER';
 
 export interface AdminUser {
