@@ -11,6 +11,8 @@ import {
   MoreHorizontal,
   UserCheck,
   Calendar,
+  Mail,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -24,6 +26,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   NativeSelect,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/common';
 import { useInstructorAssignments } from '@/hooks/to/useInstructorAssignmentQueries';
 import type {
@@ -56,8 +62,8 @@ const t = {
   activeAssignments: { ko: '활동 중', en: 'Active' },
   // 테이블 컬럼
   columnInstructor: { ko: '강사명', en: 'Instructor' },
-  columnCourseTime: { ko: '차수', en: 'Course Time' },
-  columnProgram: { ko: '프로그램', en: 'Program' },
+  columnCourseTime: { ko: '차수명', en: 'Course Time' },
+  columnProgram: { ko: '과정명', en: 'Course' },
   columnRole: { ko: '역할', en: 'Role' },
   columnStatus: { ko: '상태', en: 'Status' },
   columnPeriod: { ko: '학습 기간', en: 'Period' },
@@ -73,6 +79,15 @@ const t = {
   prev: { ko: '이전', en: 'Prev' },
   next: { ko: '다음', en: 'Next' },
   assignmentCount: { ko: '개의 배정', en: ' assignments' },
+  // 사이드 패널
+  panelTitle: { ko: '배정 상세 정보', en: 'Assignment Details' },
+  instructorInfo: { ko: '강사 정보', en: 'Instructor Info' },
+  courseTimeInfo: { ko: '차수 정보', en: 'Course Time Info' },
+  email: { ko: '이메일', en: 'Email' },
+  assignedAt: { ko: '배정일', en: 'Assigned At' },
+  programName: { ko: '과정명', en: 'Course Name' },
+  learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
+  goToCourseTime: { ko: '차수 상세 페이지로 이동', en: 'Go to Course Time' },
 };
 
 const roleBadgeVariant: Record<InstructorRole, 'default' | 'secondary' | 'outline'> = {
@@ -94,6 +109,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
   const [statusFilter, setStatusFilter] = useState<AssignmentStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
+  const [selectedAssignment, setSelectedAssignment] = useState<InstructorAssignmentListResponse | null>(null);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
   const getRoleLabel = (role: InstructorRole) =>
@@ -121,9 +137,9 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
     const query = searchQuery.toLowerCase();
     return assignments.filter(
       (item) =>
-        item.instructor.name.toLowerCase().includes(query) ||
-        item.courseTime.title.toLowerCase().includes(query) ||
-        item.program.title.toLowerCase().includes(query)
+        (item.instructor?.name?.toLowerCase().includes(query) ?? false) ||
+        (item.courseTime?.title?.toLowerCase().includes(query) ?? false) ||
+        (item.program?.title?.toLowerCase().includes(query) ?? false)
     );
   }, [assignments, searchQuery]);
 
@@ -171,7 +187,10 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem onClick={() => navigate(`/to/times/${item.courseTime.id}`)}>
+          <DropdownMenuItem
+            onClick={() => item.courseTime?.id && navigate(`/to/times/${item.courseTime.id}`)}
+            disabled={!item.courseTime?.id}
+          >
             <Eye size={14} />
             {getText('viewCourseTime')}
           </DropdownMenuItem>
@@ -191,10 +210,10 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
         cell: ({ row }) => (
           <div className="max-w-[180px]">
             <p className="text-sm font-medium text-text-primary truncate">
-              {row.original.instructor.name}
+              {row.original.instructor?.name ?? '-'}
             </p>
             <p className="text-xs text-text-secondary truncate">
-              {row.original.instructor.email}
+              {row.original.instructor?.email ?? '-'}
             </p>
           </div>
         ),
@@ -207,7 +226,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
         cell: ({ row }) => (
           <div className="max-w-[150px]">
             <p className="text-sm text-text-primary truncate">
-              {row.original.courseTime.title}
+              {row.original.courseTime?.title ?? '-'}
             </p>
           </div>
         ),
@@ -220,7 +239,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
         cell: ({ row }) => (
           <div className="max-w-[180px]">
             <p className="text-sm text-text-secondary truncate">
-              {row.original.program.title}
+              {row.original.program?.title ?? '-'}
             </p>
           </div>
         ),
@@ -252,7 +271,9 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
         header: getText('columnPeriod'),
         cell: ({ row }) => (
           <span className="text-sm text-text-secondary">
-            {formatPeriod(row.original.courseTime.startDate, row.original.courseTime.endDate)}
+            {row.original.courseTime?.startDate && row.original.courseTime?.endDate
+              ? formatPeriod(row.original.courseTime.startDate, row.original.courseTime.endDate)
+              : '-'}
           </span>
         ),
       },
@@ -446,7 +467,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
               data={filteredAssignments}
               showColumnToggle={false}
               showPagination={true}
-              onRowClick={(item) => navigate(`/to/times/${item.courseTime.id}`)}
+              onRowClick={(item) => setSelectedAssignment(item)}
               labels={{
                 noResults: getText('noResults'),
               }}
@@ -479,6 +500,107 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
           )}
         </div>
       </div>
+
+      {/* Detail Modal */}
+      <Dialog open={!!selectedAssignment} onOpenChange={(open: boolean) => !open && setSelectedAssignment(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{getText('panelTitle')}</DialogTitle>
+          </DialogHeader>
+
+          {selectedAssignment && (
+            <div className="space-y-6">
+              {/* 강사 정보 */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                  <UserCheck size={16} />
+                  {getText('instructorInfo')}
+                </h3>
+                <div className="bg-bg-secondary rounded-lg p-4 space-y-3">
+                  <div>
+                    <p className="text-xs text-text-secondary">{getText('columnInstructor')}</p>
+                    <p className="text-sm font-medium text-text-primary">
+                      {selectedAssignment.instructor?.name ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary flex items-center gap-1">
+                      <Mail size={12} />
+                      {getText('email')}
+                    </p>
+                    <p className="text-sm text-text-primary">
+                      {selectedAssignment.instructor?.email ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary">{getText('columnRole')}</p>
+                    <Badge variant={roleBadgeVariant[selectedAssignment.role]} className="mt-1">
+                      {getRoleLabel(selectedAssignment.role)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary">{getText('columnStatus')}</p>
+                    <Badge variant={statusBadgeVariant[selectedAssignment.status]} className="mt-1">
+                      {getStatusLabel(selectedAssignment.status)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary">{getText('assignedAt')}</p>
+                    <p className="text-sm text-text-primary">
+                      {formatDate(selectedAssignment.assignedAt)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 차수 정보 */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                  <Calendar size={16} />
+                  {getText('courseTimeInfo')}
+                </h3>
+                <div className="bg-bg-secondary rounded-lg p-4 space-y-3">
+                  <div>
+                    <p className="text-xs text-text-secondary">{getText('columnCourseTime')}</p>
+                    <p className="text-sm font-medium text-text-primary">
+                      {selectedAssignment.courseTime?.title ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary">{getText('programName')}</p>
+                    <p className="text-sm text-text-primary">
+                      {selectedAssignment.program?.title ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary">{getText('learningPeriod')}</p>
+                    <p className="text-sm text-text-primary">
+                      {selectedAssignment.courseTime?.startDate && selectedAssignment.courseTime?.endDate
+                        ? `${formatDate(selectedAssignment.courseTime.startDate)} ~ ${formatDate(selectedAssignment.courseTime.endDate)}`
+                        : '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 차수 상세 페이지 이동 버튼 */}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  if (selectedAssignment.courseTime?.id) {
+                    navigate(`/to/times/${selectedAssignment.courseTime.id}`);
+                  }
+                }}
+                disabled={!selectedAssignment.courseTime?.id}
+              >
+                <ExternalLink size={16} />
+                {getText('goToCourseTime')}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
