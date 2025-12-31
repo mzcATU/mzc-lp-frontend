@@ -310,22 +310,22 @@ export function LearningPlayerPage() {
 
       {/* 헤더 */}
       <header
-        className={`flex items-center justify-between px-4 py-3 border-b ${
-          isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-gray-200'
+        className={`flex items-center px-4 py-3 border-b shrink-0 ${
+          isDark ? 'bg-[#1e1e1e] border-white/10' : 'bg-[#f7f9fa] border-gray-200'
         }`}
       >
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2">
+        <div className="flex items-center gap-4 min-w-0">
+          <Button variant="ghost" size="sm" onClick={handleBack} className={`gap-1 shrink-0 px-1 ${isDark ? 'hover:bg-white/10 text-gray-300 hover:text-gray-300' : ''}`}>
             <ArrowLeft className="w-4 h-4" />
-            {t.player.backToCourse}
+            <span className="hidden sm:inline">{t.player.backToCourse}</span>
           </Button>
-          <div className={`h-6 w-px ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-          <h1 className={`text-base font-semibold truncate max-w-md ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <div className={`h-6 w-px shrink-0 ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+          <h1 className={`text-sm sm:text-base font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {enrollment?.programTitle ?? t.player.defaultTitle}
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {isCompleted && (
             <Badge variant="green" className="gap-1">
               <CheckCircle className="w-3 h-3" />
@@ -347,8 +347,9 @@ export function LearningPlayerPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* 비디오 영역 */}
         <main className={`flex-1 flex flex-col overflow-hidden ${sidebarOpen ? 'lg:mr-80' : ''}`}>
-          <div className="flex-1 p-4 lg:p-8 overflow-y-auto">
-            <div className="max-w-4xl mx-auto">
+          {/* 비디오 플레이어 영역 */}
+          <div className={`shrink-0 ${isDark ? 'bg-black' : 'bg-black'}`}>
+            <div className="max-w-5xl mx-auto">
               {/* 비디오 플레이어 */}
               {currentContentId && currentContentType === 'VIDEO' && (
                 <VideoPlayer
@@ -392,9 +393,29 @@ export function LearningPlayerPage() {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* 콘텐츠 정보 영역 */}
+          <div className={`flex-1 p-4 lg:p-6 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+            <div className="max-w-5xl mx-auto">
+              {/* 현재 학습 콘텐츠 제목 */}
+              {currentItemId && (
+                <div className={`rounded-xl p-4 mb-4 ${isDark ? 'bg-[#2a2a2a] border border-white/10' : 'bg-[#ffffff] border border-gray-200'}`}>
+                  <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {demoCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || '콘텐츠'}
+                  </h2>
+                  {isCompleted && (
+                    <div className="flex items-center gap-2 mt-2 text-green-500">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">학습 완료</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 자동 저장 표시 */}
-              <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center justify-between">
                 <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                   {t.player.autoSaved}: {new Date(lastSaveTime).toLocaleTimeString()}
                 </span>
@@ -404,28 +425,44 @@ export function LearningPlayerPage() {
 
           {/* 하단 네비게이션 */}
           <footer
-            className={`flex items-center justify-between px-4 py-3 border-t ${
-              isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-gray-200'
+            className={`flex items-center justify-between px-4 py-3 border-t shrink-0 ${
+              isDark ? 'bg-[#1e1e1e] border-white/10' : 'bg-[#f7f9fa] border-gray-200'
             }`}
           >
-            <Button variant="outline" onClick={handlePrevious} disabled={!hasPrevious} className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevious}
+              disabled={!hasPrevious}
+              className={`gap-1 sm:gap-2 ${isDark ? 'bg-transparent border-white/15 text-gray-300 hover:bg-white/5 hover:text-gray-200' : ''}`}
+            >
               <ChevronLeft className="w-4 h-4" />
-              {t.player.previous}
+              <span className="hidden sm:inline">{t.player.previous}</span>
             </Button>
 
             {!isCompleted && (
-              <Button onClick={handleComplete} disabled={markItemComplete.isPending}>
+              <button
+                onClick={handleComplete}
+                disabled={markItemComplete.isPending}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium text-sm hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50"
+              >
                 {markItemComplete.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <CheckCircle className="w-4 h-4 mr-2" />
+                  <CheckCircle className="w-4 h-4" />
                 )}
-                {t.player.markComplete}
-              </Button>
+                <span className="hidden sm:inline">{t.player.markComplete}</span>
+              </button>
             )}
 
-            <Button variant="outline" onClick={handleNext} disabled={!hasNext} className="gap-2">
-              {t.player.next}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNext}
+              disabled={!hasNext}
+              className={`gap-1 sm:gap-2 ${isDark ? 'bg-transparent border-white/15 text-gray-300 hover:bg-white/5 hover:text-gray-200' : ''}`}
+            >
+              <span className="hidden sm:inline">{t.player.next}</span>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </footer>
