@@ -74,7 +74,7 @@ const t = {
   confirm: { ko: '확인', en: 'Confirm' },
   notSet: { ko: '미설정', en: 'Not set' },
   hours: { ko: '시간', en: 'hours' },
-  creatorId: { ko: '생성자 ID', en: 'Creator ID' },
+  creator: { ko: '생성자', en: 'Creator' },
   noSnapshot: { ko: '연결된 스냅샷이 없습니다.', en: 'No snapshot linked.' },
   courseDetails: { ko: '과정 세부 정보', en: 'Course Details' },
   metadata: { ko: '메타데이터', en: 'Metadata' },
@@ -299,11 +299,11 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 </div>
                 <div>
                   <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('creatorId')}
+                    {getText('creator')}
                   </Label>
                   <p className="text-text-primary mt-1 font-medium flex items-center gap-1">
                     <User size={14} className="text-text-secondary" />
-                    {program.creatorId}
+                    {program.creatorName || (program.creatorId ? `ID: ${program.creatorId}` : '-')}
                   </p>
                 </div>
               </div>
@@ -392,7 +392,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                       {getText('approvedBy')}
                     </Label>
                     <p className="text-text-primary mt-1">
-                      {program.approvedBy || getText('notSet')}
+                      {program.approvedByName || (program.approvedBy ? `ID: ${program.approvedBy}` : getText('notSet'))}
                     </p>
                   </div>
                   <div>
