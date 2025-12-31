@@ -10,3 +10,4 @@ export { notificationService } from './notificationService';
 export { courseExploreService } from './courseExploreService';
 export { roadmapExploreService } from './roadmapExploreService';
 export { communityService } from './communityService';
+export { instructorService } from './instructorService';

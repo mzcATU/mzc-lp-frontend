@@ -178,3 +178,17 @@ export {
   useLikePost,
   useUnlikePost,
 } from './useCommunityQueries';
+
+// Instructor Hooks
+export {
+  instructorKeys,
+  usePopularInstructors,
+  useInstructorProfile,
+  useInstructorCourses,
+  useInstructorRoadmaps,
+  useInstructorPosts,
+  useInstructorReviews,
+  useFollowStatus,
+  useFollowInstructor,
+  useUnfollowInstructor,
+} from './useInstructorQueries';

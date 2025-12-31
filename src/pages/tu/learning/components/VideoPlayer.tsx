@@ -178,7 +178,7 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className={`relative w-full aspect-video rounded-lg flex items-center justify-center ${
+        className={`relative w-full aspect-video flex items-center justify-center ${
           isDark ? 'bg-white/5' : 'bg-gray-100'
         }`}
       >
@@ -205,7 +205,7 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className={`relative w-full aspect-video rounded-lg flex flex-col items-center justify-center gap-4 ${
+        className={`relative w-full aspect-video flex flex-col items-center justify-center gap-4 ${
           isDark ? 'bg-white/5' : 'bg-gray-100'
         }`}
       >
@@ -224,7 +224,7 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className="relative w-full aspect-video rounded-lg overflow-hidden"
+        className="relative w-full aspect-video overflow-hidden"
         style={{ backgroundColor: '#000' }}
       >
         <video
@@ -243,7 +243,7 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className="relative w-full aspect-video rounded-lg overflow-hidden"
+        className="relative w-full aspect-video overflow-hidden"
         style={{ backgroundColor: '#000' }}
       >
         <ReactPlayer
@@ -271,7 +271,7 @@ export function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video rounded-lg overflow-hidden group"
+      className="relative w-full aspect-video overflow-hidden group"
       style={{ backgroundColor: '#000' }}
     >
       <ReactPlayer
