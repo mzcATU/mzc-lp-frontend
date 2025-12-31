@@ -94,7 +94,7 @@ export function LandingHeader() {
             />
             <button
               type="submit"
-              className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full landing-btn-primary w-9 h-9 flex items-center justify-center"
+              className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] hover:from-[#8b99ff] hover:to-[#c084fc] w-9 h-9 flex items-center justify-center transition-colors"
             >
               <Search className="h-4 w-4 text-white" />
             </button>
