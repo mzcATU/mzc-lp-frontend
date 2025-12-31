@@ -278,7 +278,11 @@ export const myPageMenuData: MenuItem[] = [
     id: 'mypage-settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    path: '/mypage/settings',
+    subItems: [
+      { id: 'profile-security', label: { ko: '프로필 및 보안', en: 'Profile & Security' }, icon: Shield, path: '/mypage/settings/security' },
+      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Megaphone, path: '/mypage/settings/notifications' },
+      { id: 'language-region', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/mypage/settings/language' },
+    ],
   },
 ];
 

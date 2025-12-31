@@ -13,7 +13,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { designTokens } from '@/styles/admin-design-tokens';
+import { useThemeStore } from '@/store/common/themeStore';
+import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
 import {
   Button,
   Input,
@@ -24,9 +25,6 @@ import {
   Badge,
   Alert,
   AlertDescription,
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
   Label,
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +48,10 @@ export function SettingsSecurityPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { theme } = useThemeStore();
+  const { t } = useTranslation();
+  const { language } = useLanguageStore();
+  const isDark = theme === 'dark';
 
   // API Hooks
   const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
@@ -106,7 +108,11 @@ export function SettingsSecurityPage() {
     }
 
     try {
-      await updateProfileMutation.mutateAsync({ name: profileData.name });
+      // 현재 프로필 이미지 URL도 함께 전송하여 이미지가 사라지지 않도록 함
+      await updateProfileMutation.mutateAsync({
+        name: profileData.name,
+        profileImageUrl: profile?.profileImageUrl,
+      });
       toast.success('프로필 정보가 저장되었습니다.');
     } catch {
       toast.error('프로필 저장에 실패했습니다.');
@@ -218,103 +224,105 @@ export function SettingsSecurityPage() {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+    return new Date(dateString).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
   };
 
+  const cardClass = isDark
+    ? 'bg-white/5 border-white/10'
+    : 'bg-white border-gray-200 shadow-sm';
+
+  const inputClass = isDark
+    ? 'bg-white/5 border-white/10 text-white placeholder:text-gray-500'
+    : 'bg-white border-gray-200 text-gray-900';
+
+  const readonlyInputClass = isDark
+    ? 'bg-white/5 border-white/10 text-gray-400'
+    : 'bg-gray-50 border-gray-200 text-gray-500';
+
   if (isLoadingProfile) {
     return (
-      <div
-        className="flex items-center justify-center min-h-full"
-        style={{ backgroundColor: designTokens.bg.app_default }}
-      >
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.secondary }} />
+      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+        <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        padding: '40px',
-        backgroundColor: designTokens.bg.app_default,
-        minHeight: '100%',
-      }}
-    >
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-3xl mx-auto">
         {/* Header with Back Button */}
         <Button
           variant="ghost"
           onClick={handleBack}
-          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
+          className={`mb-6 gap-2 ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>설정으로 돌아가기</span>
+          <span>{language === 'ko' ? '설정으로 돌아가기' : 'Back to Settings'}</span>
         </Button>
 
-        <h1
-          style={{
-            color: designTokens.text.primary,
-            fontSize: '24px',
-            fontWeight: 600,
-            marginBottom: '8px',
-          }}
-        >
-          계정 및 보안
+        <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          {t.profileSecurity.title}
         </h1>
-        <p style={{ color: designTokens.text.secondary, marginBottom: '32px' }}>
-          계정 정보 및 보안 설정을 관리하세요
+        <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          {t.profileSecurity.description}
         </p>
 
         {/* Profile Information Section */}
-        <Card className="mb-6">
-          <CardHeader className="border-b px-6 py-4">
+        <Card className={`mb-6 ${cardClass}`}>
+          <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
             <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
-              <CardTitle className="text-lg font-medium">프로필 정보</CardTitle>
+              <Shield className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+              <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {t.profileSecurity.profileInfo}
+              </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
+          <CardContent className="px-6 py-6">
             {/* Profile Image */}
-            <div className="mb-5">
-              <Label className="mb-3 text-muted-foreground text-sm">프로필 이미지</Label>
+            <div className="mb-6">
+              <Label className={`mb-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {t.profileSecurity.profileImage}
+              </Label>
               <div className="flex items-center gap-4 mt-3">
-                <Avatar className="w-20 h-20">
-                  {profileImagePreview ? (
-                    <AvatarImage src={profileImagePreview} alt="Profile" />
-                  ) : (
-                    <AvatarFallback>
-                      <User className="w-8 h-8" style={{ color: designTokens.text.placeholder }} />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                <div className="relative">
+                  <div className={`w-20 h-20 rounded-full flex items-center justify-center overflow-hidden ${
+                    isDark ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]' : 'bg-blue-100'
+                  }`}>
+                    {profileImagePreview ? (
+                      <img src={profileImagePreview} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className={`w-10 h-10 ${isDark ? 'text-white' : 'text-blue-600'}`} />
+                    )}
+                  </div>
+                  <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="gap-2"
                     disabled={uploadImageMutation.isPending}
+                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform"
                   >
                     {uploadImageMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
                     ) : (
-                      <Camera className="w-4 h-4" />
+                      <Camera className="w-4 h-4 text-gray-600" />
                     )}
-                    이미지 변경
-                  </Button>
+                  </button>
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
-                    style={{ display: 'none' }}
+                    className="hidden"
                   />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    JPG, PNG (최대 5MB)
+                </div>
+                <div>
+                  <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t.profileSecurity.imageGuide}
+                  </p>
+                  <p className="text-xs mt-1 text-gray-500">
+                    {t.profileSecurity.imageClickGuide}
                   </p>
                 </div>
               </div>
@@ -322,122 +330,122 @@ export function SettingsSecurityPage() {
 
             {/* Name */}
             <div className="mb-5">
+              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {t.profileSecurity.name}
+              </Label>
               <Input
-                label="이름"
                 value={profileData.name}
                 onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
+                className={inputClass}
               />
             </div>
 
             {/* Email (Read-only) */}
             <div className="mb-5">
-              <Label className="flex items-center gap-2 mb-2 text-muted-foreground text-sm">
+              <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 <Mail className="w-4 h-4" />
-                이메일
+                {t.profileSecurity.email}
               </Label>
               <input
                 type="email"
                 value={profile?.email || ''}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed"
-                style={{
-                  backgroundColor: designTokens.bg.secondary,
-                  color: designTokens.text.secondary,
-                  border: `1px solid ${designTokens.bg.border}`,
-                }}
+                className={`w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border ${readonlyInputClass}`}
               />
             </div>
 
             {/* Join Date (Read-only) */}
             <div className="mb-6">
-              <Label className="flex items-center gap-2 mb-2 text-muted-foreground text-sm">
+              <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 <Calendar className="w-4 h-4" />
-                가입일
+                {t.profileSecurity.joinDate}
               </Label>
               <input
                 type="text"
                 value={formatDate(profile?.createdAt)}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed"
-                style={{
-                  backgroundColor: designTokens.bg.secondary,
-                  color: designTokens.text.secondary,
-                  border: `1px solid ${designTokens.bg.border}`,
-                }}
+                className={`w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border ${readonlyInputClass}`}
               />
             </div>
 
             {/* Save Button */}
-            <Button
-              onClick={handleProfileSave}
-              disabled={updateProfileMutation.isPending}
-            >
+            <Button onClick={handleProfileSave} disabled={updateProfileMutation.isPending}>
               {updateProfileMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  저장 중...
+                  {t.profileSecurity.processing}
                 </>
               ) : (
-                '저장'
+                t.common.save
               )}
             </Button>
           </CardContent>
         </Card>
 
         {/* Password Change Section */}
-        <Card className="mb-6">
-          <CardHeader className="border-b px-6 py-4">
+        <Card className={`mb-6 ${cardClass}`}>
+          <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
             <div className="flex items-center gap-3">
-              <Lock className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
-              <CardTitle className="text-lg font-medium">비밀번호 변경</CardTitle>
+              <Lock className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+              <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {t.profileSecurity.passwordChange}
+              </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
+          <CardContent className="px-6 py-6">
             <div className="mb-5">
+              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {t.profileSecurity.currentPassword}
+              </Label>
               <Input
-                label="현재 비밀번호"
                 type="password"
                 value={passwordData.currentPassword}
                 onChange={(e) =>
                   setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))
                 }
+                className={inputClass}
               />
             </div>
 
             <div className="mb-5">
+              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {t.profileSecurity.newPassword}
+              </Label>
               <Input
-                label="새 비밀번호"
                 type="password"
                 value={passwordData.newPassword}
                 onChange={(e) =>
                   setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))
                 }
+                className={inputClass}
               />
-              <p className="text-xs text-muted-foreground mt-1.5">최소 8자 이상 입력해주세요</p>
+              <p className="text-xs mt-1.5 text-gray-500">
+                {t.profileSecurity.passwordMinLength}
+              </p>
             </div>
 
             <div className="mb-6">
+              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {t.profileSecurity.confirmPassword}
+              </Label>
               <Input
-                label="새 비밀번호 확인"
                 type="password"
                 value={passwordData.confirmPassword}
                 onChange={(e) =>
                   setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))
                 }
+                className={inputClass}
               />
             </div>
 
-            <Button
-              onClick={handlePasswordChange}
-              disabled={changePasswordMutation.isPending}
-            >
+            <Button onClick={handlePasswordChange} disabled={changePasswordMutation.isPending}>
               {changePasswordMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  변경 중...
+                  {t.profileSecurity.processing}
                 </>
               ) : (
-                '비밀번호 변경'
+                t.profileSecurity.changePassword
               )}
             </Button>
           </CardContent>
@@ -445,16 +453,20 @@ export function SettingsSecurityPage() {
 
         {/* Design Authority Section (User Role Only) */}
         {isUserRole && (
-          <Card className="mb-6">
-            <CardHeader className="border-b px-6 py-4">
+          <Card className={`mb-6 ${cardClass}`}>
+            <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
-                <CardTitle className="text-lg font-medium">강의 개설 권한</CardTitle>
+                <CheckCircle className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {t.profileSecurity.coursePermission}
+                </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="px-6 pb-6">
+            <CardContent className="px-6 py-6">
               <div className="mb-5">
-                <Label className="mb-3 text-muted-foreground text-sm">현재 권한 상태</Label>
+                <Label className={`mb-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {t.profileSecurity.currentPermissionStatus}
+                </Label>
                 <div className="mt-3">
                   <Badge variant={getAuthBadgeVariant(designAuthStatus)} className="px-4 py-2 text-sm">
                     {getAuthLabel(designAuthStatus)}
@@ -464,36 +476,27 @@ export function SettingsSecurityPage() {
 
               {designAuthStatus === 'USER' && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                    강의를 개설하고 콘텐츠를 등록하려면 권한을 요청해주세요.
+                  <p className={`text-sm mb-4 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {t.profileSecurity.permissionRequestDesc}
                   </p>
-                  <Button
-                    onClick={handleRequestDesignAuth}
-                    disabled={isRequestPending}
-                  >
+                  <Button onClick={handleRequestDesignAuth} disabled={isRequestPending}>
                     {isRequestPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        요청 중...
+                        {language === 'ko' ? '요청 중...' : 'Requesting...'}
                       </>
                     ) : (
-                      '강의 개설 권한 요청'
+                      t.profileSecurity.requestPermission
                     )}
                   </Button>
                 </div>
               )}
 
               {(designAuthStatus === 'DESIGNER' || designAuthStatus === 'OWNER') && (
-                <Alert
-                  className="flex items-center gap-3"
-                  style={{
-                    backgroundColor: designTokens.status.success_background,
-                    borderColor: designTokens.status.success_text,
-                  }}
-                >
-                  <CheckCircle className="w-5 h-5" style={{ color: designTokens.status.success_text }} />
-                  <AlertDescription style={{ color: designTokens.status.success_text }}>
-                    강의 개설 및 콘텐츠 등록 권한이 활성화되었습니다.
+                <Alert className={`flex items-center gap-3 ${isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200'}`}>
+                  <CheckCircle className={`w-5 h-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+                  <AlertDescription className={isDark ? 'text-green-400' : 'text-green-700'}>
+                    {t.profileSecurity.permissionEnabled}
                   </AlertDescription>
                 </Alert>
               )}
@@ -502,23 +505,19 @@ export function SettingsSecurityPage() {
         )}
 
         {/* Account Management Section */}
-        <Card>
-          <CardHeader className="border-b px-6 py-4">
+        <Card className={cardClass}>
+          <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5" style={{ color: designTokens.badge.orange.text }} />
-              <CardTitle className="text-lg font-medium">계정 관리</CardTitle>
+              <AlertTriangle className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
+              <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {t.profileSecurity.accountManagement}
+              </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <Alert
-              className="mb-4"
-              style={{
-                backgroundColor: designTokens.status.warning_background,
-                borderColor: designTokens.status.warning_text,
-              }}
-            >
-              <AlertDescription style={{ color: designTokens.status.warning_text }}>
-                계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
+          <CardContent className="px-6 py-6">
+            <Alert className={`mb-4 ${isDark ? 'bg-orange-500/10 border-orange-500/30' : 'bg-orange-50 border-orange-200'}`}>
+              <AlertDescription className={isDark ? 'text-orange-400' : 'text-orange-700'}>
+                {t.profileSecurity.accountDeleteWarning}
               </AlertDescription>
             </Alert>
 
@@ -526,43 +525,35 @@ export function SettingsSecurityPage() {
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  style={{
-                    color: designTokens.status.error_text,
-                    borderColor: designTokens.status.error_text,
-                  }}
-                  className="hover:bg-red-50"
+                  className={`text-red-500 border-red-500 ${isDark ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}
                 >
-                  회원 탈퇴
+                  {t.profileSecurity.withdraw}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
+                  <AlertDialogTitle>{t.profileSecurity.withdraw}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며,
-                    모든 데이터가 영구적으로 삭제됩니다.
+                    {t.profileSecurity.withdrawDesc}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="py-4">
                   <Input
-                    label="비밀번호 확인"
+                    label={t.profileSecurity.currentPassword}
                     type="password"
                     value={withdrawPassword}
                     onChange={(e) => setWithdrawPassword(e.target.value)}
-                    placeholder="현재 비밀번호를 입력하세요"
+                    placeholder={language === 'ko' ? '현재 비밀번호를 입력하세요' : 'Enter current password'}
                   />
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleWithdraw}
-                    style={{
-                      backgroundColor: designTokens.status.error_text,
-                      color: 'white',
-                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white"
                     disabled={withdrawMutation.isPending || !withdrawPassword}
                   >
-                    {withdrawMutation.isPending ? '처리 중...' : '탈퇴하기'}
+                    {withdrawMutation.isPending ? t.profileSecurity.processing : t.profileSecurity.withdraw}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

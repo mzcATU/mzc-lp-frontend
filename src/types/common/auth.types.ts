@@ -34,6 +34,7 @@ export interface ChangePasswordRequest {
 export interface UpdateProfileRequest {
   name?: string;
   phone?: string;
+  profileImageUrl?: string;
 }
 
 // --- Response DTOs ---
