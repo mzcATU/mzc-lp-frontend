@@ -215,16 +215,6 @@ export function WishlistPage() {
                       {item.discount}% 할인
                     </span>
                   )}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      removeItem(item.id);
-                    }}
-                    disabled={removeFromWishlistMutation.isPending}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-black/50 text-white hover:bg-red-500 transition-colors disabled:opacity-50"
-                  >
-                    <Heart className="w-4 h-4 fill-current" />
-                  </button>
                 </Link>
 
                 {/* Content */}
