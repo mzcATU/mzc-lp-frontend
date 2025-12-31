@@ -1,0 +1,1 @@
+export { InstructorAssignmentsPage } from './InstructorAssignmentsPage';
