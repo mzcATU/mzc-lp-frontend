@@ -370,3 +370,8 @@ export { ToggleGroup, ToggleGroupItem } from './ToggleGroup';
 // 9. AUTH - 인증 관련
 // ═══════════════════════════════════════════════════════════════════════════════
 export { ProtectedRoute } from './ProtectedRoute';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 10. WISHLIST - 찜 기능
+// ═══════════════════════════════════════════════════════════════════════════════
+export { WishlistButton } from './WishlistButton';

@@ -314,7 +314,7 @@ export function CourseDetailPage() {
         if (isWishlisted) {
           await removeFromWishlistMutation.mutateAsync(course.id);
         } else {
-          await addToWishlistMutation.mutateAsync(course.id);
+          await addToWishlistMutation.mutateAsync({ courseId: course.id });
         }
         setIsWishlisted(!isWishlisted);
       } catch (err) {
