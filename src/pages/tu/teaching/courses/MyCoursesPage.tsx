@@ -99,7 +99,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   const avgCompletion = Math.round(TEACHING_COURSES.reduce((acc, c) => acc + c.progress, 0) / TEACHING_COURSES.length);
 
   return (
-    <div className="p-8 bg-bg-default min-h-screen">
+    <div className="p-8 bg-bg-app_default min-h-screen">
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>

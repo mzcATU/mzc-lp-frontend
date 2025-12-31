@@ -208,12 +208,12 @@ export function BaseSidebar({
 
   return (
     <aside
-      className={cn(
-        'flex-shrink-0 transition-all duration-300',
-        isExpanded ? 'p-4' : 'p-2',
-        isDarkMode ? 'bg-[#1e1e1e]' : 'bg-gray-50'
-      )}
-      style={{ width: isExpanded ? '280px' : '84px' }}
+      className="flex-shrink-0 transition-all duration-300"
+      style={{
+        width: isExpanded ? '280px' : '84px',
+        padding: isExpanded ? '16px' : '8px',
+        backgroundColor: isDarkMode ? '#1e1e1e' : designTokens.bg.app_default,
+      }}
     >
       {/* 카드형 사이드바 */}
       <div
@@ -356,7 +356,7 @@ export function BaseSidebar({
                 {/* Level 2 Sub-Menu Items */}
                 {hasSubItems && isExpanded && isExpandedItem && (
                   <div
-                    className="mt-1 ml-4 pl-4 border-l-2"
+                    className="mt-1 ml-4 pl-4 border-l-2 space-y-1"
                     style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb' }}
                   >
                     {item.subItems!.map((subItem) => {
