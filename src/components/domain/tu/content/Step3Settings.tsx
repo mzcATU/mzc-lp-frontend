@@ -6,6 +6,7 @@ import { RadioOptionCard } from '@/components/common';
 interface Step3Props {
   data: LOData;
   onUpdate: (data: Partial<LOData>) => void;
+  isExternalLink?: boolean;
 }
 
 const completionOptions: { value: CompletionCriteria; label: string; description: string }[] = [
@@ -41,7 +42,7 @@ const accessOptions: { value: AccessControl; icon: typeof Globe; label: string; 
   },
 ];
 
-export function Step3Settings({ data, onUpdate }: Readonly<Step3Props>) {
+export function Step3Settings({ data, onUpdate, isExternalLink = false }: Readonly<Step3Props>) {
   return (
     <div className="space-y-8">
       {/* 학습 정책 섹션 */}
@@ -51,27 +52,33 @@ export function Step3Settings({ data, onUpdate }: Readonly<Step3Props>) {
           <h2 className="text-text-primary font-medium text-lg">학습 정책</h2>
         </div>
 
-        {/* 다운로드 허용 */}
-        <div className="mb-6 pb-6 border-b border-border">
+        {/* 다운로드 허용 - 외부 링크일 때는 비활성화 */}
+        <div className={cn('mb-6 pb-6 border-b border-border', isExternalLink && 'opacity-50')}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-text-primary mb-1">다운로드 허용</p>
-              <p className="text-sm text-text-secondary">학습자가 콘텐츠를 다운로드할 수 있도록 허용합니다</p>
+              <p className="text-sm text-text-secondary">
+                {isExternalLink
+                  ? '외부 링크는 다운로드를 지원하지 않습니다'
+                  : '학습자가 콘텐츠를 다운로드할 수 있도록 허용합니다'}
+              </p>
             </div>
             <button
               type="button"
               role="switch"
               aria-checked={data.allowDownload}
-              onClick={() => onUpdate({ allowDownload: !data.allowDownload })}
+              onClick={() => !isExternalLink && onUpdate({ allowDownload: !data.allowDownload })}
+              disabled={isExternalLink}
               className={cn(
                 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                data.allowDownload ? 'bg-btn-neutral' : 'bg-border'
+                data.allowDownload && !isExternalLink ? 'bg-btn-neutral' : 'bg-border',
+                isExternalLink && 'cursor-not-allowed'
               )}
             >
               <span
                 className={cn(
                   'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                  data.allowDownload ? 'translate-x-6' : 'translate-x-1'
+                  data.allowDownload && !isExternalLink ? 'translate-x-6' : 'translate-x-1'
                 )}
               />
             </button>

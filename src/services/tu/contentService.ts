@@ -29,6 +29,7 @@ interface UploadFileOptions {
   description?: string;
   tags?: string;
   thumbnail?: File;
+  downloadable?: boolean;
 }
 
 export const contentService = {
@@ -51,6 +52,9 @@ export const contentService = {
     }
     if (options?.thumbnail) {
       formData.append('thumbnail', options.thumbnail);
+    }
+    if (options?.downloadable !== undefined) {
+      formData.append('downloadable', String(options.downloadable));
     }
 
     const { data } = await axiosInstance.post<{ data: ContentResponse }>(
