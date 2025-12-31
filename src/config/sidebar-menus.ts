@@ -44,6 +44,7 @@ import {
   PenTool,
   CheckSquare,
   Briefcase,
+  ImageIcon,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -188,6 +189,14 @@ export const tenantOperatorMenuData: MenuItem[] = [
     subItems: [
       { id: 'time-management', label: { ko: '차수 관리', en: 'Course Time Management' }, icon: Calendar, path: '/to/times' },
       { id: 'instructor-assignment', label: { ko: '강사 배정', en: 'Instructor Assignment' }, icon: UserCheck, path: '/to/instructors' },
+    ],
+  },
+  {
+    id: 'branding-management',
+    label: { ko: '홈 화면 관리', en: 'Home Screen Management' },
+    icon: ImageIcon,
+    subItems: [
+      { id: 'banner-management', label: { ko: '배너 관리', en: 'Banner Management' }, icon: ImageIcon, path: '/to/branding' },
     ],
   },
   {
