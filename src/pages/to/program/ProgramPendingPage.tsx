@@ -56,6 +56,7 @@ const t = {
   columnTitle: { ko: '과정명', en: 'Title' },
   columnLevel: { ko: '레벨', en: 'Level' },
   columnType: { ko: '타입', en: 'Type' },
+  columnCreator: { ko: '생성자', en: 'Creator' },
   columnSubmittedAt: { ko: '신청일', en: 'Submitted' },
   columnActions: { ko: '액션', en: 'Actions' },
   view: { ko: '상세보기', en: 'View Details' },
@@ -245,6 +246,17 @@ export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingP
         cell: ({ row }) => (
           <span className="text-sm text-text-secondary whitespace-nowrap">
             {row.original.type ? PROGRAM_TYPE_LABELS[row.original.type] : getText('notSet')}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'creatorName',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={getText('columnCreator')} />
+        ),
+        cell: ({ row }) => (
+          <span className="text-sm text-text-secondary whitespace-nowrap">
+            {row.original.creatorName || (row.original.creatorId ? `ID: ${row.original.creatorId}` : '-')}
           </span>
         ),
       },
