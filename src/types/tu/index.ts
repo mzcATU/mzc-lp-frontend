@@ -177,3 +177,21 @@ export {
   POST_TYPE_LABELS,
   COMMUNITY_SORT_OPTIONS,
 } from './community.types';
+
+// Curriculum (강의 커리큘럼 편집)
+export type {
+  CurriculumItemType,
+  CurriculumFolderItem,
+  CurriculumContentItem,
+  CurriculumItem,
+  CurriculumFormData,
+} from './curriculum.types';
+
+export {
+  isCurriculumFolder,
+  isCurriculumContent,
+  createFolderItem,
+  createContentItem,
+  findItemInTree,
+  findParentInTree,
+} from './curriculum.types';
