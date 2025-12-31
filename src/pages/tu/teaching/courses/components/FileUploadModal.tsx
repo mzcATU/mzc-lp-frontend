@@ -134,7 +134,7 @@ export function FileUploadModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-md bg-bg-default">
+      <DialogContent className="max-w-md sm:max-w-md bg-bg-default">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-text-primary">
             <Upload size={20} />
@@ -177,7 +177,7 @@ export function FileUploadModal({
                 <div className="flex h-10 w-10 items-center justify-center rounded-md bg-bg-secondary text-text-secondary">
                   {getFileIcon(selectedFile)}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 w-0">
                   <p className="text-sm font-medium text-text-primary truncate">
                     {selectedFile.name}
                   </p>
