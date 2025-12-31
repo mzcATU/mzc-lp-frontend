@@ -1,8 +1,42 @@
 /**
- * 찜 목록(Wishlist) 관련 타입 정의
+ * 찜 목록(Wishlist) 관련 타입 정의 - 백엔드 API 스펙 기반
  */
 
-// 찜 목록 아이템
+// 찜 아이템 응답 (백엔드 WishlistItemResponse)
+export interface WishlistItemResponse {
+  id: number;
+  courseId: number;
+  courseTitle: string | null;
+  courseThumbnailUrl: string | null;
+  courseLevel: string | null;
+  courseType: string | null;
+  courseEstimatedHours: number | null;
+  addedAt: string;
+}
+
+// 찜 추가 요청
+export interface WishlistAddRequest {
+  courseId: number;
+}
+
+// 여러 강의 찜 여부 확인 요청
+export interface WishlistCheckRequest {
+  courseIds: number[];
+}
+
+// 여러 강의 찜 여부 확인 응답
+export interface WishlistCheckResponse {
+  wishlistStatus: Record<number, boolean>;
+}
+
+// 찜 개수 응답
+export interface WishlistCountResponse {
+  count: number;
+}
+
+// === Legacy 타입 (하위 호환용) ===
+
+/** @deprecated Use WishlistItemResponse instead */
 export interface WishlistItem {
   id: number;
   courseId: number;
@@ -19,23 +53,23 @@ export interface WishlistItem {
   addedAt?: string;
 }
 
-// 찜 목록 응답
+/** @deprecated Use Page<WishlistItemResponse> instead */
 export interface WishlistResponse {
   items: WishlistItem[];
   totalCount: number;
 }
 
-// 찜 추가 요청
+/** @deprecated Use WishlistAddRequest instead */
 export interface AddToWishlistRequest {
   courseId: number;
 }
 
-// 찜 삭제 요청
+/** @deprecated */
 export interface RemoveFromWishlistRequest {
   itemIds: number[];
 }
 
-// 찜 목록 전체 장바구니 담기 요청
+/** @deprecated */
 export interface AddAllToCartRequest {
   itemIds: number[];
 }

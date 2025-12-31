@@ -1,51 +1,89 @@
 /**
- * 찜 목록(Wishlist) API 서비스
+ * 찜 목록(Wishlist) API 서비스 - 백엔드 API 스펙 기반
  */
 
 import axiosInstance from '@/services/common/api/axiosInstance';
+import { API_ENDPOINTS } from '@/services/common/api/endpoints';
+import type { ApiResponse, PageResponse } from '@/types/common/api.types';
 import type {
-  WishlistResponse,
-  AddToWishlistRequest,
-  RemoveFromWishlistRequest,
-  AddAllToCartRequest,
+  WishlistItemResponse,
+  WishlistAddRequest,
+  WishlistCheckRequest,
+  WishlistCheckResponse,
+  WishlistCountResponse,
 } from '@/types/tu/wishlist.types';
-
-const BASE_URL = '/tu/wishlist';
 
 export const wishlistService = {
   /**
-   * 찜 목록 조회
+   * 찜 추가
    */
-  getWishlist: async (): Promise<WishlistResponse> => {
-    const response = await axiosInstance.get<WishlistResponse>(BASE_URL);
-    return response.data;
+  addToWishlist: async (request: WishlistAddRequest): Promise<WishlistItemResponse> => {
+    const response = await axiosInstance.post<ApiResponse<WishlistItemResponse>>(
+      API_ENDPOINTS.WISHLIST.BASE,
+      request
+    );
+    return response.data.data;
   },
 
   /**
-   * 찜 목록에 강의 추가
+   * 찜 삭제
    */
-  addToWishlist: async (data: AddToWishlistRequest): Promise<void> => {
-    await axiosInstance.post(`${BASE_URL}/items`, data);
+  removeFromWishlist: async (courseId: number): Promise<void> => {
+    await axiosInstance.delete(API_ENDPOINTS.WISHLIST.COURSE(courseId));
   },
 
   /**
-   * 찜 목록에서 아이템 삭제
+   * 내 찜 목록 조회 (페이징)
    */
-  removeFromWishlist: async (data: RemoveFromWishlistRequest): Promise<void> => {
-    await axiosInstance.delete(`${BASE_URL}/items`, { data });
+  getMyWishlist: async (
+    page: number = 0,
+    size: number = 20
+  ): Promise<PageResponse<WishlistItemResponse>> => {
+    const response = await axiosInstance.get<ApiResponse<PageResponse<WishlistItemResponse>>>(
+      API_ENDPOINTS.WISHLIST.BASE,
+      { params: { page, size } }
+    );
+    return response.data.data;
   },
 
   /**
-   * 찜 목록 전체 비우기
+   * 특정 강의 찜 여부 확인
    */
-  clearWishlist: async (): Promise<void> => {
-    await axiosInstance.delete(`${BASE_URL}/clear`);
+  checkWishlistStatus: async (courseId: number): Promise<boolean> => {
+    const response = await axiosInstance.get<ApiResponse<boolean>>(
+      API_ENDPOINTS.WISHLIST.COURSE_CHECK(courseId)
+    );
+    return response.data.data;
   },
 
   /**
-   * 찜 목록 전체를 장바구니에 담기
+   * 여러 강의 찜 여부 일괄 확인
    */
-  addAllToCart: async (data: AddAllToCartRequest): Promise<void> => {
-    await axiosInstance.post(`${BASE_URL}/add-all-to-cart`, data);
+  checkWishlistStatusBulk: async (request: WishlistCheckRequest): Promise<WishlistCheckResponse> => {
+    const response = await axiosInstance.post<ApiResponse<WishlistCheckResponse>>(
+      API_ENDPOINTS.WISHLIST.CHECK_BULK,
+      request
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 내 찜 개수 조회
+   */
+  getMyWishlistCount: async (): Promise<WishlistCountResponse> => {
+    const response = await axiosInstance.get<ApiResponse<WishlistCountResponse>>(
+      API_ENDPOINTS.WISHLIST.COUNT
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 특정 강의의 찜 개수 조회
+   */
+  getCourseWishlistCount: async (courseId: number): Promise<WishlistCountResponse> => {
+    const response = await axiosInstance.get<ApiResponse<WishlistCountResponse>>(
+      API_ENDPOINTS.WISHLIST.COURSE_COUNT(courseId)
+    );
+    return response.data.data;
   },
 };

@@ -114,6 +114,12 @@ export type {
 
 // Wishlist (찜 목록)
 export type {
+  WishlistItemResponse,
+  WishlistAddRequest,
+  WishlistCheckRequest,
+  WishlistCheckResponse,
+  WishlistCountResponse,
+  // Legacy (하위 호환)
   WishlistItem,
   WishlistResponse,
   AddToWishlistRequest,

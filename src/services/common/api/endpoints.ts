@@ -206,4 +206,14 @@ export const API_ENDPOINTS = {
     ITEM_COMPLETE: (id: number, itemId: number) => `/enrollments/${id}/items/${itemId}/complete`,
     CURRICULUM: (id: number) => `/enrollments/${id}/curriculum`,
   },
+
+  // Wishlist (찜) - TU
+  WISHLIST: {
+    BASE: '/wishlist',
+    COUNT: '/wishlist/count',
+    CHECK_BULK: '/wishlist/check',
+    COURSE: (courseId: number) => `/wishlist/courses/${courseId}`,
+    COURSE_CHECK: (courseId: number) => `/wishlist/courses/${courseId}/check`,
+    COURSE_COUNT: (courseId: number) => `/wishlist/courses/${courseId}/count`,
+  },
 } as const;
