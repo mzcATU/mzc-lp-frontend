@@ -12,7 +12,6 @@ import {
   Edit,
   MoreHorizontal,
   Loader2,
-  Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -80,16 +79,18 @@ export function MyTeachingPage() {
   const courses = coursesData?.content || [];
 
   const handleCreateCourse = () => {
-    if (isDesigner) {
-      // 이미 DESIGNER 역할이 있으면 바로 강의 개설 페이지로 이동
-      navigate('/tu/teaching/courses/create');
-    } else {
-      // DESIGNER 역할이 없으면 권한 부여 다이얼로그 표시
-      setShowRoleDialog(true);
-    }
+    // DESIGNER 역할 여부와 관계없이 항상 확인 다이얼로그 표시
+    setShowRoleDialog(true);
   };
 
   const handleGrantDesignerRole = async () => {
+    // 이미 DESIGNER인 경우 바로 이동
+    if (isDesigner) {
+      setShowRoleDialog(false);
+      navigate('/tu/teaching/courses/create');
+      return;
+    }
+
     setIsGrantingRole(true);
     try {
       // DESIGNER 역할 부여 API 호출
@@ -121,6 +122,14 @@ export function MyTeachingPage() {
     } finally {
       setIsGrantingRole(false);
     }
+  };
+
+  // 다이얼로그 설명 텍스트
+  const getDialogDescription = () => {
+    if (isDesigner) {
+      return t.teaching.navigateConfirm;
+    }
+    return t.teaching.grantPermissionDesc;
   };
 
   const handleViewCourse = (courseId: string) => {
@@ -287,36 +296,22 @@ export function MyTeachingPage() {
         )}
       </div>
 
-      {/* DESIGNER 역할 부여 다이얼로그 */}
+      {/* 강의 개설 확인 다이얼로그 */}
       <AlertDialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className={isDark ? 'bg-[#2a2a2a] border-white/10' : ''}>
           <AlertDialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-blue-600" />
-              </div>
-              <AlertDialogTitle>{t.teaching.grantPermission}</AlertDialogTitle>
-            </div>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-muted-foreground text-sm">
-                <p>
-                  {t.teaching.grantPermissionDesc.split('Designer')[0]}
-                  <strong>{t.teaching.designer}</strong>
-                  {t.teaching.grantPermissionDesc.split('Designer')[1] || ''}
-                </p>
-                <p>
-                  {t.teaching.grantPermissionConfirm}
-                </p>
-                <div className="mt-4 p-3 rounded-lg bg-orange-50 border border-orange-200">
-                  <p className="text-sm text-orange-800">
-                    {t.teaching.grantPermissionWarning}
-                  </p>
-                </div>
-              </div>
+            <AlertDialogTitle className={isDark ? 'text-white' : ''}>{t.teaching.courseDesignTitle}</AlertDialogTitle>
+            <AlertDialogDescription className={isDark ? 'text-gray-300' : ''}>
+              {getDialogDescription()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isGrantingRole}>{t.common.cancel}</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={isGrantingRole}
+              className={isDark ? 'bg-transparent border-white/20 text-gray-200 hover:bg-white/10 hover:text-white' : ''}
+            >
+              {t.common.cancel}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleGrantDesignerRole}
               disabled={isGrantingRole}
@@ -327,7 +322,7 @@ export function MyTeachingPage() {
                   {t.teaching.granting}
                 </>
               ) : (
-                t.common.confirm
+                t.teaching.proceed
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
