@@ -9,17 +9,19 @@ import {
   Users,
   Eye,
   MoreHorizontal,
+  User,
   UserCheck,
   Calendar,
   Mail,
   ExternalLink,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
   Button,
   DataTable,
   DataTableColumnHeader,
-  IconStatCard,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -91,16 +93,51 @@ const t = {
 
 // Badge 색상 스타일 (디자인 토큰 기반)
 const roleBadgeStyles: Record<InstructorRole, string> = {
-  MAIN: 'bg-badge-indigo-bg text-badge-indigo border-transparent',
-  SUB: 'bg-badge-blue-bg text-badge-blue border-transparent',
-  ASSISTANT: 'bg-badge-gray-bg text-badge-gray border-transparent',
+  MAIN: 'bg-badge-indigo-bg text-badge-indigo',
+  SUB: 'bg-badge-blue-bg text-badge-blue',
+  ASSISTANT: 'bg-badge-gray-bg text-badge-gray',
 };
 
 const statusBadgeStyles: Record<AssignmentStatus, string> = {
-  ACTIVE: 'bg-badge-green-bg text-badge-green border-transparent',
-  REPLACED: 'bg-badge-yellow-bg text-badge-yellow border-transparent',
-  CANCELLED: 'bg-badge-red-bg text-badge-red border-transparent',
+  ACTIVE: 'bg-badge-green-bg text-badge-green',
+  REPLACED: 'bg-badge-yellow-bg text-badge-yellow',
+  CANCELLED: 'bg-badge-red-bg text-badge-red',
 };
+
+// 아이콘 색상별 스타일 (디자인 토큰 기반)
+const iconColorStyles = {
+  blue: 'bg-badge-blue-bg text-badge-blue',
+  indigo: 'bg-badge-indigo-bg text-badge-indigo',
+  green: 'bg-badge-green-bg text-badge-green',
+  gray: 'bg-badge-gray-bg text-badge-gray',
+} as const;
+
+type IconColor = keyof typeof iconColorStyles;
+
+// 통계 카드 컴포넌트 (White Surface + Colored Icon)
+function StatCard({
+  icon,
+  label,
+  value,
+  iconColor
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  iconColor: IconColor;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-bg-default p-5 shadow-sm transition-all hover:shadow-md">
+      <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', iconColorStyles[iconColor])}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-text-secondary">{label}</p>
+        <p className="text-2xl font-bold text-text-primary">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<InstructorAssignmentsPageProps>) {
   const navigate = useNavigate();
@@ -403,37 +440,39 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
       {/* Content List */}
       <div className="flex-1 overflow-auto">
         <div className="p-6 px-8 pt-0">
-          {/* Statistics Cards */}
+          {/* Statistics Cards - White Surface + Colored Icons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <IconStatCard
+            <StatCard
               icon={<Users size={20} />}
               label={getText('totalAssignments')}
               value={stats.total}
+              iconColor="blue"
             />
-            <IconStatCard
+            <StatCard
               icon={<UserCheck size={20} />}
               label={getText('mainInstructors')}
               value={stats.main}
+              iconColor="indigo"
             />
-            <IconStatCard
+            <StatCard
               icon={<Users size={20} />}
               label={getText('subInstructors')}
               value={stats.sub}
+              iconColor="gray"
             />
-            <IconStatCard
+            <StatCard
               icon={<Calendar size={20} />}
               label={getText('activeAssignments')}
               value={stats.active}
+              iconColor="green"
             />
           </div>
 
           {/* Count */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-text-secondary">
-              {filteredAssignments.length}
-              {getText('assignmentCount')}
-            </p>
-          </div>
+          <p className="text-sm text-text-secondary mb-4">
+            {filteredAssignments.length}
+            {getText('assignmentCount')}
+          </p>
 
           {/* Loading State */}
           {isLoading && (
@@ -466,7 +505,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
               columns={columns}
               data={filteredAssignments}
               showColumnToggle={false}
-              showPagination={true}
+              showPagination={false}
               onRowClick={(item) => setSelectedAssignment(item)}
               labels={{
                 noResults: getText('noResults'),
@@ -476,26 +515,28 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
 
           {/* Pagination */}
           {data && data.totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {getText('prev')}
-              </Button>
-              <span className="px-4 py-2 text-sm text-text-secondary">
-                {page + 1} / {data.totalPages}
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-xs text-text-secondary">
+                {page * 20 + 1} - {Math.min((page + 1) * 20, totalElements)} / {totalElements}
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page >= data.totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {getText('next')}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  {getText('prev')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page >= data.totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  {getText('next')}
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -503,101 +544,155 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
 
       {/* Detail Modal */}
       <Dialog open={!!selectedAssignment} onOpenChange={(open: boolean) => !open && setSelectedAssignment(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{getText('panelTitle')}</DialogTitle>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {/* Header */}
+          <DialogHeader className="px-6 py-5 border-b border-border">
+            <DialogTitle className="text-lg font-bold text-text-primary tracking-tight">
+              {getText('panelTitle')}
+            </DialogTitle>
           </DialogHeader>
 
           {selectedAssignment && (
-            <div className="space-y-6">
-              {/* 강사 정보 */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                  <UserCheck size={16} />
-                  {getText('instructorInfo')}
-                </h3>
-                <div className="bg-bg-secondary rounded-lg p-4 space-y-3">
-                  <div>
-                    <p className="text-xs text-text-secondary">{getText('columnInstructor')}</p>
-                    <p className="text-sm font-medium text-text-primary">
-                      {selectedAssignment.instructor?.name ?? '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary flex items-center gap-1">
-                      <Mail size={12} />
-                      {getText('email')}
-                    </p>
-                    <p className="text-sm text-text-primary">
-                      {selectedAssignment.instructor?.email ?? '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">{getText('columnRole')}</p>
-                    <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1', roleBadgeStyles[selectedAssignment.role])}>
-                      {getRoleLabel(selectedAssignment.role)}
+            <>
+              {/* Body */}
+              <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
+                {/* Section 1: 강사 정보 */}
+                <section className="mb-8">
+                  {/* Section Title with Icon Badge */}
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-badge-indigo-bg text-badge-indigo">
+                      <User size={14} />
                     </span>
+                    {getText('instructorInfo')}
+                  </h3>
+
+                  {/* Grid Layout */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                    {/* 강사명 */}
+                    <div>
+                      <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                        {getText('columnInstructor')}
+                      </dt>
+                      <dd className="text-sm font-medium text-text-primary">
+                        {selectedAssignment.instructor?.name ?? '-'}
+                      </dd>
+                    </div>
+
+                    {/* 이메일 */}
+                    <div className="col-span-2 sm:col-span-1">
+                      <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                        {getText('email')}
+                      </dt>
+                      <dd className="flex items-center gap-1.5 text-sm font-medium text-text-primary">
+                        <Mail size={14} className="text-text-placeholder" />
+                        {selectedAssignment.instructor?.email ?? '-'}
+                      </dd>
+                    </div>
+
+                    {/* 역할 */}
+                    <div>
+                      <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                        {getText('columnRole')}
+                      </dt>
+                      <dd>
+                        <span className={cn('inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold', roleBadgeStyles[selectedAssignment.role])}>
+                          {getRoleLabel(selectedAssignment.role)}
+                        </span>
+                      </dd>
+                    </div>
+
+                    {/* 상태 */}
+                    <div>
+                      <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                        {getText('columnStatus')}
+                      </dt>
+                      <dd>
+                        <span className={cn('inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold', statusBadgeStyles[selectedAssignment.status])}>
+                          {selectedAssignment.status === 'ACTIVE' && <CheckCircle2 size={12} />}
+                          {getStatusLabel(selectedAssignment.status)}
+                        </span>
+                      </dd>
+                    </div>
+
+                    {/* 배정일 */}
+                    <div>
+                      <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                        {getText('assignedAt')}
+                      </dt>
+                      <dd className="text-sm font-medium text-text-primary">
+                        {formatDate(selectedAssignment.assignedAt)}
+                      </dd>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">{getText('columnStatus')}</p>
-                    <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1', statusBadgeStyles[selectedAssignment.status])}>
-                      {getStatusLabel(selectedAssignment.status)}
+                </section>
+
+                {/* Divider */}
+                <div className="my-6 border-t border-dashed border-border" />
+
+                {/* Section 2: 차수 정보 */}
+                <section>
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-badge-indigo-bg text-badge-indigo">
+                      <Calendar size={14} />
                     </span>
+                    {getText('courseTimeInfo')}
+                  </h3>
+
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* 차수명 */}
+                      <div>
+                        <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                          {getText('columnCourseTime')}
+                        </dt>
+                        <dd className="text-sm font-medium text-text-primary">
+                          {selectedAssignment.courseTime?.title ?? '-'}
+                        </dd>
+                      </div>
+
+                      {/* 과정명 */}
+                      <div>
+                        <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                          {getText('programName')}
+                        </dt>
+                        <dd className="text-sm font-medium text-text-primary">
+                          {selectedAssignment.program?.title ?? '-'}
+                        </dd>
+                      </div>
+                    </div>
+
+                    {/* 학습 기간 */}
+                    <div>
+                      <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
+                        {getText('learningPeriod')}
+                      </dt>
+                      <dd className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                        <Clock size={14} className="text-text-placeholder" />
+                        {selectedAssignment.courseTime?.startDate && selectedAssignment.courseTime?.endDate
+                          ? `${formatDate(selectedAssignment.courseTime.startDate)} ~ ${formatDate(selectedAssignment.courseTime.endDate)}`
+                          : '-'}
+                      </dd>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">{getText('assignedAt')}</p>
-                    <p className="text-sm text-text-primary">
-                      {formatDate(selectedAssignment.assignedAt)}
-                    </p>
-                  </div>
-                </div>
+                </section>
               </div>
 
-              {/* 차수 정보 */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-                  <Calendar size={16} />
-                  {getText('courseTimeInfo')}
-                </h3>
-                <div className="bg-bg-secondary rounded-lg p-4 space-y-3">
-                  <div>
-                    <p className="text-xs text-text-secondary">{getText('columnCourseTime')}</p>
-                    <p className="text-sm font-medium text-text-primary">
-                      {selectedAssignment.courseTime?.title ?? '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">{getText('programName')}</p>
-                    <p className="text-sm text-text-primary">
-                      {selectedAssignment.program?.title ?? '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">{getText('learningPeriod')}</p>
-                    <p className="text-sm text-text-primary">
-                      {selectedAssignment.courseTime?.startDate && selectedAssignment.courseTime?.endDate
-                        ? `${formatDate(selectedAssignment.courseTime.startDate)} ~ ${formatDate(selectedAssignment.courseTime.endDate)}`
-                        : '-'}
-                    </p>
-                  </div>
-                </div>
+              {/* Footer */}
+              <div className="bg-bg-secondary px-6 py-4 flex justify-end border-t border-border">
+                <button
+                  onClick={() => {
+                    if (selectedAssignment.courseTime?.id) {
+                      navigate(`/to/times/${selectedAssignment.courseTime.id}`);
+                    }
+                  }}
+                  disabled={!selectedAssignment.courseTime?.id}
+                  className="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-text-secondary hover:text-badge-indigo hover:bg-badge-indigo-bg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-secondary"
+                >
+                  {getText('goToCourseTime')}
+                  <ExternalLink size={16} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </button>
               </div>
-
-              {/* 차수 상세 페이지 이동 버튼 */}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  if (selectedAssignment.courseTime?.id) {
-                    navigate(`/to/times/${selectedAssignment.courseTime.id}`);
-                  }
-                }}
-                disabled={!selectedAssignment.courseTime?.id}
-              >
-                <ExternalLink size={16} />
-                {getText('goToCourseTime')}
-              </Button>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
