@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, SlidersHorizontal, Star, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Star, Loader2, Heart } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -233,6 +233,15 @@ interface CourseCardProps {
 }
 
 function CourseCard({ course, isDark }: CourseCardProps) {
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted(!isWishlisted);
+    // TODO: API 연동 시 실제 찜 추가/삭제 로직 구현
+  };
+
   const tags: string[] = [];
   if (course.isNew) tags.push('NEW');
   if (course.isBestseller) tags.push('베스트');
@@ -271,6 +280,18 @@ function CourseCard({ course, isDark }: CourseCardProps) {
               ))}
             </div>
           )}
+          {/* 찜 버튼 */}
+          <button
+            onClick={handleWishlistToggle}
+            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-300 ${
+              isWishlisted
+                ? 'bg-red-500 text-white'
+                : 'bg-black/50 text-white hover:bg-red-500'
+            }`}
+            aria-label={isWishlisted ? '찜 해제' : '찜하기'}
+          >
+            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+          </button>
         </div>
 
         {/* Content */}

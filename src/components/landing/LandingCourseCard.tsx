@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Star, Heart } from 'lucide-react';
 import { useTranslation } from '@/store/common/languageStore';
 
 interface LandingCourseCardProps {
@@ -25,6 +26,14 @@ export function LandingCourseCard({
   tags,
 }: LandingCourseCardProps) {
   const { t, language } = useTranslation();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted(!isWishlisted);
+    // TODO: API 연동 시 실제 찜 추가/삭제 로직 구현
+  };
 
   // 태그 번역 매핑
   const getTagLabel = (tag: string) => {
@@ -69,6 +78,18 @@ export function LandingCourseCard({
               ))}
             </div>
           )}
+          {/* 찜 버튼 */}
+          <button
+            onClick={handleWishlistToggle}
+            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-300 ${
+              isWishlisted
+                ? 'bg-red-500 text-white'
+                : 'bg-black/50 text-white hover:bg-red-500'
+            }`}
+            aria-label={isWishlisted ? '찜 해제' : '찜하기'}
+          >
+            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+          </button>
         </div>
 
         {/* Content */}
