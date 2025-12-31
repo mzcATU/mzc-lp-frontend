@@ -39,11 +39,11 @@ export interface CurriculumFolderItem extends CurriculumItemBase {
 /** 콘텐츠(LO) 타입 커리큘럼 항목 */
 export interface CurriculumContentItem extends CurriculumItemBase {
   type: 'content';
-  /** 연결된 Learning Object ID */
-  learningObjectId: number;
-  /** LO 원본 파일명 */
+  /** 콘텐츠 ID (백엔드에서 LO 자동 생성) */
+  contentId: number;
+  /** 원본 파일명 */
   originalFileName: string;
-  /** LO 콘텐츠 타입 */
+  /** 콘텐츠 타입 */
   contentType: string;
   /** 강의 내 표시용 이름 (선택적 오버라이드) */
   displayName?: string;
@@ -96,7 +96,7 @@ export function createFolderItem(
 
 /** 새 콘텐츠 항목 생성 */
 export function createContentItem(
-  learningObjectId: number,
+  contentId: number,
   originalFileName: string,
   contentType: string,
   depth: number = 0,
@@ -108,7 +108,7 @@ export function createContentItem(
     type: 'content',
     depth,
     order,
-    learningObjectId,
+    contentId,
     originalFileName,
     contentType,
   };

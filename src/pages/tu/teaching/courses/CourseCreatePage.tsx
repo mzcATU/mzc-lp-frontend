@@ -49,11 +49,11 @@ async function createCurriculumItemsRecursively(
         );
       }
     } else if (isCurriculumContent(item)) {
-      // 콘텐츠(차시) 생성
+      // 콘텐츠(차시) 생성 - contentId로 백엔드에서 LO 자동 생성
       await courseService.createItem(courseId, {
         itemName: item.name,
         parentId: parentId ?? undefined,
-        learningObjectId: item.learningObjectId,
+        contentId: item.contentId,
         displayName: item.displayName || undefined,
         description: item.description || undefined,
       });

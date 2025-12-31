@@ -30,6 +30,7 @@ export interface ContentResponse {
   customThumbnailPath: string | null;
   description: string | null;
   tags: string | null;
+  downloadable: boolean | null;
   createdBy: number;
   currentVersion: number;
   inCourse: boolean;
@@ -50,6 +51,7 @@ export interface ContentListResponse {
   customThumbnailPath: string | null;
   description: string | null;
   tags: string | null;
+  downloadable: boolean | null;
   currentVersion: number;
   inCourse: boolean | null;
   createdAt: string;
@@ -83,6 +85,7 @@ export interface CreateExternalLinkRequest {
 // 콘텐츠 메타데이터 수정 요청
 export interface UpdateContentRequest {
   originalFileName?: string;
+  downloadable?: boolean;
 }
 
 // 버전 복원 요청
