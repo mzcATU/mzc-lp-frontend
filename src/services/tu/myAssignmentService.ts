@@ -7,7 +7,32 @@ import type {
   InstructorAssignmentResponse,
   InstructorDetailStatResponse,
   CourseTimeEnrollmentsResponse,
+  CourseTimeEnrollmentItem,
+  EnrollmentStats,
+  StudentEnrollmentStatus,
 } from '@/types/tu';
+
+// 백엔드 EnrollmentResponse 타입
+interface BackendEnrollmentResponse {
+  id: number;
+  userId: number;
+  courseTimeId: number;
+  enrolledAt: string;
+  type: string;
+  status: string;
+  progressPercent: number;
+  score: number | null;
+  completedAt: string | null;
+}
+
+// 백엔드 Page 응답 타입
+interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
 
 export const myAssignmentService = {
   /**
@@ -42,11 +67,74 @@ export const myAssignmentService = {
 
   /**
    * 차수 수강생 목록 조회 (강사용)
-   * GET /api/times/{timeId}/enrollments
+   * GET /api/times/{timeId}/enrollments + /api/times/{timeId}
    * @param timeId - 차수 ID
    */
   getCourseTimeEnrollments: async (timeId: number): Promise<CourseTimeEnrollmentsResponse> => {
-    const response = await axiosInstance.get(API_ENDPOINTS.TIMES.ENROLLMENTS(timeId));
-    return response.data.data;
+    // 1. 수강생 목록 조회 (페이지네이션 없이 전체 조회)
+    const enrollmentsRes = await axiosInstance.get(API_ENDPOINTS.TIMES.ENROLLMENTS(timeId), {
+      params: { size: 1000 },
+    });
+    const pageData: PageResponse<BackendEnrollmentResponse> = enrollmentsRes.data.data;
+
+    // 2. 차수 정보 조회
+    const timeRes = await axiosInstance.get(API_ENDPOINTS.TIMES.BY_ID(timeId));
+    const timeData = timeRes.data.data;
+
+    // 3. 백엔드 상태를 프론트엔드 상태로 매핑
+    const mapStatus = (status: string): StudentEnrollmentStatus => {
+      const statusMap: Record<string, StudentEnrollmentStatus> = {
+        ENROLLED: 'ENROLLED',
+        IN_PROGRESS: 'IN_PROGRESS',
+        COMPLETED: 'COMPLETED',
+        DROPPED: 'DROPPED',
+        CANCELLED: 'DROPPED',
+      };
+      return statusMap[status] || 'ENROLLED';
+    };
+
+    // 4. 수강생 목록 변환
+    const enrollments: CourseTimeEnrollmentItem[] = pageData.content.map((e) => ({
+      enrollmentId: e.id,
+      userId: e.userId,
+      userName: `User ${e.userId}`, // 백엔드가 userName 미제공
+      userEmail: '', // 백엔드가 userEmail 미제공
+      status: mapStatus(e.status),
+      progress: e.progressPercent ?? 0,
+      enrolledAt: e.enrolledAt,
+      completedAt: e.completedAt,
+      lastAccessedAt: null,
+    }));
+
+    // 5. 통계 계산
+    const stats: EnrollmentStats = {
+      totalCount: enrollments.length,
+      enrolledCount: enrollments.filter((e) => e.status === 'ENROLLED').length,
+      inProgressCount: enrollments.filter((e) => e.status === 'IN_PROGRESS').length,
+      completedCount: enrollments.filter((e) => e.status === 'COMPLETED').length,
+      droppedCount: enrollments.filter((e) => e.status === 'DROPPED').length,
+      averageProgress:
+        enrollments.length > 0
+          ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length)
+          : 0,
+      completionRate:
+        enrollments.length > 0
+          ? Math.round(
+              (enrollments.filter((e) => e.status === 'COMPLETED').length / enrollments.length) *
+                100
+            )
+          : 0,
+    };
+
+    // 6. 응답 조합
+    return {
+      timeId,
+      timeName: timeData.title || `차수 ${timeId}`,
+      programName: timeData.programName || '프로그램',
+      startDate: timeData.classStartDate || '',
+      endDate: timeData.classEndDate || '',
+      enrollments,
+      stats,
+    };
   },
 };
