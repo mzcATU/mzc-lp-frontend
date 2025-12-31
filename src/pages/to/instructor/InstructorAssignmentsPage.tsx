@@ -17,7 +17,6 @@ import {
 import { cn } from '@/utils/cn';
 import {
   Button,
-  Badge,
   DataTable,
   DataTableColumnHeader,
   IconStatCard,
@@ -90,16 +89,17 @@ const t = {
   goToCourseTime: { ko: '차수 상세 페이지로 이동', en: 'Go to Course Time' },
 };
 
-const roleBadgeVariant: Record<InstructorRole, 'default' | 'secondary' | 'outline'> = {
-  MAIN: 'default',
-  SUB: 'secondary',
-  ASSISTANT: 'outline',
+// Badge 색상 스타일 (디자인 토큰 기반)
+const roleBadgeStyles: Record<InstructorRole, string> = {
+  MAIN: 'bg-badge-indigo-bg text-badge-indigo border-transparent',
+  SUB: 'bg-badge-blue-bg text-badge-blue border-transparent',
+  ASSISTANT: 'bg-badge-gray-bg text-badge-gray border-transparent',
 };
 
-const statusBadgeVariant: Record<AssignmentStatus, 'default' | 'secondary' | 'destructive'> = {
-  ACTIVE: 'default',
-  REPLACED: 'secondary',
-  CANCELLED: 'destructive',
+const statusBadgeStyles: Record<AssignmentStatus, string> = {
+  ACTIVE: 'bg-badge-green-bg text-badge-green border-transparent',
+  REPLACED: 'bg-badge-yellow-bg text-badge-yellow border-transparent',
+  CANCELLED: 'bg-badge-red-bg text-badge-red border-transparent',
 };
 
 export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<InstructorAssignmentsPageProps>) {
@@ -250,9 +250,9 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
           <DataTableColumnHeader column={column} title={getText('columnRole')} />
         ),
         cell: ({ row }) => (
-          <Badge variant={roleBadgeVariant[row.original.role]}>
+          <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', roleBadgeStyles[row.original.role])}>
             {getRoleLabel(row.original.role)}
-          </Badge>
+          </span>
         ),
       },
       {
@@ -261,9 +261,9 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
           <DataTableColumnHeader column={column} title={getText('columnStatus')} />
         ),
         cell: ({ row }) => (
-          <Badge variant={statusBadgeVariant[row.original.status]}>
+          <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', statusBadgeStyles[row.original.status])}>
             {getStatusLabel(row.original.status)}
-          </Badge>
+          </span>
         ),
       },
       {
@@ -534,15 +534,15 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
                   </div>
                   <div>
                     <p className="text-xs text-text-secondary">{getText('columnRole')}</p>
-                    <Badge variant={roleBadgeVariant[selectedAssignment.role]} className="mt-1">
+                    <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1', roleBadgeStyles[selectedAssignment.role])}>
                       {getRoleLabel(selectedAssignment.role)}
-                    </Badge>
+                    </span>
                   </div>
                   <div>
                     <p className="text-xs text-text-secondary">{getText('columnStatus')}</p>
-                    <Badge variant={statusBadgeVariant[selectedAssignment.status]} className="mt-1">
+                    <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1', statusBadgeStyles[selectedAssignment.status])}>
                       {getStatusLabel(selectedAssignment.status)}
-                    </Badge>
+                    </span>
                   </div>
                   <div>
                     <p className="text-xs text-text-secondary">{getText('assignedAt')}</p>
