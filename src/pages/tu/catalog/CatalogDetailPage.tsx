@@ -10,6 +10,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
@@ -152,10 +153,12 @@ export function CatalogDetailPage() {
 
   const handleEnroll = async (courseTimeId: number) => {
     try {
-      await enrollMutation.mutateAsync(courseTimeId);
-      alert(t.catalog.enrollSuccess);
+      const enrollment = await enrollMutation.mutateAsync(courseTimeId);
+      toast.success(t.catalog.enrollSuccess);
+      // 수강 신청 성공 후 학습 페이지로 이동
+      navigate(`/mypage/learning/${enrollment.id}`);
     } catch {
-      alert(t.catalog.enrollFail);
+      toast.error(t.catalog.enrollFail);
     }
   };
 
