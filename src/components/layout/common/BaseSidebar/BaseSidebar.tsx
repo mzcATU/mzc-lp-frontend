@@ -48,7 +48,7 @@ function ModeSwitcher({ currentMode, isExpanded, language, colors, onModeChange 
     return (
       <button
         onClick={() => onModeChange(currentMode === 'instructor' ? 'learner' : 'instructor')}
-        className="w-10 h-10 rounded-lg flex items-center justify-center transition-all"
+        className="w-[44px] h-[44px] rounded-xl flex items-center justify-center transition-all mx-auto"
         style={{ backgroundColor: colors.hover }}
         title={currentModeData.label[language]}
       >
@@ -61,13 +61,13 @@ function ModeSwitcher({ currentMode, isExpanded, language, colors, onModeChange 
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all"
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
         style={{
           backgroundColor: colors.hover,
           color: colors.textPrimary,
         }}
       >
-        <CurrentIcon className="w-4 h-4" style={{ color: colors.textSecondary }} />
+        <CurrentIcon className="w-5 h-5" style={{ color: colors.textSecondary }} />
         <span className="flex-1 text-left text-sm font-medium">
           {currentModeData.label[language]}
         </span>
@@ -86,7 +86,7 @@ function ModeSwitcher({ currentMode, isExpanded, language, colors, onModeChange 
           />
           {/* Dropdown */}
           <div
-            className="absolute left-0 right-0 top-full mt-1 rounded-lg border shadow-lg z-50 py-1"
+            className="absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-lg z-50 py-1"
             style={{
               backgroundColor: colors.tooltipBg,
               borderColor: colors.border,
@@ -102,7 +102,7 @@ function ModeSwitcher({ currentMode, isExpanded, language, colors, onModeChange 
                     onModeChange(mode.id);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 transition-all"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 transition-all"
                   style={{
                     backgroundColor: isActive ? colors.activeBg : 'transparent',
                     color: isActive ? colors.activeText : colors.textPrimary,
@@ -118,7 +118,7 @@ function ModeSwitcher({ currentMode, isExpanded, language, colors, onModeChange 
                     }
                   }}
                 >
-                  <Icon className="w-4 h-4" style={{ color: isActive ? colors.activeText : colors.textSecondary }} />
+                  <Icon className="w-5 h-5" style={{ color: isActive ? colors.activeText : colors.textSecondary }} />
                   <span className="flex-1 text-left text-sm">{mode.label[language]}</span>
                   {isActive && <Check className="w-4 h-4" />}
                 </button>
@@ -207,100 +207,88 @@ export function BaseSidebar({
   };
 
   return (
-    <div
+    <aside
+      className="flex-shrink-0 transition-all duration-300"
       style={{
-        width: isExpanded ? '280px' : '72px',
-        height: '100vh',
-        backgroundColor: colors.bg,
-        borderRight: `1px solid ${colors.border}`,
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
-        overflow: 'hidden',
+        width: isExpanded ? '280px' : '84px',
+        padding: isExpanded ? '16px' : '8px',
+        backgroundColor: isDarkMode ? '#1e1e1e' : designTokens.bg.app_default,
       }}
     >
-      {/* Logo Section */}
-      <div
-        style={{
-          padding: isExpanded ? '20px 16px' : '20px 12px',
-          borderBottom: showModeSwitcher ? 'none' : `1px solid ${colors.border}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          minHeight: '64px',
-        }}
-      >
-        <div
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <GraduationCap size={24} color="#FFFFFF" />
-        </div>
-        {isExpanded && (
-          <div style={{ overflow: 'hidden' }}>
-            <h1
-              style={{
-                color: colors.textPrimary,
-                margin: 0,
-                fontSize: '18px',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Learning Hub
-            </h1>
-            {!showModeSwitcher && (
-              <p
-                style={{
-                  color: colors.textSecondary,
-                  margin: 0,
-                  fontSize: '12px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {roleLabel[language]}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Mode Switcher (TU only) */}
-      {showModeSwitcher && (
-        <div
-          style={{
-            padding: isExpanded ? '0 16px 16px' : '0 12px 16px',
-            borderBottom: `1px solid ${colors.border}`,
-          }}
-        >
-          <ModeSwitcher
-            currentMode={currentMode}
-            isExpanded={isExpanded}
-            language={language}
-            colors={colors}
-            onModeChange={handleModeChange}
-          />
-        </div>
-      )}
-
-      {/* Navigation Menu */}
+      {/* 카드형 사이드바 */}
       <div
         className={cn(
-          'flex-1 overflow-y-auto overflow-x-hidden p-3',
-          'sidebar-scrollbar',
-          !isDarkMode && 'sidebar-scrollbar-light'
+          'rounded-2xl h-full flex flex-col',
+          isExpanded ? 'p-4' : 'py-3 px-2',
+          isDarkMode
+            ? 'bg-white/5 border border-white/10 backdrop-blur-sm'
+            : 'bg-white border border-gray-200 shadow-sm'
         )}
       >
-        <ul className="space-y-1">
+        {/* Logo Section */}
+        <div
+          className={cn(
+            'flex items-center gap-3 mb-4',
+            !isExpanded && 'justify-center'
+          )}
+        >
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+            }}
+          >
+            <GraduationCap size={22} color="#FFFFFF" />
+          </div>
+          {isExpanded && (
+            <div className="overflow-hidden">
+              <h1
+                className="text-lg font-semibold whitespace-nowrap"
+                style={{ color: colors.textPrimary }}
+              >
+                Learning Hub
+              </h1>
+              {!showModeSwitcher && (
+                <p
+                  className="text-xs whitespace-nowrap"
+                  style={{ color: colors.textSecondary }}
+                >
+                  {roleLabel[language]}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Mode Switcher (TU only) */}
+        {showModeSwitcher && (
+          <div className={cn('mb-4', !isExpanded && 'flex justify-center')}>
+            <ModeSwitcher
+              currentMode={currentMode}
+              isExpanded={isExpanded}
+              language={language}
+              colors={colors}
+              onModeChange={handleModeChange}
+            />
+          </div>
+        )}
+
+        {/* Divider after header */}
+        <div
+          className="mb-4"
+          style={{
+            borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : colors.border}`,
+          }}
+        />
+
+        {/* Navigation Menu */}
+        <nav
+          className={cn(
+            'flex-1 overflow-y-auto overflow-x-hidden space-y-1',
+            'sidebar-scrollbar',
+            !isDarkMode && 'sidebar-scrollbar-light'
+          )}
+        >
           {menuData.map((item) => {
             const Icon = item.icon;
             const hasSubItems = item.subItems && item.subItems.length > 0;
@@ -308,21 +296,23 @@ export function BaseSidebar({
             const isActive = activeItem === item.id;
 
             return (
-              <li key={item.id}>
+              <div key={item.id} className="mb-1">
                 {/* Level 1 Menu Item */}
                 <button
                   onClick={() => handleItemClick(item.id, !!hasSubItems)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
-                    !isExpanded && 'justify-center'
-                  )}
+                  className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
                   style={{
+                    width: isExpanded ? '100%' : '44px',
+                    height: '44px',
+                    padding: isExpanded ? '0 16px' : '0',
+                    justifyContent: 'center',
                     backgroundColor:
                       isActive && !hasSubItems ? colors.activeBg : 'transparent',
                     color:
                       isActive && !hasSubItems
                         ? colors.activeText
                         : colors.textPrimary,
+                    margin: isExpanded ? '0' : '0 auto',
                   }}
                   onMouseEnter={(e) => {
                     if (!(isActive && !hasSubItems)) {
@@ -347,7 +337,7 @@ export function BaseSidebar({
                   />
                   {isExpanded && (
                     <>
-                      <span className="flex-1 text-left text-sm">
+                      <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
                         {item.label[language]}
                       </span>
                       {hasSubItems && (
@@ -365,58 +355,57 @@ export function BaseSidebar({
 
                 {/* Level 2 Sub-Menu Items */}
                 {hasSubItems && isExpanded && isExpandedItem && (
-                  <ul
+                  <div
                     className="mt-1 ml-4 pl-4 border-l-2 space-y-1"
-                    style={{ borderColor: colors.border }}
+                    style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#e5e7eb' }}
                   >
                     {item.subItems!.map((subItem) => {
                       const SubIcon = subItem.icon;
                       const isSubActive = activeItem === subItem.id;
 
                       return (
-                        <li key={subItem.id}>
-                          <button
-                            onClick={() =>
-                              handleSubItemClick(subItem.id, item.id)
+                        <button
+                          key={subItem.id}
+                          onClick={() =>
+                            handleSubItemClick(subItem.id, item.id)
+                          }
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm"
+                          style={{
+                            backgroundColor: isSubActive
+                              ? colors.activeBg
+                              : 'transparent',
+                            color: isSubActive
+                              ? colors.activeText
+                              : colors.textPrimary,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSubActive) {
+                              e.currentTarget.style.backgroundColor =
+                                colors.hover;
                             }
-                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm"
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSubActive) {
+                              e.currentTarget.style.backgroundColor =
+                                'transparent';
+                            }
+                          }}
+                        >
+                          <SubIcon
+                            className="w-4 h-4 flex-shrink-0"
                             style={{
-                              backgroundColor: isSubActive
-                                ? colors.activeBg
-                                : 'transparent',
                               color: isSubActive
                                 ? colors.activeText
-                                : colors.textPrimary,
+                                : colors.textSecondary,
                             }}
-                            onMouseEnter={(e) => {
-                              if (!isSubActive) {
-                                e.currentTarget.style.backgroundColor =
-                                  colors.hover;
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isSubActive) {
-                                e.currentTarget.style.backgroundColor =
-                                  'transparent';
-                              }
-                            }}
-                          >
-                            <SubIcon
-                              className="w-4 h-4 flex-shrink-0"
-                              style={{
-                                color: isSubActive
-                                  ? colors.activeText
-                                  : colors.textSecondary,
-                              }}
-                            />
-                            <span className="flex-1 text-left">
-                              {subItem.label[language]}
-                            </span>
-                          </button>
-                        </li>
+                          />
+                          <span className="flex-1 text-left">
+                            {subItem.label[language]}
+                          </span>
+                        </button>
                       );
                     })}
-                  </ul>
+                  </div>
                 )}
 
                 {/* Collapsed State - Tooltip */}
@@ -424,7 +413,7 @@ export function BaseSidebar({
                   <div className="relative group">
                     <div className="absolute left-full top-0 ml-2 hidden group-hover:block z-50">
                       <div
-                        className="border rounded-lg shadow-lg py-2 px-1 min-w-[200px]"
+                        className="border rounded-xl shadow-lg py-2 px-1 min-w-[200px]"
                         style={{
                           backgroundColor: colors.tooltipBg,
                           borderColor: colors.border,
@@ -434,7 +423,7 @@ export function BaseSidebar({
                           className="px-3 py-1.5 text-xs border-b mb-1"
                           style={{
                             color: colors.textSecondary,
-                            borderColor: colors.border,
+                            borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : colors.border,
                           }}
                         >
                           {item.label[language]}
@@ -449,7 +438,7 @@ export function BaseSidebar({
                               onClick={() =>
                                 handleSubItemClick(subItem.id, item.id)
                               }
-                              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm"
+                              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm"
                               style={{
                                 backgroundColor: isSubActive
                                   ? colors.activeBg
@@ -489,58 +478,65 @@ export function BaseSidebar({
                     </div>
                   </div>
                 )}
-              </li>
+              </div>
             );
           })}
-        </ul>
-      </div>
+        </nav>
 
-      {/* Divider */}
-      <div className="border-t" style={{ borderColor: colors.border }} />
-
-      {/* Collapse Toggle */}
-      <div className="p-3">
-        <button
-          onClick={onToggle}
-          className={cn(
-            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
-            !isExpanded && 'justify-center'
-          )}
-          style={{ color: colors.textPrimary }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors.hover;
+        {/* Divider before footer */}
+        <div
+          className="mt-4 pt-4"
+          style={{
+            borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : colors.border}`,
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-          title={
-            isExpanded
-              ? language === 'ko'
-                ? '사이드바 접기'
-                : 'Collapse Sidebar'
-              : language === 'ko'
-                ? '사이드바 펼치기'
-                : 'Expand Sidebar'
-          }
         >
-          {isExpanded ? (
-            <PanelLeftClose
-              className="w-5 h-5"
-              style={{ color: colors.textSecondary }}
-            />
-          ) : (
-            <PanelLeft
-              className="w-5 h-5"
-              style={{ color: colors.textSecondary }}
-            />
-          )}
-          {isExpanded && (
-            <span className="flex-1 text-left text-sm">
-              {language === 'ko' ? '접기' : 'Collapse'}
-            </span>
-          )}
-        </button>
+          {/* Collapse Toggle */}
+          <button
+            onClick={onToggle}
+            className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+            style={{
+              width: isExpanded ? '100%' : '44px',
+              height: '44px',
+              padding: isExpanded ? '0 16px' : '0',
+              justifyContent: 'center',
+              color: colors.textPrimary,
+              margin: isExpanded ? '0' : '0 auto',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            title={
+              isExpanded
+                ? language === 'ko'
+                  ? '사이드바 접기'
+                  : 'Collapse Sidebar'
+                : language === 'ko'
+                  ? '사이드바 펼치기'
+                  : 'Expand Sidebar'
+            }
+          >
+            {isExpanded ? (
+              <PanelLeftClose
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: colors.textSecondary }}
+              />
+            ) : (
+              <PanelLeft
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: colors.textSecondary }}
+              />
+            )}
+            {isExpanded && (
+              <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
+                {language === 'ko' ? '접기' : 'Collapse'}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 }
