@@ -1,4 +1,5 @@
-import { BookOpen, Folder, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { BookOpen, Folder, FileText, ChevronRight, ChevronDown } from 'lucide-react';
 import type { CourseItemHierarchyResponse } from '@/types/common/course.types';
 
 interface CourseCurriculumSectionProps {
@@ -14,18 +15,35 @@ function CurriculumTreeItem({
   item: CourseItemHierarchyResponse;
   depth?: number;
 }) {
+  const [isOpen, setIsOpen] = useState(true);
   const paddingLeft = depth * 24;
   const Icon = item.isFolder ? Folder : FileText;
   const iconColor = item.isFolder ? 'text-amber-500' : 'text-text-secondary';
   // displayName이 있으면 우선 표시, 없으면 itemName 사용
   const displayName = item.displayName || item.itemName;
+  const hasChildren = item.children && item.children.length > 0;
+  const isToggleable = item.isFolder && hasChildren;
+
+  const handleToggle = () => {
+    if (isToggleable) {
+      setIsOpen((prev) => !prev);
+    }
+  };
 
   return (
     <div>
       <div
-        className="flex items-start gap-2 py-2 px-3 hover:bg-bg-secondary rounded-md transition-colors"
+        className={`flex items-start gap-2 py-2 px-3 hover:bg-bg-secondary rounded-md transition-colors ${isToggleable ? 'cursor-pointer' : ''}`}
         style={{ paddingLeft: `${paddingLeft + 12}px` }}
+        onClick={handleToggle}
       >
+        {isToggleable && (
+          isOpen ? (
+            <ChevronDown size={16} className="text-text-secondary mt-0.5 flex-shrink-0" />
+          ) : (
+            <ChevronRight size={16} className="text-text-secondary mt-0.5 flex-shrink-0" />
+          )
+        )}
         <Icon size={16} className={`${iconColor} mt-0.5 flex-shrink-0`} />
         <div className="flex-1 min-w-0">
           <span className="text-text-primary text-sm block">{displayName}</span>
@@ -41,7 +59,7 @@ function CurriculumTreeItem({
           )}
         </div>
       </div>
-      {item.children && item.children.length > 0 && (
+      {hasChildren && isOpen && (
         <div>
           {item.children.map((child) => (
             <CurriculumTreeItem key={child.itemId} item={child} depth={depth + 1} />
