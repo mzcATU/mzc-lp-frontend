@@ -17,6 +17,7 @@ import {
   ProgramPendingPage,
   ProgramDetailPage,
 } from '@/pages/to/program';
+import { InstructorAssignmentsPage } from '@/pages/to/instructor';
 import { DashboardPage, PlaceholderPage } from './pages';
 
 function TenantOperatorWrapper() {
@@ -49,7 +50,7 @@ export const toRoutes = (
     <Route path="learning-objects" element={<PlaceholderPage title="학습 객체 관리" />} />
     {/* 수강 및 강사 정보 */}
     <Route path="sis" element={<PlaceholderPage title="학생 수강 정보 확인" />} />
-    <Route path="iis" element={<PlaceholderPage title="강사 배정 정보 확인" />} />
+    <Route path="instructor-assignments" element={<InstructorAssignmentsPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

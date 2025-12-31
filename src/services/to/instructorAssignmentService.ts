@@ -10,11 +10,28 @@ import type {
   ReplaceInstructorRequest,
   CancelAssignmentRequest,
   InstructorAssignmentFilterParams,
+  InstructorAssignmentListResponse,
 } from '@/types/to/instructorAssignment.types';
+import type { PageResponse } from '@/types/common/api.types';
 
 export const instructorAssignmentService = {
   // ============================================
-  // 강사 배정 CRUD
+  // 전체 강사 배정 목록 조회 (TO용)
+  // ============================================
+
+  /** 전체 강사 배정 목록 조회 */
+  async getAssignments(
+    params?: InstructorAssignmentFilterParams
+  ): Promise<PageResponse<InstructorAssignmentListResponse>> {
+    const { data } = await axiosInstance.get<{ data: PageResponse<InstructorAssignmentListResponse> }>(
+      API_ENDPOINTS.INSTRUCTOR_ASSIGNMENTS.BASE,
+      { params }
+    );
+    return data.data;
+  },
+
+  // ============================================
+  // 강사 배정 CRUD (차수 기준)
   // ============================================
 
   /** 강사 배정 */
