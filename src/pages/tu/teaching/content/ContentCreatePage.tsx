@@ -21,13 +21,14 @@ export function ContentCreatePage() {
           name: data.title, // 콘텐츠 제목을 name으로 사용
         });
       } else if (data.uploadedFile) {
-        // 파일 업로드 (제목, 설명, 태그, 썸네일 전달)
+        // 파일 업로드 (제목, 설명, 태그, 썸네일, 다운로드 허용 전달)
         await uploadContent.mutateAsync({
           file: data.uploadedFile,
           originalFileName: data.title && data.title !== data.uploadedFile.name ? data.title : undefined,
           description: data.description || undefined,
           tags: data.tags.length > 0 ? data.tags.join(',') : undefined,
           thumbnail: data.thumbnailImage,
+          downloadable: data.allowDownload,
         });
       }
 

@@ -384,15 +384,17 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
                     <Eye size={16} />
                     {getText('preview')}
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="border border-border"
-                    onClick={handleDownload}
-                  >
-                    <Download size={16} />
-                    {getText('download')}
-                  </Button>
+                  {content.downloadable !== false && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="border border-border"
+                      onClick={handleDownload}
+                    >
+                      <Download size={16} />
+                      {getText('download')}
+                    </Button>
+                  )}
                 </>
               )}
               {isArchived ? (

@@ -83,6 +83,7 @@ interface UploadContentParams {
   description?: string;
   tags?: string;
   thumbnail?: File;
+  downloadable?: boolean;
 }
 
 // 파일 업로드
@@ -90,8 +91,8 @@ export const useUploadContent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ file, folderId, originalFileName, description, tags, thumbnail }: UploadContentParams) =>
-      contentService.uploadFile(file, { folderId, originalFileName, description, tags, thumbnail }),
+    mutationFn: ({ file, folderId, originalFileName, description, tags, thumbnail, downloadable }: UploadContentParams) =>
+      contentService.uploadFile(file, { folderId, originalFileName, description, tags, thumbnail, downloadable }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });
