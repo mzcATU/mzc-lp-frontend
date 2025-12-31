@@ -300,17 +300,19 @@ export function BaseSidebar({
                 {/* Level 1 Menu Item */}
                 <button
                   onClick={() => handleItemClick(item.id, !!hasSubItems)}
-                  className={cn(
-                    'flex items-center gap-3 rounded-xl transition-all',
-                    isExpanded ? 'w-full px-4 py-3' : 'w-[44px] h-[44px] justify-center mx-auto'
-                  )}
+                  className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
                   style={{
+                    width: isExpanded ? '100%' : '44px',
+                    height: '44px',
+                    padding: isExpanded ? '0 16px' : '0',
+                    justifyContent: 'center',
                     backgroundColor:
                       isActive && !hasSubItems ? colors.activeBg : 'transparent',
                     color:
                       isActive && !hasSubItems
                         ? colors.activeText
                         : colors.textPrimary,
+                    margin: isExpanded ? '0' : '0 auto',
                   }}
                   onMouseEnter={(e) => {
                     if (!(isActive && !hasSubItems)) {
@@ -335,7 +337,7 @@ export function BaseSidebar({
                   />
                   {isExpanded && (
                     <>
-                      <span className="flex-1 text-left text-sm font-medium">
+                      <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
                         {item.label[language]}
                       </span>
                       {hasSubItems && (
@@ -491,11 +493,15 @@ export function BaseSidebar({
           {/* Collapse Toggle */}
           <button
             onClick={onToggle}
-            className={cn(
-              'flex items-center gap-3 rounded-xl transition-all',
-              isExpanded ? 'w-full px-4 py-3' : 'w-[44px] h-[44px] justify-center mx-auto'
-            )}
-            style={{ color: colors.textPrimary }}
+            className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+            style={{
+              width: isExpanded ? '100%' : '44px',
+              height: '44px',
+              padding: isExpanded ? '0 16px' : '0',
+              justifyContent: 'center',
+              color: colors.textPrimary,
+              margin: isExpanded ? '0' : '0 auto',
+            }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = colors.hover;
             }}
@@ -514,17 +520,17 @@ export function BaseSidebar({
           >
             {isExpanded ? (
               <PanelLeftClose
-                className="w-5 h-5"
+                className="w-5 h-5 flex-shrink-0"
                 style={{ color: colors.textSecondary }}
               />
             ) : (
               <PanelLeft
-                className="w-5 h-5"
+                className="w-5 h-5 flex-shrink-0"
                 style={{ color: colors.textSecondary }}
               />
             )}
             {isExpanded && (
-              <span className="flex-1 text-left text-sm font-medium">
+              <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
                 {language === 'ko' ? '접기' : 'Collapse'}
               </span>
             )}
