@@ -19,6 +19,7 @@ export type {
 } from '../common/course.types';
 
 import type { CourseLevel, CourseType } from '../common/course.types';
+import type { CurriculumItem } from '../tu/curriculum.types';
 
 export {
   COURSE_LEVEL_LABELS,
@@ -45,7 +46,10 @@ export interface ContentAttachment {
   description?: string;
 }
 
-/** 회차(레슨) 데이터 타입 */
+/**
+ * 회차(레슨) 데이터 타입
+ * @deprecated types/tu/curriculum.types.ts의 CurriculumItem 사용 권장
+ */
 export interface LessonData {
   id: string;
   order: number;
@@ -53,6 +57,27 @@ export interface LessonData {
   description: string;
   contents: ContentAttachment[];
 }
+
+// ============================================
+// Curriculum Tree Types - Re-export from tu
+// ============================================
+// 새 타입은 types/tu/curriculum.types.ts에서 관리됩니다.
+export type {
+  CurriculumItemType,
+  CurriculumFolderItem,
+  CurriculumContentItem,
+  CurriculumItem,
+  CurriculumFormData,
+} from '../tu/curriculum.types';
+
+export {
+  isCurriculumFolder,
+  isCurriculumContent,
+  createFolderItem,
+  createContentItem,
+  findItemInTree,
+  findParentInTree,
+} from '../tu/curriculum.types';
 
 /**
  * 강의 난이도 (UI 전용)
@@ -90,7 +115,10 @@ export interface CourseFormData {
   tags: string[];
   level: CourseLevel | '';
   type: CourseType | '';
+  /** @deprecated curriculumItems 사용 권장 */
   lessons: LessonData[];
+  /** 커리큘럼 트리 구조 (폴더/콘텐츠 계층) */
+  curriculumItems: CurriculumItem[];
   isDraft: boolean;
   lastSaved?: string;
   multiLanguage: MultiLanguageSettings;
