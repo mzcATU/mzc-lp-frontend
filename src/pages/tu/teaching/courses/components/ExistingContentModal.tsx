@@ -164,8 +164,7 @@ export function ExistingContentModal({
           </div>
 
           {/* 콘텐츠 목록 */}
-          <div className="border border-border rounded-lg overflow-hidden flex-1 min-h-0">
-            <div className="h-full overflow-y-auto">
+          <div className="border border-border rounded-lg overflow-y-auto flex-1 min-h-0">
               {isLoading ? (
                 <div className="p-8 text-center text-text-secondary">
                   {getText('processing')}
@@ -204,7 +203,6 @@ export function ExistingContentModal({
                   ))}
                 </div>
               )}
-            </div>
           </div>
         </div>
 

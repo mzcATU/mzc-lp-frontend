@@ -112,6 +112,8 @@ const t = {
   archiveSuccess: { ko: '보관되었습니다.', en: 'Archived successfully.' },
   restoreSuccess: { ko: '복원되었습니다.', en: 'Restored successfully.' },
   deleteSuccess: { ko: '삭제되었습니다.', en: 'Deleted successfully.' },
+  deleteFailedInUse: { ko: '이 콘텐츠는 강의에 포함되어 있어 삭제할 수 없습니다.', en: 'This content cannot be deleted because it is included in a course.' },
+  updateFailedInUse: { ko: '이 콘텐츠는 강의에 포함되어 있어 수정할 수 없습니다.', en: 'This content cannot be modified because it is included in a course.' },
   versionRestoreSuccess: { ko: '버전이 복원되었습니다.', en: 'Version restored successfully.' },
   externalUrl: { ko: '외부 URL', en: 'External URL' },
   inCourse: { ko: '과정에 포함됨', en: 'In Course' },
@@ -246,9 +248,14 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Update failed:', err);
-      alert('수정에 실패했습니다.');
+      const error = err as { response?: { data?: { error?: { code?: string } } } };
+      if (error.response?.data?.error?.code === 'CT010') {
+        alert(getText('updateFailedInUse'));
+      } else {
+        alert(getText('error'));
+      }
     }
   };
 
@@ -281,8 +288,15 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
       await deleteContent.mutateAsync(contentId);
       alert(getText('deleteSuccess'));
       navigate('/tu/teaching/content');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Delete failed:', err);
+      // 강의에 포함된 콘텐츠 삭제 시도 시 에러 처리
+      const error = err as { response?: { data?: { error?: { code?: string } } } };
+      if (error.response?.data?.error?.code === 'CT010') {
+        alert(getText('deleteFailedInUse'));
+      } else {
+        alert(getText('error'));
+      }
     }
   };
 
