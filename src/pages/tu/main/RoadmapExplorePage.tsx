@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Clock, Users, Star, CheckCircle, Loader2, Search } from 'lucide-react';
+import { ChevronRight, Clock, Users, Star, CheckCircle, Loader2, Search, Heart } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -143,6 +143,15 @@ interface RoadmapCardProps {
 }
 
 function RoadmapCard({ roadmap, isDark }: RoadmapCardProps) {
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted(!isWishlisted);
+    // TODO: API 연동 시 실제 찜 추가/삭제 로직 구현
+  };
+
   const color = getCategoryColor(roadmap.category);
   const tags: string[] = [];
   if (roadmap.isNew) tags.push('NEW');
@@ -151,18 +160,33 @@ function RoadmapCard({ roadmap, isDark }: RoadmapCardProps) {
   return (
     <Link
       to={`/tu/main/roadmap/${roadmap.id}`}
-      className={`block rounded-2xl p-6 card-hover cursor-pointer group border ${
+      className={`block rounded-2xl p-6 card-hover cursor-pointer group border relative ${
         isDark
           ? 'glass border-white/10'
           : 'bg-white border-gray-200 shadow-sm hover:shadow-lg'
       }`}
     >
+      {/* 찜 버튼 */}
+      <button
+        onClick={handleWishlistToggle}
+        className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-300 z-10 ${
+          isWishlisted
+            ? 'bg-red-500 text-white'
+            : isDark
+              ? 'bg-white/10 text-gray-400 hover:bg-red-500 hover:text-white'
+              : 'bg-gray-100 text-gray-400 hover:bg-red-500 hover:text-white'
+        }`}
+        aria-label={isWishlisted ? '찜 해제' : '찜하기'}
+      >
+        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+      </button>
+
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
           <CheckCircle className="w-6 h-6 text-white" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mr-10">
           {tags.map((tag) => (
             <span
               key={tag}
