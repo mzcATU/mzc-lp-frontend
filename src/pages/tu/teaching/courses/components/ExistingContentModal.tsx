@@ -126,8 +126,8 @@ export function ExistingContentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] bg-bg-default flex flex-col overflow-hidden">
-        <DialogHeader className="shrink-0">
+      <DialogContent className="max-w-2xl sm:max-w-2xl max-h-[80vh] bg-bg-default">
+        <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-text-primary">
             <FileText size={20} />
             {getText('existingContentModalTitle')}
@@ -187,7 +187,7 @@ export function ExistingContentModal({
                       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-bg-secondary text-text-secondary shrink-0">
                         {getContentIcon(content.contentType)}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 w-0">
                         <p className="text-sm font-medium text-text-primary truncate">
                           {content.originalFileName}
                         </p>
