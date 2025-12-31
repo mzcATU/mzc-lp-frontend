@@ -5,6 +5,16 @@ import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/common';
 import type { MenuItem } from '@/types';
 
 interface MyPageSidebarProps {
@@ -23,6 +33,33 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
+  const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
+
+  // 강의 개설하기 클릭 핸들러
+  const handleCreateCourseClick = () => {
+    setShowCreateCourseDialog(true);
+  };
+
+  const handleCreateCourseConfirm = () => {
+    // USER인 경우 DESIGNER 권한 부여
+    if (user?.role === 'USER') {
+      updateUser({ role: 'DESIGNER' });
+    }
+    setShowCreateCourseDialog(false);
+    onMenuItemClick?.('create-course');
+  };
+
+  // 강의 개설 다이얼로그 설명 텍스트
+  const getCreateCourseDialogDescription = () => {
+    if (user?.role === 'USER') {
+      return language === 'ko'
+        ? '강의 개설을 위해 디자이너 권한이 부여됩니다. 강의 설계 / 개설 페이지로 이동하시겠습니까?'
+        : 'Designer permission will be granted for course creation. Would you like to proceed to the course design / creation page?';
+    }
+    return language === 'ko'
+      ? '강의 설계 / 개설 페이지로 이동하시겠습니까?'
+      : 'Would you like to proceed to the course design / creation page?';
+  };
 
   // 현재 유저 롤로 subItem 필터링
   const filterSubItemsByRole = (subItems?: MenuItem['subItems']) => {
@@ -93,9 +130,10 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                 <button
                   key={subItem.id}
                   onClick={() => {
-                    // 강의 개설하기 클릭 시 DESIGNER role 부여
+                    // 강의 개설하기 클릭 시 확인 다이얼로그 표시
                     if (subItem.id === 'create-course') {
-                      updateUser({ role: 'DESIGNER' });
+                      handleCreateCourseClick();
+                      return;
                     }
                     subItem.path && onMenuItemClick?.(subItem.id);
                   }}
@@ -196,6 +234,28 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
           </button>
         </div>
       </div>
+
+      {/* 강의 개설 확인 다이얼로그 */}
+      <AlertDialog open={showCreateCourseDialog} onOpenChange={setShowCreateCourseDialog}>
+        <AlertDialogContent className={isDark ? 'bg-[#2a2a2a] border-white/10' : ''}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={isDark ? 'text-white' : ''}>
+              {language === 'ko' ? '강의 설계 / 개설' : 'Course Design / Creation'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className={isDark ? 'text-gray-300' : ''}>
+              {getCreateCourseDialogDescription()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className={isDark ? 'bg-transparent border-white/20 text-gray-200 hover:bg-white/10 hover:text-white' : ''}>
+              {language === 'ko' ? '취소' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleCreateCourseConfirm}>
+              {language === 'ko' ? '이동' : 'Proceed'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

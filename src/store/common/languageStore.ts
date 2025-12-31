@@ -112,6 +112,9 @@ type TranslationKeys = {
     statsDesc: string;
     statsOverview: string;
     statsComingSoon: string;
+    courseDesignTitle: string;
+    navigateConfirm: string;
+    proceed: string;
   };
   // 프로필 및 보안
   profileSecurity: {
@@ -395,6 +398,9 @@ const ko: TranslationKeys = {
     statsDesc: '내 강의의 수강생 및 학습 통계를 확인하세요',
     statsOverview: '통계 개요',
     statsComingSoon: '강의 통계 기능은 현재 개발 중입니다. 곧 수강생 현황, 학습 완료율 등 다양한 통계를 확인할 수 있습니다.',
+    courseDesignTitle: '강의 설계 / 개설',
+    navigateConfirm: '강의 설계 / 개설 페이지로 이동하시겠습니까?',
+    proceed: '이동',
   },
   profileSecurity: {
     title: '프로필 및 보안',
@@ -664,6 +670,9 @@ const en: TranslationKeys = {
     statsDesc: 'View student and learning statistics for your courses',
     statsOverview: 'Statistics Overview',
     statsComingSoon: 'Course statistics feature is currently under development. You will soon be able to view student enrollment, completion rates, and other statistics.',
+    courseDesignTitle: 'Course Design / Creation',
+    navigateConfirm: 'Would you like to proceed to the course design / creation page?',
+    proceed: 'Proceed',
   },
   profileSecurity: {
     title: 'Profile & Security',
