@@ -362,7 +362,7 @@ export function MyPageHome() {
               <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {t.mypage.noEnrolledCoursesDesc}
               </p>
-              <Button onClick={() => navigate('/tu/catalog')}>{t.mypage.browseCourses}</Button>
+              <Button onClick={() => navigate('/tu/b2c/courses')}>{t.mypage.browseCourses}</Button>
             </div>
           )}
         </section>
@@ -412,7 +412,7 @@ export function MyPageHome() {
               icon={<TrendingUp className="w-5 h-5" />}
               title={t.mypage.learningProgress}
               description={t.mypage.learningProgressDesc}
-              onClick={() => navigate('/tu/progress')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               isDark={isDark}
             />
           </div>

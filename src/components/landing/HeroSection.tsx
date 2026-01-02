@@ -129,7 +129,7 @@ export function HeroSection() {
 
           <div className="flex gap-4 pt-4">
             <Link
-              to="/tu/catalog"
+              to="/tu/b2c/courses"
               className="landing-btn-primary px-8 py-4 rounded-full text-white font-bold text-base flex items-center gap-2"
             >
               {t.hero.getStarted}

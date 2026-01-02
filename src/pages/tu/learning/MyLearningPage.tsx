@@ -316,7 +316,7 @@ export function MyLearningPage() {
             <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               {t.learning.noEnrollmentsDesc}
             </p>
-            <Button variant="brand" onClick={() => navigate('/tu/catalog')}>
+            <Button variant="brand" onClick={() => navigate('/tu/b2c/courses')}>
               {t.learning.browseCourses}
             </Button>
           </div>
