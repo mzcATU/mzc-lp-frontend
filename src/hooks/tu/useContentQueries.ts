@@ -82,6 +82,8 @@ interface UploadContentParams {
   originalFileName?: string;
   description?: string;
   tags?: string;
+  category?: string;
+  completionCriteria?: 'BUTTON_CLICK' | 'PERCENT_90' | 'PERCENT_100';
   thumbnail?: File;
   downloadable?: boolean;
 }
@@ -91,8 +93,8 @@ export const useUploadContent = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ file, folderId, originalFileName, description, tags, thumbnail, downloadable }: UploadContentParams) =>
-      contentService.uploadFile(file, { folderId, originalFileName, description, tags, thumbnail, downloadable }),
+    mutationFn: ({ file, folderId, originalFileName, description, tags, category, completionCriteria, thumbnail, downloadable }: UploadContentParams) =>
+      contentService.uploadFile(file, { folderId, originalFileName, description, tags, category, completionCriteria, thumbnail, downloadable }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });
