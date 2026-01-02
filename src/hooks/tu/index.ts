@@ -115,11 +115,12 @@ export {
 export {
   cartKeys,
   useCart,
-  useCartAddItem,
+  useCartCount,
+  useCheckCartStatus,
+  useAddToCart,
   useRemoveFromCart,
-  useClearCart,
-  useApplyCoupon,
-  useRemoveCoupon,
+  useRemoveFromCartBulk,
+  useToggleCart,
 } from './useCartQueries';
 
 // Wishlist Hooks

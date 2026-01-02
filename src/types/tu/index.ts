@@ -102,14 +102,12 @@ export type {
 
 // Cart (장바구니)
 export type {
+  CartItemResponse,
+  CartAddRequest,
+  CartRemoveRequest,
+  CartCountResponse,
   CartItem,
-  CartResponse,
   CartSummary,
-  Coupon,
-  ApplyCouponRequest,
-  ApplyCouponResponse,
-  AddToCartRequest,
-  RemoveFromCartRequest,
 } from './cart.types';
 
 // Wishlist (찜 목록)

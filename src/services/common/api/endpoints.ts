@@ -218,4 +218,13 @@ export const API_ENDPOINTS = {
     COURSE_CHECK: (courseId: number) => `/wishlist/courses/${courseId}/check`,
     COURSE_COUNT: (courseId: number) => `/wishlist/courses/${courseId}/count`,
   },
+
+  // Cart (장바구니) - TU
+  CART: {
+    BASE: '/cart',
+    ITEMS: '/cart/items',
+    COUNT: '/cart/count',
+    ITEM: (courseId: number) => `/cart/items/${courseId}`,
+    ITEM_CHECK: (courseId: number) => `/cart/items/${courseId}/check`,
+  },
 } as const;
