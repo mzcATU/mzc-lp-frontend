@@ -310,7 +310,7 @@ export function NotificationsPage() {
                   key={notification.id}
                   onClick={() => {
                     markAsRead(notification.id);
-                    navigate(`/tu/notifications/${notification.id}`);
+                    navigate(`/tu/b2c/notifications/${notification.id}`);
                   }}
                   className={`rounded-xl p-4 flex gap-4 cursor-pointer transition-all border ${
                     isDark

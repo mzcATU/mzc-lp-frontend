@@ -241,7 +241,7 @@ export const tenantUserMenuData: MenuItem[] = [
     id: 'catalog',
     label: { ko: '과정 둘러보기', en: 'Course Catalog' },
     icon: Library,
-    path: '/tu/catalog',
+    path: '/tu/b2c/courses',
   },
 ];
 

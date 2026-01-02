@@ -152,7 +152,7 @@ export function WishlistPage() {
                   }`}
                 >
                   {/* Image */}
-                  <Link to={`/tu/catalog/${item.courseId}`} className="block relative">
+                  <Link to={`/tu/b2c/courses/${item.courseId}`} className="block relative">
                     <div className="w-full aspect-video bg-gradient-to-br from-[#6778ff]/20 to-[#a855f7]/20 flex items-center justify-center">
                       {item.courseThumbnailUrl ? (
                         <img
@@ -173,7 +173,7 @@ export function WishlistPage() {
 
                   {/* Content */}
                   <div className="p-4">
-                    <Link to={`/tu/catalog/${item.courseId}`}>
+                    <Link to={`/tu/b2c/courses/${item.courseId}`}>
                       <h3 className={`font-semibold mb-2 line-clamp-2 group-hover:text-[#6778ff] transition-colors ${
                         isDark ? 'text-white' : 'text-gray-900'
                       }`}>
@@ -204,7 +204,7 @@ export function WishlistPage() {
                     {/* Actions */}
                     <div className="flex gap-2">
                       <Link
-                        to={`/tu/catalog/${item.courseId}`}
+                        to={`/tu/b2c/courses/${item.courseId}`}
                         className="flex-1 py-2.5 rounded-lg font-medium text-sm landing-btn-primary text-white flex items-center justify-center gap-2"
                       >
                         상세보기
