@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Heart, Eye, Clock, TrendingUp, HelpCircle, Lightbulb, Users, Loader2, Search } from 'lucide-react';
+import { MessageSquare, Heart, Eye, Clock, TrendingUp, HelpCircle, Lightbulb, Users, Loader2, Search, User } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -9,7 +9,7 @@ import { WritePostModal } from '@/components/domain/community';
 import type { CommunityPost, CommunityCategory, CreatePostRequest } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
+const USE_API = true;
 
 // 카테고리 아이콘 매핑
 const getCategoryIcon = (categoryId: string) => {
@@ -156,6 +156,21 @@ const formatRelativeTime = (dateString: string): string => {
   return date.toLocaleDateString('ko-KR');
 };
 
+// 이미지 URL 처리 (상대 경로를 절대 URL로 변환)
+const getImageUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // /uploads/로 시작하는 상대 경로는 API 서버 URL을 붙임
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8080';
+  return `${apiBaseUrl}${url}`;
+};
+
+// 마크다운 이미지 문법을 제거하고 "[이미지]"로 대체
+const stripMarkdownImages = (content: string): string => {
+  // ![alt](url) 패턴을 "[이미지]"로 대체
+  return content.replace(/!\[[^\]]*\]\([^)]+\)/g, '[이미지]');
+};
+
 interface PostCardProps {
   post: CommunityPost;
   isDark: boolean;
@@ -177,13 +192,21 @@ function PostCard({ post, isDark, categories }: PostCardProps) {
     >
       <div className="flex items-start gap-4">
         {/* Author Image */}
-        {post.author.avatar && (
-          <img
-            src={post.author.avatar}
-            alt={post.author.name}
-            className="w-10 h-10 rounded-full object-cover hidden sm:block"
-          />
-        )}
+        <div className="hidden sm:block">
+          {getImageUrl(post.author.avatar) ? (
+            <img
+              src={getImageUrl(post.author.avatar)!}
+              alt={post.author.name}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              isDark ? 'bg-white/10' : 'bg-gray-200'
+            }`}>
+              <User className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+            </div>
+          )}
+        </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -220,7 +243,7 @@ function PostCard({ post, isDark, categories }: PostCardProps) {
 
           {/* Preview */}
           <p className={`text-sm mb-3 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            {post.excerpt || post.content}
+            {stripMarkdownImages(post.excerpt || post.content)}
           </p>
 
           {/* Tags */}
@@ -410,14 +433,15 @@ export function CommunityPage() {
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
             className={`rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#6778ff] cursor-pointer ${
               isDark
-                ? 'bg-white/5 border border-white/10 text-white'
+                ? 'bg-[#2a2a2a] border border-white/10 text-white'
                 : 'bg-white border border-gray-200 text-gray-900'
             }`}
+            style={isDark ? { colorScheme: 'dark' } : undefined}
           >
-            <option value="latest">최신순</option>
-            <option value="popular">조회순</option>
-            <option value="most_commented">댓글순</option>
-            <option value="most_liked">좋아요순</option>
+            <option value="latest" className={isDark ? 'bg-[#2a2a2a] text-white' : ''}>최신순</option>
+            <option value="popular" className={isDark ? 'bg-[#2a2a2a] text-white' : ''}>조회순</option>
+            <option value="most_commented" className={isDark ? 'bg-[#2a2a2a] text-white' : ''}>댓글순</option>
+            <option value="most_liked" className={isDark ? 'bg-[#2a2a2a] text-white' : ''}>좋아요순</option>
           </select>
         </div>
 
