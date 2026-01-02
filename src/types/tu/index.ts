@@ -216,3 +216,29 @@ export {
   findItemInTree,
   findParentInTree,
 } from './curriculum.types';
+
+// CourseTime Catalog (학습자용 차수 카탈로그)
+export type {
+  CourseTimeStatus,
+  DeliveryType,
+  EnrollmentMethod,
+  CatalogInstructorRole,
+  ProgramLevel,
+  ProgramType,
+  ProgramSummaryResponse,
+  InstructorSummaryResponse,
+  CurriculumItemResponse,
+  CourseTimeCatalogResponse,
+  CourseTimePublicDetailResponse,
+  CourseTimeCatalogParams,
+} from './courseTimeCatalog.types';
+
+export {
+  COURSE_TIME_STATUS_LABELS,
+  DELIVERY_TYPE_LABELS,
+  ENROLLMENT_METHOD_LABELS,
+  CATALOG_INSTRUCTOR_ROLE_LABELS,
+  PROGRAM_LEVEL_LABELS,
+  PROGRAM_TYPE_LABELS,
+  COURSE_TIME_STATUS_COLORS,
+} from './courseTimeCatalog.types';

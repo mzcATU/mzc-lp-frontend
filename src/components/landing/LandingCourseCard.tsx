@@ -40,6 +40,9 @@ export function LandingCourseCard({
     if (tag === 'NEW') return t.landing.tagNew;
     if (tag === '베스트') return t.landing.tagBest;
     if (tag === '할인중') return t.landing.tagSale;
+    if (tag === '상시모집') return '상시모집';
+    if (tag === '모집중') return '모집중';
+    if (tag === '무료') return '무료';
     return tag;
   };
 
@@ -70,7 +73,13 @@ export function LandingCourseCard({
                       ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
                       : tag === '베스트'
                         ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                        : 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
+                        : tag === '상시모집'
+                          ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
+                          : tag === '모집중'
+                            ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
+                            : tag === '무료'
+                              ? 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
+                              : 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
                   }`}
                 >
                   {getTagLabel(tag)}

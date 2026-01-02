@@ -221,3 +221,10 @@ export {
   useDeleteSnapshotItem,
   type MyProgramFilterParams,
 } from './useMyProgramQueries';
+
+// CourseTime Catalog Hooks (학습자용 차수 카탈로그)
+export {
+  courseTimeCatalogKeys,
+  useCourseTimeCatalog,
+  useCourseTimeDetail,
+} from './useCourseTimeCatalogQueries';
