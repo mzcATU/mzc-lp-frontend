@@ -190,15 +190,16 @@ export const tenantOperatorMenuData: MenuItem[] = [
       { id: 'instructor-assignment', label: { ko: '강사 배정', en: 'Instructor Assignment' }, icon: UserCheck, path: '/to/instructors' },
     ],
   },
-  {
-    id: 'content-management',
-    label: { ko: '콘텐츠 관리', en: 'Content Management' },
-    icon: Database,
-    subItems: [
-      { id: 'content-pool', label: { ko: '콘텐츠 풀', en: 'Content Pool' }, icon: Database, path: '/to/content' },
-      { id: 'learning-objects', label: { ko: '학습객체', en: 'Learning Objects' }, icon: Layers, path: '/to/learning-objects' },
-    ],
-  },
+  // TODO: TO 콘텐츠 관리 기능 - 개발 예정으로 임시 숨김
+  // {
+  //   id: 'content-management',
+  //   label: { ko: '콘텐츠 관리', en: 'Content Management' },
+  //   icon: Database,
+  //   subItems: [
+  //     { id: 'content-pool', label: { ko: '콘텐츠 풀', en: 'Content Pool' }, icon: Database, path: '/to/content' },
+  //     { id: 'learning-objects', label: { ko: '학습객체', en: 'Learning Objects' }, icon: Layers, path: '/to/learning-objects' },
+  //   ],
+  // },
   {
     id: 'enrollment-instructor-data',
     label: { ko: '수강 및 강사 정보', en: 'Enrollment & Instructor Data' },

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe } from 'lucide-react';
+import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
+import { userService } from '@/services/common/userService';
+import { authService } from '@/services/common/authService';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,19 +37,66 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
+  const [isGrantingRole, setIsGrantingRole] = useState(false);
+
+  // 사용자가 DESIGNER 역할을 가지고 있는지 확인
+  const isDesigner = user?.role === 'DESIGNER' || user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN';
 
   // 강의 개설하기 클릭 핸들러
   const handleCreateCourseClick = () => {
     setShowCreateCourseDialog(true);
   };
 
-  const handleCreateCourseConfirm = () => {
-    // USER인 경우 DESIGNER 권한 부여
-    if (user?.role === 'USER') {
-      updateUser({ role: 'DESIGNER' });
+  const handleCreateCourseConfirm = async () => {
+    // 이미 DESIGNER인 경우 바로 이동
+    if (isDesigner) {
+      setShowCreateCourseDialog(false);
+      onMenuItemClick?.('create-course');
+      return;
     }
-    setShowCreateCourseDialog(false);
-    onMenuItemClick?.('create-course');
+
+    setIsGrantingRole(true);
+    try {
+      // DESIGNER 역할 부여 API 호출
+      await userService.applyDesignerRole();
+
+      // 토큰 갱신 (CourseRole이 반영된 새 토큰 발급)
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (refreshToken) {
+        const tokenResponse = await authService.refresh(refreshToken);
+        useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+      }
+
+      // 사용자 정보 다시 조회하여 역할 업데이트
+      const updatedUser = await userService.getMe();
+      updateUser({ role: updatedUser.role });
+
+      toast.success(language === 'ko' ? '강의 개설 권한이 부여되었습니다.' : 'Designer permission granted.');
+      setShowCreateCourseDialog(false);
+      onMenuItemClick?.('create-course');
+    } catch (error) {
+      // 409 Conflict = 이미 DESIGNER 역할을 가지고 있음
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
+        // 토큰 갱신 (이미 권한이 있어도 토큰에 반영 필요)
+        const refreshToken = useAuthStore.getState().refreshToken;
+        if (refreshToken) {
+          const tokenResponse = await authService.refresh(refreshToken);
+          useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+        }
+
+        const updatedUser = await userService.getMe();
+        updateUser({ role: updatedUser.role });
+
+        toast.success(language === 'ko' ? '이미 강의 개설 권한이 있습니다.' : 'You already have designer permission.');
+        setShowCreateCourseDialog(false);
+        onMenuItemClick?.('create-course');
+      } else {
+        toast.error(language === 'ko' ? '권한 부여에 실패했습니다.' : 'Failed to grant permission.');
+      }
+    } finally {
+      setIsGrantingRole(false);
+    }
   };
 
   // 강의 개설 다이얼로그 설명 텍스트
@@ -247,11 +297,21 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className={isDark ? 'bg-transparent border-white/20 text-gray-200 hover:bg-white/10 hover:text-white' : ''}>
+            <AlertDialogCancel
+              disabled={isGrantingRole}
+              className={isDark ? 'bg-transparent border-white/20 text-gray-200 hover:bg-white/10 hover:text-white' : ''}
+            >
               {language === 'ko' ? '취소' : 'Cancel'}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateCourseConfirm}>
-              {language === 'ko' ? '이동' : 'Proceed'}
+            <AlertDialogAction onClick={handleCreateCourseConfirm} disabled={isGrantingRole}>
+              {isGrantingRole ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {language === 'ko' ? '처리 중...' : 'Processing...'}
+                </>
+              ) : (
+                language === 'ko' ? '이동' : 'Proceed'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -102,18 +102,25 @@ export function Step2ContentUpload({ data, onUpdate }: Readonly<Step2Props>) {
     );
   }
 
-  // Video/Document Upload UI
-  if (data.loType === 'video' || data.loType === 'document') {
-    const acceptedFormats = data.loType === 'video' ? '.mp4,.mov,.avi,.mkv' : '.pdf,.txt,.doc,.docx,.ppt,.pptx';
+  // Video/Image/Document Upload UI
+  if (data.loType === 'video' || data.loType === 'image' || data.loType === 'document') {
+    const acceptedFormats =
+      data.loType === 'video'
+        ? '.mp4,.mov,.avi,.mkv'
+        : data.loType === 'image'
+          ? '.jpg,.jpeg,.png,.gif,.webp'
+          : '.pdf,.txt,.doc,.docx,.ppt,.pptx';
     const formatText =
       data.loType === 'video'
         ? 'MP4, MOV, AVI, MKV (최대 500MB)'
-        : 'PDF, TXT, DOC, DOCX, PPT, PPTX (최대 100MB)';
+        : data.loType === 'image'
+          ? 'JPG, PNG, GIF, WEBP (최대 20MB)'
+          : 'PDF, TXT, DOC, DOCX, PPT, PPTX (최대 100MB)';
 
     return (
       <div className="space-y-6">
         <h2 className="text-text-primary font-medium text-lg">
-          {data.loType === 'video' ? '비디오 파일 업로드' : '문서 파일 업로드'}
+          {data.loType === 'video' ? '비디오 파일 업로드' : data.loType === 'image' ? '이미지 파일 업로드' : '문서 파일 업로드'}
         </h2>
 
         {!data.uploadedFile && !isUploading && (
@@ -152,7 +159,7 @@ export function Step2ContentUpload({ data, onUpdate }: Readonly<Step2Props>) {
             <div className="mt-4 p-4 bg-bg-secondary rounded-lg border border-border">
               <p className="text-sm text-text-secondary">
                 <strong className="text-text-primary">백그라운드 처리 안내:</strong> 업로드 완료 후
-                {data.loType === 'video' ? ' 비디오 인코딩' : ' 문서 변환'} 작업이 자동으로 진행됩니다.
+                {data.loType === 'video' ? ' 비디오 인코딩' : data.loType === 'image' ? ' 이미지 처리' : ' 문서 변환'} 작업이 자동으로 진행됩니다.
                 처리 상태는 콘텐츠 목록에서 확인하실 수 있습니다.
               </p>
             </div>

@@ -1,7 +1,21 @@
 import { useNavigate } from 'react-router-dom';
 import { ContentRegistrationWizard } from '@/components/domain/tu/content';
-import type { LOData } from '@/types';
+import type { LOData, CompletionCriteria } from '@/types';
 import { useUploadContent, useCreateExternalLink } from '@/hooks/tu';
+
+// 프론트 completionCriteria -> 백엔드 enum 변환
+const mapCompletionCriteria = (criteria: CompletionCriteria): 'BUTTON_CLICK' | 'PERCENT_90' | 'PERCENT_100' => {
+  switch (criteria) {
+    case 'button-click':
+      return 'BUTTON_CLICK';
+    case '90-percent':
+      return 'PERCENT_90';
+    case '100-percent':
+      return 'PERCENT_100';
+    default:
+      return 'PERCENT_100';
+  }
+};
 
 export function ContentCreatePage() {
   const navigate = useNavigate();
@@ -21,12 +35,14 @@ export function ContentCreatePage() {
           name: data.title, // 콘텐츠 제목을 name으로 사용
         });
       } else if (data.uploadedFile) {
-        // 파일 업로드 (제목, 설명, 태그, 썸네일, 다운로드 허용 전달)
+        // 파일 업로드 (제목, 설명, 태그, 카테고리, 완료기준, 썸네일, 다운로드 허용 전달)
         await uploadContent.mutateAsync({
           file: data.uploadedFile,
           originalFileName: data.title && data.title !== data.uploadedFile.name ? data.title : undefined,
           description: data.description || undefined,
           tags: data.tags.length > 0 ? data.tags.join(',') : undefined,
+          category: data.category || undefined,
+          completionCriteria: mapCompletionCriteria(data.completionCriteria),
           thumbnail: data.thumbnailImage,
           downloadable: data.allowDownload,
         });
