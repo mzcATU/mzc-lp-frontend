@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ComponentShowcase from '@/pages/dev/ComponentShowcase';
 import { saRoutes } from './sa.routes';
 import { taRoutes } from './ta.routes';
@@ -10,6 +10,9 @@ import { UnauthorizedPage } from './pages';
 export function AppRoutes() {
   return (
     <Routes>
+      {/* 루트 경로 리다이렉트 */}
+      <Route path="/" element={<Navigate to="/tu/b2c" replace />} />
+
       {/* 역할별 라우트 */}
       {saRoutes}
       {taRoutes}

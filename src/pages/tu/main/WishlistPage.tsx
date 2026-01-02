@@ -133,7 +133,7 @@ export function WishlistPage() {
               관심 있는 강의에 하트를 눌러 저장해보세요!
             </p>
             <Link
-              to="/tu/catalog"
+              to="/tu/b2c/courses"
               className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-full text-white font-medium"
             >
               강의 둘러보기 <ChevronRight className="w-4 h-4" />
@@ -272,7 +272,7 @@ export function WishlistPage() {
                 찜한 강의를 기반으로 추천 강의를 준비하고 있어요.
               </p>
               <Link
-                to="/tu/catalog"
+                to="/tu/b2c/courses"
                 className={`inline-flex items-center gap-2 font-medium transition-colors ${
                   isDark ? 'text-[#6778ff] hover:text-[#8b99ff]' : 'text-[#6778ff] hover:text-[#5566ee]'
                 }`}

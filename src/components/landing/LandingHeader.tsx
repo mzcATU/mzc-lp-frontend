@@ -59,20 +59,20 @@ export function LandingHeader() {
           {/* Left: Logo & Menu */}
           <div className="flex items-center gap-8 ml-2 md:ml-4">
             {/* Logo */}
-            <Link to="/" className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
+            <Link to="/tu/b2c" className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
               <span className="text-2xl">M</span>
               <span className="gradient-text">MZC Learn</span>
             </Link>
 
             {/* Desktop Nav Links */}
             <nav className={`hidden md:flex items-center gap-8 font-medium text-[15px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              <Link to="/tu/main/courses" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+              <Link to="/tu/b2c/courses" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 강의 탐색
               </Link>
-              <Link to="/tu/main/roadmaps" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+              <Link to="/tu/b2c/roadmaps" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 로드맵
               </Link>
-              <Link to="/tu/main/community" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+              <Link to="/tu/b2c/community" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 커뮤니티
               </Link>
             </nav>
@@ -116,7 +116,7 @@ export function LandingHeader() {
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
               <Link
-                to="/tu/cart"
+                to="/tu/b2c/cart"
                 className={`p-2 rounded-lg transition-colors relative ${
                   isDark
                     ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -126,7 +126,7 @@ export function LandingHeader() {
                 <ShoppingCart className="h-5 w-5" />
               </Link>
               <Link
-                to="/tu/wishlist"
+                to="/tu/b2c/wishlist"
                 className={`p-2 rounded-lg transition-colors relative ${
                   isDark
                     ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -136,7 +136,7 @@ export function LandingHeader() {
                 <Heart className="h-5 w-5" />
               </Link>
               <Link
-                to="/tu/notifications"
+                to="/tu/b2c/notifications"
                 className={`p-2 rounded-lg transition-colors relative ${
                   isDark
                     ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -193,7 +193,7 @@ export function LandingHeader() {
                       {/* 메뉴 항목들 */}
                       <div className="py-2 space-y-1">
                         <Link
-                          to="/mypage"
+                          to="/tu/b2c/mypage"
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                             isDark
@@ -205,7 +205,7 @@ export function LandingHeader() {
                           {t.landing.mypage}
                         </Link>
                         <Link
-                          to="/mypage/teaching"
+                          to="/tu/b2c/mypage/teaching"
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                             isDark
@@ -222,7 +222,7 @@ export function LandingHeader() {
                       <div className={`py-2 border-t space-y-1 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                         <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.landing.settings}</p>
                         <Link
-                          to="/mypage/profile"
+                          to="/tu/b2c/mypage/profile"
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                             isDark
@@ -234,7 +234,7 @@ export function LandingHeader() {
                           {t.landing.profileSecurity}
                         </Link>
                         <Link
-                          to="/mypage/notifications"
+                          to="/tu/b2c/mypage/notifications"
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                             isDark
@@ -246,7 +246,7 @@ export function LandingHeader() {
                           {t.landing.notifications}
                         </Link>
                         <Link
-                          to="/mypage/language"
+                          to="/tu/b2c/mypage/language"
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                             isDark

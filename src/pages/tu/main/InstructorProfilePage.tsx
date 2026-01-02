@@ -287,7 +287,7 @@ export function InstructorProfilePage() {
         <LandingHeader />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>강사를 찾을 수 없습니다.</p>
-          <Link to="/tu/main" className="mt-4 text-[#6778ff] hover:underline">
+          <Link to="/tu/b2c" className="mt-4 text-[#6778ff] hover:underline">
             홈으로 돌아가기
           </Link>
         </div>

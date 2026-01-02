@@ -504,7 +504,7 @@ export function CommunityDetailPage() {
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <div className="text-center">
           <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>게시글을 불러올 수 없습니다.</p>
-          <Link to="/tu/main/community" className="text-[#6778ff] hover:underline mt-4 inline-block">
+          <Link to="/tu/b2c/community" className="text-[#6778ff] hover:underline mt-4 inline-block">
             커뮤니티로 돌아가기
           </Link>
         </div>

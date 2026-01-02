@@ -405,7 +405,7 @@ export function LandingPage() {
                 </p>
               </div>
               <Link
-                to="/mypage/teaching"
+                to="/tu/b2c/mypage/teaching"
                 className="flex items-center gap-2 px-8 py-4 bg-white text-[#6778ff] font-semibold rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
               >
                 강사 시작하기

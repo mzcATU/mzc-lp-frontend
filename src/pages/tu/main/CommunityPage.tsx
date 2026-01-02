@@ -395,7 +395,7 @@ export function CommunityPage() {
                 </p>
               </div>
               <Link
-                to="/tu/main/community?category=tech"
+                to="/tu/b2c/community?category=tech"
                 className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
               >
                 더 보기 <ChevronRight className="w-4 h-4" />
