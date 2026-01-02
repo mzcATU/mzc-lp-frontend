@@ -139,10 +139,11 @@ export {
 export {
   notificationKeys,
   useNotifications,
+  useNotification,
   useUnreadNotificationCount,
   useMarkAsRead,
   useMarkAllAsRead,
-  useDeleteNotifications,
+  useDeleteNotification,
   useDeleteReadNotifications,
 } from './useNotificationQueries';
 
