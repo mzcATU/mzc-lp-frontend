@@ -9,7 +9,7 @@ import { WritePostModal } from '@/components/domain/community';
 import type { CommunityPost, CommunityCategory, CreatePostRequest } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
+const USE_API = true;
 
 // 더미 카테고리 데이터
 const MOCK_CATEGORIES: CommunityCategory[] = [
@@ -150,6 +150,12 @@ const formatRelativeTime = (dateString: string): string => {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}시간 전`;
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}일 전`;
   return date.toLocaleDateString('ko-KR');
+};
+
+// 마크다운 이미지 문법을 제거하고 "[이미지]"로 대체
+const stripMarkdownImages = (content: string): string => {
+  // ![alt](url) 패턴을 "[이미지]"로 대체
+  return content.replace(/!\[[^\]]*\]\([^)]+\)/g, '[이미지]');
 };
 
 // 인기글 탭 타입
@@ -543,7 +549,7 @@ export function CommunityPage() {
                         )}
                       </h3>
                       <p className="text-sm landing-text-muted line-clamp-1">
-                        {post.content}
+                        {stripMarkdownImages(post.content)}
                       </p>
                     </div>
                   </Link>

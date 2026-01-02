@@ -788,3 +788,29 @@
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.2);
 }
+
+/* === Dark Mode Select/Option Styles === */
+.landing-dark select {
+  color-scheme: dark;
+  background-color: #2a2a2a;
+}
+
+.landing-dark select option {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.landing-dark select:focus {
+  outline: none;
+}
+
+/* Input/textarea in dark mode landing pages */
+.landing-dark input,
+.landing-dark textarea {
+  color-scheme: dark;
+}
+
+.landing-dark input::placeholder,
+.landing-dark textarea::placeholder {
+  color: #9E9E9E;
+}
