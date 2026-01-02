@@ -94,7 +94,6 @@ export {
   usePopularCourses,
   useRecommendedCourses,
   useRelatedCourses,
-  useAddToCart,
 } from './useCourseDetailQueries';
 
 // Roadmap Detail Hooks
