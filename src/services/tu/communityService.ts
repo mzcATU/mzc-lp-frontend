@@ -114,6 +114,26 @@ export const communityService = {
     return response.data.data;
   },
 
+  /**
+   * 내 게시글 목록 조회
+   */
+  getMyPosts: async (page = 0, pageSize = 20): Promise<CommunityPostListResponse> => {
+    const response = await axiosInstance.get<ApiResponse<CommunityPostListResponse>>(
+      `${BASE_URL}/posts/my?page=${page}&pageSize=${pageSize}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 내가 댓글 단 게시글 목록 조회
+   */
+  getCommentedPosts: async (page = 0, pageSize = 20): Promise<CommunityPostListResponse> => {
+    const response = await axiosInstance.get<ApiResponse<CommunityPostListResponse>>(
+      `${BASE_URL}/posts/commented?page=${page}&pageSize=${pageSize}`
+    );
+    return response.data.data;
+  },
+
   // ========== 댓글 관련 API ==========
 
   /**

@@ -22,6 +22,8 @@ import {
   TeachingStatsPage,
   CompletedCoursesPage,
   CertificationsPage,
+  MyPostsPage,
+  MyCommentsPage,
 } from '@/pages/tu';
 import { MyPageLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
@@ -65,6 +67,9 @@ export const tuRoutes = (
       {/* 내 강의 관리 */}
       <Route path="teaching" element={<MyTeachingPage />} />
       <Route path="teaching/stats" element={<TeachingStatsPage />} />
+      {/* 커뮤니티 활동 */}
+      <Route path="community/posts" element={<MyPostsPage />} />
+      <Route path="community/comments" element={<MyCommentsPage />} />
       {/* 설정 */}
       <Route path="settings" element={<SettingsPage />} />
       <Route path="settings/security" element={<SettingsSecurityPage />} />

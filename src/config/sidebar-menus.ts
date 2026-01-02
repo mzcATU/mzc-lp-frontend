@@ -44,6 +44,7 @@ import {
   PenTool,
   CheckSquare,
   Briefcase,
+  MessageSquare,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -273,6 +274,15 @@ export const myPageMenuData: MenuItem[] = [
       { id: 'my-courses', label: { ko: '내 강의', en: 'My Courses' }, icon: BookOpen, path: '/mypage/teaching' },
       { id: 'create-course', label: { ko: '강의 개설하기', en: 'Create Course' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
       { id: 'teaching-stats', label: { ko: '내 강의 통계', en: 'Teaching Stats' }, icon: TrendingUp, path: '/mypage/teaching/stats' },
+    ],
+  },
+  {
+    id: 'my-community',
+    label: { ko: '커뮤니티 활동', en: 'Community Activity' },
+    icon: MessageSquare,
+    subItems: [
+      { id: 'my-posts', label: { ko: '내 게시글', en: 'My Posts' }, icon: FileEdit, path: '/mypage/community/posts' },
+      { id: 'my-comments', label: { ko: '내 댓글', en: 'My Comments' }, icon: MessageSquare, path: '/mypage/community/comments' },
     ],
   },
   {

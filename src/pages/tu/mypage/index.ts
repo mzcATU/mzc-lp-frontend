@@ -5,3 +5,5 @@ export { MyTeachingPage } from './MyTeachingPage';
 export { TeachingStatsPage } from './TeachingStatsPage';
 export { CompletedCoursesPage } from './CompletedCoursesPage';
 export { CertificationsPage } from './CertificationsPage';
+export { MyPostsPage } from './MyPostsPage';
+export { MyCommentsPage } from './MyCommentsPage';

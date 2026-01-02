@@ -20,6 +20,8 @@ export const communityKeys = {
   categories: () => [...communityKeys.all, 'categories'] as const,
   popular: (limit?: number) => [...communityKeys.all, 'popular', limit] as const,
   comments: (postId: number) => [...communityKeys.all, 'comments', postId] as const,
+  myPosts: (page: number, pageSize: number) => [...communityKeys.all, 'myPosts', page, pageSize] as const,
+  commentedPosts: (page: number, pageSize: number) => [...communityKeys.all, 'commentedPosts', page, pageSize] as const,
 };
 
 /**
@@ -67,6 +69,30 @@ export function usePopularPosts(limit?: number, enabled = true) {
     queryFn: () => communityService.getPopularPosts(limit),
     enabled,
     staleTime: 1000 * 60 * 5, // 5분
+  });
+}
+
+/**
+ * 내 게시글 목록 조회 훅
+ */
+export function useMyPosts(page = 0, pageSize = 20, enabled = true) {
+  return useQuery({
+    queryKey: communityKeys.myPosts(page, pageSize),
+    queryFn: () => communityService.getMyPosts(page, pageSize),
+    enabled,
+    staleTime: 1000 * 60, // 1분
+  });
+}
+
+/**
+ * 내가 댓글 단 게시글 목록 조회 훅
+ */
+export function useCommentedPosts(page = 0, pageSize = 20, enabled = true) {
+  return useQuery({
+    queryKey: communityKeys.commentedPosts(page, pageSize),
+    queryFn: () => communityService.getCommentedPosts(page, pageSize),
+    enabled,
+    staleTime: 1000 * 60, // 1분
   });
 }
 
