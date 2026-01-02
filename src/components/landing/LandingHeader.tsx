@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
+import { useUnreadNotificationCount } from '@/hooks/tu';
 
 export function LandingHeader() {
   const [showBanner, setShowBanner] = useState(true);
@@ -16,6 +17,8 @@ export function LandingHeader() {
   const { theme, toggleTheme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
+  const { data: unreadCountData } = useUnreadNotificationCount(isAuthenticated);
+  const unreadCount = unreadCountData?.count || 0;
 
   // 프로필 이미지 URL 생성
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -144,6 +147,11 @@ export function LandingHeader() {
                 }`}
               >
                 <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-gradient-to-r from-[#6778ff] to-[#a855f7] rounded-full">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
               {isAuthenticated && user ? (
                 /* Logged in state */
