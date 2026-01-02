@@ -241,7 +241,7 @@ export const tenantUserMenuData: MenuItem[] = [
     id: 'catalog',
     label: { ko: '과정 둘러보기', en: 'Course Catalog' },
     icon: Library,
-    path: '/tu/catalog',
+    path: '/tu/b2c/courses',
   },
 ];
 
@@ -253,16 +253,16 @@ export const myPageMenuData: MenuItem[] = [
     id: 'mypage-home',
     label: { ko: '마이페이지', en: 'My Page' },
     icon: Home,
-    path: '/mypage',
+    path: '/tu/b2c/mypage',
   },
   {
     id: 'my-enrollments',
     label: { ko: '내 수강 강의', en: 'My Enrollments' },
     icon: BookOpen,
     subItems: [
-      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/mypage/learning' },
-      { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/mypage/completed' },
-      { id: 'certifications', label: { ko: '인증서', en: 'Certifications' }, icon: Award, path: '/mypage/certifications' },
+      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
+      { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2c/mypage/completed' },
+      { id: 'certifications', label: { ko: '인증서', en: 'Certifications' }, icon: Award, path: '/tu/b2c/mypage/certifications' },
     ],
   },
   {
@@ -270,9 +270,9 @@ export const myPageMenuData: MenuItem[] = [
     label: { ko: '내 강의 관리', en: 'My Teaching' },
     icon: Briefcase,
     subItems: [
-      { id: 'my-courses', label: { ko: '내 강의', en: 'My Courses' }, icon: BookOpen, path: '/mypage/teaching' },
+      { id: 'my-courses', label: { ko: '내 강의', en: 'My Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/teaching' },
       { id: 'create-course', label: { ko: '강의 개설하기', en: 'Create Course' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
-      { id: 'teaching-stats', label: { ko: '내 강의 통계', en: 'Teaching Stats' }, icon: TrendingUp, path: '/mypage/teaching/stats' },
+      { id: 'teaching-stats', label: { ko: '내 강의 통계', en: 'Teaching Stats' }, icon: TrendingUp, path: '/tu/b2c/mypage/teaching/stats' },
     ],
   },
   {
@@ -280,9 +280,9 @@ export const myPageMenuData: MenuItem[] = [
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
     subItems: [
-      { id: 'profile-security', label: { ko: '프로필 및 보안', en: 'Profile & Security' }, icon: Shield, path: '/mypage/settings/security' },
-      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Megaphone, path: '/mypage/settings/notifications' },
-      { id: 'language-region', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/mypage/settings/language' },
+      { id: 'profile-security', label: { ko: '프로필 및 보안', en: 'Profile & Security' }, icon: Shield, path: '/tu/b2c/mypage/settings/security' },
+      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Megaphone, path: '/tu/b2c/mypage/settings/notifications' },
+      { id: 'language-region', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/tu/b2c/mypage/settings/language' },
     ],
   },
 ];

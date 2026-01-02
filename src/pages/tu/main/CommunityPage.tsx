@@ -9,7 +9,7 @@ import { WritePostModal } from '@/components/domain/community';
 import type { CommunityPost, CommunityCategory, CreatePostRequest } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
+const USE_API = true;
 
 // 더미 카테고리 데이터
 const MOCK_CATEGORIES: CommunityCategory[] = [
@@ -150,6 +150,12 @@ const formatRelativeTime = (dateString: string): string => {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}시간 전`;
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}일 전`;
   return date.toLocaleDateString('ko-KR');
+};
+
+// 마크다운 이미지 문법을 제거하고 "[이미지]"로 대체
+const stripMarkdownImages = (content: string): string => {
+  // ![alt](url) 패턴을 "[이미지]"로 대체
+  return content.replace(/!\[[^\]]*\]\([^)]+\)/g, '[이미지]');
 };
 
 // 인기글 탭 타입
@@ -336,7 +342,7 @@ export function CommunityPage() {
                 {popularPosts.left.map((post) => (
                   <Link
                     key={post.id}
-                    to={`/tu/main/community/${post.id}`}
+                    to={`/tu/b2c/community/${post.id}`}
                     className="flex items-center gap-3 group"
                   >
                     <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
@@ -360,7 +366,7 @@ export function CommunityPage() {
                   {popularPosts.right.map((post) => (
                     <Link
                       key={post.id}
-                      to={`/tu/main/community/${post.id}`}
+                      to={`/tu/b2c/community/${post.id}`}
                       className="flex items-center gap-3 group"
                     >
                       <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
@@ -395,7 +401,7 @@ export function CommunityPage() {
                 </p>
               </div>
               <Link
-                to="/tu/main/community?category=tech"
+                to="/tu/b2c/community?category=tech"
                 className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
               >
                 더 보기 <ChevronRight className="w-4 h-4" />
@@ -422,7 +428,7 @@ export function CommunityPage() {
                   {extendedNews.map((news, index) => (
                     <Link
                       key={`${news.id}-${index}`}
-                      to={`/tu/main/community/${news.id}`}
+                      to={`/tu/b2c/community/${news.id}`}
                       className={`group block rounded-2xl p-6 transition-all duration-300 border flex-shrink-0 w-[calc(33.333%-16px)] ${
                         isDark
                           ? 'glass border-white/10 hover:border-[#6778ff]/50'
@@ -512,7 +518,7 @@ export function CommunityPage() {
                 {filteredPosts.map((post) => (
                   <Link
                     key={post.id}
-                    to={`/tu/main/community/${post.id}`}
+                    to={`/tu/b2c/community/${post.id}`}
                     className={`flex items-start gap-4 px-6 py-5 transition-colors ${
                       isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
                     }`}
@@ -543,7 +549,7 @@ export function CommunityPage() {
                         )}
                       </h3>
                       <p className="text-sm landing-text-muted line-clamp-1">
-                        {post.content}
+                        {stripMarkdownImages(post.content)}
                       </p>
                     </div>
                   </Link>
@@ -584,7 +590,7 @@ export function CommunityPage() {
           if (USE_API) {
             const result = await createPostMutation.mutateAsync(data);
             setIsWriteModalOpen(false);
-            navigate(`/tu/main/community/${result.id}`);
+            navigate(`/tu/b2c/community/${result.id}`);
           } else {
             console.log('New post data:', data);
             setIsWriteModalOpen(false);

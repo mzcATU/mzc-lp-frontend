@@ -247,7 +247,7 @@ export function LandingPage() {
               <p className="landing-text-muted text-sm mt-2">{t.landing.featuredCoursesDesc}</p>
             </div>
             <a
-              href="/tu/catalog"
+              href="/tu/b2c/courses"
               className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
             >
               {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
@@ -274,7 +274,7 @@ export function LandingPage() {
                 <p className="landing-text-muted text-sm mt-2">{t.landing.newCoursesDesc}</p>
               </div>
               <a
-                href="/tu/catalog"
+                href="/tu/b2c/courses"
                 className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
               >
                 {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
@@ -297,7 +297,7 @@ export function LandingPage() {
               <p className="landing-text-muted text-sm mt-2">{t.landing.beginnerCoursesDesc}</p>
             </div>
             <a
-              href="/tu/catalog"
+              href="/tu/b2c/courses"
               className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
             >
               {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
@@ -405,7 +405,7 @@ export function LandingPage() {
                 </p>
               </div>
               <Link
-                to="/mypage/teaching"
+                to="/tu/b2c/mypage/teaching"
                 className="flex items-center gap-2 px-8 py-4 bg-white text-[#6778ff] font-semibold rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
               >
                 강사 시작하기

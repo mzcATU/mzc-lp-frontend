@@ -273,7 +273,7 @@ export function RoadmapDetailPage() {
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
         <div className="text-center">
           <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>로드맵을 불러올 수 없습니다.</p>
-          <Link to="/tu/main/roadmap" className="text-[#6778ff] hover:underline mt-4 inline-block">
+          <Link to="/tu/b2c/roadmap" className="text-[#6778ff] hover:underline mt-4 inline-block">
             로드맵 목록으로 돌아가기
           </Link>
         </div>
@@ -315,7 +315,7 @@ export function RoadmapDetailPage() {
             <div className="lg:w-1/2">
               {/* Breadcrumb */}
               <nav className={`flex items-center gap-2 text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                <Link to="/tu/main/roadmap" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+                <Link to="/tu/b2c/roadmap" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                   로드맵
                 </Link>
                 <ChevronRight className="w-4 h-4" />
