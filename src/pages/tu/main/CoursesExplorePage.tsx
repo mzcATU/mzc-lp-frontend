@@ -4,11 +4,12 @@ import { Search, SlidersHorizontal, Star, Loader2, Heart } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCourseExplore, useCourseCategories } from '@/hooks/tu';
+import { useCourseExplore, useCourseCategories, useToggleWishlist, useCheckWishlistStatus } from '@/hooks/tu';
+import { useAuthStore } from '@/store/common/authStore';
 import type { CourseExploreItem, ExploreCourseCategory } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
+const USE_API = true;
 
 // 더미 카테고리 데이터
 const MOCK_CATEGORIES: ExploreCourseCategory[] = [
@@ -233,13 +234,20 @@ interface CourseCardProps {
 }
 
 function CourseCard({ course, isDark }: CourseCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { isAuthenticated } = useAuthStore();
+  const { data: wishlistStatus } = useCheckWishlistStatus(course.id, isAuthenticated);
+  const toggleWishlistMutation = useToggleWishlist();
+
+  const isWishlisted = wishlistStatus ?? false;
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-    // TODO: API 연동 시 실제 찜 추가/삭제 로직 구현
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    toggleWishlistMutation.toggle(course.id, isWishlisted);
   };
 
   const tags: string[] = [];
