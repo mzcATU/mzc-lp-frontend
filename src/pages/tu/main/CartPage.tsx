@@ -1,142 +1,97 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, ShoppingCart, ChevronRight, Tag, Loader2 } from 'lucide-react';
+import { Trash2, ShoppingCart, ChevronRight, Loader2, Heart, Plus, Check } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCart, useRemoveFromCart, useApplyCoupon } from '@/hooks/tu';
-import type { CartItem } from '@/types/tu';
-
-// 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
-
-// 더미 장바구니 데이터
-const MOCK_CART_ITEMS: CartItem[] = [
-  {
-    id: 1,
-    courseId: 101,
-    title: '실전! Next.js 15 완벽 마스터',
-    instructor: '김개발',
-    originalPrice: 129000,
-    price: 89000,
-    image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop',
-    discount: 31,
-    rating: 4.9,
-    reviewCount: 1234,
-    totalHours: 32,
-    isSelected: true,
-  },
-  {
-    id: 2,
-    courseId: 102,
-    title: 'ChatGPT API 활용 실무 프로젝트',
-    instructor: '이에이아이',
-    originalPrice: 150000,
-    price: 120000,
-    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop',
-    discount: 20,
-    rating: 4.8,
-    reviewCount: 892,
-    totalHours: 28,
-    isSelected: true,
-  },
-  {
-    id: 3,
-    courseId: 103,
-    title: 'AWS 클라우드 실무',
-    instructor: '윤클라우드',
-    originalPrice: 130000,
-    price: 110000,
-    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=250&fit=crop',
-    discount: 15,
-    rating: 4.7,
-    reviewCount: 567,
-    totalHours: 24,
-    isSelected: true,
-  },
-];
+import { useCart, useRemoveFromCart, useRemoveFromCartBulk, useAddToCart, useMyWishlist } from '@/hooks/tu';
+import type { CartItemResponse } from '@/types/tu/cart.types';
+import type { WishlistItemResponse } from '@/types/tu/wishlist.types';
 
 export function CartPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
-  // React Query 훅 (API 모드일 때만 활성화)
-  const { data: apiCartData, isLoading, error } = useCart(USE_API);
+  // Cart React Query 훅
+  const { data: cartItems = [], isLoading: isCartLoading, error: cartError } = useCart();
   const removeFromCartMutation = useRemoveFromCart();
-  const applyCouponMutation = useApplyCoupon();
+  const removeFromCartBulkMutation = useRemoveFromCartBulk();
+  const addToCartMutation = useAddToCart();
 
-  // 로컬 상태 (Mock 모드에서 사용)
-  const [mockCartItems, setMockCartItems] = useState(MOCK_CART_ITEMS);
-  const [couponCode, setCouponCode] = useState('');
-
-  // 실제 사용할 데이터 결정
-  const cartItems = USE_API ? (apiCartData?.items || []) : mockCartItems;
+  // Wishlist React Query 훅
+  const { data: wishlistData, isLoading: isWishlistLoading } = useMyWishlist();
+  const wishlistItems = wishlistData?.content || [];
 
   // 선택 상태 관리
-  const [selectedItems, setSelectedItems] = useState<number[]>(() =>
-    cartItems.map(item => item.id)
+  const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
+
+  // 장바구니에 있는 courseId Set
+  const cartCourseIds = useMemo(() => new Set(cartItems.map(item => item.courseId)), [cartItems]);
+
+  // 찜 목록 중 장바구니에 없는 아이템만 표시
+  const availableWishlistItems = useMemo(() =>
+    wishlistItems.filter(item => !cartCourseIds.has(item.courseId)),
+    [wishlistItems, cartCourseIds]
   );
 
-  // 선택된 아이템 동기화
-  useMemo(() => {
-    if (cartItems.length > 0 && selectedItems.length === 0) {
-      setSelectedItems(cartItems.map(item => item.id));
+  // 장바구니 아이템이 로드되면 전체 선택
+  useEffect(() => {
+    if (cartItems.length > 0 && selectedCourseIds.length === 0) {
+      setSelectedCourseIds(cartItems.map(item => item.courseId));
     }
-  }, [cartItems, selectedItems.length]);
+  }, [cartItems, selectedCourseIds.length]);
 
   const toggleSelectAll = () => {
-    if (selectedItems.length === cartItems.length) {
-      setSelectedItems([]);
+    if (selectedCourseIds.length === cartItems.length) {
+      setSelectedCourseIds([]);
     } else {
-      setSelectedItems(cartItems.map(item => item.id));
+      setSelectedCourseIds(cartItems.map(item => item.courseId));
     }
   };
 
-  const toggleSelectItem = (id: number) => {
-    if (selectedItems.includes(id)) {
-      setSelectedItems(selectedItems.filter(itemId => itemId !== id));
+  const toggleSelectItem = (courseId: number) => {
+    if (selectedCourseIds.includes(courseId)) {
+      setSelectedCourseIds(selectedCourseIds.filter(id => id !== courseId));
     } else {
-      setSelectedItems([...selectedItems, id]);
+      setSelectedCourseIds([...selectedCourseIds, courseId]);
     }
   };
 
-  const removeItem = (id: number) => {
-    if (USE_API) {
-      removeFromCartMutation.mutate({ itemIds: [id] });
-    } else {
-      setMockCartItems(mockCartItems.filter(item => item.id !== id));
-    }
-    setSelectedItems(selectedItems.filter(itemId => itemId !== id));
+  const removeItem = (courseId: number) => {
+    removeFromCartMutation.mutate(courseId, {
+      onSuccess: () => {
+        setSelectedCourseIds(selectedCourseIds.filter(id => id !== courseId));
+      }
+    });
   };
 
   const removeSelectedItems = () => {
-    if (USE_API) {
-      removeFromCartMutation.mutate({ itemIds: selectedItems });
-    } else {
-      setMockCartItems(mockCartItems.filter(item => !selectedItems.includes(item.id)));
-    }
-    setSelectedItems([]);
+    if (selectedCourseIds.length === 0) return;
+
+    removeFromCartBulkMutation.mutate({ courseIds: selectedCourseIds }, {
+      onSuccess: () => {
+        setSelectedCourseIds([]);
+      }
+    });
   };
 
-  const handleApplyCoupon = () => {
-    if (!couponCode.trim()) return;
-
-    if (USE_API) {
-      applyCouponMutation.mutate({ couponCode: couponCode.trim() });
-    } else {
-      // Mock 모드에서는 알림만 표시
-      alert(`쿠폰 코드 "${couponCode}" 적용 (데모)`);
-    }
+  const addFromWishlist = (courseId: number) => {
+    addToCartMutation.mutate({ courseId }, {
+      onSuccess: () => {
+        // 추가된 아이템을 자동으로 선택
+        setSelectedCourseIds(prev => [...prev, courseId]);
+      }
+    });
   };
 
-  // 가격 계산
-  const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
-  const totalOriginalPrice = selectedCartItems.reduce((sum, item) => sum + item.originalPrice, 0);
-  const totalPrice = selectedCartItems.reduce((sum, item) => sum + item.price, 0);
-  const totalDiscount = totalOriginalPrice - totalPrice;
+  // 선택된 아이템들
+  const selectedCartItems = useMemo(() =>
+    cartItems.filter(item => selectedCourseIds.includes(item.courseId)),
+    [cartItems, selectedCourseIds]
+  );
 
   // 로딩 상태
-  if (USE_API && isLoading) {
+  if (isCartLoading) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
         <LandingHeader />
@@ -154,7 +109,7 @@ export function CartPage() {
   }
 
   // 에러 상태
-  if (USE_API && error) {
+  if (cartError) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
         <LandingHeader />
@@ -176,6 +131,9 @@ export function CartPage() {
     );
   }
 
+  const isRemoving = removeFromCartMutation.isPending || removeFromCartBulkMutation.isPending;
+  const isAdding = addToCartMutation.isPending;
+
   return (
     <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
       <LandingHeader />
@@ -185,7 +143,7 @@ export function CartPage() {
           장바구니
         </h1>
 
-        {cartItems.length === 0 ? (
+        {cartItems.length === 0 && availableWishlistItems.length === 0 ? (
           <div className="text-center py-20">
             <ShoppingCart className={`w-20 h-20 mx-auto mb-6 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
             <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -203,89 +161,217 @@ export function CartPage() {
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Cart Items */}
-            <div className="flex-1">
-              {/* Select All */}
-              <div className={`flex items-center justify-between mb-4 pb-4 border-b ${
-                isDark ? 'border-white/10' : 'border-gray-200'
-              }`}>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedItems.length === cartItems.length}
-                    onChange={toggleSelectAll}
-                    className="w-5 h-5 rounded border-gray-300 text-[#6778ff] focus:ring-[#6778ff]"
-                  />
-                  <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    전체 선택 ({selectedItems.length}/{cartItems.length})
-                  </span>
-                </label>
-                <button
-                  onClick={removeSelectedItems}
-                  disabled={selectedItems.length === 0 || removeFromCartMutation.isPending}
-                  className={`text-sm transition-colors disabled:opacity-50 ${
-                    isDark ? 'text-gray-400 hover:text-red-400' : 'text-gray-500 hover:text-red-500'
-                  }`}
-                >
-                  선택 삭제
-                </button>
+            {/* Left Column - Cart Items & Wishlist */}
+            <div className="flex-1 space-y-8">
+              {/* Cart Items Section */}
+              <div>
+                {cartItems.length > 0 && (
+                  <>
+                    {/* Select All */}
+                    <div className={`flex items-center justify-between mb-4 pb-4 border-b ${
+                      isDark ? 'border-white/10' : 'border-gray-200'
+                    }`}>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedCourseIds.length === cartItems.length && cartItems.length > 0}
+                          onChange={toggleSelectAll}
+                          className="w-5 h-5 rounded border-gray-300 text-[#6778ff] focus:ring-[#6778ff]"
+                        />
+                        <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          전체 선택 ({selectedCourseIds.length}/{cartItems.length})
+                        </span>
+                      </label>
+                      <button
+                        onClick={removeSelectedItems}
+                        disabled={selectedCourseIds.length === 0 || isRemoving}
+                        className={`text-sm transition-colors disabled:opacity-50 ${
+                          isDark ? 'text-gray-400 hover:text-red-400' : 'text-gray-500 hover:text-red-500'
+                        }`}
+                      >
+                        {isRemoving ? '삭제 중...' : '선택 삭제'}
+                      </button>
+                    </div>
+
+                    {/* Cart Items List */}
+                    <div className="space-y-4">
+                      {cartItems.map((item: CartItemResponse) => (
+                        <div
+                          key={item.cartItemId}
+                          className={`rounded-xl p-4 flex gap-4 border ${
+                            isDark
+                              ? 'glass border-white/10'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedCourseIds.includes(item.courseId)}
+                            onChange={() => toggleSelectItem(item.courseId)}
+                            className="w-5 h-5 rounded border-gray-300 text-[#6778ff] focus:ring-[#6778ff] mt-1"
+                          />
+                          <img
+                            src={item.thumbnailUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop'}
+                            alt={item.courseTitle}
+                            className="w-32 h-20 object-cover rounded-lg"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <Link
+                              to={`/tu/main/courses/${item.courseId}`}
+                              className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
+                            >
+                              {item.courseTitle}
+                            </Link>
+                            {item.courseDescription && (
+                              <p className={`text-sm mb-2 line-clamp-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {item.courseDescription}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {item.level && (
+                                <span className={`text-xs px-2 py-0.5 rounded ${
+                                  isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {item.level}
+                                </span>
+                              )}
+                              {item.type && (
+                                <span className={`text-xs px-2 py-0.5 rounded ${
+                                  isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {item.type}
+                                </span>
+                              )}
+                              {item.estimatedHours && (
+                                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  {item.estimatedHours}시간
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeItem(item.courseId)}
+                            disabled={isRemoving}
+                            className={`p-2 transition-colors disabled:opacity-50 ${
+                              isDark ? 'text-gray-400 hover:text-red-400' : 'text-gray-400 hover:text-red-500'
+                            }`}
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {cartItems.length === 0 && (
+                  <div className={`text-center py-12 rounded-xl border ${
+                    isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                  }`}>
+                    <ShoppingCart className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      장바구니가 비어있습니다
+                    </p>
+                    <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                      아래 찜 목록에서 강의를 추가해보세요!
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Items List */}
-              <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`rounded-xl p-4 flex gap-4 border ${
-                      isDark
-                        ? 'glass border-white/10'
-                        : 'bg-white border-gray-200'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.includes(item.id)}
-                      onChange={() => toggleSelectItem(item.id)}
-                      className="w-5 h-5 rounded border-gray-300 text-[#6778ff] focus:ring-[#6778ff] mt-1"
-                    />
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-32 h-20 object-cover rounded-lg"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-semibold mb-1 line-clamp-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {item.title}
-                      </h3>
-                      <p className={`text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {item.instructor}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        {item.discount > 0 && (
-                          <>
-                            <span className="text-[#6778ff] font-bold">{item.discount}%</span>
-                            <span className={`line-through text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                              {item.originalPrice.toLocaleString()}원
-                            </span>
-                          </>
-                        )}
-                        <span className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {item.price.toLocaleString()}원
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      disabled={removeFromCartMutation.isPending}
-                      className={`p-2 transition-colors disabled:opacity-50 ${
-                        isDark ? 'text-gray-400 hover:text-red-400' : 'text-gray-400 hover:text-red-500'
-                      }`}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+              {/* Wishlist Section */}
+              {availableWishlistItems.length > 0 && (
+                <div>
+                  <div className={`flex items-center gap-2 mb-4 pb-4 border-b ${
+                    isDark ? 'border-white/10' : 'border-gray-200'
+                  }`}>
+                    <Heart className={`w-5 h-5 ${isDark ? 'text-pink-400' : 'text-pink-500'}`} fill="currentColor" />
+                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      찜 목록에서 추가하기
+                    </h2>
+                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      ({availableWishlistItems.length}개)
+                    </span>
                   </div>
-                ))}
-              </div>
+
+                  {isWishlistLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#6778ff]" />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {availableWishlistItems.map((item: WishlistItemResponse) => (
+                        <div
+                          key={item.id}
+                          className={`rounded-xl p-4 flex gap-4 border ${
+                            isDark
+                              ? 'glass border-white/10'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <img
+                            src={item.courseThumbnailUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop'}
+                            alt={item.courseTitle || ''}
+                            className="w-28 h-18 object-cover rounded-lg"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <Link
+                              to={`/tu/main/courses/${item.courseId}`}
+                              className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
+                            >
+                              {item.courseTitle}
+                            </Link>
+                            <div className="flex items-center gap-2 flex-wrap mt-1">
+                              {item.courseLevel && (
+                                <span className={`text-xs px-2 py-0.5 rounded ${
+                                  isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {item.courseLevel}
+                                </span>
+                              )}
+                              {item.courseType && (
+                                <span className={`text-xs px-2 py-0.5 rounded ${
+                                  isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {item.courseType}
+                                </span>
+                              )}
+                              {item.courseEstimatedHours && (
+                                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  {item.courseEstimatedHours}시간
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => addFromWishlist(item.courseId)}
+                            disabled={isAdding || cartCourseIds.has(item.courseId)}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
+                              cartCourseIds.has(item.courseId)
+                                ? isDark
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : 'bg-green-100 text-green-600'
+                                : 'landing-btn-primary text-white'
+                            }`}
+                          >
+                            {cartCourseIds.has(item.courseId) ? (
+                              <>
+                                <Check className="w-4 h-4" />
+                                추가됨
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4" />
+                                담기
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Order Summary */}
@@ -296,77 +382,39 @@ export function CartPage() {
                   : 'bg-white border-gray-200'
               }`}>
                 <h2 className={`text-xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  결제 정보
+                  선택한 강의
                 </h2>
 
-                {/* Coupon */}
-                <div className="mb-6">
-                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    쿠폰 코드
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <Tag className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
-                        isDark ? 'text-gray-500' : 'text-gray-400'
-                      }`} />
-                      <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="쿠폰 코드 입력"
-                        className={`w-full rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6778ff] ${
-                          isDark
-                            ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500'
-                            : 'bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400'
-                        }`}
-                      />
-                    </div>
-                    <button
-                      onClick={handleApplyCoupon}
-                      disabled={applyCouponMutation.isPending}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
-                        isDark
-                          ? 'bg-white/10 text-white hover:bg-white/20'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {applyCouponMutation.isPending ? '적용 중...' : '적용'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Price Breakdown */}
+                {/* Selected Items Summary */}
                 <div className={`space-y-3 mb-6 pb-6 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                   <div className={`flex justify-between ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    <span>선택 강의 ({selectedItems.length}개)</span>
-                    <span>{totalOriginalPrice.toLocaleString()}원</span>
+                    <span>선택 강의</span>
+                    <span>{selectedCartItems.length}개</span>
                   </div>
-                  <div className="flex justify-between text-[#6778ff]">
-                    <span>할인 금액</span>
-                    <span>-{totalDiscount.toLocaleString()}원</span>
-                  </div>
-                </div>
-
-                {/* Total */}
-                <div className="flex justify-between items-center mb-6">
-                  <span className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    총 결제 금액
-                  </span>
-                  <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {totalPrice.toLocaleString()}원
-                  </span>
+                  {selectedCartItems.length > 0 && (
+                    <div className={`text-sm space-y-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {selectedCartItems.slice(0, 3).map(item => (
+                        <p key={item.cartItemId} className="truncate">
+                          • {item.courseTitle}
+                        </p>
+                      ))}
+                      {selectedCartItems.length > 3 && (
+                        <p>• 외 {selectedCartItems.length - 3}개</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Checkout Button */}
                 <button
-                  disabled={selectedItems.length === 0}
+                  disabled={selectedCourseIds.length === 0}
                   className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {selectedItems.length > 0 ? `${selectedItems.length}개 강의 결제하기` : '강의를 선택해주세요'}
+                  {selectedCourseIds.length > 0 ? `${selectedCourseIds.length}개 강의 수강신청` : '강의를 선택해주세요'}
                 </button>
 
                 <p className={`text-center text-xs mt-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                  결제 시 이용약관 및 환불 정책에 동의하게 됩니다.
+                  수강신청 시 이용약관에 동의하게 됩니다.
                 </p>
               </div>
             </div>

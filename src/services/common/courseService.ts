@@ -54,22 +54,22 @@ export const courseService = {
   async getCourses(
     params?: CourseFilterParams
   ): Promise<PageResponse<CourseResponse>> {
-    const { data } = await axiosInstance.get<PageResponse<CourseResponse>>(
+    const { data } = await axiosInstance.get<{ data: PageResponse<CourseResponse> }>(
       API_ENDPOINTS.COURSES.BASE,
       { params }
     );
-    return data;
+    return data.data;
   },
 
   /** 내 강의 목록 조회 */
   async getMyCourses(
     params?: CourseFilterParams
   ): Promise<PageResponse<CourseResponse>> {
-    const { data } = await axiosInstance.get<PageResponse<CourseResponse>>(
+    const { data } = await axiosInstance.get<{ data: PageResponse<CourseResponse> }>(
       API_ENDPOINTS.COURSES.MY,
       { params }
     );
-    return data;
+    return data.data;
   },
 
   /** 강의 상세 조회 */
