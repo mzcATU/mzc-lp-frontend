@@ -233,7 +233,7 @@ export function MyLearningPage() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className={`gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}`}
+            className={`gap-2 ${isDark ? '!bg-transparent border-white/20 text-white hover:!bg-white/10' : ''}`}
           >
             <Filter className="w-4 h-4" />
             {t.learning.filter}
@@ -257,7 +257,7 @@ export function MyLearningPage() {
                       setStatusFilter('all');
                       setPage(0);
                     }}
-                    className={statusFilter !== 'all' && isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                    className={statusFilter !== 'all' && isDark ? '!bg-transparent border-white/20 text-white hover:!bg-white/10' : ''}
                   >
                     {t.landing.all}
                   </Button>
@@ -270,7 +270,7 @@ export function MyLearningPage() {
                         setStatusFilter(status);
                         setPage(0);
                       }}
-                      className={statusFilter !== status && isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                      className={statusFilter !== status && isDark ? '!bg-transparent border-white/20 text-white hover:!bg-white/10' : ''}
                     >
                       {statusLabels[status]}
                     </Button>

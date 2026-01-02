@@ -31,8 +31,8 @@ interface BackendEnrollmentResponse {
 interface BackendCourseTimeResponse {
   id: number;
   title: string;
-  programId: number;
-  programName: string;
+  programId: number | null;
+  programName: string | null;
   classStartDate: string;
   classEndDate: string;
 }
@@ -184,12 +184,29 @@ export const enrollmentService = {
 
   /**
    * 수강 신청 상세 조회
+   * - 백엔드 응답을 프론트엔드 형식으로 변환
+   * - 차수(courseTime) 정보를 추가로 조회하여 programTitle, courseTimeName 등 보완
    */
   getEnrollment: async (id: number): Promise<Enrollment> => {
-    const response = await axiosInstance.get<ApiResponse<Enrollment>>(
+    // 1. 수강 정보 조회
+    const response = await axiosInstance.get<ApiResponse<BackendEnrollmentResponse>>(
       API_ENDPOINTS.ENROLLMENTS.BY_ID(id)
     );
-    return response.data.data;
+    const enrollment = response.data.data;
+
+    // 2. 차수 정보 조회
+    let courseTimeInfo: BackendCourseTimeResponse | undefined;
+    try {
+      const courseTimeRes = await axiosInstance.get<ApiResponse<BackendCourseTimeResponse>>(
+        API_ENDPOINTS.TIMES.BY_ID(enrollment.courseTimeId)
+      );
+      courseTimeInfo = courseTimeRes.data.data;
+    } catch {
+      // 차수 정보 조회 실패 시 빈 값 사용
+    }
+
+    // 3. 변환하여 반환
+    return transformEnrollment(enrollment, courseTimeInfo);
   },
 
   /**
