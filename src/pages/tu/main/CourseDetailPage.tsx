@@ -209,6 +209,7 @@ const MOCK_COURSES: Record<string, CourseDetail> = {
 };
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
+// courseDetailService에서 백엔드 응답을 프론트엔드 형식으로 변환
 const USE_API = true;
 
 /**
