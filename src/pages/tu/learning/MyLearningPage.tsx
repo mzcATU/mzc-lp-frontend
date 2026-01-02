@@ -199,7 +199,7 @@ export function MyLearningPage() {
             </h1>
             {/* 데모 버튼 (테스트용 - 숨김) */}
             <button
-              onClick={() => navigate('/mypage/learning/demo/player')}
+              onClick={() => navigate('/tu/b2c/mypage/learning/demo/player')}
               className={`opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
               title="Demo Mode"
             >

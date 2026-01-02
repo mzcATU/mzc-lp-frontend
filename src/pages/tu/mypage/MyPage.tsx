@@ -222,7 +222,7 @@ export function MyPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               className={isDark ? 'text-gray-400 hover:text-white' : ''}
             >
               전체보기
@@ -319,7 +319,7 @@ export function MyPage() {
               icon={<BookOpen className="w-5 h-5" />}
               title="내 학습"
               description="수강 중인 강의를 확인하세요"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               isDark={isDark}
             />
             <QuickMenuItem

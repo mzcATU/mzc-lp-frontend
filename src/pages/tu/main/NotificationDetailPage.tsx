@@ -174,7 +174,7 @@ useEffect(() => {
     `,
     createdAt: '2024-12-28T10:00:00Z',
     isRead: true,
-    actionUrl: '/mypage/certifications',
+    actionUrl: '/tu/b2c/mypage/certifications',
     actionLabel: '수료증 확인하기',
   },
   6: {
