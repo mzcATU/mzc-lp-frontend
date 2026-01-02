@@ -1,7 +1,4 @@
 export { LandingPage } from './LandingPage';
-export { Page1 } from './Page1';
-export { Page2 } from './Page2';
-export { Page3 } from './Page3';
 export { CoursesExplorePage } from './CoursesExplorePage';
 export { RoadmapExplorePage } from './RoadmapExplorePage';
 export { RoadmapDetailPage } from './RoadmapDetailPage';
