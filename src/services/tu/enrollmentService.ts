@@ -11,7 +11,34 @@ import type {
 export type EnrollmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
 
 /**
- * 수강 신청 타입
+ * 백엔드 EnrollmentResponse 타입 (실제 API 응답)
+ */
+interface BackendEnrollmentResponse {
+  id: number;
+  userId: number;
+  courseTimeId: number;
+  enrolledAt: string;
+  type: string;
+  status: string;
+  progressPercent: number | null;
+  score: number | null;
+  completedAt: string | null;
+}
+
+/**
+ * 백엔드 CourseTime 응답 타입 (차수 정보)
+ */
+interface BackendCourseTimeResponse {
+  id: number;
+  title: string;
+  programId: number;
+  programName: string;
+  classStartDate: string;
+  classEndDate: string;
+}
+
+/**
+ * 수강 신청 타입 (프론트엔드용)
  */
 export interface Enrollment {
   id: number;
@@ -63,6 +90,41 @@ interface ApiResponse<T> {
 }
 
 /**
+ * 백엔드 상태를 프론트엔드 상태로 매핑
+ */
+const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
+  const statusMap: Record<string, EnrollmentStatus> = {
+    ENROLLED: 'APPROVED',
+    IN_PROGRESS: 'APPROVED',
+    COMPLETED: 'COMPLETED',
+    CANCELLED: 'CANCELLED',
+    DROPPED: 'CANCELLED',
+  };
+  return statusMap[status] || 'PENDING';
+};
+
+/**
+ * 백엔드 응답을 프론트엔드 Enrollment로 변환
+ */
+const transformEnrollment = (
+  backend: BackendEnrollmentResponse,
+  courseTimeInfo?: BackendCourseTimeResponse
+): Enrollment => ({
+  id: backend.id,
+  userId: backend.userId,
+  courseTimeId: backend.courseTimeId,
+  programId: courseTimeInfo?.programId ?? 0,
+  programTitle: courseTimeInfo?.programName ?? '',
+  courseTimeName: courseTimeInfo?.title ?? '',
+  status: mapEnrollmentStatus(backend.status),
+  enrolledAt: backend.enrolledAt,
+  completedAt: backend.completedAt ?? undefined,
+  progress: backend.progressPercent ?? 0,
+  startDate: courseTimeInfo?.classStartDate ?? '',
+  endDate: courseTimeInfo?.classEndDate ?? '',
+});
+
+/**
  * 수강 신청 서비스
  */
 export const enrollmentService = {
@@ -78,13 +140,46 @@ export const enrollmentService = {
 
   /**
    * 내 수강 신청 목록 조회
+   * - 백엔드 응답을 프론트엔드 형식으로 변환
+   * - 차수(courseTime) 정보를 추가로 조회하여 programTitle, courseTimeName 등 보완
    */
   getMyEnrollments: async (params?: EnrollmentFilterParams): Promise<PageResponse<Enrollment>> => {
-    const response = await axiosInstance.get<ApiResponse<PageResponse<Enrollment>>>(
+    // 1. 수강 목록 조회
+    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendEnrollmentResponse>>>(
       API_ENDPOINTS.ENROLLMENTS.MY,
       { params }
     );
-    return response.data.data;
+    const pageData = response.data.data;
+
+    // 2. 고유한 courseTimeId 목록 추출
+    const courseTimeIds = [...new Set(pageData.content.map((e) => e.courseTimeId))];
+
+    // 3. 각 차수 정보 조회 (병렬)
+    const courseTimeMap = new Map<number, BackendCourseTimeResponse>();
+    if (courseTimeIds.length > 0) {
+      const courseTimePromises = courseTimeIds.map(async (id) => {
+        try {
+          const res = await axiosInstance.get<ApiResponse<BackendCourseTimeResponse>>(
+            API_ENDPOINTS.TIMES.BY_ID(id)
+          );
+          return { id, data: res.data.data };
+        } catch {
+          return { id, data: null };
+        }
+      });
+      const results = await Promise.all(courseTimePromises);
+      results.forEach(({ id, data }) => {
+        if (data) courseTimeMap.set(id, data);
+      });
+    }
+
+    // 4. 변환하여 반환
+    return {
+      ...pageData,
+      content: pageData.content.map((e) =>
+        transformEnrollment(e, courseTimeMap.get(e.courseTimeId))
+      ),
+    };
   },
 
   /**

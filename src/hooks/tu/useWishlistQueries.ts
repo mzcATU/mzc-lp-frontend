@@ -1,87 +1,133 @@
 /**
- * 찜 목록(Wishlist) React Query 훅
+ * 찜 목록(Wishlist) React Query 훅 - 백엔드 API 스펙 기반
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wishlistService } from '@/services/tu/wishlistService';
-import type {
-  AddToWishlistRequest,
-  RemoveFromWishlistRequest,
-  AddAllToCartRequest,
-} from '@/types/tu/wishlist.types';
-import { cartKeys } from './useCartQueries';
+import type { WishlistAddRequest } from '@/types/tu/wishlist.types';
 
 // Query Keys
 export const wishlistKeys = {
   all: ['wishlist'] as const,
-  list: () => [...wishlistKeys.all, 'items'] as const,
+  list: (page?: number, size?: number) => [...wishlistKeys.all, 'list', { page, size }] as const,
+  count: () => [...wishlistKeys.all, 'count'] as const,
+  check: (courseId: number) => [...wishlistKeys.all, 'check', courseId] as const,
+  checkBulk: (courseIds: number[]) => [...wishlistKeys.all, 'checkBulk', courseIds] as const,
+  courseCount: (courseId: number) => [...wishlistKeys.all, 'courseCount', courseId] as const,
 };
 
 /**
- * 찜 목록 조회 훅
+ * 내 찜 목록 조회 훅 (페이징)
  */
-export function useWishlist(enabled = true) {
+export function useMyWishlist(page: number = 0, size: number = 20, enabled = true) {
   return useQuery({
-    queryKey: wishlistKeys.list(),
-    queryFn: wishlistService.getWishlist,
+    queryKey: wishlistKeys.list(page, size),
+    queryFn: () => wishlistService.getMyWishlist(page, size),
     enabled,
     staleTime: 1000 * 60 * 5, // 5분
   });
 }
 
 /**
- * 찜 목록 추가 훅 (Wishlist 서비스용)
+ * 내 찜 개수 조회 훅
  */
-export function useWishlistAddItem() {
+export function useMyWishlistCount(enabled = true) {
+  return useQuery({
+    queryKey: wishlistKeys.count(),
+    queryFn: wishlistService.getMyWishlistCount,
+    enabled,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * 특정 강의 찜 여부 확인 훅
+ */
+export function useCheckWishlistStatus(courseId: number, enabled = true) {
+  return useQuery({
+    queryKey: wishlistKeys.check(courseId),
+    queryFn: () => wishlistService.checkWishlistStatus(courseId),
+    enabled: enabled && courseId > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * 여러 강의 찜 여부 일괄 확인 훅
+ */
+export function useCheckWishlistStatusBulk(courseIds: number[], enabled = true) {
+  return useQuery({
+    queryKey: wishlistKeys.checkBulk(courseIds),
+    queryFn: () => wishlistService.checkWishlistStatusBulk({ courseIds }),
+    enabled: enabled && courseIds.length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * 특정 강의의 찜 개수 조회 훅
+ */
+export function useCourseWishlistCount(courseId: number, enabled = true) {
+  return useQuery({
+    queryKey: wishlistKeys.courseCount(courseId),
+    queryFn: () => wishlistService.getCourseWishlistCount(courseId),
+    enabled: enabled && courseId > 0,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * 찜 추가 훅
+ */
+export function useAddToWishlist() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: AddToWishlistRequest) => wishlistService.addToWishlist(data),
-    onSuccess: () => {
+    mutationFn: (request: WishlistAddRequest) => wishlistService.addToWishlist(request),
+    onSuccess: (_, variables) => {
+      // 관련 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: wishlistKeys.all });
+      // 특정 강의 찜 여부 캐시 업데이트
+      queryClient.setQueryData(wishlistKeys.check(variables.courseId), true);
     },
   });
 }
 
 /**
- * 찜 목록 삭제 훅 (Wishlist 서비스용)
+ * 찜 삭제 훅
  */
-export function useWishlistRemoveItem() {
+export function useRemoveFromWishlist() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: RemoveFromWishlistRequest) => wishlistService.removeFromWishlist(data),
-    onSuccess: () => {
+    mutationFn: (courseId: number) => wishlistService.removeFromWishlist(courseId),
+    onSuccess: (_, courseId) => {
+      // 관련 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: wishlistKeys.all });
+      // 특정 강의 찜 여부 캐시 업데이트
+      queryClient.setQueryData(wishlistKeys.check(courseId), false);
     },
   });
 }
 
 /**
- * 찜 목록 비우기 훅
+ * 찜 토글 훅 (추가/삭제 통합)
  */
-export function useClearWishlist() {
-  const queryClient = useQueryClient();
+export function useToggleWishlist() {
+  const addMutation = useAddToWishlist();
+  const removeMutation = useRemoveFromWishlist();
 
-  return useMutation({
-    mutationFn: () => wishlistService.clearWishlist(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: wishlistKeys.all });
-    },
-  });
-}
+  const toggle = async (courseId: number, isCurrentlyWishlisted: boolean) => {
+    if (isCurrentlyWishlisted) {
+      await removeMutation.mutateAsync(courseId);
+    } else {
+      await addMutation.mutateAsync({ courseId });
+    }
+  };
 
-/**
- * 찜 목록 전체를 장바구니에 담기 훅
- */
-export function useAddAllToCart() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: AddAllToCartRequest) => wishlistService.addAllToCart(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: wishlistKeys.all });
-      queryClient.invalidateQueries({ queryKey: cartKeys.all });
-    },
-  });
+  return {
+    toggle,
+    isLoading: addMutation.isPending || removeMutation.isPending,
+    error: addMutation.error || removeMutation.error,
+  };
 }

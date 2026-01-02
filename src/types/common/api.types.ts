@@ -27,3 +27,15 @@ export interface PaginationParams {
   sort?: string;
   order?: 'asc' | 'desc';
 }
+
+// Spring Page 응답 타입
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}

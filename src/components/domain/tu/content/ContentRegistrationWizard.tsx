@@ -141,7 +141,7 @@ export function ContentRegistrationWizard({
       case 2:
         return <Step2ContentUpload data={formData} onUpdate={handleUpdateData} />;
       case 3:
-        return <Step3Settings data={formData} onUpdate={handleUpdateData} />;
+        return <Step3Settings data={formData} onUpdate={handleUpdateData} isExternalLink={formData.loType === 'external-link'} />;
       default:
         return null;
     }

@@ -205,7 +205,7 @@ export const tenantOperatorMenuData: MenuItem[] = [
     icon: ClipboardList,
     subItems: [
       { id: 'sis-lookup', label: { ko: '학생 수강 정보 확인', en: 'SIS Lookup' }, icon: BookOpen, path: '/to/sis' },
-      { id: 'iis-lookup', label: { ko: '강사 배정 정보 확인', en: 'IIS Lookup' }, icon: BookCheck, path: '/to/iis' },
+      { id: 'iis-lookup', label: { ko: '강사 배정 정보 확인', en: 'IIS Lookup' }, icon: BookCheck, path: '/to/instructor-assignments' },
     ],
   },
   {

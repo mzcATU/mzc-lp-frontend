@@ -94,8 +94,6 @@ export {
   usePopularCourses,
   useRecommendedCourses,
   useRelatedCourses,
-  useAddToWishlist,
-  useRemoveFromWishlist,
   useAddToCart,
 } from './useCourseDetailQueries';
 
@@ -127,11 +125,14 @@ export {
 // Wishlist Hooks
 export {
   wishlistKeys,
-  useWishlist,
-  useWishlistAddItem,
-  useWishlistRemoveItem,
-  useClearWishlist,
-  useAddAllToCart,
+  useMyWishlist,
+  useMyWishlistCount,
+  useCheckWishlistStatus,
+  useCheckWishlistStatusBulk,
+  useCourseWishlistCount,
+  useAddToWishlist,
+  useRemoveFromWishlist,
+  useToggleWishlist,
 } from './useWishlistQueries';
 
 // Notification Hooks

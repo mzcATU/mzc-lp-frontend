@@ -113,6 +113,9 @@ export const translations = {
   // 공통
   cancel: { ko: '취소', en: 'Cancel' },
   processing: { ko: '처리 중...', en: 'Processing...' },
+  // 페이지네이션
+  prev: { ko: '이전', en: 'Prev' },
+  pageInfo: { ko: '{current} / {total} 페이지', en: 'Page {current} of {total}' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

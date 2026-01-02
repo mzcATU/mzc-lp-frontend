@@ -114,6 +114,12 @@ export type {
 
 // Wishlist (찜 목록)
 export type {
+  WishlistItemResponse,
+  WishlistAddRequest,
+  WishlistCheckRequest,
+  WishlistCheckResponse,
+  WishlistCountResponse,
+  // Legacy (하위 호환)
   WishlistItem,
   WishlistResponse,
   AddToWishlistRequest,
@@ -194,3 +200,21 @@ export type {
   InstructorReviewsResponse,
   FollowStatusResponse,
 } from './instructor.types';
+
+// Curriculum (강의 커리큘럼 편집)
+export type {
+  CurriculumItemType,
+  CurriculumFolderItem,
+  CurriculumContentItem,
+  CurriculumItem,
+  CurriculumFormData,
+} from './curriculum.types';
+
+export {
+  isCurriculumFolder,
+  isCurriculumContent,
+  createFolderItem,
+  createContentItem,
+  findItemInTree,
+  findParentInTree,
+} from './curriculum.types';

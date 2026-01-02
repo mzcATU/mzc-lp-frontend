@@ -119,7 +119,7 @@ export interface UpdateCourseRequest {
 export interface CreateItemRequest {
   itemName: string;
   parentId?: number | null;
-  learningObjectId: number;
+  contentId: number;
   displayName?: string;
   description?: string;
 }

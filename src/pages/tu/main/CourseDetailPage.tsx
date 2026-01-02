@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Star, Clock, Users, PlayCircle, FileText, Award, ShoppingCart, Heart, Share2, ChevronDown, ChevronRight, Check, Loader2, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -208,7 +209,7 @@ const MOCK_COURSES: Record<string, CourseDetail> = {
 };
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
+const USE_API = true;
 
 /**
  * 커리큘럼 섹션 컴포넌트
@@ -315,7 +316,7 @@ export function CourseDetailPage() {
         if (isWishlisted) {
           await removeFromWishlistMutation.mutateAsync(course.id);
         } else {
-          await addToWishlistMutation.mutateAsync(course.id);
+          await addToWishlistMutation.mutateAsync({ courseId: course.id });
         }
         setIsWishlisted(!isWishlisted);
       } catch (err) {
@@ -374,12 +375,13 @@ export function CourseDetailPage() {
     if (USE_API) {
       try {
         await addToCartMutation.mutateAsync(course.id);
-        alert('장바구니에 추가되었습니다.');
+        toast.success('장바구니에 추가되었습니다.');
       } catch (err) {
         console.error('장바구니 추가 실패:', err);
+        toast.error('장바구니 추가에 실패했습니다.');
       }
     } else {
-      alert('장바구니에 추가되었습니다. (데모)');
+      toast.success('장바구니에 추가되었습니다. (데모)');
     }
   };
 
