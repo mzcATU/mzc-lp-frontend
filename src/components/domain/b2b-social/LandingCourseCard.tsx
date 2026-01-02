@@ -38,7 +38,7 @@ export const LandingCourseCard = ({
   contentType,
   duration,
   enrollmentCount,
-}: LandingCourseCardProps) {
+}: LandingCourseCardProps) => {
   const { language } = useTranslation();
   const [isWishlisted, setIsWishlisted] = useState(false);
 

@@ -91,7 +91,7 @@ export const TargetingSelector = ({
   onChange,
   isAllTarget = true,
   onAllTargetChange,
-}: TargetingSelectorProps) {
+}: TargetingSelectorProps) => {
   const [expandedCategories, setExpandedCategories] = useState<TargetCategory[]>([]);
   const [searchTerms, setSearchTerms] = useState<Record<TargetCategory, string>>({
     department: '',

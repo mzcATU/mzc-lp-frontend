@@ -24,7 +24,7 @@ export const BannerImageDropzone = ({
   aspectRatio = 'aspect-[3/1]',
   deviceType = 'pc',
   className,
-}: BannerImageDropzoneProps) {
+}: BannerImageDropzoneProps) => {
   const [isDragActive, setIsDragActive] = useState(false);
 
   const onDrop = useCallback(

@@ -12,6 +12,7 @@ import {
   SiteOperationDashboard,
   AutoEnrollmentRulesPage,
   MemberPoolPage,
+  EmployeeListPage,
 } from '@/pages/b2b-social/to';
 import { PlaceholderPage } from './pages';
 
@@ -52,7 +53,7 @@ export const b2bSocialToRoutes = (
     <Route path="mandatory" element={<PlaceholderPage title="필수 교육 관리" />} />
 
     {/* 임직원 관리 */}
-    <Route path="employees" element={<PlaceholderPage title="임직원 목록" />} />
+    <Route path="employees" element={<EmployeeListPage />} />
     <Route path="employees/groups" element={<MemberPoolPage />} />
 
     {/* 교육 자동화 */}

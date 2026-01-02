@@ -51,7 +51,6 @@ import {
   BarChart3,
   Zap,
   UsersRound,
-  Upload,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 

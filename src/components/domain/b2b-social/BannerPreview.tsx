@@ -23,7 +23,7 @@ export const BannerPreview = ({
   banners,
   initialIndex = 0,
   className,
-}: BannerPreviewProps) {
+}: BannerPreviewProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [deviceType, setDeviceType] = useState<'pc' | 'mobile'>('pc');
 
