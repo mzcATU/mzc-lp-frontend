@@ -11,3 +11,4 @@ export { courseExploreService } from './courseExploreService';
 export { roadmapExploreService } from './roadmapExploreService';
 export { communityService } from './communityService';
 export { instructorService } from './instructorService';
+export { courseTimeCatalogService } from './courseTimeCatalogService';
