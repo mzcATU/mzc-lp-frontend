@@ -55,7 +55,7 @@ const MOCK_NOTIFICATIONS: Record<number, NotificationItem & { content?: string; 
     `,
     createdAt: '2024-12-30T09:50:00Z',
     isRead: false,
-    actionUrl: '/tu/main/courses',
+    actionUrl: '/tu/b2c/courses',
     actionLabel: '강의 둘러보기',
   },
   2: {
@@ -82,7 +82,7 @@ const MOCK_NOTIFICATIONS: Record<number, NotificationItem & { content?: string; 
     `,
     createdAt: '2024-12-30T09:00:00Z',
     isRead: false,
-    actionUrl: '/tu/main/courses/1',
+    actionUrl: '/tu/b2c/courses/1',
     actionLabel: '강의 바로가기',
   },
   3: {
@@ -117,7 +117,7 @@ useEffect(() => {
     `,
     createdAt: '2024-12-30T07:00:00Z',
     isRead: false,
-    actionUrl: '/tu/main/community/1',
+    actionUrl: '/tu/b2c/community/1',
     actionLabel: '답변 보러가기',
   },
   4: {
@@ -174,7 +174,7 @@ useEffect(() => {
     `,
     createdAt: '2024-12-28T10:00:00Z',
     isRead: true,
-    actionUrl: '/mypage/certifications',
+    actionUrl: '/tu/b2c/mypage/certifications',
     actionLabel: '수료증 확인하기',
   },
   6: {
@@ -204,7 +204,7 @@ MZC Learn Platform에 가입해주셔서 감사합니다!
     `,
     createdAt: '2024-12-27T10:00:00Z',
     isRead: true,
-    actionUrl: '/tu/main/courses',
+    actionUrl: '/tu/b2c/courses',
     actionLabel: '강의 둘러보기',
   },
 };
@@ -306,7 +306,7 @@ export function NotificationDetailPage() {
       } else {
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
-      navigate('/tu/notifications');
+      navigate('/tu/b2c/notifications');
     } catch (error) {
       console.error('Failed to delete notification:', error);
     } finally {
@@ -346,7 +346,7 @@ export function NotificationDetailPage() {
             <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               해당 알림이 삭제되었거나 존재하지 않습니다.
             </p>
-            <Button onClick={() => navigate('/tu/notifications')}>
+            <Button onClick={() => navigate('/tu/b2c/notifications')}>
               알림 목록으로 돌아가기
             </Button>
           </div>
@@ -366,7 +366,7 @@ export function NotificationDetailPage() {
         <div className="max-w-3xl mx-auto">
           {/* Back Button */}
           <button
-            onClick={() => navigate('/tu/notifications')}
+            onClick={() => navigate('/tu/b2c/notifications')}
             className={`flex items-center gap-2 mb-6 transition-colors ${
               isDark
                 ? 'text-gray-400 hover:text-white'

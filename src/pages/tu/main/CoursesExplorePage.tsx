@@ -256,7 +256,7 @@ function CourseCard({ course, isDark }: CourseCardProps) {
   if (course.discount > 0) tags.push('할인중');
 
   return (
-    <Link to={`/tu/main/courses/${course.id}`} className="group block h-full">
+    <Link to={`/tu/b2c/courses/${course.id}`} className="group block h-full">
       <div className={`h-full card-hover rounded-xl overflow-hidden border ${
         isDark
           ? 'bg-white/5 border-white/10'

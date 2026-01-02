@@ -148,7 +148,7 @@ export function CatalogDetailPage() {
   const enrollMutation = useEnroll();
 
   const handleBack = () => {
-    navigate('/tu/catalog');
+    navigate('/tu/b2c/courses');
   };
 
   const handleEnroll = async (courseTimeId: number) => {
