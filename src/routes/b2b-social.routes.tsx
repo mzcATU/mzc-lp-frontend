@@ -6,10 +6,9 @@ import { b2bSocialTaRoutes } from './b2b-social.ta.routes';
  * B2B 소셜러닝 라우트 통합
  *
  * 구조:
- * - /b2b-social           : 랜딩 페이지
- * - /b2b-social/tu/*      : 학습자 페이지 (TU)
- * - /b2b-social/to/*      : 운영자 페이지 (TO)
- * - /b2b-social/ta/*      : 관리자 페이지 (TA)
+ * - /tu/b2b-social           : 랜딩 페이지
+ * - /tu/b2b-social/to/*      : 운영자 페이지 (TO)
+ * - /tu/b2b-social/ta/*      : 관리자 페이지 (TA)
  */
 export const b2bSocialRoutes = (
   <>

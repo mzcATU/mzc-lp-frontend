@@ -22,11 +22,11 @@ function B2BSocialTaWrapper() {
 /**
  * B2B 소셜러닝 TA (관리자) 라우트
  *
- * 경로: /b2b-social/ta/*
+ * 경로: /tu/b2b-social/ta/*
  * - 대시보드, 사용자 관리, 권한 관리, 시스템 설정 등
  */
 export const b2bSocialTaRoutes = (
-  <Route path="/b2b-social/ta" element={<B2BSocialTaWrapper />}>
+  <Route path="/tu/b2b-social/ta" element={<B2BSocialTaWrapper />}>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
 

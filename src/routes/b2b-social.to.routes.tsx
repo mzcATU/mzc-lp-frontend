@@ -23,11 +23,11 @@ function B2BSocialToWrapper() {
 /**
  * B2B 소셜러닝 TO (운영자) 라우트
  *
- * 경로: /b2b-social/to/*
+ * 경로: /tu/b2b-social/to/*
  * - 대시보드, 배너 관리, 콘텐츠 관리, 수강생 관리 등
  */
 export const b2bSocialToRoutes = (
-  <Route path="/b2b-social/to" element={<B2BSocialToWrapper />}>
+  <Route path="/tu/b2b-social/to" element={<B2BSocialToWrapper />}>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
 

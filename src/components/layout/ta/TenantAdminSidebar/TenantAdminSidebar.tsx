@@ -16,7 +16,7 @@ interface TenantAdminSidebarProps {
 
 export function TenantAdminSidebar(props: TenantAdminSidebarProps) {
   const location = useLocation();
-  const isB2BSocial = location.pathname.startsWith('/b2b-social');
+  const isB2BSocial = location.pathname.includes('/b2b-social');
 
   return (
     <BaseSidebar
