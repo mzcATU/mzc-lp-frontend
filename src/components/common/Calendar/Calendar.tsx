@@ -39,17 +39,15 @@ function Calendar({
           "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
         week: "flex w-full mt-2",
         day: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected])]:rounded-md",
-        day_button: cn(
-          buttonVariants({ variant: "ghost" }),
-          "size-8 p-0 font-normal aria-selected:opacity-100"
-        ),
+        day_button:
+          "size-8 p-0 font-normal rounded-md hover:bg-accent hover:text-accent-foreground transition-colors aria-selected:bg-primary aria-selected:text-primary-foreground aria-selected:hover:bg-primary aria-selected:hover:text-primary-foreground",
         range_start:
           "day-range-start aria-selected:bg-primary aria-selected:text-primary-foreground",
         range_end:
           "day-range-end aria-selected:bg-primary aria-selected:text-primary-foreground",
         selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        today: "bg-bg-secondary text-text-primary font-semibold",
+          "bg-primary text-primary-foreground rounded-md hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+        today: "bg-bg-secondary text-text-primary font-semibold rounded-md aria-selected:bg-primary aria-selected:text-primary-foreground",
         outside:
           "day-outside text-muted-foreground aria-selected:text-muted-foreground",
         disabled: "text-muted-foreground opacity-50",
