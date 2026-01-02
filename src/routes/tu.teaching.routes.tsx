@@ -11,6 +11,9 @@ import {
   ContentDetailPage,
   MyAssignmentsPage,
   AssignmentDetailPage,
+  MyProgramsPage,
+  TuProgramDetailPage,
+  TuProgramEditPage,
 } from '@/pages/tu';
 import { DashboardPage, PlaceholderPage } from './pages';
 
@@ -35,11 +38,16 @@ export const tuTeachingRoutes = (
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
 
-    {/* 내 강의 */}
+    {/* 내 강의계획 */}
     <Route path="teaching/courses" element={<MyCoursesPage />} />
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
     <Route path="teaching/courses/:courseId/edit" element={<CourseEditPage />} />
+
+    {/* 내 프로그램 */}
+    <Route path="teaching/programs" element={<MyProgramsPage />} />
+    <Route path="teaching/programs/:programId" element={<TuProgramDetailPage />} />
+    <Route path="teaching/programs/:programId/edit" element={<TuProgramEditPage />} />
 
     {/* 내 콘텐츠 */}
     <Route path="teaching/content" element={<MyContentPage />} />
