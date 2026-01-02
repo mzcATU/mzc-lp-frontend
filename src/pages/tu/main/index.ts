@@ -10,3 +10,4 @@ export { CartPage } from './CartPage';
 export { WishlistPage } from './WishlistPage';
 export { NotificationsPage } from './NotificationsPage';
 export { CourseDetailPage } from './CourseDetailPage';
+export { InstructorProfilePage } from './InstructorProfilePage';

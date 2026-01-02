@@ -184,6 +184,23 @@ export {
   COMMUNITY_SORT_OPTIONS,
 } from './community.types';
 
+// Instructor (강사)
+export type {
+  InstructorSummary,
+  InstructorProfile,
+  InstructorCourse,
+  InstructorRoadmap,
+  InstructorPost,
+  InstructorReview,
+  PopularInstructorsResponse,
+  InstructorProfileResponse,
+  InstructorCoursesResponse,
+  InstructorRoadmapsResponse,
+  InstructorPostsResponse,
+  InstructorReviewsResponse,
+  FollowStatusResponse,
+} from './instructor.types';
+
 // Curriculum (강의 커리큘럼 편집)
 export type {
   CurriculumItemType,

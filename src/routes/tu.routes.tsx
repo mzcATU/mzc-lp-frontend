@@ -12,6 +12,7 @@ import {
   WishlistPage,
   NotificationsPage,
   CourseDetailPage,
+  InstructorProfilePage,
   MyPageHome,
   ProfilePage,
   MyLearningPage,
@@ -90,5 +91,6 @@ export const tuRoutes = (
     <Route path="/tu/main/page1" element={<Page1 />} />
     <Route path="/tu/main/page2" element={<Page2 />} />
     <Route path="/tu/main/page3" element={<Page3 />} />
+    <Route path="/tu/instructors/:instructorId" element={<InstructorProfilePage />} />
   </>
 );

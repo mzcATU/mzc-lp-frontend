@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState } from 'react';
-import { Star, Clock, Users, PlayCircle, FileText, Award, ShoppingCart, Heart, Share2, ChevronDown, ChevronRight, Check, Loader2 } from 'lucide-react';
+import { Star, Clock, Users, PlayCircle, FileText, Award, ShoppingCart, Heart, Share2, ChevronDown, ChevronRight, Check, Loader2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
@@ -293,6 +293,7 @@ export function CourseDetailPage() {
 
   const [expandedSections, setExpandedSections] = useState<number[]>([0]);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
@@ -323,6 +324,50 @@ export function CourseDetailPage() {
       }
     } else {
       setIsWishlisted(!isWishlisted);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+
+    const copyToClipboard = () => {
+      const textArea = document.createElement('textarea');
+      textArea.value = url;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setShowCopiedToast(true);
+      setTimeout(() => setShowCopiedToast(false), 2000);
+    };
+
+    // 모바일에서 Web Share API 시도
+    if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: course.title,
+          text: `${course.instructor.name}의 "${course.title}" 강의를 확인해보세요!`,
+          url,
+        });
+        return;
+      } catch {
+        // 공유 취소 또는 실패 시 클립보드로 fallback
+      }
+    }
+
+    // 클립보드 복사 시도
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(url);
+        setShowCopiedToast(true);
+        setTimeout(() => setShowCopiedToast(false), 2000);
+      } catch {
+        copyToClipboard();
+      }
+    } else {
+      copyToClipboard();
     }
   };
 
@@ -443,17 +488,20 @@ export function CourseDetailPage() {
               </div>
 
               {/* Instructor */}
-              <div className="flex items-center gap-3 mb-8">
+              <Link
+                to={`/tu/instructors/${course.instructor.id}`}
+                className="flex items-center gap-3 mb-8 group"
+              >
                 <img
                   src={course.instructor.profileImage || 'https://via.placeholder.com/48'}
                   alt={course.instructor.name}
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-transparent group-hover:ring-[#6778ff] transition-all"
                 />
                 <div>
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{course.instructor.name}</p>
+                  <p className={`font-medium group-hover:text-[#6778ff] transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>{course.instructor.name}</p>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>강사</p>
                 </div>
-              </div>
+              </Link>
 
               {/* Promo Video */}
               <div className={`rounded-xl overflow-hidden border ${
@@ -539,7 +587,9 @@ export function CourseDetailPage() {
                         <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
                         {isWishlisted ? '찜함' : '찜하기'}
                       </button>
-                      <button className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border ${
+                      <button
+                        onClick={handleShare}
+                        className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border ${
                         isDark
                           ? 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
                           : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
@@ -644,30 +694,55 @@ export function CourseDetailPage() {
             <h2 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               강사 소개
             </h2>
-            <div className={`rounded-xl p-6 border ${
-              isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
-            }`}>
+            <Link
+              to={`/tu/instructors/${course.instructor.id}`}
+              className={`block rounded-xl p-6 border transition-all group ${
+                isDark
+                  ? 'glass border-white/10 hover:border-[#6778ff]/50'
+                  : 'bg-white border-gray-200 hover:border-[#6778ff] hover:shadow-lg'
+              }`}
+            >
               <div className="flex items-start gap-4">
                 <img
                   src={course.instructor.profileImage || 'https://via.placeholder.com/80'}
                   alt={course.instructor.name}
-                  className="w-20 h-20 rounded-full object-cover"
+                  className="w-20 h-20 rounded-full object-cover ring-2 ring-transparent group-hover:ring-[#6778ff] transition-all"
                 />
-                <div>
-                  <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {course.instructor.name}
-                  </h3>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className={`text-xl font-bold mb-2 group-hover:text-[#6778ff] transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {course.instructor.name}
+                    </h3>
+                    <ChevronRight className={`w-5 h-5 group-hover:translate-x-1 transition-transform ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  </div>
                   <p className={`leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {course.instructor.bio}
                   </p>
+                  <p className="mt-3 text-[#6778ff] text-sm font-medium">
+                    강사 프로필 보기 →
+                  </p>
                 </div>
               </div>
-            </div>
+            </Link>
           </section>
         </div>
       </main>
 
       <LandingFooter />
+
+      {/* 복사 완료 토스트 */}
+      {showCopiedToast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className={`px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 ${
+            isDark
+              ? 'bg-[#6778ff] text-white'
+              : 'bg-gray-900 text-white'
+          }`}>
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">링크가 클립보드에 복사되었습니다</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
