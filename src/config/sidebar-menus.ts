@@ -49,6 +49,9 @@ import {
   Image,
   GraduationCap,
   BarChart3,
+  Zap,
+  UsersRound,
+  Upload,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -336,6 +339,23 @@ export const b2bSocialToMenuData: MenuItem[] = [
     subItems: [
       { id: 'courses', label: { ko: '교육 과정 관리', en: 'Course Management' }, icon: BookOpen, path: '/b2b-social/to/courses' },
       { id: 'mandatory', label: { ko: '필수 교육 관리', en: 'Mandatory Training' }, icon: BookCheck, path: '/b2b-social/to/mandatory' },
+    ],
+  },
+  {
+    id: 'employee-management',
+    label: { ko: '임직원 관리', en: 'Employee Management' },
+    icon: UsersRound,
+    subItems: [
+      { id: 'employee-list', label: { ko: '임직원 목록', en: 'Employee List' }, icon: Users, path: '/b2b-social/to/employees' },
+      { id: 'employee-groups', label: { ko: '그룹 관리', en: 'Group Management' }, icon: Layers, path: '/b2b-social/to/employees/groups' },
+    ],
+  },
+  {
+    id: 'education-automation',
+    label: { ko: '교육 자동화', en: 'Education Automation' },
+    icon: Zap,
+    subItems: [
+      { id: 'auto-enrollment', label: { ko: '자동 입과', en: 'Auto Enrollment' }, icon: Settings, path: '/b2b-social/to/automation/rules' },
     ],
   },
   {

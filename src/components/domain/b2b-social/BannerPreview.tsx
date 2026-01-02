@@ -19,7 +19,7 @@ interface BannerPreviewProps {
   className?: string;
 }
 
-export function BannerPreview({
+export const BannerPreview = ({
   banners,
   initialIndex = 0,
   className,

@@ -74,7 +74,7 @@ const activityColors = {
   alert: designTokens.badge.orange,
 };
 
-export function SiteOperationDashboard() {
+export const SiteOperationDashboard = () => {
   return (
     <div
       className="h-full overflow-auto p-8"

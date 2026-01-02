@@ -29,7 +29,7 @@ const ContentTypeIcon = ({ type }: { type: ContentType }) => {
   }
 };
 
-export function LandingCourseCard({
+export const LandingCourseCard = ({
   id,
   title,
   image,

@@ -7,7 +7,12 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import { BannerManagementPage, SiteOperationDashboard } from '@/pages/b2b-social/to';
+import {
+  BannerManagementPage,
+  SiteOperationDashboard,
+  AutoEnrollmentRulesPage,
+  MemberPoolPage,
+} from '@/pages/b2b-social/to';
 import { PlaceholderPage } from './pages';
 
 function B2BSocialToWrapper() {
@@ -45,6 +50,13 @@ export const b2bSocialToRoutes = (
     {/* 교육 운영 */}
     <Route path="courses" element={<PlaceholderPage title="교육 과정 관리" />} />
     <Route path="mandatory" element={<PlaceholderPage title="필수 교육 관리" />} />
+
+    {/* 임직원 관리 */}
+    <Route path="employees" element={<PlaceholderPage title="임직원 목록" />} />
+    <Route path="employees/groups" element={<MemberPoolPage />} />
+
+    {/* 교육 자동화 */}
+    <Route path="automation/rules" element={<AutoEnrollmentRulesPage />} />
 
     {/* 통계 */}
     <Route path="analytics" element={<PlaceholderPage title="학습 통계" />} />

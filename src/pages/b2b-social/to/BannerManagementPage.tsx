@@ -430,7 +430,7 @@ function SlidePanel({ isOpen, onClose, title, children }: SlidePanelProps) {
  * - 타겟팅 노출 설정 (직무, 직급, 직책, 부서)
  * - PC/Mobile 미리보기
  */
-export function BrandingPage() {
+export const BrandingPage = () => {
   const [banners, setBanners] = useState<Banner[]>(sampleBanners);
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);

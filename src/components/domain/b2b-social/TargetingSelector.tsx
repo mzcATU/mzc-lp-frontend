@@ -86,7 +86,7 @@ const categoryConfig: Record<
   rank: { label: '직급', icon: UserCheck, dataKey: 'ranks' },
 };
 
-export function TargetingSelector({
+export const TargetingSelector = ({
   value,
   onChange,
   isAllTarget = true,

@@ -15,7 +15,7 @@ interface BannerImageDropzoneProps {
   className?: string;
 }
 
-export function BannerImageDropzone({
+export const BannerImageDropzone = ({
   value,
   onChange,
   onFileSelect,
