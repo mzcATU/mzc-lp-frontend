@@ -534,7 +534,7 @@ export function CommunityDetailPage() {
     try {
       await deletePostMutation.mutateAsync(postId);
       toast.success('게시글이 삭제되었습니다.');
-      navigate('/tu/main/community');
+      navigate('/tu/b2c/community');
     } catch (err) {
       console.error('게시글 삭제 실패:', err);
       toast.error('게시글 삭제에 실패했습니다.');
@@ -702,7 +702,7 @@ export function CommunityDetailPage() {
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <div className="text-center">
           <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>게시글을 불러올 수 없습니다.</p>
-          <Link to="/tu/main/community" className="text-[#6778ff] hover:underline mt-4 inline-block">
+          <Link to="/tu/b2c/community" className="text-[#6778ff] hover:underline mt-4 inline-block">
             커뮤니티로 돌아가기
           </Link>
         </div>
@@ -1085,7 +1085,7 @@ export function CommunityDetailPage() {
                 }`}
               >
                 {/* 강의 썸네일 */}
-                <Link to={`/tu/main/courses/${post.relatedCourse.id}`}>
+                <Link to={`/tu/b2c/courses/${post.relatedCourse.id}`}>
                   <img
                     src={post.relatedCourse.thumbnailUrl || 'https://via.placeholder.com/320x180'}
                     alt={post.relatedCourse.title}
@@ -1095,7 +1095,7 @@ export function CommunityDetailPage() {
 
                 <div className="p-4">
                   {/* 강의 제목 */}
-                  <Link to={`/tu/main/courses/${post.relatedCourse.id}`}>
+                  <Link to={`/tu/b2c/courses/${post.relatedCourse.id}`}>
                     <h3
                       className={`font-semibold mb-2 line-clamp-2 hover:text-[#6778ff] transition-colors ${
                         isDark ? 'text-white' : 'text-gray-900'
@@ -1107,7 +1107,7 @@ export function CommunityDetailPage() {
 
                   {/* 강사 정보 */}
                   <Link
-                    to={`/tu/main/instructors/${post.relatedCourse.instructor.id}`}
+                    to={`/tu/b2c/instructors/${post.relatedCourse.instructor.id}`}
                     className="flex items-center gap-2 mb-3"
                   >
                     <img
@@ -1133,7 +1133,7 @@ export function CommunityDetailPage() {
                   </div>
 
                   {/* 강의 보기 버튼 */}
-                  <Link to={`/tu/main/courses/${post.relatedCourse.id}`}>
+                  <Link to={`/tu/b2c/courses/${post.relatedCourse.id}`}>
                     <Button className="w-full gap-2">
                       강의 상세보기
                       <ChevronRight className="w-4 h-4" />

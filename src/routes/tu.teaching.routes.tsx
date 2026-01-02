@@ -24,7 +24,13 @@ function TenantUserWrapper() {
   );
 }
 
-export const tuCoursesRoutes = (
+/**
+ * TU Teaching 라우트 - 강의 관리 (사이드바 있음)
+ *
+ * 경로: /tu/teaching/*
+ * - 내 강의 관리, 콘텐츠 관리, 과제 관리
+ */
+export const tuTeachingRoutes = (
   <Route path="/tu" element={<TenantUserWrapper />}>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
@@ -34,9 +40,13 @@ export const tuCoursesRoutes = (
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
     <Route path="teaching/courses/:courseId/edit" element={<CourseEditPage />} />
+
+    {/* 내 콘텐츠 */}
     <Route path="teaching/content" element={<MyContentPage />} />
     <Route path="teaching/content/create" element={<TuContentCreatePage />} />
     <Route path="teaching/content/:id" element={<ContentDetailPage />} />
+
+    {/* 내 과제 */}
     <Route path="teaching/assignments" element={<MyAssignmentsPage />} />
     <Route path="teaching/assignments/:id" element={<AssignmentDetailPage />} />
 

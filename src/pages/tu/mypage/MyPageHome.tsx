@@ -214,7 +214,7 @@ export function MyPageHome() {
               {/* 프로필 수정 버튼 */}
               <Button
                 variant="outline"
-                onClick={() => navigate('/mypage/profile')}
+                onClick={() => navigate('/tu/b2c/mypage/profile')}
                 className={isDark ? 'border-white/30 text-white bg-white/10 hover:bg-white/20' : ''}
               >
                 {t.mypage.editProfile}
@@ -278,7 +278,7 @@ export function MyPageHome() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               className={isDark ? 'text-gray-400 hover:text-white' : ''}
             >
               {t.mypage.viewAll}
@@ -362,7 +362,7 @@ export function MyPageHome() {
               <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {t.mypage.noEnrolledCoursesDesc}
               </p>
-              <Button onClick={() => navigate('/tu/catalog')}>{t.mypage.browseCourses}</Button>
+              <Button onClick={() => navigate('/tu/b2c/courses')}>{t.mypage.browseCourses}</Button>
             </div>
           )}
         </section>
@@ -377,42 +377,42 @@ export function MyPageHome() {
               icon={<BookOpen className="w-5 h-5" />}
               title={t.mypage.myLearning}
               description={t.mypage.myLearningDesc}
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Award className="w-5 h-5" />}
               title={t.mypage.certificates}
               description={t.mypage.certificatesDesc}
-              onClick={() => navigate('/mypage/certifications')}
+              onClick={() => navigate('/tu/b2c/mypage/certifications')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Shield className="w-5 h-5" />}
               title={t.mypage.profileAndSecurity}
               description={t.mypage.profileSecurityDesc}
-              onClick={() => navigate('/mypage/profile')}
+              onClick={() => navigate('/tu/b2c/mypage/profile')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Bell className="w-5 h-5" />}
               title={t.mypage.notifications}
               description={t.mypage.notificationsDesc}
-              onClick={() => navigate('/mypage/notifications')}
+              onClick={() => navigate('/tu/b2c/mypage/notifications')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Globe className="w-5 h-5" />}
               title={t.mypage.languageRegion}
               description={t.mypage.languageRegionDesc}
-              onClick={() => navigate('/mypage/language')}
+              onClick={() => navigate('/tu/b2c/mypage/language')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<TrendingUp className="w-5 h-5" />}
               title={t.mypage.learningProgress}
               description={t.mypage.learningProgressDesc}
-              onClick={() => navigate('/tu/progress')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               isDark={isDark}
             />
           </div>

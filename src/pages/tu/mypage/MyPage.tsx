@@ -157,7 +157,7 @@ export function MyPage() {
               {/* 설정 버튼 */}
               <Button
                 variant="outline"
-                onClick={() => navigate('/tu/settings')}
+                onClick={() => navigate('/tu/b2c/mypage/settings')}
                 className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -222,7 +222,7 @@ export function MyPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               className={isDark ? 'text-gray-400 hover:text-white' : ''}
             >
               전체보기
@@ -304,7 +304,7 @@ export function MyPage() {
               <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 새로운 강의를 찾아 학습을 시작해보세요
               </p>
-              <Button onClick={() => navigate('/tu/catalog')}>강의 둘러보기</Button>
+              <Button onClick={() => navigate('/tu/b2c/courses')}>강의 둘러보기</Button>
             </div>
           )}
         </section>
@@ -319,42 +319,42 @@ export function MyPage() {
               icon={<BookOpen className="w-5 h-5" />}
               title="내 학습"
               description="수강 중인 강의를 확인하세요"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Award className="w-5 h-5" />}
               title="인증서"
               description="취득한 인증서를 확인하세요"
-              onClick={() => navigate('/tu/certifications')}
+              onClick={() => navigate('/tu/b2c/mypage/certifications')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Shield className="w-5 h-5" />}
               title="계정 및 보안"
               description="계정 정보 및 보안 설정"
-              onClick={() => navigate('/tu/settings/security')}
+              onClick={() => navigate('/tu/b2c/mypage/settings/security')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Bell className="w-5 h-5" />}
               title="알림 설정"
               description="알림 설정을 관리하세요"
-              onClick={() => navigate('/tu/settings/notifications')}
+              onClick={() => navigate('/tu/b2c/mypage/settings/notifications')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Globe className="w-5 h-5" />}
               title="언어 및 지역"
               description="언어 및 지역 설정을 변경하세요"
-              onClick={() => navigate('/tu/settings/language')}
+              onClick={() => navigate('/tu/b2c/mypage/settings/language')}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<TrendingUp className="w-5 h-5" />}
               title="학습 진도"
               description="전체 학습 진도를 확인하세요"
-              onClick={() => navigate('/tu/progress')}
+              onClick={() => navigate('/tu/b2c/mypage/learning')}
               isDark={isDark}
             />
           </div>

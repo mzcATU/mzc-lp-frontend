@@ -153,7 +153,7 @@ export function CartPage() {
               관심 있는 강의를 담아보세요!
             </p>
             <Link
-              to="/tu/main/courses"
+              to="/tu/b2c/courses"
               className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-full text-white font-medium"
             >
               강의 둘러보기 <ChevronRight className="w-4 h-4" />
@@ -217,7 +217,7 @@ export function CartPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <Link
-                              to={`/tu/main/courses/${item.courseId}`}
+                              to={`/tu/b2c/courses/${item.courseId}`}
                               className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
                             >
                               {item.courseTitle}
@@ -316,7 +316,7 @@ export function CartPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <Link
-                              to={`/tu/main/courses/${item.courseId}`}
+                              to={`/tu/b2c/courses/${item.courseId}`}
                               className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
                             >
                               {item.courseTitle}
