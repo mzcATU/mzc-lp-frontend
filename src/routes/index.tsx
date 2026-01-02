@@ -5,6 +5,7 @@ import { taRoutes } from './ta.routes';
 import { toRoutes } from './to.routes';
 import { tuRoutes } from './tu.routes';
 import { authRoutes } from './auth.routes';
+import { b2bSocialRoutes } from './b2b-social.routes';
 import { UnauthorizedPage } from './pages';
 
 export function AppRoutes() {
@@ -18,6 +19,9 @@ export function AppRoutes() {
       {taRoutes}
       {toRoutes}
       {tuRoutes}
+
+      {/* B2B 소셜러닝 */}
+      {b2bSocialRoutes}
 
       {/* 인증 페이지 */}
       {authRoutes}

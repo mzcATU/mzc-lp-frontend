@@ -1,5 +1,10 @@
+import { useLocation } from 'react-router-dom';
 import { BaseSidebar } from '../../common/BaseSidebar';
-import { tenantOperatorMenuData, roleLabels } from '@/config/sidebar-menus';
+import {
+  tenantOperatorMenuData,
+  b2bSocialToMenuData,
+  roleLabels,
+} from '@/config/sidebar-menus';
 
 interface TenantOperatorSidebarProps {
   isExpanded: boolean;
@@ -10,11 +15,14 @@ interface TenantOperatorSidebarProps {
 }
 
 export function TenantOperatorSidebar(props: TenantOperatorSidebarProps) {
+  const location = useLocation();
+  const isB2BSocial = location.pathname.startsWith('/b2b-social');
+
   return (
     <BaseSidebar
       {...props}
-      menuData={tenantOperatorMenuData}
-      roleLabel={roleLabels.tenantOperator}
+      menuData={isB2BSocial ? b2bSocialToMenuData : tenantOperatorMenuData}
+      roleLabel={isB2BSocial ? roleLabels.b2bSocialTo : roleLabels.tenantOperator}
     />
   );
 }

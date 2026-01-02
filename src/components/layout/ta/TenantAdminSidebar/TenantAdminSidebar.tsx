@@ -1,5 +1,10 @@
+import { useLocation } from 'react-router-dom';
 import { BaseSidebar } from '../../common/BaseSidebar';
-import { tenantAdminMenuData, roleLabels } from '@/config/sidebar-menus';
+import {
+  tenantAdminMenuData,
+  b2bSocialTaMenuData,
+  roleLabels,
+} from '@/config/sidebar-menus';
 
 interface TenantAdminSidebarProps {
   isExpanded: boolean;
@@ -10,11 +15,14 @@ interface TenantAdminSidebarProps {
 }
 
 export function TenantAdminSidebar(props: TenantAdminSidebarProps) {
+  const location = useLocation();
+  const isB2BSocial = location.pathname.startsWith('/b2b-social');
+
   return (
     <BaseSidebar
       {...props}
-      menuData={tenantAdminMenuData}
-      roleLabel={roleLabels.tenantAdmin}
+      menuData={isB2BSocial ? b2bSocialTaMenuData : tenantAdminMenuData}
+      roleLabel={isB2BSocial ? roleLabels.b2bSocialTa : roleLabels.tenantAdmin}
     />
   );
 }

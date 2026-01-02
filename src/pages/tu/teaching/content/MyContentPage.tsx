@@ -130,15 +130,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   const [isFolderSelectModalOpen, setIsFolderSelectModalOpen] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
 
-  // 폴더 관리 패널 상태
-  const [isFolderPanelOpen, setIsFolderPanelOpen] = useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
-
-  // 콘텐츠 선택 상태
-  const [selectedContentIds, setSelectedContentIds] = useState<Set<number>>(new Set());
-  const [isFolderSelectModalOpen, setIsFolderSelectModalOpen] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
-
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   // API 파라미터 구성
@@ -218,63 +209,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
 
   const handleClosePreview = () => {
     setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null, downloadable: true });
-  };
-
-  // 콘텐츠 선택 핸들러
-  const handleSelectContent = (contentId: number, checked: boolean) => {
-    setSelectedContentIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(contentId);
-      } else {
-        next.delete(contentId);
-      }
-      return next;
-    });
-  };
-
-  const handleSelectAll = () => {
-    if (selectedContentIds.size === contents.length) {
-      setSelectedContentIds(new Set());
-    } else {
-      setSelectedContentIds(new Set(contents.map((c) => c.id)));
-    }
-  };
-
-  // 폴더 이동 핸들러
-  const handleMoveToFolder = async (folderId: number | null) => {
-    if (selectedContentIds.size === 0) return;
-
-    setIsMoving(true);
-    const contentIds = Array.from(selectedContentIds);
-    const errors: number[] = [];
-
-    try {
-      // 각 콘텐츠에 대해 LO를 조회하고 폴더 이동
-      for (const contentId of contentIds) {
-        try {
-          // Content ID로 LO 조회
-          const lo = await learningObjectService.getLearningObjectByContentId(contentId);
-          // LO 폴더 이동
-          await learningObjectService.moveToFolder(lo.learningObjectId, { folderId });
-        } catch {
-          errors.push(contentId);
-        }
-      }
-
-      if (errors.length > 0) {
-        console.error('Failed to move contents:', errors);
-        alert(getText('moveFailed'));
-      }
-
-      // 성공적으로 이동된 항목이 있으면 목록 새로고침
-      await queryClient.invalidateQueries({ queryKey: ['contents'] });
-      await queryClient.invalidateQueries({ queryKey: ['contentFolders'] });
-      setSelectedContentIds(new Set());
-      setIsFolderSelectModalOpen(false);
-    } finally {
-      setIsMoving(false);
-    }
   };
 
   // 콘텐츠 선택 핸들러

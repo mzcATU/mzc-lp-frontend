@@ -45,6 +45,9 @@ import {
   CheckSquare,
   Briefcase,
   Package,
+  Image,
+  GraduationCap,
+  BarChart3,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -290,6 +293,130 @@ export const myPageMenuData: MenuItem[] = [
 ];
 
 /**
+ * B2B 소셜러닝 TO (운영자) 메뉴
+ */
+export const b2bSocialToMenuData: MenuItem[] = [
+  {
+    id: 'dashboard',
+    label: { ko: '대시보드', en: 'Dashboard' },
+    icon: LayoutDashboard,
+    path: '/b2b-social/to/dashboard',
+  },
+  {
+    id: 'home-management',
+    label: { ko: '홈 화면 관리', en: 'Home Management' },
+    icon: Home,
+    subItems: [
+      { id: 'banners', label: { ko: '배너 관리', en: 'Banner Management' }, icon: Image, path: '/b2b-social/to/banners' },
+    ],
+  },
+  {
+    id: 'content-management',
+    label: { ko: '콘텐츠 관리', en: 'Content Management' },
+    icon: Database,
+    subItems: [
+      { id: 'content-pool', label: { ko: '콘텐츠 관리', en: 'Content Pool' }, icon: Database, path: '/b2b-social/to/content' },
+      { id: 'content-upload', label: { ko: '콘텐츠 업로드', en: 'Content Upload' }, icon: FolderEdit, path: '/b2b-social/to/content/upload' },
+    ],
+  },
+  {
+    id: 'education-management',
+    label: { ko: '교육 운영', en: 'Education Management' },
+    icon: GraduationCap,
+    subItems: [
+      { id: 'courses', label: { ko: '교육 과정 관리', en: 'Course Management' }, icon: BookOpen, path: '/b2b-social/to/courses' },
+      { id: 'mandatory', label: { ko: '필수 교육 관리', en: 'Mandatory Training' }, icon: BookCheck, path: '/b2b-social/to/mandatory' },
+    ],
+  },
+  {
+    id: 'student-management',
+    label: { ko: '수강생 관리', en: 'Student Management' },
+    icon: Users,
+    subItems: [
+      { id: 'students', label: { ko: '수강생 관리', en: 'Students' }, icon: Users, path: '/b2b-social/to/students' },
+      { id: 'enrollments', label: { ko: '수강 신청 관리', en: 'Enrollments' }, icon: ClipboardList, path: '/b2b-social/to/enrollments' },
+    ],
+  },
+  {
+    id: 'analytics',
+    label: { ko: '학습 통계', en: 'Analytics' },
+    icon: BarChart3,
+    path: '/b2b-social/to/analytics',
+  },
+  {
+    id: 'settings',
+    label: { ko: '설정', en: 'Settings' },
+    icon: Settings,
+    path: '/b2b-social/to/settings',
+  },
+];
+
+/**
+ * B2B 소셜러닝 TA (관리자) 메뉴
+ */
+export const b2bSocialTaMenuData: MenuItem[] = [
+  {
+    id: 'dashboard',
+    label: { ko: '대시보드', en: 'Dashboard' },
+    icon: LayoutDashboard,
+    path: '/b2b-social/ta/dashboard',
+  },
+  {
+    id: 'user-management',
+    label: { ko: '사용자 관리', en: 'User Management' },
+    icon: Users,
+    subItems: [
+      { id: 'users', label: { ko: '사용자 관리', en: 'Users' }, icon: Users, path: '/b2b-social/ta/users' },
+      { id: 'groups', label: { ko: '그룹/부서 관리', en: 'Groups' }, icon: Building2, path: '/b2b-social/ta/users/groups' },
+      { id: 'permissions', label: { ko: '권한 관리', en: 'Permissions' }, icon: Shield, path: '/b2b-social/ta/users/permissions' },
+    ],
+  },
+  {
+    id: 'content-policy',
+    label: { ko: '콘텐츠 정책', en: 'Content Policy' },
+    icon: Database,
+    subItems: [
+      { id: 'policy', label: { ko: '콘텐츠 정책', en: 'Policy' }, icon: FileText, path: '/b2b-social/ta/content/policy' },
+      { id: 'categories', label: { ko: '카테고리 관리', en: 'Categories' }, icon: Layers, path: '/b2b-social/ta/content/categories' },
+    ],
+  },
+  {
+    id: 'education-policy',
+    label: { ko: '교육 정책', en: 'Education Policy' },
+    icon: GraduationCap,
+    subItems: [
+      { id: 'mandatory', label: { ko: '필수 교육 정책', en: 'Mandatory Policy' }, icon: BookCheck, path: '/b2b-social/ta/education/mandatory' },
+      { id: 'compliance', label: { ko: '컴플라이언스 설정', en: 'Compliance' }, icon: Shield, path: '/b2b-social/ta/education/compliance' },
+    ],
+  },
+  {
+    id: 'branding',
+    label: { ko: '브랜딩', en: 'Branding' },
+    icon: Palette,
+    subItems: [
+      { id: 'design', label: { ko: '디자인 설정', en: 'Design' }, icon: Paintbrush, path: '/b2b-social/ta/branding/design' },
+      { id: 'navigation', label: { ko: '메뉴 설정', en: 'Navigation' }, icon: Menu, path: '/b2b-social/ta/branding/navigation' },
+    ],
+  },
+  {
+    id: 'analytics',
+    label: { ko: '분석 및 보고서', en: 'Analytics & Reports' },
+    icon: BarChart3,
+    subItems: [
+      { id: 'overview', label: { ko: '통계 개요', en: 'Overview' }, icon: PieChart, path: '/b2b-social/ta/analytics/overview' },
+      { id: 'reports', label: { ko: '보고서', en: 'Reports' }, icon: FileText, path: '/b2b-social/ta/analytics/reports' },
+      { id: 'export', label: { ko: '데이터 내보내기', en: 'Export' }, icon: Download, path: '/b2b-social/ta/analytics/export' },
+    ],
+  },
+  {
+    id: 'settings',
+    label: { ko: '설정', en: 'Settings' },
+    icon: Settings,
+    path: '/b2b-social/ta/settings',
+  },
+];
+
+/**
  * 역할별 라벨
  */
 export const roleLabels = {
@@ -298,4 +425,6 @@ export const roleLabels = {
   tenantOperator: { ko: '교육 운영자', en: 'Operator' },
   tenantUser: { ko: 'Enterprise LMS', en: 'Enterprise LMS' },
   myPage: { ko: '마이페이지', en: 'My Page' },
+  b2bSocialTo: { ko: 'B2B 소셜러닝 운영', en: 'B2B Social Learning Ops' },
+  b2bSocialTa: { ko: 'B2B 소셜러닝 관리', en: 'B2B Social Learning Admin' },
 };
