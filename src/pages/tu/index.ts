@@ -1,4 +1,17 @@
-export { MyCoursesPage, MyContentPage, CourseCreatePage, CourseEditPage, CourseDetailPage as TeachingCourseDetailPage, TuContentCreatePage, ContentDetailPage, MyAssignmentsPage, AssignmentDetailPage } from './teaching';
+export {
+  MyCoursesPage,
+  MyContentPage,
+  CourseCreatePage,
+  CourseEditPage,
+  CourseDetailPage as TeachingCourseDetailPage,
+  TuContentCreatePage,
+  ContentDetailPage,
+  MyAssignmentsPage,
+  AssignmentDetailPage,
+  MyProgramsPage,
+  TuProgramDetailPage,
+  TuProgramEditPage,
+} from './teaching';
 export { SettingsLanguagePage } from './settings';
 export { LandingPage, CoursesExplorePage, RoadmapExplorePage, RoadmapDetailPage, CommunityPage, CommunityDetailPage, CartPage, WishlistPage, NotificationsPage, NotificationDetailPage, CourseDetailPage, InstructorProfilePage } from './main';
 export { CatalogPage, CatalogDetailPage } from './catalog';
