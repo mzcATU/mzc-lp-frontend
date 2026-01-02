@@ -1,56 +1,35 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Users, TrendingUp, Award, Plus, Filter } from 'lucide-react';
+import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
+import { useMyCourses } from '@/hooks/tu';
 import type { Course, CourseStatus } from '@/types';
+import type { CourseResponse } from '@/types/common/course.types';
 
 interface MyCoursesPageProps {
   language?: 'ko' | 'en';
 }
 
-const TEACHING_COURSES: Course[] = [
-  {
-    id: '4',
-    title: 'JavaScript 기초부터 심화까지',
+const DEFAULT_THUMBNAIL = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
+
+/** CourseResponse를 UI용 Course 타입으로 변환 */
+function mapCourseResponseToCourse(response: CourseResponse): Course {
+  return {
+    id: String(response.courseId),
+    title: response.title,
     instructor: '나',
     progress: 100,
-    totalLessons: 30,
-    completedLessons: 30,
-    thumbnail: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=400&h=250&fit=crop',
-    category: '프로그래밍',
-    students: 45,
-    lastAccessed: '30분 전',
-    status: 'active',
-  },
-  {
-    id: '5',
-    title: 'Node.js 백엔드 개발',
-    instructor: '나',
-    progress: 100,
-    totalLessons: 22,
-    completedLessons: 22,
-    thumbnail: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop',
-    category: '백엔드',
-    students: 32,
-    lastAccessed: '1시간 전',
-    status: 'active',
-  },
-  {
-    id: '6',
-    title: 'Git & GitHub 협업 실전',
-    instructor: '나',
-    progress: 100,
-    totalLessons: 15,
-    completedLessons: 15,
-    thumbnail: 'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=400&h=250&fit=crop',
-    category: '개발 도구',
-    students: 58,
-    lastAccessed: '3시간 전',
-    status: 'active',
-  },
-];
+    totalLessons: 0,
+    completedLessons: 0,
+    thumbnail: response.thumbnailUrl || DEFAULT_THUMBNAIL,
+    category: response.tags?.[0] || '미분류',
+    students: 0,
+    lastAccessed: new Date(response.updatedAt).toLocaleDateString('ko-KR'),
+    status: 'active' as CourseStatus,
+  };
+}
 
 const t = {
   title: { ko: '내 강의', en: 'My Courses' },
@@ -75,6 +54,9 @@ const t = {
   noCourses: { ko: '개설한 과정이 없습니다', en: 'No courses created yet' },
   noCoursesDesc: { ko: '새로운 과정을 개설하여 학생들과 지식을 공유하세요', en: 'Create a new course to share knowledge with students' },
   createNewCourse: { ko: '과정 개설하기', en: 'Create Course' },
+  loading: { ko: '강의 목록을 불러오는 중...', en: 'Loading courses...' },
+  error: { ko: '강의 목록을 불러오는데 실패했습니다', en: 'Failed to load courses' },
+  retry: { ko: '다시 시도', en: 'Retry' },
 };
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
@@ -82,7 +64,40 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   const [filterStatus, setFilterStatus] = useState<'all' | CourseStatus>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
 
-  const filteredCourses = TEACHING_COURSES.filter((course) => {
+  // API 연동
+  const { data: coursesData, isLoading, error, refetch } = useMyCourses();
+
+  const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <div className="p-8 bg-bg-app_default min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={32} className="animate-spin text-text-secondary mx-auto mb-4" />
+          <p className="text-text-secondary">{getText('loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="p-8 bg-bg-app_default min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle size={48} className="text-status-error mx-auto mb-4" />
+          <p className="text-text-secondary mb-4">{getText('error')}</p>
+          <Button onClick={() => refetch()}>{getText('retry')}</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // API 응답을 UI용 Course 타입으로 변환
+  const courses: Course[] = (coursesData?.content || []).map(mapCourseResponseToCourse);
+
+  const filteredCourses = courses.filter((course) => {
     if (filterStatus === 'all') return true;
     return course.status === filterStatus;
   });
@@ -93,10 +108,10 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     return 0;
   });
 
-  const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
-
-  const totalStudents = TEACHING_COURSES.reduce((acc, c) => acc + (c.students || 0), 0);
-  const avgCompletion = Math.round(TEACHING_COURSES.reduce((acc, c) => acc + c.progress, 0) / TEACHING_COURSES.length);
+  const totalStudents = courses.reduce((acc, c) => acc + (c.students || 0), 0);
+  const avgCompletion = courses.length > 0
+    ? Math.round(courses.reduce((acc, c) => acc + c.progress, 0) / courses.length)
+    : 0;
 
   return (
     <div className="p-8 bg-bg-app_default min-h-screen">
@@ -114,7 +129,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
       {/* Statistics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <IconStatCard icon={<BookOpen size={20} />} label={getText('coursesCreated')} value={TEACHING_COURSES.length} />
+        <IconStatCard icon={<BookOpen size={20} />} label={getText('coursesCreated')} value={courses.length} />
         <IconStatCard icon={<Users size={20} />} label={getText('totalStudents')} value={totalStudents} />
         <IconStatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCompletion')} value={`${avgCompletion}%`} />
       </div>

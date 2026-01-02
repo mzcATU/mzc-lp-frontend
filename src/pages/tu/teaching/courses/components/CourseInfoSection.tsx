@@ -1,4 +1,4 @@
-import { FileText, Calendar, Clock, Tag } from 'lucide-react';
+import { FileText, Calendar, Clock, Tag, ImageIcon } from 'lucide-react';
 import type { CourseDetailResponse } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
 
@@ -46,6 +46,23 @@ export function CourseInfoSection({ course, categories }: Readonly<CourseInfoSec
       </h2>
 
       <div className="space-y-6">
+        {/* 썸네일 */}
+        {course.thumbnailUrl && (
+          <div>
+            <label className="text-sm text-text-secondary mb-2 flex items-center gap-1">
+              <ImageIcon size={14} />
+              썸네일
+            </label>
+            <div className="w-64 h-40 rounded-lg overflow-hidden border border-border">
+              <img
+                src={course.thumbnailUrl}
+                alt={`${course.title} 썸네일`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        )}
+
         {/* 설명 */}
         <div>
           <label className="block text-sm text-text-secondary mb-1">설명</label>
