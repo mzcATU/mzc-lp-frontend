@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Input, Label } from '@/components/common';
+import { Card, Button, Input } from '@/components/common';
 import {
   Folder,
   FileText,

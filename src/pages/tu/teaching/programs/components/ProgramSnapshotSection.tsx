@@ -159,10 +159,10 @@ export function ProgramSnapshotSection({
                   {getText('hashtags')}
                 </Label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {snapshot.hashtags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                  {snapshot.hashtags.split(',').map((tag) => (
+                    <Badge key={tag.trim()} variant="secondary" className="flex items-center gap-1">
                       <Hash size={12} />
-                      {tag}
+                      {tag.trim()}
                     </Badge>
                   ))}
                 </div>

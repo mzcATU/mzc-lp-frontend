@@ -123,12 +123,13 @@ export function ProgramBasicInfoForm({
               <NativeSelect
                 value={formData.level}
                 onChange={(e) => handleChange('level', e.target.value as ProgramLevel | '')}
-              >
-                <option value="">{getText('selectLevel')}</option>
-                <option value="BEGINNER">{getText('beginner')}</option>
-                <option value="INTERMEDIATE">{getText('intermediate')}</option>
-                <option value="ADVANCED">{getText('advanced')}</option>
-              </NativeSelect>
+                options={[
+                  { value: '', label: getText('selectLevel') },
+                  { value: 'BEGINNER', label: getText('beginner') },
+                  { value: 'INTERMEDIATE', label: getText('intermediate') },
+                  { value: 'ADVANCED', label: getText('advanced') },
+                ]}
+              />
             </div>
 
             {/* 유형 */}
@@ -137,12 +138,13 @@ export function ProgramBasicInfoForm({
               <NativeSelect
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value as ProgramType | '')}
-              >
-                <option value="">{getText('selectType')}</option>
-                <option value="ONLINE">{getText('online')}</option>
-                <option value="OFFLINE">{getText('offline')}</option>
-                <option value="BLENDED">{getText('blended')}</option>
-              </NativeSelect>
+                options={[
+                  { value: '', label: getText('selectType') },
+                  { value: 'ONLINE', label: getText('online') },
+                  { value: 'OFFLINE', label: getText('offline') },
+                  { value: 'BLENDED', label: getText('blended') },
+                ]}
+              />
             </div>
 
             {/* 예상 학습시간 */}
