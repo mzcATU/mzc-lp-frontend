@@ -8,7 +8,7 @@ import { useCourseExplore, useCourseCategories } from '@/hooks/tu';
 import type { CourseExploreItem, ExploreCourseCategory } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
+const USE_API = true;
 
 // 더미 카테고리 데이터
 const MOCK_CATEGORIES: ExploreCourseCategory[] = [
