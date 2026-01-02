@@ -180,7 +180,7 @@ export function MyLearningPage() {
   ) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
-    navigate(`/mypage/learning/${enrollmentId}`);
+    navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
   };
 
   const handleSearch = (e: React.FormEvent) => {

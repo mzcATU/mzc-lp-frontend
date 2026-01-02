@@ -171,7 +171,7 @@ export function LearningDetailPage() {
   const handleContinueLearning = () => {
     // 미완료 아이템 중 첫 번째 아이템으로 이동, 없으면 첫 아이템
     const nextItem = mockCurriculum.find((item) => !item.completed) || mockCurriculum[0];
-    navigate(`/mypage/learning/${enrollmentId}/player/${nextItem?.id || ''}`);
+    navigate(`/tu/b2c/mypage/learning/${enrollmentId}/player/${nextItem?.id || ''}`);
   };
 
   // Loading State

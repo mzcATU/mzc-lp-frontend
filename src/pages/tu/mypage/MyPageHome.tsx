@@ -300,7 +300,7 @@ export function MyPageHome() {
                       ? 'bg-white/5 border-white/10 hover:bg-white/10'
                       : 'bg-white hover:shadow-md'
                   }`}
-                  onClick={() => navigate(`/mypage/learning/${enrollment.id}`)}
+                  onClick={() => navigate(`/tu/b2c/mypage/learning/${enrollment.id}`)}
                 >
                   <CardContent className="p-5">
                     <Badge variant={statusColors[enrollment.status]} className="text-xs mb-3">
