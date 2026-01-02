@@ -247,7 +247,7 @@ export function LearningPlayerPage() {
     setIsCompleted(progressRecords.some((r) => r.itemId === itemId && r.completed));
 
     // URL 업데이트
-    const basePath = isDemoMode ? '/mypage/learning/demo/player' : `/mypage/learning/${enrollmentId}/player`;
+    const basePath = isDemoMode ? '/tu/b2c/mypage/learning/demo/player' : `/mypage/learning/${enrollmentId}/player`;
     navigate(`${basePath}/${itemId}`, { replace: true });
   }, [enrollmentId, navigate, progressRecords, saveProgress, isDemoMode]);
 
@@ -255,9 +255,9 @@ export function LearningPlayerPage() {
   const handleBack = useCallback(() => {
     saveProgress();
     if (isDemoMode) {
-      navigate('/mypage/learning');
+      navigate('/tu/b2c/mypage/learning');
     } else {
-      navigate(`/mypage/learning/${enrollmentId}`);
+      navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
     }
   }, [enrollmentId, navigate, saveProgress, isDemoMode]);
 
@@ -290,7 +290,7 @@ export function LearningPlayerPage() {
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate('/mypage/learning')}>
+        <Button onClick={() => navigate('/tu/b2c/mypage/learning')}>
           {t.learning.backToLearning}
         </Button>
       </div>

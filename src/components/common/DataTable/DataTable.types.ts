@@ -23,6 +23,8 @@ export interface DataTableProps<TData, TValue> {
   labels?: DataTableLabels;
   /** 행 클릭 핸들러 */
   onRowClick?: (row: TData) => void;
+  /** 행별 클래스명 반환 함수 */
+  rowClassName?: (row: TData) => string;
 }
 
 export interface DataTableColumnHeaderProps

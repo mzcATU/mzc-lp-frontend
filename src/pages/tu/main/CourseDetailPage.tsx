@@ -209,6 +209,7 @@ const MOCK_COURSES: Record<string, CourseDetail> = {
 };
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
+// courseDetailService에서 백엔드 응답을 프론트엔드 형식으로 변환
 const USE_API = true;
 
 /**
@@ -412,7 +413,7 @@ export function CourseDetailPage() {
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
         <div className="text-center">
           <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>강의를 불러올 수 없습니다.</p>
-          <Link to="/tu/main/courses" className="text-[#6778ff] hover:underline mt-4 inline-block">
+          <Link to="/tu/b2c/courses" className="text-[#6778ff] hover:underline mt-4 inline-block">
             강의 목록으로 돌아가기
           </Link>
         </div>
@@ -432,12 +433,12 @@ export function CourseDetailPage() {
             <div className="flex-1">
               {/* Breadcrumb */}
               <nav className={`flex items-center gap-2 text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                <Link to="/tu/main/courses" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+                <Link to="/tu/b2c/courses" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                   강의
                 </Link>
                 <ChevronRight className="w-4 h-4" />
                 <Link
-                  to={`/tu/main/courses?category=${course.category}`}
+                  to={`/tu/b2c/courses?category=${course.category}`}
                   className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}
                 >
                   {getCategoryLabel(course.category)}
@@ -489,7 +490,7 @@ export function CourseDetailPage() {
 
               {/* Instructor */}
               <Link
-                to={`/tu/instructors/${course.instructor.id}`}
+                to={`/tu/b2c/instructors/${course.instructor.id}`}
                 className="flex items-center gap-3 mb-8 group"
               >
                 <img
@@ -695,7 +696,7 @@ export function CourseDetailPage() {
               강사 소개
             </h2>
             <Link
-              to={`/tu/instructors/${course.instructor.id}`}
+              to={`/tu/b2c/instructors/${course.instructor.id}`}
               className={`block rounded-xl p-6 border transition-all group ${
                 isDark
                   ? 'glass border-white/10 hover:border-[#6778ff]/50'

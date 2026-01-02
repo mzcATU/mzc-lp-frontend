@@ -71,6 +71,7 @@ function DataTable<TData, TValue>({
   pageSize = 10,
   labels: customLabels,
   onRowClick,
+  rowClassName,
 }: DataTableProps<TData, TValue>) {
   const labels = { ...defaultLabels, ...customLabels };
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -182,7 +183,10 @@ function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => onRowClick?.(row.original)}
-                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                  className={cn(
+                    onRowClick ? "cursor-pointer hover:bg-muted/50" : "",
+                    rowClassName?.(row.original)
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

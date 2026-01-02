@@ -203,3 +203,21 @@ export {
   type CourseForApplication,
   type ApplicationResult,
 } from './useProgramApplicationQueries';
+
+// My Program Hooks (TU 내 프로그램 관리)
+export {
+  myProgramKeys,
+  useMyPrograms,
+  useMyProgram,
+  useMyProgramSnapshot,
+  useSnapshotItems,
+  useUpdateMyProgram,
+  useDeleteMyProgram,
+  useSubmitMyProgram,
+  useUpdateSnapshot,
+  useAddSnapshotItem,
+  useUpdateSnapshotItem,
+  useMoveSnapshotItem,
+  useDeleteSnapshotItem,
+  type MyProgramFilterParams,
+} from './useMyProgramQueries';
