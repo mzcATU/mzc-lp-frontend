@@ -148,7 +148,7 @@ export function CatalogDetailPage() {
   const enrollMutation = useEnroll();
 
   const handleBack = () => {
-    navigate('/tu/catalog');
+    navigate('/tu/b2c/courses');
   };
 
   const handleEnroll = async (courseTimeId: number) => {
@@ -156,7 +156,7 @@ export function CatalogDetailPage() {
       const enrollment = await enrollMutation.mutateAsync(courseTimeId);
       toast.success(t.catalog.enrollSuccess);
       // 수강 신청 성공 후 학습 페이지로 이동
-      navigate(`/mypage/learning/${enrollment.id}`);
+      navigate(`/tu/b2c/mypage/learning/${enrollment.id}`);
     } catch {
       toast.error(t.catalog.enrollFail);
     }

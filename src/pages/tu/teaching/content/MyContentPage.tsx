@@ -682,6 +682,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               showColumnToggle={false}
               showPagination={false}
               onRowClick={(item) => navigate(`/tu/teaching/content/${item.id}`)}
+              rowClassName={(item) => item.status === 'ARCHIVED' ? 'opacity-60' : ''}
               labels={{
                 noResults: getText('noResults'),
               }}

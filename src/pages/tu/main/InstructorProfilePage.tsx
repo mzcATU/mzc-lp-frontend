@@ -287,7 +287,7 @@ export function InstructorProfilePage() {
         <LandingHeader />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>강사를 찾을 수 없습니다.</p>
-          <Link to="/tu/main" className="mt-4 text-[#6778ff] hover:underline">
+          <Link to="/tu/b2c" className="mt-4 text-[#6778ff] hover:underline">
             홈으로 돌아가기
           </Link>
         </div>
@@ -481,7 +481,7 @@ export function InstructorProfilePage() {
                   return (
                     <Link
                       key={course.id}
-                      to={`/tu/main/courses/${course.id}`}
+                      to={`/tu/b2c/courses/${course.id}`}
                       className="group block h-full"
                     >
                       <div className={`h-full card-hover rounded-xl overflow-hidden border ${
@@ -592,7 +592,7 @@ export function InstructorProfilePage() {
             {roadmaps?.map((roadmap) => (
               <Link
                 key={roadmap.id}
-                to={`/tu/main/roadmaps/${roadmap.id}`}
+                to={`/tu/b2c/roadmaps/${roadmap.id}`}
                 className={`block rounded-2xl p-6 card-hover cursor-pointer group border transition-all ${
                   isDark
                     ? 'glass border-white/10'

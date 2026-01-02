@@ -180,7 +180,7 @@ export function MyLearningPage() {
   ) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
-    navigate(`/mypage/learning/${enrollmentId}`);
+    navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -199,7 +199,7 @@ export function MyLearningPage() {
             </h1>
             {/* 데모 버튼 (테스트용 - 숨김) */}
             <button
-              onClick={() => navigate('/mypage/learning/demo/player')}
+              onClick={() => navigate('/tu/b2c/mypage/learning/demo/player')}
               className={`opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
               title="Demo Mode"
             >
@@ -316,7 +316,7 @@ export function MyLearningPage() {
             <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               {t.learning.noEnrollmentsDesc}
             </p>
-            <Button variant="brand" onClick={() => navigate('/tu/catalog')}>
+            <Button variant="brand" onClick={() => navigate('/tu/b2c/courses')}>
               {t.learning.browseCourses}
             </Button>
           </div>

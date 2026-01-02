@@ -342,7 +342,7 @@ export function CommunityPage() {
                 {popularPosts.left.map((post) => (
                   <Link
                     key={post.id}
-                    to={`/tu/main/community/${post.id}`}
+                    to={`/tu/b2c/community/${post.id}`}
                     className="flex items-center gap-3 group"
                   >
                     <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
@@ -366,7 +366,7 @@ export function CommunityPage() {
                   {popularPosts.right.map((post) => (
                     <Link
                       key={post.id}
-                      to={`/tu/main/community/${post.id}`}
+                      to={`/tu/b2c/community/${post.id}`}
                       className="flex items-center gap-3 group"
                     >
                       <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
@@ -401,7 +401,7 @@ export function CommunityPage() {
                 </p>
               </div>
               <Link
-                to="/tu/main/community?category=tech"
+                to="/tu/b2c/community?category=tech"
                 className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
               >
                 더 보기 <ChevronRight className="w-4 h-4" />
@@ -428,7 +428,7 @@ export function CommunityPage() {
                   {extendedNews.map((news, index) => (
                     <Link
                       key={`${news.id}-${index}`}
-                      to={`/tu/main/community/${news.id}`}
+                      to={`/tu/b2c/community/${news.id}`}
                       className={`group block rounded-2xl p-6 transition-all duration-300 border flex-shrink-0 w-[calc(33.333%-16px)] ${
                         isDark
                           ? 'glass border-white/10 hover:border-[#6778ff]/50'
@@ -518,7 +518,7 @@ export function CommunityPage() {
                 {filteredPosts.map((post) => (
                   <Link
                     key={post.id}
-                    to={`/tu/main/community/${post.id}`}
+                    to={`/tu/b2c/community/${post.id}`}
                     className={`flex items-start gap-4 px-6 py-5 transition-colors ${
                       isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
                     }`}
@@ -590,7 +590,7 @@ export function CommunityPage() {
           if (USE_API) {
             const result = await createPostMutation.mutateAsync(data);
             setIsWriteModalOpen(false);
-            navigate(`/tu/main/community/${result.id}`);
+            navigate(`/tu/b2c/community/${result.id}`);
           } else {
             console.log('New post data:', data);
             setIsWriteModalOpen(false);
