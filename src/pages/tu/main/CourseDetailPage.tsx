@@ -49,19 +49,33 @@ interface CurriculumSectionProps {
 
 function CurriculumSection({ item, isExpanded, onToggle, isDark }: CurriculumSectionProps) {
   if (!item.isFolder) {
-    // 콘텐츠 아이템
+    // 콘텐츠 아이템 - 카드 스타일로 표시
     return (
       <div
-        className={`flex items-center justify-between p-4 pl-12 transition-colors ${
-          isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+        className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
+          isDark
+            ? 'glass border-white/10 hover:bg-white/5'
+            : 'bg-white border-gray-200 hover:bg-gray-50'
         }`}
       >
         <div className="flex items-center gap-3">
-          <PlayCircle className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-          <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>{item.itemName}</span>
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isDark ? 'bg-white/10' : 'bg-gray-100'
+            }`}
+          >
+            <PlayCircle className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
+          </div>
+          <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+            {item.itemName}
+          </span>
         </div>
         {item.duration && (
-          <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          <span
+            className={`text-sm px-2 py-1 rounded-md ${
+              isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
+            }`}
+          >
             {Math.floor(item.duration / 60)}:{String(item.duration % 60).padStart(2, '0')}
           </span>
         )}
@@ -108,15 +122,25 @@ function CurriculumSection({ item, isExpanded, onToggle, isDark }: CurriculumSec
               }`}
             >
               <div className="flex items-center gap-3">
-                {child.isFolder ? (
-                  <FileText className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                ) : (
-                  <PlayCircle className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                )}
-                <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>{child.itemName}</span>
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    isDark ? 'bg-white/10' : 'bg-gray-100'
+                  }`}
+                >
+                  {child.isFolder ? (
+                    <FileText className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
+                  ) : (
+                    <PlayCircle className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
+                  )}
+                </div>
+                <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{child.itemName}</span>
               </div>
               {child.duration && (
-                <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                <span
+                  className={`text-sm px-2 py-1 rounded-md ${
+                    isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
                   {Math.floor(child.duration / 60)}:{String(child.duration % 60).padStart(2, '0')}
                 </span>
               )}
@@ -613,13 +637,13 @@ export function CourseDetailPage() {
       <main className="w-full px-4 md:px-8 lg:px-16 py-12">
         <div className="max-w-4xl">
           {/* 커리큘럼 */}
-          {courseTime.curriculum && courseTime.curriculum.length > 0 && (
-            <section className="mb-12">
-              <h2
-                className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
-              >
-                커리큘럼
-              </h2>
+          <section className="mb-12">
+            <h2
+              className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
+            >
+              커리큘럼
+            </h2>
+            {courseTime.curriculum && courseTime.curriculum.length > 0 ? (
               <div className="space-y-3">
                 {courseTime.curriculum.map((item, index) => (
                   <CurriculumSection
@@ -631,8 +655,26 @@ export function CourseDetailPage() {
                   />
                 ))}
               </div>
-            </section>
-          )}
+            ) : (
+              <div
+                className={`rounded-xl p-8 text-center border ${
+                  isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                }`}
+              >
+                <FileText
+                  className={`w-12 h-12 mx-auto mb-4 ${
+                    isDark ? 'text-gray-600' : 'text-gray-300'
+                  }`}
+                />
+                <p className={`font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  커리큘럼 준비 중
+                </p>
+                <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  상세 커리큘럼은 곧 업데이트될 예정입니다.
+                </p>
+              </div>
+            )}
+          </section>
 
           {/* 강사 소개 */}
           {courseTime.instructors.length > 0 && (

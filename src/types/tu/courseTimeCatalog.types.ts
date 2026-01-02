@@ -137,6 +137,7 @@ export interface CourseTimeCatalogParams {
   programId?: number;
   isFree?: boolean;
   keyword?: string;
+  categoryId?: number;
   page?: number;
   size?: number;
   sort?: string;

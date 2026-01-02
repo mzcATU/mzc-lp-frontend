@@ -9,11 +9,12 @@ import {
 } from '@/components/landing';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
-import { usePopularInstructors } from '@/hooks/tu';
+import { usePopularInstructors, useCourseTimeCatalog } from '@/hooks/tu';
 import type { InstructorSummary } from '@/types/tu';
+import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
 
-// API 사용 여부 플래그 (백엔드 연동 시 true로 변경)
-const USE_API = false;
+// API 사용 여부 플래그
+const USE_INSTRUCTOR_API = false; // 강사 API 연동 시 true로 변경
 
 // 더미 인기 강사 데이터
 const dummyPopularInstructors: InstructorSummary[] = [
@@ -63,147 +64,105 @@ const dummyPopularInstructors: InstructorSummary[] = [
   },
 ];
 
-// 카테고리 ID 목록
-const categoryIds = ['all', 'cloud', 'dev', 'ai', 'data', 'security', 'devops'] as const;
+// 카테고리 옵션 (백엔드 카테고리 ID와 매핑)
+// TODO: 추후 /api/public/categories API로 동적으로 변경
+interface CategoryOption {
+  id: number | null; // null은 전체
+  name: string;
+  code: string; // URL 파라미터용
+}
 
-const courses = [
-  {
-    id: 1,
-    title: 'AWS 클라우드 실무 완벽 마스터',
-    instructor: '김클라우드',
-    price: '₩89,000',
-    rating: 4.9,
-    reviewCount: 1234,
-    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=250&fit=crop',
-    tags: ['NEW', '베스트'],
-    category: 'cloud',
-  },
-  {
-    id: 2,
-    title: 'Azure 기초부터 실전까지',
-    instructor: '이에저',
-    price: '₩120,000',
-    rating: 4.8,
-    reviewCount: 892,
-    image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=250&fit=crop',
-    tags: ['베스트'],
-    category: 'cloud',
-  },
-  {
-    id: 3,
-    title: 'GCP로 배우는 클라우드 아키텍처',
-    instructor: '박지씨피',
-    price: '₩75,000',
-    rating: 4.7,
-    reviewCount: 2156,
-    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=250&fit=crop',
-    tags: [],
-    category: 'cloud',
-  },
-  {
-    id: 4,
-    title: 'Kubernetes 완전 정복',
-    instructor: '최쿠버',
-    price: '₩65,000',
-    rating: 4.9,
-    reviewCount: 567,
-    image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop',
-    tags: ['NEW'],
-    category: 'devops',
-  },
-  {
-    id: 5,
-    title: 'ChatGPT API 활용 실무 프로젝트',
-    instructor: '정에이아이',
-    price: '₩55,000',
-    rating: 4.6,
-    reviewCount: 334,
-    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop',
-    tags: ['할인중'],
-    category: 'ai',
-  },
-  {
-    id: 6,
-    title: 'React & TypeScript 실전 가이드',
-    instructor: '강리액트',
-    price: '₩95,000',
-    rating: 4.8,
-    reviewCount: 723,
-    image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop',
-    tags: ['베스트'],
-    category: 'dev',
-  },
-  {
-    id: 7,
-    title: '데이터 분석 with Python',
-    instructor: '제임스킴',
-    price: '₩45,000',
-    rating: 4.5,
-    reviewCount: 1567,
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop',
-    tags: [],
-    category: 'data',
-  },
-  {
-    id: 8,
-    title: '클라우드 보안 기초와 실전',
-    instructor: '윤시큐리티',
-    price: '₩110,000',
-    rating: 4.9,
-    reviewCount: 445,
-    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=250&fit=crop',
-    tags: ['NEW', '베스트'],
-    category: 'security',
-  },
-  {
-    id: 9,
-    title: 'Docker 컨테이너 마스터',
-    instructor: '한도커',
-    price: '₩35,000',
-    rating: 4.7,
-    reviewCount: 2890,
-    image: 'https://images.unsplash.com/photo-1605745341112-85968b19335b?w=400&h=250&fit=crop',
-    tags: ['할인중'],
-    category: 'devops',
-  },
-  {
-    id: 10,
-    title: 'Terraform으로 인프라 자동화',
-    instructor: '오테라폼',
-    price: '₩85,000',
-    rating: 4.8,
-    reviewCount: 678,
-    image: 'https://images.unsplash.com/photo-1518432031352-d6fc5c10da5a?w=400&h=250&fit=crop',
-    tags: ['베스트'],
-    category: 'devops',
-  },
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  { id: null, name: '전체', code: 'all' },
+  { id: 1, name: '개발', code: 'dev' },
+  { id: 2, name: 'AI', code: 'ai' },
+  { id: 3, name: '데이터', code: 'data' },
+  { id: 4, name: '디자인', code: 'design' },
+  { id: 5, name: '비즈니스', code: 'business' },
+  { id: 6, name: '마케팅', code: 'marketing' },
+  { id: 7, name: '외국어', code: 'language' },
 ];
+
+/**
+ * CourseTime 데이터를 LandingCourseCard props로 변환
+ */
+function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
+  // 주강사 찾기
+  const mainInstructor = courseTime.instructors.find((i) => i.role === 'MAIN');
+  const instructorName = mainInstructor?.name || courseTime.instructors[0]?.name || '';
+
+  // 가격 포맷팅
+  const price = courseTime.isFree ? 0 : parseFloat(courseTime.price);
+  const priceDisplay = courseTime.isFree ? '무료' : `₩${price.toLocaleString()}`;
+
+  // 태그 생성
+  const tags: string[] = [];
+  if (courseTime.isOnDemand) {
+    tags.push('상시모집');
+  } else if (courseTime.status === 'RECRUITING') {
+    tags.push('모집중');
+  }
+  if (courseTime.isFree) {
+    tags.push('무료');
+  }
+
+  // 썸네일
+  const thumbnailUrl =
+    courseTime.program?.thumbnailUrl ||
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
+
+  return {
+    id: courseTime.id,
+    title: courseTime.title,
+    instructor: instructorName,
+    price: priceDisplay,
+    rating: 4.5, // CourseTime API에 rating이 없으므로 기본값
+    reviewCount: courseTime.currentEnrollment, // 수강생 수로 대체
+    image: thumbnailUrl,
+    tags,
+    category: courseTime.program?.categoryName || 'all',
+  };
+}
 
 /**
  * 랜딩 페이지 - 다크/라이트 테마 LMS 메인
  */
 export function LandingPage() {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
 
+  // CourseTime API로 강의 데이터 로드 (모집중/진행중, 카테고리 필터 적용)
+  const { data: courseTimeData, isLoading: isCoursesLoading } = useCourseTimeCatalog({
+    status: ['RECRUITING', 'ONGOING'],
+    categoryId: activeCategoryId ?? undefined,
+    size: 20,
+    sort: 'createdAt,desc',
+  });
+
   // 인기 강사 데이터 로드
-  const { data: instructorsData, isLoading: isInstructorsLoading } = usePopularInstructors(4, USE_API);
-  const popularInstructors = USE_API ? (instructorsData?.instructors ?? []) : dummyPopularInstructors;
+  const { data: instructorsData, isLoading: isInstructorsLoading } = usePopularInstructors(4, USE_INSTRUCTOR_API);
+  const popularInstructors = USE_INSTRUCTOR_API ? (instructorsData?.instructors ?? []) : dummyPopularInstructors;
 
-  // 카테고리 레이블을 번역으로 가져오기
-  const getCategoryLabel = (id: string) => {
-    return t.landing[id as keyof typeof t.landing] as string;
-  };
+  // CourseTime 데이터를 카드 props로 변환
+  const courseTimes = courseTimeData?.content || [];
+  const courses = courseTimes.map(convertCourseTimeToCardProps);
 
-  const filteredCourses =
-    activeCategory === 'all'
-      ? courses
-      : courses.filter((course) => course.category === activeCategory);
+  // 현재 선택된 카테고리 정보 가져오기
+  const activeCategory = CATEGORY_OPTIONS.find((c) => c.id === activeCategoryId);
 
-  const featuredCourses = courses.filter((c) => c.tags.includes('베스트')).slice(0, 5);
-  const newCourses = courses.filter((c) => c.tags.includes('NEW')).slice(0, 5);
+  // API에서 이미 categoryId로 필터링됨, 추가 클라이언트 필터링 불필요
+  const filteredCourses = courses;
+
+  // 최신 강의 (createdAt 기준 정렬이므로 처음 5개)
+  const newCourses = courses.slice(0, 5);
+
+  // 추천 강의 (무료 강의 우선)
+  const featuredCourses = courses
+    .filter((c) => c.tags.includes('무료') || c.tags.includes('상시모집'))
+    .slice(0, 5);
+  const recommendedCourses = featuredCourses.length > 0 ? featuredCourses : courses.slice(0, 5);
 
   return (
     <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
@@ -217,19 +176,19 @@ export function LandingPage() {
         <div className="w-full px-4 md:px-8 lg:px-16 py-12">
           {/* Quick Category Chips */}
           <div className="flex flex-wrap items-center gap-3">
-            {categoryIds.map((catId) => (
+            {CATEGORY_OPTIONS.map((cat) => (
               <button
-                key={catId}
-                onClick={() => setActiveCategory(catId)}
+                key={cat.code}
+                onClick={() => setActiveCategoryId(cat.id)}
                 className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300
                   ${
-                    activeCategory === catId
+                    activeCategoryId === cat.id
                       ? 'landing-btn-primary shadow-lg'
                       : 'landing-chip-inactive'
                   }
                 `}
               >
-                {getCategoryLabel(catId)}
+                {cat.name}
               </button>
             ))}
           </div>
@@ -240,9 +199,9 @@ export function LandingPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">
-                {activeCategory === 'all'
+                {activeCategoryId === null
                   ? t.landing.featuredCourses
-                  : `${getCategoryLabel(activeCategory)} ${t.landing.relatedCourses}`}
+                  : `${activeCategory?.name ?? ''} ${t.landing.relatedCourses}`}
               </h2>
               <p className="landing-text-muted text-sm mt-2">{t.landing.featuredCoursesDesc}</p>
             </div>
@@ -254,15 +213,21 @@ export function LandingPage() {
             </a>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {filteredCourses.length > 0 ? (
-              filteredCourses.map((course) => <LandingCourseCard key={course.id} {...course} />)
-            ) : (
-              <p className="col-span-5 text-center landing-text-muted py-10">
-                {t.landing.noCoursesInCategory}
-              </p>
-            )}
-          </div>
+          {isCoursesLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              {filteredCourses.length > 0 ? (
+                filteredCourses.slice(0, 10).map((course) => <LandingCourseCard key={course.id} {...course} />)
+              ) : (
+                <p className="col-span-5 text-center landing-text-muted py-10">
+                  {t.landing.noCoursesInCategory}
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Featured Section 2: New Arrivals */}
@@ -281,11 +246,17 @@ export function LandingPage() {
               </a>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {newCourses.map((course) => (
-                <LandingCourseCard key={`new-${course.id}`} {...course} />
-              ))}
-            </div>
+            {isCoursesLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {newCourses.map((course) => (
+                  <LandingCourseCard key={`new-${course.id}`} {...course} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -303,11 +274,17 @@ export function LandingPage() {
               {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
             </a>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {featuredCourses.map((course) => (
-              <LandingCourseCard key={`beg-${course.id}`} {...course} />
-            ))}
-          </div>
+          {isCoursesLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              {recommendedCourses.map((course) => (
+                <LandingCourseCard key={`rec-${course.id}`} {...course} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Popular Instructors Section */}

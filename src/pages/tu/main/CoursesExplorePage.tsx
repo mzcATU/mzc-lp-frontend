@@ -16,21 +16,23 @@ import {
   PROGRAM_LEVEL_LABELS,
 } from '@/types/tu/courseTimeCatalog.types';
 
-// 카테고리 옵션 (백엔드 API 지원 시 동적으로 변경 예정)
+// 카테고리 옵션 (백엔드 카테고리 ID와 매핑)
+// TODO: 추후 /api/public/categories API로 동적으로 변경
 interface CategoryOption {
-  id: string;
+  id: number | null; // null은 전체
   name: string;
+  code: string; // URL 파라미터용
 }
 
 const CATEGORY_OPTIONS: CategoryOption[] = [
-  { id: 'all', name: '전체' },
-  { id: 'dev', name: '개발' },
-  { id: 'ai', name: 'AI' },
-  { id: 'data', name: '데이터' },
-  { id: 'design', name: '디자인' },
-  { id: 'business', name: '비즈니스' },
-  { id: 'marketing', name: '마케팅' },
-  { id: 'language', name: '외국어' },
+  { id: null, name: '전체', code: 'all' },
+  { id: 1, name: '개발', code: 'dev' },
+  { id: 2, name: 'AI', code: 'ai' },
+  { id: 3, name: '데이터', code: 'data' },
+  { id: 4, name: '디자인', code: 'design' },
+  { id: 5, name: '비즈니스', code: 'business' },
+  { id: 6, name: '마케팅', code: 'marketing' },
+  { id: 7, name: '외국어', code: 'language' },
 ];
 
 // 운영 방식 필터 옵션
@@ -246,7 +248,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
 
 export function CoursesExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const [deliveryTypeFilter, setDeliveryTypeFilter] = useState<DeliveryType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('enrollEndDate,asc');
@@ -261,6 +263,7 @@ export function CoursesExplorePage() {
     deliveryType: deliveryTypeFilter !== 'all' ? deliveryTypeFilter : undefined,
     isFree: isFreeFilter,
     keyword: searchQuery || undefined,
+    categoryId: activeCategoryId ?? undefined,
     sort: sortBy,
     size: 20,
   };
@@ -276,15 +279,18 @@ export function CoursesExplorePage() {
     isFreeFilter !== undefined,
   ].filter(Boolean).length;
 
-  // URL에서 검색어 가져오기
+  // URL에서 검색어 및 카테고리 가져오기
   useEffect(() => {
     const search = searchParams.get('search');
-    const category = searchParams.get('category');
+    const categoryCode = searchParams.get('category');
     if (search) {
       setSearchQuery(search);
     }
-    if (category) {
-      setActiveCategory(category);
+    if (categoryCode) {
+      const category = CATEGORY_OPTIONS.find((c) => c.code === categoryCode);
+      if (category) {
+        setActiveCategoryId(category.id);
+      }
     }
   }, [searchParams]);
 
@@ -513,10 +519,10 @@ export function CoursesExplorePage() {
         <div className="flex flex-wrap gap-3 mb-10">
           {CATEGORY_OPTIONS.map((cat) => (
             <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
+              key={cat.code}
+              onClick={() => setActiveCategoryId(cat.id)}
               className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                activeCategory === cat.id
+                activeCategoryId === cat.id
                   ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7] text-white shadow-lg shadow-[#6778ff]/25'
                   : isDark
                     ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'

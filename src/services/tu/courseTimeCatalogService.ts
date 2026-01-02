@@ -56,6 +56,11 @@ export const courseTimeCatalogService = {
       searchParams.append('keyword', params.keyword);
     }
 
+    // 카테고리 ID 필터
+    if (params?.categoryId) {
+      searchParams.append('categoryId', String(params.categoryId));
+    }
+
     // 페이징
     if (params?.page !== undefined) {
       searchParams.append('page', String(params.page));
