@@ -64,6 +64,7 @@ export const contentService = {
         headers: {
           'Content-Type': undefined, // 브라우저가 boundary 포함하여 자동 설정
         },
+        timeout: 300000, // 5분 (대용량 파일 업로드용)
       }
     );
     return data.data;
@@ -127,6 +128,7 @@ export const contentService = {
         headers: {
           'Content-Type': undefined, // 브라우저가 boundary 포함하여 자동 설정
         },
+        timeout: 300000, // 5분 (대용량 파일 업로드용)
       }
     );
     const result = response.data;
