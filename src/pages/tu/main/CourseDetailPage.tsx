@@ -374,7 +374,7 @@ export function CourseDetailPage() {
   const handleAddToCart = async () => {
     if (USE_API) {
       try {
-        await addToCartMutation.mutateAsync(course.id);
+        await addToCartMutation.mutateAsync({ courseId: course.id });
         toast.success('장바구니에 추가되었습니다.');
       } catch (err) {
         console.error('장바구니 추가 실패:', err);

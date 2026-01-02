@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Heart, Eye, Clock, TrendingUp, HelpCircle, Lightbulb, Users, Loader2, Search } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCommunityPosts, useCommunityCategories } from '@/hooks/tu';
-import type { CommunityPost, CommunityCategory } from '@/types/tu';
+import { useCommunityPosts, useCommunityCategories, useCreatePost } from '@/hooks/tu';
+import { WritePostModal } from '@/components/domain/community';
+import type { CommunityPost, CommunityCategory, CreatePostRequest } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
 const USE_API = false;
@@ -167,7 +168,7 @@ function PostCard({ post, isDark, categories }: PostCardProps) {
 
   return (
     <Link
-      to={`/tu/community/${post.id}`}
+      to={`/tu/main/community/${post.id}`}
       className={`block rounded-xl p-6 transition-all cursor-pointer border ${
         isDark
           ? 'glass border-white/10 hover:bg-white/5'
@@ -270,8 +271,11 @@ export function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'latest' | 'popular' | 'most_commented' | 'most_liked'>('latest');
+  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
+  const createPostMutation = useCreatePost();
 
   // React Query 훅 (API 모드일 때만 활성화)
   const filter = {
@@ -445,7 +449,10 @@ export function CommunityPage() {
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
             총 <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{filteredPosts.length}</span>개의 게시글
           </p>
-          <button className="landing-btn-primary px-6 py-3 rounded-xl text-white font-medium flex items-center gap-2">
+          <button
+            onClick={() => setIsWriteModalOpen(true)}
+            className="landing-btn-primary px-6 py-3 rounded-xl text-white font-medium flex items-center gap-2"
+          >
             <MessageSquare className="w-4 h-4" />
             글쓰기
           </button>
@@ -482,6 +489,27 @@ export function CommunityPage() {
       </main>
 
       <LandingFooter />
+
+      {/* Write Post Modal */}
+      <WritePostModal
+        isOpen={isWriteModalOpen}
+        onClose={() => setIsWriteModalOpen(false)}
+        onSubmit={async (data: CreatePostRequest) => {
+          if (USE_API) {
+            const result = await createPostMutation.mutateAsync(data);
+            setIsWriteModalOpen(false);
+            navigate(`/tu/main/community/${result.id}`);
+          } else {
+            // Mock 모드: 새 게시글을 추가하는 시뮬레이션
+            console.log('New post data:', data);
+            setIsWriteModalOpen(false);
+            alert('게시글이 작성되었습니다. (Mock 모드)');
+          }
+        }}
+        categories={categories}
+        isDark={isDark}
+        isSubmitting={createPostMutation.isPending}
+      />
     </div>
   );
 }

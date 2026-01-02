@@ -8,6 +8,8 @@ import type {
   CommunityFilter,
   CreatePostRequest,
   UpdatePostRequest,
+  CreateCommentRequest,
+  UpdateCommentRequest,
 } from '@/types/tu/community.types';
 
 // Query Keys
@@ -17,6 +19,7 @@ export const communityKeys = {
   post: (postId: number) => [...communityKeys.all, 'post', postId] as const,
   categories: () => [...communityKeys.all, 'categories'] as const,
   popular: (limit?: number) => [...communityKeys.all, 'popular', limit] as const,
+  comments: (postId: number) => [...communityKeys.all, 'comments', postId] as const,
 };
 
 /**
@@ -134,6 +137,96 @@ export function useUnlikePost() {
     mutationFn: (postId: number) => communityService.unlikePost(postId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    },
+  });
+}
+
+// ========== 댓글 관련 훅 ==========
+
+/**
+ * 댓글 목록 조회 훅
+ */
+export function useComments(postId: number, page = 1, pageSize = 20, enabled = true) {
+  return useQuery({
+    queryKey: communityKeys.comments(postId),
+    queryFn: () => communityService.getComments(postId, page, pageSize),
+    enabled: enabled && !!postId,
+    staleTime: 1000 * 60, // 1분
+  });
+}
+
+/**
+ * 댓글 작성 훅
+ */
+export function useCreateComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateCommentRequest) => communityService.createComment(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.comments(variables.postId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.post(variables.postId) });
+    },
+  });
+}
+
+/**
+ * 댓글 수정 훅
+ */
+export function useUpdateComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, commentId, data }: { postId: number; commentId: number; data: UpdateCommentRequest }) =>
+      communityService.updateComment(postId, commentId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.comments(variables.postId) });
+    },
+  });
+}
+
+/**
+ * 댓글 삭제 훅
+ */
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, commentId }: { postId: number; commentId: number }) =>
+      communityService.deleteComment(postId, commentId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.comments(variables.postId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.post(variables.postId) });
+    },
+  });
+}
+
+/**
+ * 댓글 좋아요 훅
+ */
+export function useLikeComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, commentId }: { postId: number; commentId: number }) =>
+      communityService.likeComment(postId, commentId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.comments(variables.postId) });
+    },
+  });
+}
+
+/**
+ * 댓글 좋아요 취소 훅
+ */
+export function useUnlikeComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ postId, commentId }: { postId: number; commentId: number }) =>
+      communityService.unlikeComment(postId, commentId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.comments(variables.postId) });
     },
   });
 }

@@ -94,7 +94,6 @@ export {
   usePopularCourses,
   useRecommendedCourses,
   useRelatedCourses,
-  useAddToCart,
 } from './useCourseDetailQueries';
 
 // Roadmap Detail Hooks
@@ -115,11 +114,12 @@ export {
 export {
   cartKeys,
   useCart,
-  useCartAddItem,
+  useCartCount,
+  useCheckCartStatus,
+  useAddToCart,
   useRemoveFromCart,
-  useClearCart,
-  useApplyCoupon,
-  useRemoveCoupon,
+  useRemoveFromCartBulk,
+  useToggleCart,
 } from './useCartQueries';
 
 // Wishlist Hooks
@@ -193,3 +193,13 @@ export {
   useFollowInstructor,
   useUnfollowInstructor,
 } from './useInstructorQueries';
+
+// Program Application Hooks
+export {
+  programApplicationKeys,
+  useApplyProgram,
+  useApplyProgramsBulk,
+  toCourseForApplication,
+  type CourseForApplication,
+  type ApplicationResult,
+} from './useProgramApplicationQueries';

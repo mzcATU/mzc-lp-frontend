@@ -1,16 +1,15 @@
 import { Route, Outlet, Navigate } from 'react-router-dom';
 import {
   LandingPage,
-  Page1,
-  Page2,
-  Page3,
   CoursesExplorePage,
   RoadmapExplorePage,
   RoadmapDetailPage,
   CommunityPage,
+  CommunityDetailPage,
   CartPage,
   WishlistPage,
   NotificationsPage,
+  NotificationDetailPage,
   CourseDetailPage,
   InstructorProfilePage,
   MyPageHome,
@@ -85,12 +84,13 @@ export const tuRoutes = (
     <Route path="/tu/main/roadmaps" element={<RoadmapExplorePage />} />
     <Route path="/tu/main/roadmaps/:id" element={<RoadmapDetailPage />} />
     <Route path="/tu/main/community" element={<CommunityPage />} />
+    <Route path="/tu/main/community/:id" element={<CommunityDetailPage />} />
+    <Route path="/tu/community" element={<CommunityPage />} />
+    <Route path="/tu/community/:id" element={<CommunityDetailPage />} />
     <Route path="/tu/cart" element={<CartPage />} />
     <Route path="/tu/wishlist" element={<WishlistPage />} />
     <Route path="/tu/notifications" element={<NotificationsPage />} />
-    <Route path="/tu/main/page1" element={<Page1 />} />
-    <Route path="/tu/main/page2" element={<Page2 />} />
-    <Route path="/tu/main/page3" element={<Page3 />} />
+    <Route path="/tu/notifications/:id" element={<NotificationDetailPage />} />
     <Route path="/tu/instructors/:instructorId" element={<InstructorProfilePage />} />
   </>
 );
