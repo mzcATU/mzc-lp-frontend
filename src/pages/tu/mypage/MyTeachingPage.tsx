@@ -18,6 +18,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { useAuth } from '@/hooks/common/auth';
 import { userService } from '@/services/common/userService';
+import { authService } from '@/services/common/authService';
 import { useAuthStore } from '@/store/common/authStore';
 import { courseService } from '@/services/common/courseService';
 import {
@@ -96,6 +97,13 @@ export function MyTeachingPage() {
       // DESIGNER 역할 부여 API 호출
       await userService.applyDesignerRole();
 
+      // 토큰 갱신 (CourseRole이 반영된 새 토큰 발급)
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (refreshToken) {
+        const tokenResponse = await authService.refresh(refreshToken);
+        useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+      }
+
       // 사용자 정보 다시 조회하여 역할 업데이트
       const updatedUser = await userService.getMe();
       useAuthStore.getState().updateUser({ role: updatedUser.role });
@@ -109,6 +117,13 @@ export function MyTeachingPage() {
       // 409 Conflict = 이미 DESIGNER 역할을 가지고 있음
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 409) {
+        // 토큰 갱신 (이미 권한이 있어도 토큰에 반영 필요)
+        const refreshToken = useAuthStore.getState().refreshToken;
+        if (refreshToken) {
+          const tokenResponse = await authService.refresh(refreshToken);
+          useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+        }
+
         // 이미 권한이 있으므로 사용자 정보 업데이트 후 진행
         const updatedUser = await userService.getMe();
         useAuthStore.getState().updateUser({ role: updatedUser.role });
