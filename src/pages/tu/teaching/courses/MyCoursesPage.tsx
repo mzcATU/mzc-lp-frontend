@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle } from 'lucide-react';
+import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
-import { useMyCourses } from '@/hooks/tu';
+import { useMyCourses, useApplyProgram, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
 import type { Course, CourseStatus } from '@/types';
 import type { CourseResponse } from '@/types/common/course.types';
 
@@ -57,17 +57,107 @@ const t = {
   loading: { ko: '강의 목록을 불러오는 중...', en: 'Loading courses...' },
   error: { ko: '강의 목록을 불러오는데 실패했습니다', en: 'Failed to load courses' },
   retry: { ko: '다시 시도', en: 'Retry' },
+  applyProgram: { ko: '프로그램 신청', en: 'Apply Program' },
+  applySelected: { ko: '선택 항목 일괄 신청', en: 'Apply Selected' },
+  selected: { ko: '개 선택됨', en: ' selected' },
+  selectAll: { ko: '전체 선택', en: 'Select All' },
+  deselectAll: { ko: '선택 해제', en: 'Deselect All' },
 };
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
   const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<'all' | CourseStatus>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
+  const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
 
   // API 연동
   const { data: coursesData, isLoading, error, refetch } = useMyCourses();
+  const applyProgramMutation = useApplyProgram();
+  const applyProgramsBulkMutation = useApplyProgramsBulk();
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
+
+  // 체크박스 토글
+  const toggleSelect = (courseId: string) => {
+    setSelectedCourseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(courseId)) {
+        next.delete(courseId);
+      } else {
+        next.add(courseId);
+      }
+      return next;
+    });
+  };
+
+  // 전체 선택/해제
+  const toggleSelectAll = (courses: Course[]) => {
+    if (selectedCourseIds.size === courses.length) {
+      setSelectedCourseIds(new Set());
+    } else {
+      setSelectedCourseIds(new Set(courses.map((c) => c.id)));
+    }
+  };
+
+  // 개별 신청
+  const handleApplySingle = async (courseResponse: CourseResponse) => {
+    if (!confirm(`"${courseResponse.title}" 강의를 프로그램으로 신청하시겠습니까?`)) return;
+
+    try {
+      const result = await applyProgramMutation.mutateAsync(
+        toCourseForApplication(courseResponse)
+      );
+
+      if (result.success) {
+        alert('프로그램 신청이 완료되었습니다. 관리자 검토 후 승인됩니다.');
+      } else {
+        alert(`신청 실패: ${result.error}`);
+      }
+    } catch (err) {
+      console.error('Apply program failed:', err);
+      alert('프로그램 신청에 실패했습니다.');
+    }
+  };
+
+  // 일괄 신청
+  const handleApplyBulk = async () => {
+    if (selectedCourseIds.size === 0) {
+      alert('신청할 강의를 선택해주세요.');
+      return;
+    }
+
+    if (!confirm(`${selectedCourseIds.size}개의 강의를 프로그램으로 일괄 신청하시겠습니까?`)) return;
+
+    const selectedResponses = (coursesData?.content || []).filter((c) =>
+      selectedCourseIds.has(String(c.courseId))
+    );
+
+    try {
+      const results = await applyProgramsBulkMutation.mutateAsync(
+        selectedResponses.map(toCourseForApplication)
+      );
+
+      const successCount = results.filter((r) => r.success).length;
+      const failCount = results.filter((r) => !r.success).length;
+
+      if (failCount === 0) {
+        alert(`${successCount}개의 프로그램 신청이 완료되었습니다.`);
+      } else {
+        const failedTitles = results
+          .filter((r) => !r.success)
+          .map((r) => r.courseTitle)
+          .join(', ');
+        alert(
+          `${successCount}개 성공, ${failCount}개 실패\n실패한 강의: ${failedTitles}`
+        );
+      }
+
+      setSelectedCourseIds(new Set());
+    } catch (err) {
+      console.error('Bulk apply failed:', err);
+      alert('일괄 신청에 실패했습니다.');
+    }
+  };
 
   // 로딩 상태
   if (isLoading) {
@@ -94,8 +184,11 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     );
   }
 
+  // 원본 CourseResponse 보관 (신청 시 필요)
+  const courseResponses = coursesData?.content || [];
+
   // API 응답을 UI용 Course 타입으로 변환
-  const courses: Course[] = (coursesData?.content || []).map(mapCourseResponseToCourse);
+  const courses: Course[] = courseResponses.map(mapCourseResponseToCourse);
 
   const filteredCourses = courses.filter((course) => {
     if (filterStatus === 'all') return true;
@@ -112,6 +205,8 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   const avgCompletion = courses.length > 0
     ? Math.round(courses.reduce((acc, c) => acc + c.progress, 0) / courses.length)
     : 0;
+
+  const isApplying = applyProgramMutation.isPending || applyProgramsBulkMutation.isPending;
 
   return (
     <div className="p-8 bg-bg-app_default min-h-screen">
@@ -134,7 +229,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
         <IconStatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCompletion')} value={`${avgCompletion}%`} />
       </div>
 
-      {/* Filters and Sort */}
+      {/* Filters, Sort, and Bulk Actions */}
       <div className="mb-6 flex gap-4 items-center flex-wrap">
         <div className="flex gap-2 items-center">
           <Filter size={18} className="text-text-secondary" />
@@ -156,6 +251,44 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
           </div>
         </div>
 
+        {/* Bulk Selection Actions */}
+        {sortedCourses.length > 0 && (
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={() => toggleSelectAll(sortedCourses)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {selectedCourseIds.size === sortedCourses.length ? (
+                <CheckSquare size={16} />
+              ) : (
+                <Square size={16} />
+              )}
+              {selectedCourseIds.size === sortedCourses.length
+                ? getText('deselectAll')
+                : getText('selectAll')}
+            </button>
+            {selectedCourseIds.size > 0 && (
+              <>
+                <span className="text-sm text-text-secondary">
+                  {selectedCourseIds.size}{getText('selected')}
+                </span>
+                <Button
+                  size="sm"
+                  onClick={handleApplyBulk}
+                  disabled={isApplying}
+                >
+                  {isApplying ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                  {getText('applySelected')}
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2 items-center ml-auto">
           <span className="text-sm text-text-secondary">{getText('sortBy')}:</span>
           <select
@@ -172,19 +305,66 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedCourses.map((course) => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            labels={{
-              students: getText('students'),
-              courseCompletion: getText('courseCompletion'),
-              lessons: getText('lessons'),
-              manageCourse: getText('manageCourse'),
-              editCourse: getText('editCourse'),
-            }}
-          />
-        ))}
+        {sortedCourses.map((course) => {
+          const courseResponse = courseResponses.find(
+            (r) => String(r.courseId) === course.id
+          );
+          const isSelected = selectedCourseIds.has(course.id);
+
+          return (
+            <div key={course.id} className="relative">
+              {/* Checkbox */}
+              <button
+                onClick={() => toggleSelect(course.id)}
+                className={cn(
+                  'absolute top-3 right-3 z-10 p-1.5 rounded-md transition-colors',
+                  isSelected
+                    ? 'bg-btn-primary text-white'
+                    : 'bg-bg-secondary/80 text-text-secondary hover:bg-bg-secondary'
+                )}
+              >
+                {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+              </button>
+
+              {/* Course Card */}
+              <div className={cn(
+                'transition-all',
+                isSelected && 'ring-2 ring-btn-primary rounded-xl'
+              )}>
+                <CourseCard
+                  course={course}
+                  labels={{
+                    students: getText('students'),
+                    courseCompletion: getText('courseCompletion'),
+                    lessons: getText('lessons'),
+                    manageCourse: getText('manageCourse'),
+                    editCourse: getText('editCourse'),
+                  }}
+                />
+              </div>
+
+              {/* Apply Button */}
+              {courseResponse && (
+                <div className="mt-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full border border-border"
+                    onClick={() => handleApplySingle(courseResponse)}
+                    disabled={isApplying}
+                  >
+                    {applyProgramMutation.isPending ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Send size={14} />
+                    )}
+                    {getText('applyProgram')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Empty State */}
@@ -201,4 +381,3 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     </div>
   );
 }
-
