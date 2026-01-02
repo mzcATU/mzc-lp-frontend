@@ -55,7 +55,7 @@ const MOCK_NOTIFICATIONS: Record<number, NotificationItem & { content?: string; 
     `,
     createdAt: '2024-12-30T09:50:00Z',
     isRead: false,
-    actionUrl: '/tu/main/courses',
+    actionUrl: '/tu/b2c/courses',
     actionLabel: '강의 둘러보기',
   },
   2: {
@@ -82,7 +82,7 @@ const MOCK_NOTIFICATIONS: Record<number, NotificationItem & { content?: string; 
     `,
     createdAt: '2024-12-30T09:00:00Z',
     isRead: false,
-    actionUrl: '/tu/main/courses/1',
+    actionUrl: '/tu/b2c/courses/1',
     actionLabel: '강의 바로가기',
   },
   3: {
@@ -117,7 +117,7 @@ useEffect(() => {
     `,
     createdAt: '2024-12-30T07:00:00Z',
     isRead: false,
-    actionUrl: '/tu/main/community/1',
+    actionUrl: '/tu/b2c/community/1',
     actionLabel: '답변 보러가기',
   },
   4: {
@@ -204,7 +204,7 @@ MZC Learn Platform에 가입해주셔서 감사합니다!
     `,
     createdAt: '2024-12-27T10:00:00Z',
     isRead: true,
-    actionUrl: '/tu/main/courses',
+    actionUrl: '/tu/b2c/courses',
     actionLabel: '강의 둘러보기',
   },
 };

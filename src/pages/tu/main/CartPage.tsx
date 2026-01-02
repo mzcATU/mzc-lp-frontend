@@ -217,7 +217,7 @@ export function CartPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <Link
-                              to={`/tu/main/courses/${item.courseId}`}
+                              to={`/tu/b2c/courses/${item.courseId}`}
                               className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
                             >
                               {item.courseTitle}
@@ -316,7 +316,7 @@ export function CartPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <Link
-                              to={`/tu/main/courses/${item.courseId}`}
+                              to={`/tu/b2c/courses/${item.courseId}`}
                               className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
                             >
                               {item.courseTitle}

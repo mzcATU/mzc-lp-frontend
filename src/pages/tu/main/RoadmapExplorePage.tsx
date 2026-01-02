@@ -159,7 +159,7 @@ function RoadmapCard({ roadmap, isDark }: RoadmapCardProps) {
 
   return (
     <Link
-      to={`/tu/main/roadmap/${roadmap.id}`}
+      to={`/tu/b2c/roadmap/${roadmap.id}`}
       className={`block rounded-2xl p-6 card-hover cursor-pointer group border relative ${
         isDark
           ? 'glass border-white/10'

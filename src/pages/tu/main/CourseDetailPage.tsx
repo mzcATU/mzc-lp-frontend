@@ -437,7 +437,7 @@ export function CourseDetailPage() {
                 </Link>
                 <ChevronRight className="w-4 h-4" />
                 <Link
-                  to={`/tu/main/courses?category=${course.category}`}
+                  to={`/tu/b2c/courses?category=${course.category}`}
                   className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}
                 >
                   {getCategoryLabel(course.category)}
