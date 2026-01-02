@@ -14,7 +14,6 @@ import {
   ChevronRight,
   Loader2,
   PenSquare,
-  TrendingUp,
   ArrowRight,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
