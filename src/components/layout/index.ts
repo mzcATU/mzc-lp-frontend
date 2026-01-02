@@ -21,3 +21,6 @@ export { TenantUserSidebar } from './tu/TenantUserSidebar';
 // MyPage
 export { MyPageLayout } from './mypage/MyPageLayout';
 export { MyPageSidebar } from './mypage/MyPageSidebar';
+
+// B2B Social Learning
+export { B2BSocialToLayout, B2BSocialToSidebar } from './b2b-social';

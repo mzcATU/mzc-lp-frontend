@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import {
   ImageIcon,
   Trash2,
@@ -8,8 +9,11 @@ import {
   EyeOff,
   Users,
   Monitor,
-  ChevronLeft,
-  ChevronRight,
+  Link as LinkIcon,
+  Calendar,
+  Pencil,
+  Save,
+  X,
 } from 'lucide-react';
 import {
   DndContext,
@@ -39,11 +43,6 @@ import {
   Label,
   Switch,
   Badge,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -54,84 +53,104 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  DateRangePicker,
 } from '@/components/common';
+import {
+  BannerImageDropzone,
+  TargetingSelector,
+  BannerPreview,
+} from '@/components/domain/b2b-social';
 
-// 노출 대상 타입
-type TargetType = 'ALL' | 'DEPARTMENT' | 'POSITION' | 'INDIVIDUAL';
+// 타겟팅 데이터 타입
+interface TargetingData {
+  departments: string[];
+  jobRoles: string[];
+  positions: string[];
+  ranks: string[];
+}
 
 // 배너 타입 정의
 interface Banner {
   id: string;
   title: string;
-  imageUrl: string;
+  pcImageUrl: string;
   mobileImageUrl?: string;
+  linkUrl?: string;
   hiddenTags: string[];
   isActive: boolean;
   order: number;
-  startDate?: string;
-  endDate?: string;
-  targetType: TargetType;
-  targetValues?: string[];
+  startDate?: Date;
+  endDate?: Date;
+  isAllTarget: boolean;
+  targeting: TargetingData;
 }
-
-// 샘플 부서/직급 데이터
-const sampleDepartments = ['개발팀', '마케팅팀', '인사팀', '영업팀', '경영지원팀'];
-const samplePositions = ['사원', '대리', '과장', '차장', '부장', '팀장', '부서장', '임원'];
 
 // 샘플 배너 데이터
 const sampleBanners: Banner[] = [
   {
     id: '1',
     title: '2025 신입사원 필수교육',
-    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=400&fit=crop',
+    pcImageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=400&fit=crop',
+    mobileImageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop',
+    linkUrl: 'https://learning.company.com/courses/new-employee-2025',
     hiddenTags: ['신입사원', '필수교육'],
     isActive: true,
     order: 1,
-    targetType: 'ALL',
+    isAllTarget: true,
+    targeting: { departments: [], jobRoles: [], positions: [], ranks: [] },
   },
   {
     id: '2',
     title: '리더십 캠프 2025',
-    imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop',
+    pcImageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop',
+    linkUrl: 'https://learning.company.com/events/leadership-camp',
     hiddenTags: ['리더십', '캠프'],
     isActive: true,
     order: 2,
-    targetType: 'POSITION',
-    targetValues: ['부서장', '팀장'],
+    startDate: new Date('2025-01-01'),
+    endDate: new Date('2025-03-31'),
+    isAllTarget: false,
+    targeting: {
+      departments: [],
+      jobRoles: [],
+      positions: ['team_leader', 'dept_leader'],
+      ranks: ['manager', 'deputy', 'general'],
+    },
   },
   {
     id: '3',
     title: 'AI 활용 업무 효율화',
-    imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=400&fit=crop',
+    pcImageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=400&fit=crop',
+    mobileImageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
+    linkUrl: 'https://learning.company.com/courses/ai-productivity',
     hiddenTags: ['AI', '업무효율'],
     isActive: false,
     order: 3,
-    targetType: 'DEPARTMENT',
-    targetValues: ['개발팀'],
+    isAllTarget: false,
+    targeting: {
+      departments: ['dev', 'marketing'],
+      jobRoles: [],
+      positions: [],
+      ranks: [],
+    },
   },
 ];
-
-// 노출 대상 라벨
-const targetTypeLabels: Record<TargetType, string> = {
-  ALL: '전체 임직원',
-  DEPARTMENT: '특정 부서',
-  POSITION: '특정 직급/직책',
-  INDIVIDUAL: '개별 지정',
-};
 
 // 드래그 가능한 배너 아이템 컴포넌트
 interface SortableBannerItemProps {
   banner: Banner;
-  isSelected: boolean;
-  onSelect: () => void;
+  onEdit: () => void;
   onToggleActive: () => void;
   onDelete: () => void;
 }
 
 function SortableBannerItem({
   banner,
-  isSelected,
-  onSelect,
+  onEdit,
   onToggleActive,
   onDelete,
 }: SortableBannerItemProps) {
@@ -150,16 +169,24 @@ function SortableBannerItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const getTargetLabel = () => {
+    if (banner.isAllTarget) return '전체';
+    const { targeting } = banner;
+    const totalSelected =
+      targeting.departments.length +
+      targeting.jobRoles.length +
+      targeting.positions.length +
+      targeting.ranks.length;
+    return totalSelected > 0 ? `${totalSelected}개 조건` : '미설정';
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-        isSelected
-          ? 'border-2 shadow-sm'
-          : 'hover:shadow-sm'
-      } ${isDragging ? 'shadow-lg' : ''}`}
-      onClick={onSelect}
+      className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+        isDragging ? 'shadow-lg' : 'hover:shadow-md'
+      }`}
       {...attributes}
     >
       {/* 드래그 핸들 */}
@@ -168,7 +195,7 @@ function SortableBannerItem({
           <TooltipTrigger asChild>
             <button
               {...listeners}
-              className="p-1 rounded cursor-grab active:cursor-grabbing transition-colors"
+              className="p-2 rounded-lg cursor-grab active:cursor-grabbing transition-colors"
               style={{ backgroundColor: 'transparent' }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = designTokens.bg.secondary;
@@ -176,10 +203,9 @@ function SortableBannerItem({
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
-              onClick={(e) => e.stopPropagation()}
             >
               <GripVertical
-                className="w-4 h-4"
+                className="w-5 h-5"
                 style={{ color: designTokens.text.placeholder }}
               />
             </button>
@@ -190,23 +216,22 @@ function SortableBannerItem({
 
       {/* 썸네일 */}
       <div
-        className="w-24 h-14 rounded bg-cover bg-center flex-shrink-0 border"
+        className="w-32 h-20 rounded-lg bg-cover bg-center flex-shrink-0 border"
         style={{
-          backgroundImage: `url(${banner.imageUrl})`,
+          backgroundImage: `url(${banner.pcImageUrl})`,
           borderColor: designTokens.bg.border,
         }}
       />
 
       {/* 정보 */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 mb-2">
           <p
-            className="font-medium truncate"
+            className="font-semibold text-base truncate"
             style={{ color: designTokens.text.primary }}
           >
             {banner.title}
           </p>
-          {/* 상태 뱃지 */}
           <Badge
             variant={banner.isActive ? 'green' : 'gray'}
             className="text-xs flex-shrink-0"
@@ -214,47 +239,81 @@ function SortableBannerItem({
             {banner.isActive ? '활성' : '비활성'}
           </Badge>
         </div>
-        <div className="flex items-center gap-2 mt-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* 태그 */}
-          <div className="flex gap-1">
-            {banner.hiddenTags.slice(0, 2).map((tag) => (
-              <Badge key={tag} variant="gray" className="text-xs">
-                #{tag}
-              </Badge>
-            ))}
-            {banner.hiddenTags.length > 2 && (
-              <Badge variant="gray" className="text-xs">
-                +{banner.hiddenTags.length - 2}
-              </Badge>
-            )}
-          </div>
+          {banner.hiddenTags.slice(0, 3).map((tag) => (
+            <Badge key={tag} variant="gray" className="text-xs">
+              #{tag}
+            </Badge>
+          ))}
+          {banner.hiddenTags.length > 3 && (
+            <Badge variant="gray" className="text-xs">
+              +{banner.hiddenTags.length - 3}
+            </Badge>
+          )}
+          {/* 구분선 */}
+          <span style={{ color: designTokens.bg.border }}>|</span>
           {/* 대상 */}
           <Badge
-            variant={banner.targetType === 'ALL' ? 'indigo' : 'blue'}
+            variant={banner.isAllTarget ? 'indigo' : 'blue'}
             className="text-xs"
           >
             <Users className="w-3 h-3 mr-1" />
-            {banner.targetType === 'ALL'
-              ? '전체'
-              : banner.targetValues?.slice(0, 2).join(', ')}
-            {banner.targetValues && banner.targetValues.length > 2 && (
-              <span> 외 {banner.targetValues.length - 2}</span>
-            )}
+            {getTargetLabel()}
           </Badge>
+          {/* 기간 */}
+          {banner.startDate && banner.endDate && (
+            <Badge variant="orange" className="text-xs">
+              <Calendar className="w-3 h-3 mr-1" />
+              기간 제한
+            </Badge>
+          )}
+          {/* 링크 */}
+          {banner.linkUrl && (
+            <Badge variant="gray" className="text-xs">
+              <LinkIcon className="w-3 h-3 mr-1" />
+              링크
+            </Badge>
+          )}
         </div>
       </div>
 
       {/* 액션 버튼 */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        {/* 수정 버튼 */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleActive();
+                onClick={onEdit}
+                className="p-2.5 rounded-lg transition-colors"
+                style={{
+                  backgroundColor: designTokens.bg.secondary,
                 }}
-                className="p-2 rounded-lg transition-colors"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = designTokens.bg.border;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = designTokens.bg.secondary;
+                }}
+              >
+                <Pencil
+                  className="w-4 h-4"
+                  style={{ color: designTokens.text.secondary }}
+                />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>수정</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        {/* 활성화 토글 */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggleActive}
+                className="p-2.5 rounded-lg transition-colors"
                 style={{
                   backgroundColor: banner.isActive
                     ? designTokens.status.success_background
@@ -280,15 +339,13 @@ function SortableBannerItem({
           </Tooltip>
         </TooltipProvider>
 
+        {/* 삭제 버튼 */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className="p-2 rounded-lg transition-colors"
+                onClick={onDelete}
+                className="p-2.5 rounded-lg transition-colors"
                 style={{ backgroundColor: designTokens.status.error_background }}
               >
                 <Trash2
@@ -305,16 +362,96 @@ function SortableBannerItem({
   );
 }
 
+// 슬라이드 패널 컴포넌트
+interface SlidePanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+function SlidePanel({ isOpen, onClose, title, children }: SlidePanelProps) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* 오버레이 */}
+      <div
+        className="fixed inset-0 z-40 transition-opacity"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+        onClick={onClose}
+      />
+
+      {/* 패널 */}
+      <div
+        className="fixed right-0 top-0 h-full z-50 shadow-2xl flex flex-col transition-transform duration-300"
+        style={{
+          width: '600px',
+          backgroundColor: designTokens.bg.default,
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+        }}
+      >
+        {/* 헤더 */}
+        <div
+          className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
+          style={{ borderColor: designTokens.bg.border }}
+        >
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: designTokens.text.primary }}
+          >
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg transition-colors"
+            style={{ backgroundColor: 'transparent' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = designTokens.bg.secondary;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <X className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+          </button>
+        </div>
+
+        {/* 콘텐츠 */}
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      </div>
+    </>
+  );
+}
+
 /**
  * TO 배너 관리 페이지
  * - 홈 배너 관리 (드래그 앤 드롭)
+ * - 타겟팅 노출 설정 (직무, 직급, 직책, 부서)
+ * - PC/Mobile 미리보기
  */
 export function BrandingPage() {
   const [banners, setBanners] = useState<Banner[]>(sampleBanners);
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [previewIndex, setPreviewIndex] = useState(0);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingTags, setEditingTags] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('basic');
+
+  // 새 배너 상태
+  const [newBanner, setNewBanner] = useState<Partial<Banner>>({
+    title: '',
+    pcImageUrl: '',
+    mobileImageUrl: '',
+    linkUrl: '',
+    hiddenTags: [],
+    isActive: true,
+    isAllTarget: true,
+    targeting: { departments: [], jobRoles: [], positions: [], ranks: [] },
+  });
+  const [newBannerTags, setNewBannerTags] = useState<string[]>([]);
+  const [newBannerDateRange, setNewBannerDateRange] = useState<DateRange | undefined>();
 
   // 드래그 센서 설정
   const sensors = useSensors(
@@ -337,7 +474,6 @@ export function BrandingPage() {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         const newItems = arrayMove(items, oldIndex, newIndex);
-        // order 업데이트
         return newItems.map((item, idx) => ({ ...item, order: idx + 1 }));
       });
     }
@@ -358,52 +494,83 @@ export function BrandingPage() {
     setBanners(banners.filter((b) => b.id !== id));
     if (selectedBanner?.id === id) {
       setSelectedBanner(null);
+      setIsPanelOpen(false);
     }
   };
 
-  const selectBanner = (banner: Banner) => {
+  const openEditPanel = (banner: Banner) => {
     setSelectedBanner(banner);
     setEditingTags(banner.hiddenTags);
+    setActiveTab('basic');
+    setIsPanelOpen(true);
+  };
+
+  const closePanel = () => {
+    setIsPanelOpen(false);
+    setTimeout(() => {
+      setSelectedBanner(null);
+    }, 300);
+  };
+
+  const updateSelectedBanner = <K extends keyof Banner>(
+    key: K,
+    value: Banner[K]
+  ) => {
+    if (!selectedBanner) return;
+
+    const updated = { ...selectedBanner, [key]: value };
+    setSelectedBanner(updated);
+    setBanners(banners.map((b) => (b.id === selectedBanner.id ? updated : b)));
   };
 
   const updateSelectedBannerTags = (tags: string[]) => {
     setEditingTags(tags);
     if (selectedBanner) {
-      setSelectedBanner({ ...selectedBanner, hiddenTags: tags });
-      setBanners(
-        banners.map((b) =>
-          b.id === selectedBanner.id ? { ...b, hiddenTags: tags } : b
-        )
-      );
+      updateSelectedBanner('hiddenTags', tags);
     }
   };
 
-  const toggleTargetValue = (value: string) => {
-    if (!selectedBanner) return;
+  const handleAddBanner = () => {
+    if (!newBanner.title || !newBanner.pcImageUrl) return;
 
-    const currentValues = selectedBanner.targetValues || [];
-    const newValues = currentValues.includes(value)
-      ? currentValues.filter((v) => v !== value)
-      : [...currentValues, value];
+    const banner: Banner = {
+      id: Date.now().toString(),
+      title: newBanner.title,
+      pcImageUrl: newBanner.pcImageUrl,
+      mobileImageUrl: newBanner.mobileImageUrl,
+      linkUrl: newBanner.linkUrl,
+      hiddenTags: newBannerTags,
+      isActive: newBanner.isActive ?? true,
+      order: banners.length + 1,
+      startDate: newBannerDateRange?.from,
+      endDate: newBannerDateRange?.to,
+      isAllTarget: newBanner.isAllTarget ?? true,
+      targeting: newBanner.targeting ?? {
+        departments: [],
+        jobRoles: [],
+        positions: [],
+        ranks: [],
+      },
+    };
 
-    setSelectedBanner({ ...selectedBanner, targetValues: newValues });
-    setBanners(
-      banners.map((b) =>
-        b.id === selectedBanner.id ? { ...b, targetValues: newValues } : b
-      )
-    );
+    setBanners([...banners, banner]);
+    setShowAddModal(false);
+    resetNewBannerForm();
   };
 
-  const activeBanners = banners.filter((b) => b.isActive);
-
-  // 미리보기에서 배너 이동
-  const nextPreviewBanner = () => {
-    setPreviewIndex((prev) => (prev + 1) % activeBanners.length);
-  };
-  const prevPreviewBanner = () => {
-    setPreviewIndex(
-      (prev) => (prev - 1 + activeBanners.length) % activeBanners.length
-    );
+  const resetNewBannerForm = () => {
+    setNewBanner({
+      title: '',
+      pcImageUrl: '',
+      mobileImageUrl: '',
+      linkUrl: '',
+      hiddenTags: [],
+      isActive: true,
+      isAllTarget: true,
+      targeting: { departments: [], jobRoles: [], positions: [], ranks: [] },
+    });
+    setNewBannerTags([]);
+    setNewBannerDateRange(undefined);
   };
 
   return (
@@ -413,425 +580,423 @@ export function BrandingPage() {
     >
       <div className="max-w-[1200px] mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1
-            className="text-[28px] font-semibold mb-2"
-            style={{ color: designTokens.text.primary }}
-          >
-            배너 관리
-          </h1>
-          <p
-            className="text-sm"
-            style={{ color: designTokens.text.secondary }}
-          >
-            홈 화면에 표시될 배너를 관리합니다.
-          </p>
-        </div>
-
-        {/* 홈 배너 관리 */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* 배너 목록 */}
-          <div className="col-span-2">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>배너 목록</CardTitle>
-                  <p
-                    className="text-sm mt-1"
-                    style={{ color: designTokens.text.secondary }}
-                  >
-                    드래그하여 순서를 변경할 수 있습니다
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    style={{
-                      borderColor: designTokens.bg.border,
-                      color: designTokens.text.primary,
-                      backgroundColor: designTokens.bg.default,
-                    }}
-                    onClick={() => {
-                      setPreviewIndex(0);
-                      setShowPreview(true);
-                    }}
-                    disabled={activeBanners.length === 0}
-                  >
-                    <Monitor className="w-4 h-4" />
-                    미리보기
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="gap-1"
-                    style={{
-                      backgroundColor: designTokens.button.brand_default,
-                      color: designTokens.button.brand_text,
-                    }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    배너 추가
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {banners.length === 0 ? (
-                  <EmptyState
-                    icon={ImageIcon}
-                    title="등록된 배너가 없습니다"
-                    description="새 배너를 추가하여 홈 화면을 꾸며보세요."
-                  />
-                ) : (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={banners.map((b) => b.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="space-y-2">
-                        {banners.map((banner) => (
-                          <SortableBannerItem
-                            key={banner.id}
-                            banner={banner}
-                            isSelected={selectedBanner?.id === banner.id}
-                            onSelect={() => selectBanner(banner)}
-                            onToggleActive={() =>
-                              toggleBannerActive(banner.id)
-                            }
-                            onDelete={() => deleteBanner(banner.id)}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                )}
-              </CardContent>
-            </Card>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1
+              className="text-[28px] font-semibold mb-2"
+              style={{ color: designTokens.text.primary }}
+            >
+              배너 관리
+            </h1>
+            <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+              홈 화면에 표시될 배너를 관리합니다. 드래그하여 순서를 변경할 수 있습니다.
+            </p>
           </div>
-
-          {/* 배너 상세 편집 */}
-          <div className="col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>배너 설정</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedBanner ? (
-                  <>
-                    {/* 배너 제목 */}
-                    <div>
-                      <Label className="mb-1 block">배너 제목 (관리용)</Label>
-                      <Input defaultValue={selectedBanner.title} />
-                    </div>
-
-                    {/* 이미지 업로드 */}
-                    <div>
-                      <Label className="mb-1 block">배너 이미지</Label>
-                      <div
-                        className="aspect-[3/1] rounded-lg bg-cover bg-center border relative group overflow-hidden"
-                        style={{
-                          backgroundImage: `url(${selectedBanner.imageUrl})`,
-                          borderColor: designTokens.bg.border,
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                            style={{
-                              borderColor: designTokens.bg.border,
-                              color: designTokens.bg.default,
-                              backgroundColor: 'transparent',
-                            }}
-                          >
-                            <ImageIcon className="w-4 h-4" />
-                            변경
-                          </Button>
-                        </div>
-                      </div>
-                      <p
-                        className="text-xs mt-1"
-                        style={{ color: designTokens.text.placeholder }}
-                      >
-                        권장: 1200x400px
-                      </p>
-                    </div>
-
-                    {/* 연결 태그 */}
-                    <div>
-                      <Label className="mb-1 block">연결 태그</Label>
-                      <p
-                        className="text-xs mb-2"
-                        style={{ color: designTokens.text.secondary }}
-                      >
-                        배너 클릭 시 이 태그들로 필터링됩니다.
-                      </p>
-                      <TagInput
-                        value={editingTags}
-                        onChange={updateSelectedBannerTags}
-                        placeholder="태그 입력 후 Enter"
-                      />
-                    </div>
-
-                    {/* 노출 대상 */}
-                    <div>
-                      <Label className="mb-1 block">노출 대상</Label>
-                      <Select
-                        value={selectedBanner.targetType}
-                        onValueChange={(value: TargetType) => {
-                          setSelectedBanner({
-                            ...selectedBanner,
-                            targetType: value,
-                            targetValues: value === 'ALL' ? undefined : [],
-                          });
-                          setBanners(
-                            banners.map((b) =>
-                              b.id === selectedBanner.id
-                                ? {
-                                    ...b,
-                                    targetType: value,
-                                    targetValues:
-                                      value === 'ALL' ? undefined : [],
-                                  }
-                                : b
-                            )
-                          );
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(targetTypeLabels).map(
-                            ([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
-
-                      {/* 부서 선택 */}
-                      {selectedBanner.targetType === 'DEPARTMENT' && (
-                        <div className="mt-2">
-                          <p
-                            className="text-xs mb-1"
-                            style={{ color: designTokens.text.secondary }}
-                          >
-                            부서 선택 (클릭하여 토글)
-                          </p>
-                          <div className="flex flex-wrap gap-1">
-                            {sampleDepartments.map((dept) => (
-                              <button
-                                key={dept}
-                                type="button"
-                                onClick={() => toggleTargetValue(dept)}
-                              >
-                                <Badge
-                                  variant={
-                                    selectedBanner.targetValues?.includes(dept)
-                                      ? 'blue'
-                                      : 'gray'
-                                  }
-                                  className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
-                                >
-                                  {dept}
-                                </Badge>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 직급 선택 */}
-                      {selectedBanner.targetType === 'POSITION' && (
-                        <div className="mt-2">
-                          <p
-                            className="text-xs mb-1"
-                            style={{ color: designTokens.text.secondary }}
-                          >
-                            직급/직책 선택 (클릭하여 토글)
-                          </p>
-                          <div className="flex flex-wrap gap-1">
-                            {samplePositions.map((pos) => (
-                              <button
-                                key={pos}
-                                type="button"
-                                onClick={() => toggleTargetValue(pos)}
-                              >
-                                <Badge
-                                  variant={
-                                    selectedBanner.targetValues?.includes(pos)
-                                      ? 'blue'
-                                      : 'gray'
-                                  }
-                                  className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
-                                >
-                                  {pos}
-                                </Badge>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 개별 지정 */}
-                      {selectedBanner.targetType === 'INDIVIDUAL' && (
-                        <div className="mt-2">
-                          <Input placeholder="사용자 이름 또는 사번 검색" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 노출 기간 */}
-                    <div>
-                      <Label className="mb-1 block">노출 기간 (선택)</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input type="date" placeholder="시작일" />
-                        <Input type="date" placeholder="종료일" />
-                      </div>
-                    </div>
-
-                    {/* 활성화 */}
-                    <div
-                      className="flex items-center justify-between pt-2 p-3 rounded-lg"
-                      style={{ backgroundColor: designTokens.bg.secondary }}
-                    >
-                      <div>
-                        <Label>배너 활성화</Label>
-                        <p
-                          className="text-xs"
-                          style={{ color: designTokens.text.secondary }}
-                        >
-                          활성화된 배너만 홈 화면에 표시됩니다
-                        </p>
-                      </div>
-                      <Switch
-                        checked={selectedBanner.isActive}
-                        onCheckedChange={() =>
-                          toggleBannerActive(selectedBanner.id)
-                        }
-                      />
-                    </div>
-
-                    <Button
-                      className="w-full mt-4"
-                      style={{
-                        backgroundColor: designTokens.button.brand_default,
-                        color: designTokens.button.brand_text,
-                      }}
-                    >
-                      저장
-                    </Button>
-                  </>
-                ) : (
-                  <EmptyState
-                    icon={ImageIcon}
-                    title="배너를 선택하세요"
-                    description="왼쪽 목록에서 배너를 선택하여 설정을 편집할 수 있습니다."
-                    className="py-8"
-                  />
-                )}
-              </CardContent>
-            </Card>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setShowPreview(true)}
+              disabled={banners.filter((b) => b.isActive).length === 0}
+            >
+              <Monitor className="w-4 h-4" />
+              미리보기
+            </Button>
+            <Button
+              className="gap-2"
+              style={{
+                backgroundColor: designTokens.button.brand_default,
+                color: designTokens.button.brand_text,
+              }}
+              onClick={() => setShowAddModal(true)}
+            >
+              <Plus className="w-4 h-4" />
+              배너 추가
+            </Button>
           </div>
         </div>
+
+        {/* 배너 목록 */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>배너 목록</CardTitle>
+              <p
+                className="text-sm"
+                style={{ color: designTokens.text.secondary }}
+              >
+                총 {banners.length}개 · 활성 {banners.filter((b) => b.isActive).length}개
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {banners.length === 0 ? (
+              <EmptyState
+                icon={ImageIcon}
+                title="등록된 배너가 없습니다"
+                description="새 배너를 추가하여 홈 화면을 꾸며보세요."
+                className="py-12"
+              />
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={banners.map((b) => b.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {banners.map((banner) => (
+                      <SortableBannerItem
+                        key={banner.id}
+                        banner={banner}
+                        onEdit={() => openEditPanel(banner)}
+                        onToggleActive={() => toggleBannerActive(banner.id)}
+                        onDelete={() => deleteBanner(banner.id)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* 미리보기 모달 */}
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden bg-black/95">
-          <DialogHeader className="p-4 border-b border-white/10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Monitor className="w-5 h-5 text-white" />
-                <DialogTitle className="text-white">배너 미리보기</DialogTitle>
-                <Badge variant="gray" className="text-xs">
-                  {previewIndex + 1} / {activeBanners.length}
-                </Badge>
+      {/* 수정 슬라이드 패널 */}
+      <SlidePanel
+        isOpen={isPanelOpen}
+        onClose={closePanel}
+        title="배너 설정"
+      >
+        {selectedBanner && (
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="basic" className="gap-2 text-sm">
+                <ImageIcon className="w-4 h-4" />
+                기본 정보
+              </TabsTrigger>
+              <TabsTrigger value="targeting" className="gap-2 text-sm">
+                <Users className="w-4 h-4" />
+                노출 대상
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-2 text-sm">
+                <Monitor className="w-4 h-4" />
+                미리보기
+              </TabsTrigger>
+            </TabsList>
+
+            {/* 기본 정보 탭 */}
+            <TabsContent value="basic" className="space-y-5">
+              {/* 배너 제목 */}
+              <div>
+                <Label className="mb-2 block text-sm">배너 제목 (관리용)</Label>
+                <Input
+                  value={selectedBanner.title}
+                  onChange={(e) => updateSelectedBanner('title', e.target.value)}
+                  placeholder="배너를 식별할 수 있는 제목을 입력하세요"
+                />
               </div>
-            </div>
+
+              {/* 이미지 업로드 */}
+              <div className="space-y-4">
+                <BannerImageDropzone
+                  value={selectedBanner.pcImageUrl}
+                  onChange={(url) => updateSelectedBanner('pcImageUrl', url)}
+                  label="PC 배너 이미지"
+                  recommendedSize="1200x400px"
+                  deviceType="pc"
+                />
+                <BannerImageDropzone
+                  value={selectedBanner.mobileImageUrl}
+                  onChange={(url) => updateSelectedBanner('mobileImageUrl', url)}
+                  label="Mobile 배너 이미지 (선택)"
+                  recommendedSize="600x400px"
+                  aspectRatio="aspect-[3/2]"
+                  deviceType="mobile"
+                />
+              </div>
+
+              {/* 연결 URL */}
+              <div>
+                <Label className="mb-2 block text-sm flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4" />
+                  연결 URL
+                </Label>
+                <Input
+                  value={selectedBanner.linkUrl || ''}
+                  onChange={(e) => updateSelectedBanner('linkUrl', e.target.value)}
+                  placeholder="https://example.com/course/123"
+                />
+                <p
+                  className="text-xs mt-1"
+                  style={{ color: designTokens.text.placeholder }}
+                >
+                  배너 클릭 시 이동할 URL을 입력하세요 (선택사항)
+                </p>
+              </div>
+
+              {/* 연결 태그 */}
+              <div>
+                <Label className="mb-2 block text-sm">연결 태그</Label>
+                <p
+                  className="text-xs mb-2"
+                  style={{ color: designTokens.text.secondary }}
+                >
+                  배너 클릭 시 이 태그들로 콘텐츠가 필터링됩니다.
+                </p>
+                <TagInput
+                  value={editingTags}
+                  onChange={updateSelectedBannerTags}
+                  placeholder="태그 입력 후 Enter"
+                />
+              </div>
+
+              {/* 노출 기간 */}
+              <div>
+                <Label className="mb-2 block text-sm flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  노출 기간 (선택)
+                </Label>
+                <DateRangePicker
+                  date={
+                    selectedBanner.startDate && selectedBanner.endDate
+                      ? {
+                          from: selectedBanner.startDate,
+                          to: selectedBanner.endDate,
+                        }
+                      : undefined
+                  }
+                  onDateChange={(range) => {
+                    updateSelectedBanner('startDate', range?.from);
+                    updateSelectedBanner('endDate', range?.to);
+                  }}
+                  placeholder="기간을 선택하세요"
+                  className="w-full"
+                />
+                <p
+                  className="text-xs mt-1"
+                  style={{ color: designTokens.text.placeholder }}
+                >
+                  설정하지 않으면 항상 노출됩니다
+                </p>
+              </div>
+
+              {/* 활성화 */}
+              <div
+                className="flex items-center justify-between p-4 rounded-lg"
+                style={{ backgroundColor: designTokens.bg.secondary }}
+              >
+                <div>
+                  <Label className="text-sm">배너 활성화</Label>
+                  <p
+                    className="text-xs mt-0.5"
+                    style={{ color: designTokens.text.secondary }}
+                  >
+                    활성화된 배너만 홈 화면에 표시됩니다
+                  </p>
+                </div>
+                <Switch
+                  checked={selectedBanner.isActive}
+                  onCheckedChange={() => toggleBannerActive(selectedBanner.id)}
+                />
+              </div>
+            </TabsContent>
+
+            {/* 노출 대상 탭 */}
+            <TabsContent value="targeting">
+              <TargetingSelector
+                value={selectedBanner.targeting}
+                onChange={(targeting) => updateSelectedBanner('targeting', targeting)}
+                isAllTarget={selectedBanner.isAllTarget}
+                onAllTargetChange={(isAll) => updateSelectedBanner('isAllTarget', isAll)}
+              />
+            </TabsContent>
+
+            {/* 미리보기 탭 */}
+            <TabsContent value="preview">
+              <BannerPreview
+                banners={[
+                  {
+                    id: selectedBanner.id,
+                    title: selectedBanner.title,
+                    pcImageUrl: selectedBanner.pcImageUrl,
+                    mobileImageUrl: selectedBanner.mobileImageUrl,
+                    linkUrl: selectedBanner.linkUrl,
+                    isActive: true,
+                  },
+                ]}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+      </SlidePanel>
+
+      {/* 전체 미리보기 모달 */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Monitor className="w-5 h-5" />
+              배너 미리보기
+            </DialogTitle>
+          </DialogHeader>
+          <BannerPreview
+            banners={banners
+              .filter((b) => b.isActive)
+              .map((b) => ({
+                id: b.id,
+                title: b.title,
+                pcImageUrl: b.pcImageUrl,
+                mobileImageUrl: b.mobileImageUrl,
+                linkUrl: b.linkUrl,
+                isActive: b.isActive,
+              }))}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* 배너 추가 모달 */}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              새 배너 추가
+            </DialogTitle>
           </DialogHeader>
 
-          {activeBanners.length > 0 && (
-            <div className="p-6">
-              {/* 배너 이미지 */}
-              <div className="relative">
-                <div
-                  className="w-full aspect-[3/1] rounded-lg bg-cover bg-center"
-                  style={{
-                    backgroundImage: `url(${activeBanners[previewIndex]?.imageUrl})`,
-                  }}
-                />
-
-                {/* 네비게이션 */}
-                {activeBanners.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevPreviewBanner}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
-                    >
-                      <ChevronLeft className="w-6 h-6 text-white" />
-                    </button>
-                    <button
-                      onClick={nextPreviewBanner}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
-                    >
-                      <ChevronRight className="w-6 h-6 text-white" />
-                    </button>
-                  </>
-                )}
-
-                {/* 인디케이터 */}
-                {activeBanners.length > 1 && (
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                    {activeBanners.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setPreviewIndex(idx)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          idx === previewIndex
-                            ? 'w-6 bg-white'
-                            : 'bg-white/50 hover:bg-white/70'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* 배너 정보 */}
-              <div className="mt-4 p-4 rounded-lg bg-white/10">
-                <p className="text-white font-medium mb-2">
-                  {activeBanners[previewIndex]?.title}
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-1">
-                    {activeBanners[previewIndex]?.hiddenTags.map((tag) => (
-                      <Badge key={tag} variant="gray" className="text-xs">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <Badge variant="blue" className="text-xs">
-                    <Users className="w-3 h-3 mr-1" />
-                    {activeBanners[previewIndex]?.targetType === 'ALL'
-                      ? '전체 임직원'
-                      : activeBanners[previewIndex]?.targetValues?.join(', ')}
-                  </Badge>
-                </div>
-                <p className="text-white/60 text-xs mt-2">
-                  클릭 시 연결 태그로 콘텐츠가 필터링됩니다.
-                </p>
-              </div>
+          <div className="space-y-6 py-4">
+            {/* 배너 제목 */}
+            <div>
+              <Label className="mb-2 block">
+                배너 제목 <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={newBanner.title || ''}
+                onChange={(e) =>
+                  setNewBanner({ ...newBanner, title: e.target.value })
+                }
+                placeholder="배너를 식별할 수 있는 제목을 입력하세요"
+              />
             </div>
-          )}
+
+            {/* 이미지 업로드 */}
+            <div className="grid grid-cols-2 gap-4">
+              <BannerImageDropzone
+                value={newBanner.pcImageUrl}
+                onChange={(url) =>
+                  setNewBanner({ ...newBanner, pcImageUrl: url })
+                }
+                label="PC 배너 이미지 *"
+                recommendedSize="1200x400px"
+                deviceType="pc"
+              />
+              <BannerImageDropzone
+                value={newBanner.mobileImageUrl}
+                onChange={(url) =>
+                  setNewBanner({ ...newBanner, mobileImageUrl: url })
+                }
+                label="Mobile 배너 이미지 (선택)"
+                recommendedSize="600x400px"
+                aspectRatio="aspect-[3/2]"
+                deviceType="mobile"
+              />
+            </div>
+
+            {/* 연결 URL */}
+            <div>
+              <Label className="mb-2 block flex items-center gap-2">
+                <LinkIcon className="w-4 h-4" />
+                연결 URL
+              </Label>
+              <Input
+                value={newBanner.linkUrl || ''}
+                onChange={(e) =>
+                  setNewBanner({ ...newBanner, linkUrl: e.target.value })
+                }
+                placeholder="https://example.com/course/123"
+              />
+            </div>
+
+            {/* 연결 태그 */}
+            <div>
+              <Label className="mb-2 block">연결 태그</Label>
+              <TagInput
+                value={newBannerTags}
+                onChange={setNewBannerTags}
+                placeholder="태그 입력 후 Enter"
+              />
+            </div>
+
+            {/* 노출 기간 */}
+            <div>
+              <Label className="mb-2 block flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                노출 기간 (선택)
+              </Label>
+              <DateRangePicker
+                date={newBannerDateRange}
+                onDateChange={setNewBannerDateRange}
+                placeholder="기간을 선택하세요"
+                className="w-full"
+              />
+            </div>
+
+            {/* 노출 대상 */}
+            <div>
+              <Label className="mb-2 block flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                노출 대상
+              </Label>
+              <TargetingSelector
+                value={
+                  newBanner.targeting ?? {
+                    departments: [],
+                    jobRoles: [],
+                    positions: [],
+                    ranks: [],
+                  }
+                }
+                onChange={(targeting) =>
+                  setNewBanner({ ...newBanner, targeting })
+                }
+                isAllTarget={newBanner.isAllTarget ?? true}
+                onAllTargetChange={(isAll) =>
+                  setNewBanner({ ...newBanner, isAllTarget: isAll })
+                }
+              />
+            </div>
+          </div>
+
+          {/* 액션 버튼 */}
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddModal(false);
+                resetNewBannerForm();
+              }}
+              className="gap-1"
+            >
+              <X className="w-4 h-4" />
+              취소
+            </Button>
+            <Button
+              onClick={handleAddBanner}
+              disabled={!newBanner.title || !newBanner.pcImageUrl}
+              className="gap-1"
+              style={{
+                backgroundColor: designTokens.button.brand_default,
+                color: designTokens.button.brand_text,
+              }}
+            >
+              <Save className="w-4 h-4" />
+              저장
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

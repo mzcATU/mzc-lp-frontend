@@ -11,7 +11,7 @@ import {
   type SortOption,
   type ViewMode,
 } from '@/components/landing';
-import { LandingCourseCard } from '@/components/b2b-social';
+import { LandingCourseCard } from '@/components/domain/b2b-social';
 import { useThemeStore } from '@/store/common/themeStore';
 
 // B2B용 해시태그 (실제로는 API에서 가져옴)

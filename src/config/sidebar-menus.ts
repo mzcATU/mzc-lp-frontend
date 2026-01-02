@@ -310,14 +310,14 @@ export const b2bSocialToMenuData: MenuItem[] = [
     id: 'dashboard',
     label: { ko: '대시보드', en: 'Dashboard' },
     icon: LayoutDashboard,
-    path: '/tu/b2b-social/to/dashboard',
+    path: '/b2b-social/to/dashboard',
   },
   {
-    id: 'home-management',
-    label: { ko: '홈 화면 관리', en: 'Home Management' },
+    id: 'site-management',
+    label: { ko: '사이트 운영 관리', en: 'Site Operation Management' },
     icon: Home,
     subItems: [
-      { id: 'banners', label: { ko: '배너 관리', en: 'Banner Management' }, icon: Image, path: '/tu/b2b-social/to/banners' },
+      { id: 'banners', label: { ko: '배너 관리', en: 'Banner Management' }, icon: Image, path: '/b2b-social/to/banners' },
     ],
   },
   {
@@ -325,8 +325,8 @@ export const b2bSocialToMenuData: MenuItem[] = [
     label: { ko: '콘텐츠 관리', en: 'Content Management' },
     icon: Database,
     subItems: [
-      { id: 'content-pool', label: { ko: '콘텐츠 관리', en: 'Content Pool' }, icon: Database, path: '/tu/b2b-social/to/content' },
-      { id: 'content-upload', label: { ko: '콘텐츠 업로드', en: 'Content Upload' }, icon: FolderEdit, path: '/tu/b2b-social/to/content/upload' },
+      { id: 'content-pool', label: { ko: '콘텐츠 관리', en: 'Content Pool' }, icon: Database, path: '/b2b-social/to/content' },
+      { id: 'content-upload', label: { ko: '콘텐츠 업로드', en: 'Content Upload' }, icon: FolderEdit, path: '/b2b-social/to/content/upload' },
     ],
   },
   {
@@ -334,8 +334,8 @@ export const b2bSocialToMenuData: MenuItem[] = [
     label: { ko: '교육 운영', en: 'Education Management' },
     icon: GraduationCap,
     subItems: [
-      { id: 'courses', label: { ko: '교육 과정 관리', en: 'Course Management' }, icon: BookOpen, path: '/tu/b2b-social/to/courses' },
-      { id: 'mandatory', label: { ko: '필수 교육 관리', en: 'Mandatory Training' }, icon: BookCheck, path: '/tu/b2b-social/to/mandatory' },
+      { id: 'courses', label: { ko: '교육 과정 관리', en: 'Course Management' }, icon: BookOpen, path: '/b2b-social/to/courses' },
+      { id: 'mandatory', label: { ko: '필수 교육 관리', en: 'Mandatory Training' }, icon: BookCheck, path: '/b2b-social/to/mandatory' },
     ],
   },
   {
@@ -343,21 +343,21 @@ export const b2bSocialToMenuData: MenuItem[] = [
     label: { ko: '수강생 관리', en: 'Student Management' },
     icon: Users,
     subItems: [
-      { id: 'students', label: { ko: '수강생 관리', en: 'Students' }, icon: Users, path: '/tu/b2b-social/to/students' },
-      { id: 'enrollments', label: { ko: '수강 신청 관리', en: 'Enrollments' }, icon: ClipboardList, path: '/tu/b2b-social/to/enrollments' },
+      { id: 'students', label: { ko: '수강생 관리', en: 'Students' }, icon: Users, path: '/b2b-social/to/students' },
+      { id: 'enrollments', label: { ko: '수강 신청 관리', en: 'Enrollments' }, icon: ClipboardList, path: '/b2b-social/to/enrollments' },
     ],
   },
   {
     id: 'analytics',
     label: { ko: '학습 통계', en: 'Analytics' },
     icon: BarChart3,
-    path: '/tu/b2b-social/to/analytics',
+    path: '/b2b-social/to/analytics',
   },
   {
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    path: '/tu/b2b-social/to/settings',
+    path: '/b2b-social/to/settings',
   },
 ];
 

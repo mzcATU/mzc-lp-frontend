@@ -1,1 +1,0 @@
-export { LandingCourseCard } from './LandingCourseCard';

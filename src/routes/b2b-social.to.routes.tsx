@@ -1,5 +1,5 @@
 import { Route, Outlet } from 'react-router-dom';
-import { TenantOperatorLayout } from '@/components/layout';
+import { B2BSocialToLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import {
   SettingsPage,
@@ -7,15 +7,15 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import { BannerManagementPage } from '@/pages/b2b-social/to';
-import { DashboardPage, PlaceholderPage } from './pages';
+import { BannerManagementPage, SiteOperationDashboard } from '@/pages/b2b-social/to';
+import { PlaceholderPage } from './pages';
 
 function B2BSocialToWrapper() {
   return (
     <ProtectedRoute allowedRoles={['OPERATOR', 'TENANT_ADMIN']}>
-      <TenantOperatorLayout>
+      <B2BSocialToLayout>
         <Outlet />
-      </TenantOperatorLayout>
+      </B2BSocialToLayout>
     </ProtectedRoute>
   );
 }
@@ -28,8 +28,8 @@ function B2BSocialToWrapper() {
  */
 export const b2bSocialToRoutes = (
   <Route path="/b2b-social/to" element={<B2BSocialToWrapper />}>
-    <Route index element={<DashboardPage />} />
-    <Route path="dashboard" element={<DashboardPage />} />
+    <Route index element={<SiteOperationDashboard />} />
+    <Route path="dashboard" element={<SiteOperationDashboard />} />
 
     {/* 홈 화면 관리 */}
     <Route path="banners" element={<BannerManagementPage />} />
