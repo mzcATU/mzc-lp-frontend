@@ -193,3 +193,13 @@ export {
   useFollowInstructor,
   useUnfollowInstructor,
 } from './useInstructorQueries';
+
+// Program Application Hooks
+export {
+  programApplicationKeys,
+  useApplyProgram,
+  useApplyProgramsBulk,
+  toCourseForApplication,
+  type CourseForApplication,
+  type ApplicationResult,
+} from './useProgramApplicationQueries';
