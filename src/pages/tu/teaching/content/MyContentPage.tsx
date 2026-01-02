@@ -118,7 +118,8 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     contentId: number | null;
     contentType: ContentType | null;
     fileName: string | null;
-  }>({ isOpen: false, contentId: null, contentType: null, fileName: null });
+    downloadable: boolean;
+  }>({ isOpen: false, contentId: null, contentType: null, fileName: null, downloadable: true });
 
   // 폴더 관리 패널 상태
   const [isFolderPanelOpen, setIsFolderPanelOpen] = useState(false);
@@ -202,11 +203,12 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       contentId: content.id,
       contentType: content.contentType,
       fileName: content.originalFileName,
+      downloadable: content.downloadable ?? true,
     });
   };
 
   const handleClosePreview = () => {
-    setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null });
+    setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null, downloadable: true });
   };
 
   // 콘텐츠 선택 핸들러
@@ -654,6 +656,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
         contentId={previewModal.contentId}
         contentType={previewModal.contentType}
         fileName={previewModal.fileName ?? undefined}
+        downloadable={previewModal.downloadable}
       />
 
       {/* 폴더 관리 슬라이드 패널 */}

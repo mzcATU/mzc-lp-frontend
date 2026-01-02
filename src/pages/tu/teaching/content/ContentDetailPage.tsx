@@ -718,6 +718,7 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
         contentId={contentId}
         contentType={content.contentType}
         fileName={content.originalFileName}
+        downloadable={content.downloadable ?? true}
       />
     </div>
   );
