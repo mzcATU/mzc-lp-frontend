@@ -109,6 +109,8 @@ export interface MultiLanguageSettings {
 export interface CourseFormData {
   title: string;
   description: string;
+  /** 썸네일 이미지 URL */
+  thumbnailUrl?: string;
   startDate: string;
   endDate: string;
   categoryId: number | null;

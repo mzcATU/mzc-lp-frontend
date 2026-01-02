@@ -2,7 +2,7 @@
  * Step 1: 기본 정보 입력
  * 담당: 코스 테이블 관련 필드
  */
-import { Globe, Plus, X } from 'lucide-react';
+import { Globe, Plus, X, ImageIcon } from 'lucide-react';
 import {
   Button,
   Input,
@@ -87,6 +87,35 @@ export function Step1BasicInfo({
           onChange={(e) => onFormDataChange({ description: e.target.value })}
           placeholder={getText('courseDescriptionPlaceholder')}
         />
+      </div>
+
+      {/* 썸네일 URL */}
+      <div className="space-y-2">
+        <Label htmlFor="thumbnailUrl" className="flex items-center gap-2">
+          <ImageIcon size={16} />
+          썸네일 이미지
+        </Label>
+        <Input
+          id="thumbnailUrl"
+          value={formData.thumbnailUrl || ''}
+          onChange={(e) => onFormDataChange({ thumbnailUrl: e.target.value })}
+          placeholder="이미지 URL을 입력하세요 (예: https://example.com/image.jpg)"
+        />
+        {formData.thumbnailUrl && (
+          <div className="mt-2 relative w-48 h-32 rounded-lg overflow-hidden border border-border">
+            <img
+              src={formData.thumbnailUrl}
+              alt="썸네일 미리보기"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        <p className="text-xs text-text-secondary">
+          권장 크기: 400x250px, 지원 형식: JPG, PNG, WebP
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

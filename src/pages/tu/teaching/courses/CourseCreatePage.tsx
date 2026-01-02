@@ -124,6 +124,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       const request: CreateCourseRequest = {
         title: formData.title,
         description: formData.description || undefined,
+        thumbnailUrl: formData.thumbnailUrl || undefined,
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,

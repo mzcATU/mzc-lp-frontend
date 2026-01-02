@@ -75,6 +75,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
       setFormData({
         title: courseData.title,
         description: courseData.description || '',
+        thumbnailUrl: courseData.thumbnailUrl || '',
         startDate: courseData.startDate || '',
         endDate: courseData.endDate || '',
         categoryId: courseData.categoryId,
@@ -114,6 +115,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
       const request: UpdateCourseRequest = {
         title: formData.title,
         description: formData.description || undefined,
+        thumbnailUrl: formData.thumbnailUrl || undefined,
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
