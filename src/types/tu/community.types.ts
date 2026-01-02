@@ -95,3 +95,59 @@ export const COMMUNITY_SORT_OPTIONS = [
   { value: 'most_commented', label: '댓글순' },
   { value: 'most_liked', label: '좋아요순' },
 ] as const;
+
+// 댓글 타입
+export interface Comment {
+  id: number;
+  postId: number;
+  content: string;
+  author: {
+    id: number;
+    name: string;
+    avatar?: string;
+  };
+  likeCount: number;
+  isLiked?: boolean;
+  parentId?: number; // 대댓글인 경우 부모 댓글 ID
+  replies?: Comment[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// 댓글 목록 응답
+export interface CommentListResponse {
+  comments: Comment[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// 댓글 작성 요청
+export interface CreateCommentRequest {
+  postId: number;
+  content: string;
+  parentId?: number; // 대댓글인 경우
+}
+
+// 댓글 수정 요청
+export interface UpdateCommentRequest {
+  content: string;
+}
+
+// 게시글 상세 (댓글 포함)
+export interface CommunityPostDetail extends CommunityPost {
+  comments?: Comment[];
+  relatedCourse?: {
+    id: number;
+    title: string;
+    thumbnailUrl?: string;
+    instructor: {
+      id: number;
+      name: string;
+      profileImage?: string;
+    };
+    rating: number;
+    studentCount: number;
+  };
+}

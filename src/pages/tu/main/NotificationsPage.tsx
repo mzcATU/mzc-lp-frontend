@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck, Trash2, Settings, Gift, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
@@ -111,6 +112,7 @@ const formatRelativeTime = (dateString: string): string => {
 export function NotificationsPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
   const [activeType, setActiveType] = useState<NotificationType | 'all'>('all');
 
   // React Query 훅 (API 모드일 때만 활성화)
@@ -306,7 +308,10 @@ export function NotificationsPage() {
               return (
                 <div
                   key={notification.id}
-                  onClick={() => markAsRead(notification.id)}
+                  onClick={() => {
+                    markAsRead(notification.id);
+                    navigate(`/tu/notifications/${notification.id}`);
+                  }}
                   className={`rounded-xl p-4 flex gap-4 cursor-pointer transition-all border ${
                     isDark
                       ? 'glass border-white/10 hover:bg-white/5'

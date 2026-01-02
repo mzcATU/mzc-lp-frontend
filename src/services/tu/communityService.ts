@@ -8,8 +8,13 @@ import type {
   CommunityCategoryResponse,
   CommunityFilter,
   CommunityPost,
+  CommunityPostDetail,
   CreatePostRequest,
   UpdatePostRequest,
+  CommentListResponse,
+  Comment,
+  CreateCommentRequest,
+  UpdateCommentRequest,
 } from '@/types/tu/community.types';
 
 const BASE_URL = '/tu/community';
@@ -49,8 +54,8 @@ export const communityService = {
   /**
    * 게시글 상세 조회
    */
-  getPost: async (postId: number): Promise<CommunityPost> => {
-    const response = await axiosInstance.get<CommunityPost>(`${BASE_URL}/posts/${postId}`);
+  getPost: async (postId: number): Promise<CommunityPostDetail> => {
+    const response = await axiosInstance.get<CommunityPostDetail>(`${BASE_URL}/posts/${postId}`);
     return response.data;
   },
 
@@ -106,5 +111,60 @@ export const communityService = {
     const params = limit ? `?limit=${limit}` : '';
     const response = await axiosInstance.get<CommunityPostListResponse>(`${BASE_URL}/posts/popular${params}`);
     return response.data;
+  },
+
+  // ========== 댓글 관련 API ==========
+
+  /**
+   * 댓글 목록 조회
+   */
+  getComments: async (postId: number, page = 1, pageSize = 20): Promise<CommentListResponse> => {
+    const response = await axiosInstance.get<CommentListResponse>(
+      `${BASE_URL}/posts/${postId}/comments?page=${page}&pageSize=${pageSize}`
+    );
+    return response.data;
+  },
+
+  /**
+   * 댓글 작성
+   */
+  createComment: async (data: CreateCommentRequest): Promise<Comment> => {
+    const response = await axiosInstance.post<Comment>(
+      `${BASE_URL}/posts/${data.postId}/comments`,
+      { content: data.content, parentId: data.parentId }
+    );
+    return response.data;
+  },
+
+  /**
+   * 댓글 수정
+   */
+  updateComment: async (postId: number, commentId: number, data: UpdateCommentRequest): Promise<Comment> => {
+    const response = await axiosInstance.patch<Comment>(
+      `${BASE_URL}/posts/${postId}/comments/${commentId}`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * 댓글 삭제
+   */
+  deleteComment: async (postId: number, commentId: number): Promise<void> => {
+    await axiosInstance.delete(`${BASE_URL}/posts/${postId}/comments/${commentId}`);
+  },
+
+  /**
+   * 댓글 좋아요
+   */
+  likeComment: async (postId: number, commentId: number): Promise<void> => {
+    await axiosInstance.post(`${BASE_URL}/posts/${postId}/comments/${commentId}/like`);
+  },
+
+  /**
+   * 댓글 좋아요 취소
+   */
+  unlikeComment: async (postId: number, commentId: number): Promise<void> => {
+    await axiosInstance.delete(`${BASE_URL}/posts/${postId}/comments/${commentId}/like`);
   },
 };
