@@ -283,8 +283,8 @@ export const myPageMenuData: MenuItem[] = [
     label: { ko: '커뮤니티 활동', en: 'Community Activity' },
     icon: MessageSquare,
     subItems: [
-      { id: 'my-posts', label: { ko: '내 게시글', en: 'My Posts' }, icon: FileEdit, path: '/mypage/community/posts' },
-      { id: 'my-comments', label: { ko: '내 댓글', en: 'My Comments' }, icon: MessageSquare, path: '/mypage/community/comments' },
+      { id: 'my-posts', label: { ko: '내 게시글', en: 'My Posts' }, icon: FileEdit, path: '/tu/b2c/mypage/posts' },
+      { id: 'my-comments', label: { ko: '내 댓글', en: 'My Comments' }, icon: MessageSquare, path: '/tu/b2c/mypage/comments' },
     ],
   },
   {
