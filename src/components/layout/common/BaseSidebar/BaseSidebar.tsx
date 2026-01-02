@@ -148,7 +148,7 @@ export function BaseSidebar({
 
   const handleModeChange = (mode: ViewMode) => {
     if (mode === 'learner') {
-      navigate('/mypage');
+      navigate('/tu/b2c/mypage');
     } else {
       navigate('/tu/dashboard');
     }

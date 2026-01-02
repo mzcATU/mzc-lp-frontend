@@ -490,7 +490,7 @@ export function CourseDetailPage() {
 
               {/* Instructor */}
               <Link
-                to={`/tu/instructors/${course.instructor.id}`}
+                to={`/tu/b2c/instructors/${course.instructor.id}`}
                 className="flex items-center gap-3 mb-8 group"
               >
                 <img
@@ -696,7 +696,7 @@ export function CourseDetailPage() {
               강사 소개
             </h2>
             <Link
-              to={`/tu/instructors/${course.instructor.id}`}
+              to={`/tu/b2c/instructors/${course.instructor.id}`}
               className={`block rounded-xl p-6 border transition-all group ${
                 isDark
                   ? 'glass border-white/10 hover:border-[#6778ff]/50'

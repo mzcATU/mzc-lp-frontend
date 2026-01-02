@@ -333,7 +333,7 @@ export function LandingPage() {
               {popularInstructors.map((instructor) => (
                 <Link
                   key={instructor.id}
-                  to={`/tu/instructors/${instructor.id}`}
+                  to={`/tu/b2c/instructors/${instructor.id}`}
                   className={`group block rounded-2xl p-6 transition-all duration-300 border ${
                     isDark
                       ? 'glass border-white/10 hover:border-[#6778ff]/50'

@@ -257,7 +257,7 @@ export function LearningPlayerPage() {
     if (isDemoMode) {
       navigate('/tu/b2c/mypage/learning');
     } else {
-      navigate(`/mypage/learning/${enrollmentId}`);
+      navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
     }
   }, [enrollmentId, navigate, saveProgress, isDemoMode]);
 
