@@ -85,27 +85,27 @@ export function Step3Settings({ data, onUpdate, isExternalLink = false }: Readon
           </div>
         </div>
 
-        {/* 워터마크 적용 */}
-        <div className="mb-6 pb-6 border-b border-border">
+        {/* 워터마크 적용 - 백엔드 미구현으로 비활성화 */}
+        <div className="mb-6 pb-6 border-b border-border opacity-50">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-text-primary mb-1">워터마크 적용</p>
-              <p className="text-sm text-text-secondary">콘텐츠에 학습자 정보를 워터마크로 표시합니다</p>
+              <p className="text-sm text-text-secondary">현재 지원되지 않는 기능입니다</p>
             </div>
             <button
               type="button"
               role="switch"
-              aria-checked={data.applyWatermark}
-              onClick={() => onUpdate({ applyWatermark: !data.applyWatermark })}
+              aria-checked={false}
+              disabled
               className={cn(
-                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                data.applyWatermark ? 'bg-btn-neutral' : 'bg-border'
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-not-allowed',
+                'bg-border'
               )}
             >
               <span
                 className={cn(
                   'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                  data.applyWatermark ? 'translate-x-6' : 'translate-x-1'
+                  'translate-x-1'
                 )}
               />
             </button>

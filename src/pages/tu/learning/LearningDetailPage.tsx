@@ -15,7 +15,6 @@ import {
   Video,
   Link as LinkIcon,
 } from 'lucide-react';
-import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
   Badge,
@@ -35,6 +34,7 @@ import {
 } from '@/components/common';
 import { useEnrollment, useCancelEnrollment } from '@/hooks/tu';
 import { useTranslation } from '@/store/common/languageStore';
+import { useThemeStore } from '@/store/common/themeStore';
 import type { EnrollmentStatus } from '@/services/tu/enrollmentService';
 
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
@@ -77,36 +77,44 @@ const typeIcons: Record<CurriculumItem['type'], React.ReactNode> = {
   link: <LinkIcon className="w-4 h-4" />,
 };
 
-function CurriculumListItem({ item }: { item: CurriculumItem }) {
+interface CurriculumListItemProps {
+  item: CurriculumItem;
+  isDark: boolean;
+}
+
+function CurriculumListItem({ item, isDark }: CurriculumListItemProps) {
   return (
     <div
-      className="flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer hover:bg-opacity-50"
-      style={{
-        backgroundColor: item.completed ? designTokens.status.success_background : designTokens.bg.default,
-        border: `1px solid ${designTokens.bg.border}`,
-      }}
+      className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer ${
+        item.completed
+          ? isDark
+            ? 'bg-green-500/10 border border-green-500/20 hover:bg-green-500/20'
+            : 'bg-green-50 border border-green-200 hover:bg-green-100'
+          : isDark
+          ? 'bg-white/5 border border-white/10 hover:bg-white/10'
+          : 'bg-white border border-gray-200 hover:bg-gray-50'
+      }`}
     >
       {/* Type Icon */}
       <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{
-          backgroundColor: item.completed ? designTokens.status.success_text : designTokens.bg.secondary,
-          color: item.completed ? '#FFFFFF' : designTokens.text.secondary,
-        }}
+        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+          item.completed
+            ? 'bg-green-500 text-white'
+            : isDark
+            ? 'bg-white/10 text-gray-400'
+            : 'bg-gray-100 text-gray-500'
+        }`}
       >
         {typeIcons[item.type]}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h4
-          className="font-medium text-sm truncate"
-          style={{ color: designTokens.text.primary }}
-        >
+        <h4 className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {item.title}
         </h4>
         {item.duration && (
-          <p className="text-xs mt-0.5" style={{ color: designTokens.text.secondary }}>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             {item.duration}분
           </p>
         )}
@@ -115,9 +123,9 @@ function CurriculumListItem({ item }: { item: CurriculumItem }) {
       {/* Status */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {item.completed ? (
-          <CheckCircle className="w-5 h-5" style={{ color: designTokens.status.success_text }} />
+          <CheckCircle className="w-5 h-5 text-green-500" />
         ) : (
-          <ChevronRight className="w-5 h-5" style={{ color: designTokens.text.placeholder }} />
+          <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
         )}
       </div>
     </div>
@@ -128,6 +136,8 @@ export function LearningDetailPage() {
   const { enrollmentId } = useParams<{ enrollmentId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const statusLabels: Record<EnrollmentStatus, string> = {
@@ -167,11 +177,8 @@ export function LearningDetailPage() {
   // Loading State
   if (isLoading) {
     return (
-      <div
-        className="flex items-center justify-center min-h-full"
-        style={{ backgroundColor: designTokens.bg.app_default }}
-      >
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.secondary }} />
+      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+        <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
       </div>
     );
   }
@@ -179,12 +186,9 @@ export function LearningDetailPage() {
   // Error State
   if (isError || !enrollment) {
     return (
-      <div
-        className="flex flex-col items-center justify-center min-h-full"
-        style={{ backgroundColor: designTokens.bg.app_default }}
-      >
-        <BookOpen className="w-16 h-16 mb-4" style={{ color: designTokens.text.placeholder }} />
-        <h3 className="text-lg font-medium mb-2" style={{ color: designTokens.text.primary }}>
+      <div className={`flex flex-col items-center justify-center min-h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+        <BookOpen className={`w-16 h-16 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+        <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
         <Button onClick={() => navigate('/mypage/learning')}>
@@ -198,18 +202,12 @@ export function LearningDetailPage() {
   const progressPercent = Math.round((completedCount / mockCurriculum.length) * 100);
 
   return (
-    <div
-      style={{
-        padding: '40px',
-        backgroundColor: designTokens.bg.app_default,
-        minHeight: '100%',
-      }}
-    >
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-[1200px] mx-auto">
         {/* Back Button */}
         <Button
           variant="ghost"
-          className="mb-6 gap-2"
+          className={`mb-6 gap-2 ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : ''}`}
           onClick={() => navigate('/mypage/learning')}
         >
           <ArrowLeft className="w-4 h-4" />
@@ -219,7 +217,11 @@ export function LearningDetailPage() {
         {/* Header Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Course Info Card */}
-          <Card className="lg:col-span-2" style={{ backgroundColor: designTokens.bg.default }}>
+          <Card
+            className={`lg:col-span-2 ${
+              isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
+            }`}
+          >
             <CardContent className="p-6">
               {/* Status Badge */}
               <Badge variant={statusColors[enrollment.status]} className="mb-4 flex items-center gap-1 w-fit">
@@ -228,20 +230,17 @@ export function LearningDetailPage() {
               </Badge>
 
               {/* Program Title */}
-              <h1
-                className="text-2xl font-bold mb-2"
-                style={{ color: designTokens.text.primary }}
-              >
+              <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {enrollment.programTitle}
               </h1>
 
               {/* Course Time Name */}
-              <p className="text-base mb-4" style={{ color: designTokens.text.secondary }}>
+              <p className={`text-base mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {enrollment.courseTimeName}
               </p>
 
               {/* Date Info */}
-              <div className="flex flex-wrap items-center gap-6 text-sm" style={{ color: designTokens.text.secondary }}>
+              <div className={`flex flex-wrap items-center gap-6 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 <span className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   {t.learning.enrollmentPeriod}: {formatDate(enrollment.startDate)} ~ {formatDate(enrollment.endDate)}
@@ -255,12 +254,9 @@ export function LearningDetailPage() {
           </Card>
 
           {/* Progress Card */}
-          <Card style={{ backgroundColor: designTokens.bg.default }}>
+          <Card className={isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}>
             <CardContent className="p-6">
-              <h3
-                className="text-sm font-medium mb-4"
-                style={{ color: designTokens.text.secondary }}
-              >
+              <h3 className={`text-sm font-medium mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {t.learning.learningProgress}
               </h3>
 
@@ -269,17 +265,15 @@ export function LearningDetailPage() {
                 <div
                   className="relative w-32 h-32 rounded-full flex items-center justify-center"
                   style={{
-                    background: `conic-gradient(${progressPercent === 100 ? designTokens.status.success_text : designTokens.button.brand_default} ${progressPercent * 3.6}deg, ${designTokens.bg.secondary} 0deg)`,
+                    background: `conic-gradient(${progressPercent === 100 ? '#22c55e' : '#6778ff'} ${progressPercent * 3.6}deg, ${isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} 0deg)`,
                   }}
                 >
                   <div
-                    className="w-24 h-24 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: designTokens.bg.default }}
+                    className={`w-24 h-24 rounded-full flex items-center justify-center ${
+                      isDark ? 'bg-[#1e1e1e]' : 'bg-white'
+                    }`}
                   >
-                    <span
-                      className="text-2xl font-bold"
-                      style={{ color: designTokens.text.primary }}
-                    >
+                    <span className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {progressPercent}%
                     </span>
                   </div>
@@ -287,13 +281,14 @@ export function LearningDetailPage() {
               </div>
 
               {/* Stats */}
-              <div className="text-center text-sm" style={{ color: designTokens.text.secondary }}>
+              <div className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {completedCount} / {mockCurriculum.length} {t.learning.completed}
               </div>
 
               {/* Continue Button */}
               {enrollment.status === 'APPROVED' && (
                 <Button
+                  variant="brand"
                   className="w-full mt-4"
                   onClick={handleContinueLearning}
                 >
@@ -306,16 +301,16 @@ export function LearningDetailPage() {
         </div>
 
         {/* Curriculum Section */}
-        <Card className="mb-8" style={{ backgroundColor: designTokens.bg.default }}>
+        <Card className={`mb-8 ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
           <CardHeader>
-            <CardTitle style={{ color: designTokens.text.primary }}>
+            <CardTitle className={isDark ? 'text-white' : 'text-gray-900'}>
               {t.learning.curriculum}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-0">
             <div className="space-y-3">
               {mockCurriculum.map((item) => (
-                <CurriculumListItem key={item.id} item={item} />
+                <CurriculumListItem key={item.id} item={item} isDark={isDark} />
               ))}
             </div>
           </CardContent>
@@ -326,20 +321,31 @@ export function LearningDetailPage() {
           <div className="flex justify-end gap-4">
             <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                <Button
+                  variant="outline"
+                  className={
+                    isDark
+                      ? 'text-red-400 border-red-400/30 hover:bg-red-400/10'
+                      : 'text-red-600 border-red-200 hover:bg-red-50'
+                  }
+                >
                   <XCircle className="w-4 h-4 mr-2" />
                   {t.learning.cancelEnrollment}
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className={isDark ? 'bg-[#2a2a2a] border-white/10' : ''}>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>{t.learning.cancelConfirmTitle}</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogTitle className={isDark ? 'text-white' : ''}>
+                    {t.learning.cancelConfirmTitle}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className={isDark ? 'text-gray-400' : ''}>
                     {t.learning.cancelConfirmDesc}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                  <AlertDialogCancel className={isDark ? 'bg-white/10 border-white/10 text-white hover:bg-white/20' : ''}>
+                    {t.common.cancel}
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleCancel}
                     className="bg-red-600 hover:bg-red-700"
