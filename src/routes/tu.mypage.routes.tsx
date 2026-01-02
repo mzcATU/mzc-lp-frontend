@@ -12,6 +12,8 @@ import {
   TeachingStatsPage,
   CompletedCoursesPage,
   CertificationsPage,
+  MyPostsPage,
+  MyCommentsPage,
 } from '@/pages/tu';
 import {
   SettingsPage,
@@ -52,6 +54,10 @@ export const tuMyPageRoutes = (
     {/* 내 강의 관리 */}
     <Route path="teaching" element={<MyTeachingPage />} />
     <Route path="teaching/stats" element={<TeachingStatsPage />} />
+
+    {/* 커뮤니티 */}
+    <Route path="posts" element={<MyPostsPage />} />
+    <Route path="comments" element={<MyCommentsPage />} />
 
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
