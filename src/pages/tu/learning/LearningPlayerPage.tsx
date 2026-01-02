@@ -83,6 +83,7 @@ export function LearningPlayerPage() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [lastSaveTime, setLastSaveTime] = useState(Date.now());
+  const [showDemoBanner, setShowDemoBanner] = useState(true);
 
   // Refs
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -299,12 +300,19 @@ export function LearningPlayerPage() {
   return (
     <div className={`flex flex-col h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       {/* 데모 모드 배너 */}
-      {isDemoMode && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+      {isDemoMode && showDemoBanner && (
+        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 relative">
           <AlertTriangle className="w-4 h-4" />
           <span className="text-sm font-medium">
             {t.player.demoModeBanner}
           </span>
+          <button
+            onClick={() => setShowDemoBanner(false)}
+            className="absolute right-3 p-1 rounded hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+            aria-label="배너 닫기"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -348,8 +356,7 @@ export function LearningPlayerPage() {
         {/* 비디오 영역 */}
         <main className={`flex-1 flex flex-col overflow-hidden ${sidebarOpen ? 'lg:mr-80' : ''}`}>
           {/* 비디오 플레이어 영역 */}
-          <div className={`shrink-0 ${isDark ? 'bg-black' : 'bg-black'}`}>
-            <div className="max-w-5xl mx-auto">
+          <div className="shrink-0 bg-black">
               {/* 비디오 플레이어 */}
               {currentContentId && currentContentType === 'VIDEO' && (
                 <VideoPlayer
@@ -383,7 +390,7 @@ export function LearningPlayerPage() {
               {/* 콘텐츠가 없는 경우 */}
               {!currentContentId && (
                 <div
-                  className={`aspect-video rounded-lg flex flex-col items-center justify-center ${
+                  className={`aspect-video flex flex-col items-center justify-center ${
                     isDark ? 'bg-white/5' : 'bg-gray-100'
                   }`}
                 >
@@ -393,15 +400,13 @@ export function LearningPlayerPage() {
                   </p>
                 </div>
               )}
-            </div>
           </div>
 
           {/* 콘텐츠 정보 영역 */}
-          <div className={`flex-1 p-4 lg:p-6 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-            <div className="max-w-5xl mx-auto">
+          <div className={`flex-1 px-4 py-3 overflow-y-auto ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
               {/* 현재 학습 콘텐츠 제목 */}
               {currentItemId && (
-                <div className={`rounded-xl p-4 mb-4 ${isDark ? 'bg-[#2a2a2a] border border-white/10' : 'bg-[#ffffff] border border-gray-200'}`}>
+                <div className={`rounded-lg p-3 mb-2 ${isDark ? 'bg-[#2a2a2a] border border-white/10' : 'bg-[#ffffff] border border-gray-200'}`}>
                   <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {demoCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || '콘텐츠'}
                   </h2>
@@ -420,7 +425,6 @@ export function LearningPlayerPage() {
                   {t.player.autoSaved}: {new Date(lastSaveTime).toLocaleTimeString()}
                 </span>
               </div>
-            </div>
           </div>
 
           {/* 하단 네비게이션 */}

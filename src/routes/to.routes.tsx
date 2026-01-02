@@ -17,7 +17,7 @@ import {
   ProgramPendingPage,
   ProgramDetailPage,
 } from '@/pages/to/program';
-import { BrandingPage } from '@/pages/to';
+import { InstructorAssignmentsPage } from '@/pages/to/instructor';
 import { DashboardPage, PlaceholderPage } from './pages';
 
 function TenantOperatorWrapper() {
@@ -44,15 +44,13 @@ export const toRoutes = (
     <Route path="times/:id" element={<CourseTimeDetailPage />} />
     {/* 강사 배정 */}
     <Route path="instructors" element={<PlaceholderPage title="강사 배정" />} />
-    {/* 브랜딩/배너 관리 */}
-    <Route path="branding" element={<BrandingPage />} />
     {/* 콘텐츠 관리 */}
     <Route path="content" element={<PlaceholderPage title="콘텐츠 풀" />} />
     <Route path="content/upload" element={<PlaceholderPage title="콘텐츠 업로드" />} />
     <Route path="learning-objects" element={<PlaceholderPage title="학습 객체 관리" />} />
     {/* 수강 및 강사 정보 */}
     <Route path="sis" element={<PlaceholderPage title="학생 수강 정보 확인" />} />
-    <Route path="iis" element={<PlaceholderPage title="강사 배정 정보 확인" />} />
+    <Route path="instructor-assignments" element={<InstructorAssignmentsPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

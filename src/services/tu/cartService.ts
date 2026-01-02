@@ -1,60 +1,70 @@
 /**
- * 장바구니(Cart) API 서비스
+ * 장바구니(Cart) API 서비스 - 백엔드 API 스펙 기반
  */
 
 import axiosInstance from '@/services/common/api/axiosInstance';
+import { API_ENDPOINTS } from '@/services/common/api/endpoints';
+import type { ApiResponse } from '@/types/common/api.types';
 import type {
-  CartResponse,
-  AddToCartRequest,
-  RemoveFromCartRequest,
-  ApplyCouponRequest,
-  ApplyCouponResponse,
+  CartItemResponse,
+  CartAddRequest,
+  CartRemoveRequest,
+  CartCountResponse,
 } from '@/types/tu/cart.types';
-
-const BASE_URL = '/tu/cart';
 
 export const cartService = {
   /**
    * 장바구니 목록 조회
    */
-  getCart: async (): Promise<CartResponse> => {
-    const response = await axiosInstance.get<CartResponse>(BASE_URL);
-    return response.data;
+  getCart: async (): Promise<CartItemResponse[]> => {
+    const response = await axiosInstance.get<ApiResponse<CartItemResponse[]>>(
+      API_ENDPOINTS.CART.BASE
+    );
+    return response.data.data;
   },
 
   /**
    * 장바구니에 강의 추가
    */
-  addToCart: async (data: AddToCartRequest): Promise<void> => {
-    await axiosInstance.post(`${BASE_URL}/items`, data);
+  addToCart: async (request: CartAddRequest): Promise<CartItemResponse> => {
+    const response = await axiosInstance.post<ApiResponse<CartItemResponse>>(
+      API_ENDPOINTS.CART.ITEMS,
+      request
+    );
+    return response.data.data;
   },
 
   /**
-   * 장바구니에서 아이템 삭제
+   * 장바구니에서 강의 삭제
    */
-  removeFromCart: async (data: RemoveFromCartRequest): Promise<void> => {
-    await axiosInstance.delete(`${BASE_URL}/items`, { data });
+  removeFromCart: async (courseId: number): Promise<void> => {
+    await axiosInstance.delete(API_ENDPOINTS.CART.ITEM(courseId));
   },
 
   /**
-   * 장바구니 비우기
+   * 장바구니에서 여러 강의 삭제 (선택 삭제)
    */
-  clearCart: async (): Promise<void> => {
-    await axiosInstance.delete(`${BASE_URL}/clear`);
+  removeFromCartBulk: async (request: CartRemoveRequest): Promise<void> => {
+    await axiosInstance.delete(API_ENDPOINTS.CART.ITEMS, { data: request });
   },
 
   /**
-   * 쿠폰 적용
+   * 장바구니 개수 조회
    */
-  applyCoupon: async (data: ApplyCouponRequest): Promise<ApplyCouponResponse> => {
-    const response = await axiosInstance.post<ApplyCouponResponse>(`${BASE_URL}/coupon`, data);
-    return response.data;
+  getCartCount: async (): Promise<CartCountResponse> => {
+    const response = await axiosInstance.get<ApiResponse<CartCountResponse>>(
+      API_ENDPOINTS.CART.COUNT
+    );
+    return response.data.data;
   },
 
   /**
-   * 쿠폰 제거
+   * 특정 강의 장바구니 여부 확인
    */
-  removeCoupon: async (): Promise<void> => {
-    await axiosInstance.delete(`${BASE_URL}/coupon`);
+  checkCartStatus: async (courseId: number): Promise<boolean> => {
+    const response = await axiosInstance.get<ApiResponse<boolean>>(
+      API_ENDPOINTS.CART.ITEM_CHECK(courseId)
+    );
+    return response.data.data;
   },
 };

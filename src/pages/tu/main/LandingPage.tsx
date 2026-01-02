@@ -1,136 +1,70 @@
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronRight, Star, ArrowRight, Loader2 } from 'lucide-react';
 import {
   LandingHeader,
   HeroSection,
   LandingCourseCard,
   LandingFooter,
-  TagFilter,
-  BannerCarousel,
-  SortViewOptions,
-  type Tag,
-  type BannerItem,
-  type SortOption,
-  type ViewMode,
 } from '@/components/landing';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
+import { usePopularInstructors } from '@/hooks/tu';
+import type { InstructorSummary } from '@/types/tu';
 
-// 테넌트 모드 타입 (실제로는 테넌트 설정에서 가져옴)
-type TenantMode = 'B2C' | 'B2B';
+// API 사용 여부 플래그 (백엔드 연동 시 true로 변경)
+const USE_API = false;
 
-// 카테고리 ID 목록 (B2C용)
+// 더미 인기 강사 데이터
+const dummyPopularInstructors: InstructorSummary[] = [
+  {
+    id: 1,
+    name: '김클라우드',
+    slug: 'kim-cloud',
+    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop',
+    specialty: 'AWS / 클라우드 아키텍처',
+    studentCount: 15420,
+    courseCount: 8,
+    rating: 4.9,
+    description: 'AWS 공인 솔루션스 아키텍트. 10년간 엔터프라이즈 클라우드 구축 경험',
+  },
+  {
+    id: 2,
+    name: '이에이아이',
+    slug: 'lee-ai',
+    profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
+    specialty: 'AI / 머신러닝',
+    studentCount: 12350,
+    courseCount: 6,
+    rating: 4.8,
+    description: 'OpenAI 공식 파트너사 AI 엔지니어. GPT, LLM 전문가',
+  },
+  {
+    id: 3,
+    name: '강리액트',
+    slug: 'kang-react',
+    profileImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop',
+    specialty: 'React / TypeScript',
+    studentCount: 18900,
+    courseCount: 12,
+    rating: 4.9,
+    description: '네이버 시니어 프론트엔드 개발자 출신. React 생태계 전문가',
+  },
+  {
+    id: 4,
+    name: '박데이터',
+    slug: 'park-data',
+    profileImage: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop',
+    specialty: '데이터 분석 / Python',
+    studentCount: 9870,
+    courseCount: 5,
+    rating: 4.7,
+    description: '카카오 데이터 사이언티스트 출신. 실무 데이터 분석 전문',
+  },
+];
+
+// 카테고리 ID 목록
 const categoryIds = ['all', 'cloud', 'dev', 'ai', 'data', 'security', 'devops'] as const;
-
-// B2B용 해시태그 (실제로는 API에서 가져옴)
-const b2bTags: Tag[] = [
-  { id: 'leadership', label: '리더십', count: 24 },
-  { id: 'communication', label: '커뮤니케이션', count: 18 },
-  { id: 'compliance', label: '컴플라이언스', count: 32 },
-  { id: 'security', label: '보안교육', count: 15 },
-  { id: 'onboarding', label: '신입사원', count: 21 },
-  { id: 'digital', label: '디지털전환', count: 12 },
-  { id: 'excel', label: 'Excel', count: 28 },
-  { id: 'presentation', label: '프레젠테이션', count: 9 },
-];
-
-// B2B용 배너 (실제로는 TA가 관리하는 데이터)
-const b2bBanners: BannerItem[] = [
-  {
-    id: '1',
-    title: '2024년 필수 컴플라이언스 교육 안내',
-    imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop',
-    hiddenTags: ['컴플라이언스', '필수교육'],
-  },
-  {
-    id: '2',
-    title: '신입사원 온보딩 프로그램',
-    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=400&fit=crop',
-    hiddenTags: ['신입사원', '온보딩'],
-  },
-  {
-    id: '3',
-    title: '리더십 역량 강화 과정 오픈',
-    imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&h=400&fit=crop',
-    hiddenTags: ['리더십', '매니저'],
-  },
-];
-
-// B2B용 콘텐츠 (실제로는 API에서 가져옴)
-const b2bContents = [
-  {
-    id: 101,
-    title: '2024 정보보안 필수교육',
-    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=250&fit=crop',
-    tags: ['보안교육', '필수'],
-    contentType: 'VOD' as const,
-    duration: 60,
-    enrollmentCount: 1234,
-  },
-  {
-    id: 102,
-    title: '효과적인 비즈니스 커뮤니케이션',
-    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop',
-    tags: ['커뮤니케이션', '소프트스킬'],
-    contentType: 'VOD' as const,
-    duration: 45,
-    enrollmentCount: 892,
-  },
-  {
-    id: 103,
-    title: 'Excel 실무 활용 가이드',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop',
-    tags: ['Excel', '업무효율'],
-    contentType: 'DOCUMENT' as const,
-    duration: 30,
-    enrollmentCount: 2156,
-  },
-  {
-    id: 104,
-    title: '신입사원 온보딩 필수 과정',
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=250&fit=crop',
-    tags: ['신입사원', '온보딩'],
-    contentType: 'VOD' as const,
-    duration: 90,
-    enrollmentCount: 567,
-  },
-  {
-    id: 105,
-    title: '리더를 위한 팀 매니지먼트',
-    image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=250&fit=crop',
-    tags: ['리더십', '매니지먼트'],
-    contentType: 'EBOOK' as const,
-    duration: 120,
-    enrollmentCount: 334,
-  },
-  {
-    id: 106,
-    title: '컴플라이언스 기초 교육',
-    image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&h=250&fit=crop',
-    tags: ['컴플라이언스', '필수'],
-    contentType: 'VOD' as const,
-    duration: 40,
-    enrollmentCount: 3421,
-  },
-  {
-    id: 107,
-    title: '디지털 전환 시대의 업무 혁신',
-    image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=250&fit=crop',
-    tags: ['디지털전환', 'DX'],
-    contentType: 'VOD' as const,
-    duration: 55,
-    enrollmentCount: 723,
-  },
-  {
-    id: 108,
-    title: '프레젠테이션 스킬 향상',
-    image: 'https://images.unsplash.com/photo-1558403194-611308249627?w=400&h=250&fit=crop',
-    tags: ['프레젠테이션', '소프트스킬'],
-    contentType: 'VOD' as const,
-    duration: 35,
-    enrollmentCount: 445,
-  },
-];
 
 const courses = [
   {
@@ -246,28 +180,23 @@ const courses = [
 ];
 
 /**
- * 랜딩 페이지 - B2C/B2B 겸용 LMS 메인
- * - B2C: 히어로 슬라이드 + 카테고리 칩 + 가격/별점 표시
- * - B2B: 이미지 배너 + 해시태그 필터 + 콘텐츠타입/수강인원 표시
+ * 랜딩 페이지 - 다크/라이트 테마 LMS 메인
  */
 export function LandingPage() {
-  // TODO: 실제로는 테넌트 설정에서 가져옴
-  const tenantMode: TenantMode = 'B2B'; // 'B2C' | 'B2B'
-
   const [activeCategory, setActiveCategory] = useState('all');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>('latest');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
 
-  // 카테고리 레이블을 번역으로 가져오기 (B2C)
+  // 인기 강사 데이터 로드
+  const { data: instructorsData, isLoading: isInstructorsLoading } = usePopularInstructors(4, USE_API);
+  const popularInstructors = USE_API ? (instructorsData?.instructors ?? []) : dummyPopularInstructors;
+
+  // 카테고리 레이블을 번역으로 가져오기
   const getCategoryLabel = (id: string) => {
     return t.landing[id as keyof typeof t.landing] as string;
   };
 
-  // B2C 필터링
   const filteredCourses =
     activeCategory === 'all'
       ? courses
@@ -276,224 +205,6 @@ export function LandingPage() {
   const featuredCourses = courses.filter((c) => c.tags.includes('베스트')).slice(0, 5);
   const newCourses = courses.filter((c) => c.tags.includes('NEW')).slice(0, 5);
 
-  // B2B 필터링 및 정렬
-  const filteredB2BContents = (() => {
-    let filtered =
-      selectedTags.length === 0
-        ? b2bContents
-        : b2bContents.filter((content) =>
-            content.tags.some((tag) => selectedTags.includes(tag))
-          );
-
-    // 정렬 적용
-    switch (sortBy) {
-      case 'popular':
-        filtered = [...filtered].sort((a, b) => b.enrollmentCount - a.enrollmentCount);
-        break;
-      case 'name':
-        filtered = [...filtered].sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case 'latest':
-      default:
-        // 기본: id 역순 (최신순)
-        filtered = [...filtered].sort((a, b) => b.id - a.id);
-        break;
-    }
-
-    return filtered;
-  })();
-
-  // B2B 모드 렌더링
-  if (tenantMode === 'B2B') {
-    return (
-      <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
-        <LandingHeader />
-
-        <main>
-          {/* Banner Carousel (TA 관리) */}
-          <div className="w-full px-4 md:px-8 lg:px-16 pt-8">
-            <BannerCarousel banners={b2bBanners} />
-          </div>
-
-          {/* Tag Filter (해시태그 스타일) */}
-          <div className="w-full px-4 md:px-8 lg:px-16 py-8">
-            <TagFilter
-              tags={b2bTags}
-              selectedTags={selectedTags}
-              onTagChange={setSelectedTags}
-              variant="HASHTAG"
-              multiSelect
-              showCount
-            />
-          </div>
-
-          {/* 전체 콘텐츠 */}
-          <section className="w-full px-4 md:px-8 lg:px-16 pb-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl md:text-2xl font-bold landing-text-primary">
-                  {selectedTags.length > 0
-                    ? `#${selectedTags.join(' #')} 관련 콘텐츠`
-                    : '전체 콘텐츠'}
-                </h2>
-                <p className="landing-text-muted text-sm mt-1">
-                  총 {filteredB2BContents.length}개의 학습 콘텐츠
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <SortViewOptions
-                  sortBy={sortBy}
-                  onSortChange={setSortBy}
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                />
-                <a
-                  href="/tu/catalog"
-                  className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
-                >
-                  {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
-
-            {/* 그리드 뷰 */}
-            {viewMode === 'grid' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filteredB2BContents.map((content) => (
-                  <LandingCourseCard
-                    key={content.id}
-                    id={content.id}
-                    title={content.title}
-                    image={content.image}
-                    tags={content.tags}
-                    contentType={content.contentType}
-                    duration={content.duration}
-                    enrollmentCount={content.enrollmentCount}
-                    tagStyle="HASHTAG"
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* 리스트 뷰 */}
-            {viewMode === 'list' && (
-              <div className="flex flex-col gap-4">
-                {filteredB2BContents.map((content) => (
-                  <div
-                    key={content.id}
-                    className="flex gap-4 p-4 rounded-xl landing-card-bg border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow"
-                  >
-                    <img
-                      src={content.image}
-                      alt={content.title}
-                      className="w-40 h-24 object-cover rounded-lg flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold landing-text-primary truncate">
-                        {content.title}
-                      </h3>
-                      <div className="flex gap-2 mt-2">
-                        {content.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs landing-text-secondary"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-4 mt-3 text-sm landing-text-muted">
-                        <span>{content.contentType}</span>
-                        <span>{content.duration}분</span>
-                        <span>{content.enrollmentCount.toLocaleString()}명 수강</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {filteredB2BContents.length === 0 && (
-              <p className="text-center landing-text-muted py-10">
-                선택한 태그에 해당하는 콘텐츠가 없습니다.
-              </p>
-            )}
-          </section>
-
-          {/* 필수 교육 섹션 */}
-          <section className="landing-section-alt py-12">
-            <div className="w-full px-4 md:px-8 lg:px-16">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold landing-text-primary">
-                    📌 필수 교육
-                  </h2>
-                  <p className="landing-text-muted text-sm mt-1">
-                    이번 달 완료해야 하는 필수 교육입니다
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {b2bContents
-                  .filter((c) => c.tags.includes('필수'))
-                  .map((content) => (
-                    <LandingCourseCard
-                      key={`required-${content.id}`}
-                      id={content.id}
-                      title={content.title}
-                      image={content.image}
-                      tags={content.tags}
-                      contentType={content.contentType}
-                      duration={content.duration}
-                      enrollmentCount={content.enrollmentCount}
-                      tagStyle="HASHTAG"
-                    />
-                  ))}
-              </div>
-            </div>
-          </section>
-
-          {/* 인기 콘텐츠 섹션 */}
-          <section className="w-full px-4 md:px-8 lg:px-16 py-12">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl md:text-2xl font-bold landing-text-primary">
-                  🔥 인기 콘텐츠
-                </h2>
-                <p className="landing-text-muted text-sm mt-1">
-                  동료들이 가장 많이 수강한 콘텐츠
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...b2bContents]
-                .sort((a, b) => b.enrollmentCount - a.enrollmentCount)
-                .slice(0, 4)
-                .map((content) => (
-                  <LandingCourseCard
-                    key={`popular-${content.id}`}
-                    id={content.id}
-                    title={content.title}
-                    image={content.image}
-                    tags={content.tags}
-                    contentType={content.contentType}
-                    duration={content.duration}
-                    enrollmentCount={content.enrollmentCount}
-                    tagStyle="HASHTAG"
-                  />
-                ))}
-            </div>
-          </section>
-        </main>
-
-        <LandingFooter />
-      </div>
-    );
-  }
-
-  // B2C 모드 렌더링 (기존)
   return (
     <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
       <LandingHeader />
@@ -596,6 +307,111 @@ export function LandingPage() {
             {featuredCourses.map((course) => (
               <LandingCourseCard key={`beg-${course.id}`} {...course} />
             ))}
+          </div>
+        </section>
+
+        {/* Popular Instructors Section */}
+        <section className="landing-section-alt py-20">
+          <div className="w-full px-4 md:px-8 lg:px-16">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">
+                  인기 강사
+                </h2>
+                <p className="landing-text-muted text-sm mt-2">
+                  수강생들이 가장 많이 찾는 검증된 전문가들을 만나보세요
+                </p>
+              </div>
+            </div>
+
+            {isInstructorsLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
+              </div>
+            ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {popularInstructors.map((instructor) => (
+                <Link
+                  key={instructor.id}
+                  to={`/tu/instructors/${instructor.id}`}
+                  className={`group block rounded-2xl p-6 transition-all duration-300 border ${
+                    isDark
+                      ? 'glass border-white/10 hover:border-[#6778ff]/50'
+                      : 'bg-white border-gray-200 hover:border-[#6778ff] hover:shadow-lg'
+                  }`}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <img
+                      src={instructor.profileImage}
+                      alt={instructor.name}
+                      className="w-24 h-24 rounded-full object-cover mb-4 ring-4 ring-white/20 group-hover:ring-[#6778ff]/30 transition-all"
+                    />
+                    <h3 className={`text-lg font-semibold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {instructor.name}
+                    </h3>
+                    <p className="text-[#6778ff] text-sm font-medium mb-2">
+                      {instructor.specialty}
+                    </p>
+                    <p className={`text-xs mb-4 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {instructor.description}
+                    </p>
+                    <div className="flex items-center gap-1 mb-3">
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {instructor.rating}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center gap-4 text-sm">
+                      <div className="text-center">
+                        <span className={`font-semibold block ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {instructor.studentCount.toLocaleString()}
+                        </span>
+                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>수강생</p>
+                      </div>
+                      <div className="text-center">
+                        <span className={`font-semibold block ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {instructor.courseCount}
+                        </span>
+                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>강의</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            )}
+          </div>
+        </section>
+
+        {/* Become Instructor CTA Section */}
+        <section className="w-full px-4 md:px-8 lg:px-16 py-20">
+          <div className={`relative overflow-hidden rounded-3xl ${
+            isDark
+              ? 'bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f0f23]'
+              : 'bg-gradient-to-br from-[#6778ff] via-[#8b5cf6] to-[#6366f1]'
+          }`}>
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl" />
+            </div>
+            <div className="relative z-10 p-8 md:p-12 lg:p-16 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="text-center md:text-left">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">
+                  당신의 지식을 나누어 보세요
+                </h2>
+                <p className="text-white/80 text-lg max-w-xl">
+                  전문 지식을 가진 분들을 위한 강사 프로그램에 참여하세요.
+                  수천 명의 수강생들에게 영감을 주고, 수익도 창출하세요.
+                </p>
+              </div>
+              <Link
+                to="/mypage/teaching"
+                className="flex items-center gap-2 px-8 py-4 bg-white text-[#6778ff] font-semibold rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
+              >
+                강사 시작하기
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
         </section>
       </main>

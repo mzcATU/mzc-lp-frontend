@@ -102,18 +102,22 @@ export type {
 
 // Cart (장바구니)
 export type {
+  CartItemResponse,
+  CartAddRequest,
+  CartRemoveRequest,
+  CartCountResponse,
   CartItem,
-  CartResponse,
   CartSummary,
-  Coupon,
-  ApplyCouponRequest,
-  ApplyCouponResponse,
-  AddToCartRequest,
-  RemoveFromCartRequest,
 } from './cart.types';
 
 // Wishlist (찜 목록)
 export type {
+  WishlistItemResponse,
+  WishlistAddRequest,
+  WishlistCheckRequest,
+  WishlistCheckResponse,
+  WishlistCountResponse,
+  // Legacy (하위 호환)
   WishlistItem,
   WishlistResponse,
   AddToWishlistRequest,
@@ -177,3 +181,38 @@ export {
   POST_TYPE_LABELS,
   COMMUNITY_SORT_OPTIONS,
 } from './community.types';
+
+// Instructor (강사)
+export type {
+  InstructorSummary,
+  InstructorProfile,
+  InstructorCourse,
+  InstructorRoadmap,
+  InstructorPost,
+  InstructorReview,
+  PopularInstructorsResponse,
+  InstructorProfileResponse,
+  InstructorCoursesResponse,
+  InstructorRoadmapsResponse,
+  InstructorPostsResponse,
+  InstructorReviewsResponse,
+  FollowStatusResponse,
+} from './instructor.types';
+
+// Curriculum (강의 커리큘럼 편집)
+export type {
+  CurriculumItemType,
+  CurriculumFolderItem,
+  CurriculumContentItem,
+  CurriculumItem,
+  CurriculumFormData,
+} from './curriculum.types';
+
+export {
+  isCurriculumFolder,
+  isCurriculumContent,
+  createFolderItem,
+  createContentItem,
+  findItemInTree,
+  findParentInTree,
+} from './curriculum.types';

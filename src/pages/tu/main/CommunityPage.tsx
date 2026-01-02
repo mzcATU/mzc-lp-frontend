@@ -1,144 +1,141 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { MessageSquare, Heart, Eye, Clock, TrendingUp, HelpCircle, Lightbulb, Users, Loader2, Search } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { MessageSquare, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCommunityPosts, useCommunityCategories } from '@/hooks/tu';
-import type { CommunityPost, CommunityCategory } from '@/types/tu';
+import { useCommunityPosts, useCommunityCategories, useCreatePost } from '@/hooks/tu';
+import { WritePostModal } from '@/components/domain/community';
+import type { CommunityPost, CommunityCategory, CreatePostRequest } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
-
-// 카테고리 아이콘 매핑
-const getCategoryIcon = (categoryId: string) => {
-  switch (categoryId) {
-    case 'qna':
-    case 'question': return HelpCircle;
-    case 'tips':
-    case 'tip': return Lightbulb;
-    case 'review': return TrendingUp;
-    case 'study':
-    case 'discussion': return Users;
-    default: return MessageSquare;
-  }
-};
+const USE_API = true;
 
 // 더미 카테고리 데이터
 const MOCK_CATEGORIES: CommunityCategory[] = [
-  { id: 'all', name: '전체', count: 6 },
-  { id: 'question', name: 'Q&A', count: 2 },
-  { id: 'tip', name: '학습 팁', count: 2 },
-  { id: 'review', name: '강의 후기', count: 1 },
-  { id: 'discussion', name: '스터디 모집', count: 1 },
+  { id: 'all', name: '전체', count: 15 },
+  { id: 'talk', name: '사는 얘기', count: 5 },
+  { id: 'ai', name: 'AI', count: 3 },
+  { id: 'salary', name: '연봉·단가', count: 2 },
+  { id: 'career', name: '취준생', count: 2 },
+  { id: 'study', name: '스터디', count: 2 },
+  { id: 'project', name: '프로젝트', count: 1 },
+  { id: 'mogakco', name: '모각코·모각공', count: 1 },
+  { id: 'mentoring', name: '멘토링·튜터링', count: 1 },
+  { id: 'meetup', name: '모임·네트워킹', count: 1 },
+];
+
+// 더미 인기글 데이터
+const MOCK_POPULAR_POSTS = {
+  today: [
+    { id: 1, title: '퇴사를 마음먹었습니다.', commentCount: 7, category: '사는 얘기' },
+    { id: 2, title: '이직하고 싶은 물경력 개발자', commentCount: 15, category: '사는 얘기' },
+    { id: 3, title: '승진했습니다', commentCount: 4, category: '사는 얘기' },
+    { id: 4, title: '바이브 코딩의 도입의 문제점이 있는것 같아요', commentCount: 11, category: '사는 얘기' },
+    { id: 5, title: '4년차의 개발 방향성과 이직 고려', commentCount: 11, category: '사는 얘기' },
+  ],
+  todayRight: [
+    { id: 6, title: '조폭 말투로 AI 쓰면 빡쳐요', commentCount: 2, category: 'AI' },
+    { id: 7, title: '커밋이력 없다고 일이 없냐 + 일 하기 싫고 추가 계약...', commentCount: 4, category: '사는 얘기' },
+    { id: 8, title: '초보자 PM역할을 맡았습니다. ㅠㅠ 개발자님들 도와주...', commentCount: 4, category: '피드백' },
+    { id: 9, title: '동생의 처남 결혼식 참석하는게 맞을까요?', commentCount: 10, category: '사는 얘기' },
+    { id: 10, title: '퀀트 개발해도 망할 것 같음..', commentCount: 2, category: '사는 얘기' },
+  ],
+  week: [
+    { id: 11, title: '주니어 개발자가 알아야 할 것들 정리', commentCount: 45, category: '학습 팁' },
+    { id: 12, title: 'React vs Vue 2024 비교', commentCount: 32, category: 'AI' },
+    { id: 13, title: '면접 후기 공유합니다', commentCount: 28, category: '취준생' },
+    { id: 14, title: '재택근무 꿀팁 모음', commentCount: 24, category: '사는 얘기' },
+    { id: 15, title: '연봉 협상 성공 후기', commentCount: 67, category: '연봉·단가' },
+  ],
+  month: [
+    { id: 16, title: '비전공자 개발자 취업 성공기', commentCount: 156, category: '취준생' },
+    { id: 17, title: '개발자 번아웃 극복 방법', commentCount: 89, category: '사는 얘기' },
+    { id: 18, title: '프리랜서 vs 정규직 비교', commentCount: 134, category: '연봉·단가' },
+    { id: 19, title: '스타트업 3년차 회고', commentCount: 78, category: '사는 얘기' },
+    { id: 20, title: '개발자 커리어 로드맵', commentCount: 201, category: '학습 팁' },
+  ],
+  notice: [
+    { id: 21, title: '[공지] 커뮤니티 이용 가이드라인 업데이트', commentCount: 0, category: '공지사항' },
+    { id: 22, title: '[이벤트] 2024년 연말 회고 이벤트', commentCount: 23, category: '공지사항' },
+    { id: 23, title: '[안내] 서비스 점검 일정 안내', commentCount: 5, category: '공지사항' },
+  ],
+};
+
+// 더미 테크 뉴스 데이터
+const MOCK_TECH_NEWS = [
+  { id: 1, author: 'chancy', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop', title: 'C# 을 사용하여 Excel 문서 인쇄', excerpt: 'Excel에서 표는 각 열에 제목이 있는 구조화된 데이터를 저장합니다. 이번 글에서는 C#을 사용하여...' },
+  { id: 2, author: 'devkim', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=100&h=100&fit=crop', title: 'React 19의 새로운 기능 살펴보기', excerpt: 'React 19에서 추가된 새로운 기능들과 변경점을 살펴봅니다. use() 훅과 서버 컴포넌트...' },
+  { id: 3, author: 'jsmaster', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', title: 'TypeScript 5.0 완벽 가이드', excerpt: 'TypeScript 5.0의 새로운 데코레이터와 const type parameters를 알아봅니다...' },
+  { id: 4, author: 'backend', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', title: 'Spring Boot 3.2 마이그레이션', excerpt: 'Spring Boot 3.2로 마이그레이션하면서 겪은 이슈들과 해결 방법을 공유합니다...' },
 ];
 
 // 더미 게시글 데이터
 const MOCK_POSTS: CommunityPost[] = [
   {
-    id: 1,
-    type: 'question',
-    category: 'question',
-    title: 'React useEffect에서 비동기 처리 시 클린업 함수 질문드립니다',
-    content: 'useEffect 안에서 API 호출을 할 때 컴포넌트가 언마운트되면 어떻게 처리해야 하나요? AbortController를 사용해야 한다고 들었는데...',
-    author: {
-      id: 1,
-      name: '코딩초보',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop',
-    },
-    tags: ['React', 'JavaScript'],
+    id: 101,
+    type: 'discussion',
+    category: 'talk',
+    title: '같이 회사 다니면 출근 좀 덜 싫을 것 같은 연예인',
+    content: '1월 2일이라 그런가 출근을 했는데 일 하나도 안잡히네요 아 심심하니 같이 회사 다니면 출근하기 행복할 것 같은 연예인 알려주세요 같은 팀이면 회사',
+    author: { id: 1, name: '코코코난', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop' },
+    tags: ['커뮤니티', '사는 얘기'],
     viewCount: 234,
     likeCount: 12,
-    commentCount: 8,
-    createdAt: '2024-12-30T08:00:00Z',
-    isSolved: true,
+    commentCount: 1,
+    createdAt: new Date(Date.now() - 7 * 60000).toISOString(),
   },
   {
-    id: 2,
+    id: 102,
+    type: 'question',
+    category: 'ai',
+    title: 'ChatGPT API 연동 시 토큰 제한 우회 방법',
+    content: 'GPT-4 API를 사용하는데 토큰 제한이 너무 빡빡합니다. 긴 문서를 처리해야 하는데 어떻게 해결하셨나요?',
+    author: { id: 2, name: 'AI개발자', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=100&h=100&fit=crop' },
+    tags: ['AI', 'ChatGPT'],
+    viewCount: 567,
+    likeCount: 34,
+    commentCount: 12,
+    createdAt: new Date(Date.now() - 25 * 60000).toISOString(),
+  },
+  {
+    id: 103,
     type: 'tip',
-    category: 'tip',
-    title: '개발 공부 3개월 만에 취업 성공한 방법 공유합니다',
-    content: '비전공자로 시작해서 3개월 만에 스타트업에 프론트엔드 개발자로 취업했습니다. 제가 했던 공부 방법과 포트폴리오 준비 과정을 공유드려요.',
-    author: {
-      id: 2,
-      name: '취준성공',
-      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=100&h=100&fit=crop',
-    },
-    tags: ['취업', '포트폴리오'],
-    viewCount: 1523,
-    likeCount: 187,
-    commentCount: 45,
-    createdAt: '2024-12-30T05:00:00Z',
-    isPinned: true,
-  },
-  {
-    id: 3,
-    type: 'review',
-    category: 'review',
-    title: '[후기] Next.js 15 완벽 마스터 강의 솔직 리뷰',
-    content: '김개발님의 Next.js 강의를 완강했습니다. App Router부터 서버 컴포넌트까지 정말 깊이있게 다뤄주셔서 실무에 바로 적용할 수 있었어요.',
-    author: {
-      id: 3,
-      name: '프론트마스터',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-    },
-    tags: ['Next.js', '강의후기'],
-    viewCount: 892,
-    likeCount: 56,
+    category: 'salary',
+    title: '연봉 협상 시 꼭 알아야 할 5가지',
+    content: '이직하면서 연봉 협상을 여러 번 해봤는데요, 제가 느낀 핵심 포인트들을 공유합니다.',
+    author: { id: 3, name: '협상의신', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
+    tags: ['연봉', '이직'],
+    viewCount: 1234,
+    likeCount: 89,
     commentCount: 23,
-    createdAt: '2024-12-29T10:00:00Z',
+    createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
   },
   {
-    id: 4,
+    id: 104,
     type: 'discussion',
-    category: 'discussion',
+    category: 'study',
     title: '[모집] 알고리즘 스터디 모집합니다 (주 3회)',
-    content: '프로그래머스 Lv.2~3 수준으로 함께 알고리즘 문제를 풀 분들을 모집합니다. 디스코드로 진행하며, 주 3회 저녁 9시에 모여서 풀이 공유해요.',
-    author: {
-      id: 4,
-      name: '알고왕',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    },
+    content: '프로그래머스 Lv.2~3 수준으로 함께 알고리즘 문제를 풀 분들을 모집합니다.',
+    author: { id: 4, name: '알고왕', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
     tags: ['알고리즘', '스터디'],
     viewCount: 456,
-    likeCount: 34,
-    commentCount: 67,
-    createdAt: '2024-12-27T10:00:00Z',
-  },
-  {
-    id: 5,
-    type: 'question',
-    category: 'question',
-    title: 'Spring Boot에서 JWT 토큰 재발급 로직 구현 방법',
-    content: 'Access Token이 만료되었을 때 Refresh Token으로 재발급하는 로직을 어디서 처리해야 할까요? 필터에서 처리하는 게 맞나요?',
-    author: {
-      id: 5,
-      name: '백엔드지망',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-    },
-    tags: ['Spring', 'JWT'],
-    viewCount: 345,
     likeCount: 21,
-    commentCount: 15,
-    createdAt: '2024-12-29T10:00:00Z',
+    commentCount: 8,
+    createdAt: new Date(Date.now() - 5 * 3600000).toISOString(),
   },
   {
-    id: 6,
-    type: 'tip',
-    category: 'tip',
-    title: 'VSCode 생산성 높이는 단축키 & 확장 프로그램 추천',
-    content: '개발할 때 유용한 VSCode 단축키와 꼭 설치해야 할 확장 프로그램들을 정리해봤습니다. 특히 Vim 모드 쓰시는 분들 참고하세요!',
-    author: {
-      id: 6,
-      name: '생산성덕후',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-    },
-    tags: ['VSCode', '개발도구'],
-    viewCount: 2341,
-    likeCount: 234,
-    commentCount: 56,
-    createdAt: '2024-12-28T10:00:00Z',
-    isPinned: true,
+    id: 105,
+    type: 'question',
+    category: 'career',
+    title: '비전공자 신입 포트폴리오 피드백 부탁드려요',
+    content: '국비지원 6개월 과정 수료하고 취준 중인데요, 포트폴리오 방향이 맞는지 모르겠습니다.',
+    author: { id: 5, name: '취준생123', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
+    tags: ['취업', '포트폴리오'],
+    viewCount: 789,
+    likeCount: 45,
+    commentCount: 31,
+    createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
   },
 ];
 
@@ -149,135 +146,37 @@ const formatRelativeTime = (dateString: string): string => {
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) return '방금 전';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}분 전`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}분`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}시간 전`;
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}일 전`;
   return date.toLocaleDateString('ko-KR');
 };
 
-interface PostCardProps {
-  post: CommunityPost;
-  isDark: boolean;
-  categories: CommunityCategory[];
-}
+// 마크다운 이미지 문법을 제거하고 "[이미지]"로 대체
+const stripMarkdownImages = (content: string): string => {
+  // ![alt](url) 패턴을 "[이미지]"로 대체
+  return content.replace(/!\[[^\]]*\]\([^)]+\)/g, '[이미지]');
+};
 
-function PostCard({ post, isDark, categories }: PostCardProps) {
-  const isHot = post.likeCount > 100;
-  const isRecruiting = post.type === 'discussion' && !post.isSolved;
-
-  return (
-    <Link
-      to={`/tu/community/${post.id}`}
-      className={`block rounded-xl p-6 transition-all cursor-pointer border ${
-        isDark
-          ? 'glass border-white/10 hover:bg-white/5'
-          : 'bg-white border-gray-200 hover:bg-gray-50'
-      }`}
-    >
-      <div className="flex items-start gap-4">
-        {/* Author Image */}
-        {post.author.avatar && (
-          <img
-            src={post.author.avatar}
-            alt={post.author.name}
-            className="w-10 h-10 rounded-full object-cover hidden sm:block"
-          />
-        )}
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            {isHot && (
-              <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs font-bold rounded">
-                HOT
-              </span>
-            )}
-            {post.isSolved && (
-              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded">
-                해결됨
-              </span>
-            )}
-            {isRecruiting && (
-              <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-bold rounded">
-                모집중
-              </span>
-            )}
-            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              {categories.find((c) => c.id === post.category)?.name || post.category}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h3 className={`text-lg font-semibold mb-2 transition-colors line-clamp-1 ${
-            isDark
-              ? 'text-white hover:text-[#6778ff]'
-              : 'text-gray-900 hover:text-[#6778ff]'
-          }`}>
-            {post.title}
-          </h3>
-
-          {/* Preview */}
-          <p className={`text-sm mb-3 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            {post.excerpt || post.content}
-          </p>
-
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className={`px-2 py-1 rounded text-xs ${
-                    isDark
-                      ? 'bg-white/5 text-gray-400'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Meta */}
-          <div className={`flex items-center gap-4 text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            <span>{post.author.name}</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {formatRelativeTime(post.createdAt)}
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              {post.viewCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <Heart className="w-3 h-3" />
-              {post.likeCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <MessageSquare className="w-3 h-3" />
-              {post.commentCount}
-            </span>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
+// 인기글 탭 타입
+type PopularTab = 'today' | 'week' | 'month' | 'notice';
 
 export function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'latest' | 'popular' | 'most_commented' | 'most_liked'>('latest');
+  const [searchQuery] = useState('');
+  const [popularTab, setPopularTab] = useState<PopularTab>('today');
+  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
+  const createPostMutation = useCreatePost();
 
   // React Query 훅 (API 모드일 때만 활성화)
   const filter = {
     search: searchQuery || undefined,
     category: activeCategory !== 'all' ? activeCategory : undefined,
-    sortBy,
+    sortBy: 'latest' as const,
   };
   const { data: apiPostData, isLoading, error } = useCommunityPosts(filter, USE_API);
   const { data: apiCategoryData } = useCommunityCategories(USE_API);
@@ -285,7 +184,7 @@ export function CommunityPage() {
   // 실제 사용할 데이터 결정
   const categories = USE_API ? (apiCategoryData?.categories || []) : MOCK_CATEGORIES;
 
-  // Mock 모드에서 필터링 및 정렬 적용
+  // Mock 모드에서 필터링 적용
   const getFilteredPosts = (): CommunityPost[] => {
     if (USE_API) {
       return apiPostData?.posts || [];
@@ -293,12 +192,10 @@ export function CommunityPage() {
 
     let filtered = [...MOCK_POSTS];
 
-    // 카테고리 필터
     if (activeCategory !== 'all') {
       filtered = filtered.filter(post => post.category === activeCategory);
     }
 
-    // 검색어 필터
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(post =>
@@ -307,39 +204,73 @@ export function CommunityPage() {
       );
     }
 
-    // 정렬
-    switch (sortBy) {
-      case 'popular':
-        filtered.sort((a, b) => b.viewCount - a.viewCount);
-        break;
-      case 'most_commented':
-        filtered.sort((a, b) => b.commentCount - a.commentCount);
-        break;
-      case 'most_liked':
-        filtered.sort((a, b) => b.likeCount - a.likeCount);
-        break;
-      case 'latest':
-      default:
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-    }
-
     return filtered;
   };
 
   const filteredPosts = getFilteredPosts();
 
+  // 인기글 데이터 가져오기
+  const getPopularPosts = (tab: PopularTab) => {
+    switch (tab) {
+      case 'today':
+        return { left: MOCK_POPULAR_POSTS.today, right: MOCK_POPULAR_POSTS.todayRight };
+      case 'week':
+        return { left: MOCK_POPULAR_POSTS.week, right: MOCK_POPULAR_POSTS.todayRight };
+      case 'month':
+        return { left: MOCK_POPULAR_POSTS.month, right: MOCK_POPULAR_POSTS.todayRight };
+      case 'notice':
+        return { left: MOCK_POPULAR_POSTS.notice, right: [] };
+      default:
+        return { left: [], right: [] };
+    }
+  };
+
+  const popularPosts = getPopularPosts(popularTab);
+
+  // 무한 순환 캐러셀
+  const totalItems = MOCK_TECH_NEWS.length;
+  const extendedNews = [...MOCK_TECH_NEWS, ...MOCK_TECH_NEWS, ...MOCK_TECH_NEWS]; // 3배로 복제
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+
+  // 무한 순환 처리
+  useEffect(() => {
+    if (carouselIndex < 0) {
+      // 왼쪽 끝 -> 오른쪽으로 점프
+      setIsTransitioning(false);
+      setCarouselIndex(totalItems + carouselIndex);
+    } else if (carouselIndex >= totalItems) {
+      // 오른쪽 끝 -> 왼쪽으로 점프
+      setIsTransitioning(false);
+      setCarouselIndex(carouselIndex - totalItems);
+    }
+  }, [carouselIndex, totalItems]);
+
+  // 트랜지션 복원
+  useEffect(() => {
+    if (!isTransitioning) {
+      const timer = setTimeout(() => setIsTransitioning(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning]);
+
+  const handlePrev = useCallback(() => {
+    setCarouselIndex(prev => prev - 1);
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setCarouselIndex(prev => prev + 1);
+  }, []);
+
   // 로딩 상태
   if (USE_API && isLoading) {
     return (
-      <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
+      <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
         <LandingHeader />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
-            <span className={`ml-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              게시글을 불러오는 중...
-            </span>
+            <span className="ml-3 landing-text-muted">게시글을 불러오는 중...</span>
           </div>
         </main>
         <LandingFooter />
@@ -350,16 +281,15 @@ export function CommunityPage() {
   // 에러 상태
   if (USE_API && error) {
     return (
-      <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
+      <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
         <LandingHeader />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="text-center py-20">
-            <p className={`text-lg ${isDark ? 'text-red-400' : 'text-red-500'}`}>
-              게시글을 불러오는데 실패했습니다.
-            </p>
+            <MessageSquare className="w-16 h-16 mx-auto mb-4 landing-text-muted" />
+            <p className="text-lg landing-text-primary mb-4">게시글을 불러오는데 실패했습니다</p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-6 py-2 landing-btn-primary rounded-full text-white"
+              className="landing-btn-primary px-6 py-2 rounded-xl"
             >
               다시 시도
             </button>
@@ -371,117 +301,306 @@ export function CommunityPage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
+    <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
       <LandingHeader />
 
-      <main className="w-full px-4 md:px-8 lg:px-16 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className={`text-4xl md:text-5xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <span className="gradient-text">커뮤니티</span>
-          </h1>
-          <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            함께 성장하는 공간, 질문하고 나누고 연결하세요.
-          </p>
-        </div>
+      <main>
+        {/* 인기글 섹션 */}
+        <section className="w-full px-4 md:px-8 lg:px-16 py-12">
+          <div className={`rounded-2xl p-6 md:p-8 border ${
+            isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+          }`}>
+            {/* 인기글 탭 */}
+            <div className={`flex gap-6 mb-6 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+              {[
+                { key: 'today', label: '오늘의 인기글' },
+                { key: 'week', label: '이번주 인기글' },
+                { key: 'month', label: '이달의 인기글' },
+                { key: 'notice', label: '공지사항' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setPopularTab(tab.key as PopularTab)}
+                  className={`pb-3 text-sm font-medium transition-colors relative ${
+                    popularTab === tab.key
+                      ? 'landing-text-primary'
+                      : 'landing-text-muted hover:landing-text-secondary'
+                  }`}
+                >
+                  {tab.label}
+                  {popularTab === tab.key && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6778ff]" />
+                  )}
+                </button>
+              ))}
+            </div>
 
-        {/* Search & Sort */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1 relative">
-            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="게시글 검색"
-              className={`w-full rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#6778ff] focus:border-transparent transition-all ${
-                isDark
-                  ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500'
-                  : 'bg-white border border-gray-200 text-gray-900 placeholder-gray-400'
-              }`}
-            />
+            {/* 인기글 목록 - 2열 그리드 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
+              {/* 왼쪽 열 */}
+              <div className="space-y-3">
+                {popularPosts.left.map((post) => (
+                  <Link
+                    key={post.id}
+                    to={`/tu/main/community/${post.id}`}
+                    className="flex items-center gap-3 group"
+                  >
+                    <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
+                      {post.title}
+                    </span>
+                    {post.commentCount > 0 && (
+                      <span className="text-xs font-medium text-red-500">
+                        N ({post.commentCount})
+                      </span>
+                    )}
+                    <span className="text-xs landing-text-muted whitespace-nowrap">
+                      {post.category}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* 오른쪽 열 */}
+              {popularPosts.right.length > 0 && (
+                <div className="space-y-3">
+                  {popularPosts.right.map((post) => (
+                    <Link
+                      key={post.id}
+                      to={`/tu/main/community/${post.id}`}
+                      className="flex items-center gap-3 group"
+                    >
+                      <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
+                        {post.title}
+                      </span>
+                      {post.commentCount > 0 && (
+                        <span className="text-xs font-medium text-red-500">
+                          N ({post.commentCount})
+                        </span>
+                      )}
+                      <span className="text-xs landing-text-muted whitespace-nowrap">
+                        {post.category}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className={`rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#6778ff] cursor-pointer ${
-              isDark
-                ? 'bg-white/5 border border-white/10 text-white'
-                : 'bg-white border border-gray-200 text-gray-900'
-            }`}
-          >
-            <option value="latest">최신순</option>
-            <option value="popular">조회순</option>
-            <option value="most_commented">댓글순</option>
-            <option value="most_liked">좋아요순</option>
-          </select>
-        </div>
+        </section>
 
-        {/* Category Tabs */}
-        <div className="flex flex-wrap gap-3 mb-8">
-          {categories.map((cat) => {
-            const IconComponent = getCategoryIcon(cat.id);
-            return (
+        {/* 테크 지식 / 뉴스 섹션 */}
+        <section className="landing-section-alt py-16">
+          <div className="w-full px-4 md:px-8 lg:px-16">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">
+                  지금 가장 뜨거운 이슈
+                </h2>
+                <p className="landing-text-muted text-sm mt-2">
+                  개발자들이 주목하는 최신 트렌드를 확인하세요
+                </p>
+              </div>
+              <Link
+                to="/tu/main/community?category=tech"
+                className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
+              >
+                더 보기 <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* 캐러셀 */}
+            <div className="relative">
+              {/* 왼쪽 버튼 - 항상 표시 */}
+              <button
+                onClick={handlePrev}
+                className={`absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-colors ${
+                  isDark ? 'glass border border-white/10 text-white hover:bg-white/10' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              <div className="overflow-hidden" ref={carouselRef}>
+                <div
+                  className={`flex gap-6 ${isTransitioning ? 'transition-transform duration-500 ease-out' : ''}`}
+                  style={{ transform: `translateX(calc(-${carouselIndex + totalItems} * (33.333% + 8px)))` }}
+                >
+                  {extendedNews.map((news, index) => (
+                    <Link
+                      key={`${news.id}-${index}`}
+                      to={`/tu/main/community/${news.id}`}
+                      className={`group block rounded-2xl p-6 transition-all duration-300 border flex-shrink-0 w-[calc(33.333%-16px)] ${
+                        isDark
+                          ? 'glass border-white/10 hover:border-[#6778ff]/50'
+                          : 'bg-white border-gray-200 hover:border-[#6778ff] hover:shadow-lg'
+                      }`}
+                    >
+                      <span className={`inline-block text-xs px-2 py-1 rounded mb-3 ${
+                        isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        Tech 뉴스
+                      </span>
+                      <div className="flex items-center gap-2 mb-3">
+                        <img src={news.avatar} alt={news.author} className="w-8 h-8 rounded-full object-cover" />
+                        <span className="text-sm landing-text-secondary">{news.author}</span>
+                      </div>
+                      <h3 className="font-semibold landing-text-primary mb-2 line-clamp-1 group-hover:text-[#6778ff] transition-colors">
+                        {news.title}
+                      </h3>
+                      <p className="text-sm landing-text-muted line-clamp-2">
+                        {news.excerpt}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* 오른쪽 버튼 - 항상 표시 */}
+              <button
+                onClick={handleNext}
+                className={`absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-colors ${
+                  isDark ? 'glass border border-white/10 text-white hover:bg-white/10' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 캐러셀 인디케이터 */}
+            <div className="flex justify-center gap-2 mt-6">
+              {[...Array(totalItems)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCarouselIndex(i)}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    (carouselIndex % totalItems + totalItems) % totalItems === i ? 'bg-[#6778ff]' : isDark ? 'bg-white/20' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 카테고리 필터 & 게시글 목록 */}
+        <section className="w-full px-4 md:px-8 lg:px-16 py-16">
+          {/* 카테고리 필터 칩 */}
+          <div className="flex flex-wrap items-center gap-3 mb-8">
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
                   activeCategory === cat.id
-                    ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7] text-white shadow-lg shadow-[#6778ff]/25'
-                    : isDark
-                      ? 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
-                      : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
+                    ? 'landing-btn-primary shadow-lg'
+                    : 'landing-chip-inactive'
                 }`}
               >
-                <IconComponent className="w-4 h-4" />
                 {cat.name}
               </button>
-            );
-          })}
-        </div>
-
-        {/* Write Button */}
-        <div className="flex justify-between items-center mb-6">
-          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-            총 <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{filteredPosts.length}</span>개의 게시글
-          </p>
-          <button className="landing-btn-primary px-6 py-3 rounded-xl text-white font-medium flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            글쓰기
-          </button>
-        </div>
-
-        {/* Posts List */}
-        {filteredPosts.length > 0 ? (
-          <div className="space-y-4">
-            {filteredPosts.map((post) => (
-              <PostCard key={post.id} post={post} isDark={isDark} categories={categories} />
             ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <MessageSquare className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
-            <p className={isDark ? 'text-gray-500' : 'text-gray-400'}>
-              게시글이 없습니다.
-            </p>
-          </div>
-        )}
 
-        {/* Load More */}
-        {filteredPosts.length > 0 && (
-          <div className="text-center mt-10">
-            <button className={`px-8 py-3 rounded-full font-medium border transition-colors ${
-              isDark
-                ? 'border-white/30 text-white hover:bg-white/10'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-            }`}>
-              더보기
+            {/* 글쓰기 버튼 */}
+            <button
+              onClick={() => setIsWriteModalOpen(true)}
+              className="ml-auto landing-btn-primary px-5 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg"
+            >
+              <MessageSquare className="w-4 h-4" />
+              글쓰기
             </button>
           </div>
-        )}
+
+          {/* 게시글 목록 */}
+          <div className={`rounded-2xl border overflow-hidden ${
+            isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+          }`}>
+            {filteredPosts.length > 0 ? (
+              <div className={`divide-y ${isDark ? 'divide-white/5' : 'divide-gray-100'}`}>
+                {filteredPosts.map((post) => (
+                  <Link
+                    key={post.id}
+                    to={`/tu/main/community/${post.id}`}
+                    className={`flex items-start gap-4 px-6 py-5 transition-colors ${
+                      isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    {/* 카테고리 & 작성자 */}
+                    <div className="flex items-center gap-3 min-w-[200px]">
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {categories.find(c => c.id === post.category)?.name || post.category}
+                      </span>
+                      <span className="text-sm landing-text-muted">
+                        {post.author.name}
+                      </span>
+                      <span className="text-xs landing-text-muted">
+                        · {formatRelativeTime(post.createdAt)}
+                      </span>
+                    </div>
+
+                    {/* 제목 & 내용 */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium landing-text-primary mb-1 line-clamp-1">
+                        {post.title}
+                        {post.commentCount > 0 && (
+                          <span className="text-red-500 text-sm ml-2 font-normal">
+                            N ({post.commentCount})
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-sm landing-text-muted line-clamp-1">
+                        {stripMarkdownImages(post.content)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20">
+                <MessageSquare className="w-16 h-16 mx-auto mb-4 landing-text-muted" />
+                <p className="landing-text-muted mb-4">게시글이 없습니다</p>
+                <button
+                  onClick={() => setIsWriteModalOpen(true)}
+                  className="landing-btn-primary px-6 py-2 rounded-xl"
+                >
+                  첫 번째 글쓰기
+                </button>
+              </div>
+            )}
+
+            {/* 더보기 */}
+            {filteredPosts.length > 0 && (
+              <div className={`text-center py-4 border-t ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
+                <button className="text-sm landing-text-secondary hover:landing-text-primary transition-colors">
+                  더보기
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       <LandingFooter />
+
+      {/* Write Post Modal */}
+      <WritePostModal
+        isOpen={isWriteModalOpen}
+        onClose={() => setIsWriteModalOpen(false)}
+        onSubmit={async (data: CreatePostRequest) => {
+          if (USE_API) {
+            const result = await createPostMutation.mutateAsync(data);
+            setIsWriteModalOpen(false);
+            navigate(`/tu/main/community/${result.id}`);
+          } else {
+            console.log('New post data:', data);
+            setIsWriteModalOpen(false);
+            alert('게시글이 작성되었습니다. (Mock 모드)');
+          }
+        }}
+        categories={categories}
+        isDark={isDark}
+        isSubmitting={createPostMutation.isPending}
+      />
     </div>
   );
 }

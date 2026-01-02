@@ -1,12 +1,12 @@
 export { LandingPage } from './LandingPage';
-export { Page1 } from './Page1';
-export { Page2 } from './Page2';
-export { Page3 } from './Page3';
 export { CoursesExplorePage } from './CoursesExplorePage';
 export { RoadmapExplorePage } from './RoadmapExplorePage';
 export { RoadmapDetailPage } from './RoadmapDetailPage';
 export { CommunityPage } from './CommunityPage';
+export { CommunityDetailPage } from './CommunityDetailPage';
 export { CartPage } from './CartPage';
 export { WishlistPage } from './WishlistPage';
 export { NotificationsPage } from './NotificationsPage';
+export { NotificationDetailPage } from './NotificationDetailPage';
 export { CourseDetailPage } from './CourseDetailPage';
+export { InstructorProfilePage } from './InstructorProfilePage';

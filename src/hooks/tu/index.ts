@@ -94,9 +94,6 @@ export {
   usePopularCourses,
   useRecommendedCourses,
   useRelatedCourses,
-  useAddToWishlist,
-  useRemoveFromWishlist,
-  useAddToCart,
 } from './useCourseDetailQueries';
 
 // Roadmap Detail Hooks
@@ -117,21 +114,25 @@ export {
 export {
   cartKeys,
   useCart,
-  useCartAddItem,
+  useCartCount,
+  useCheckCartStatus,
+  useAddToCart,
   useRemoveFromCart,
-  useClearCart,
-  useApplyCoupon,
-  useRemoveCoupon,
+  useRemoveFromCartBulk,
+  useToggleCart,
 } from './useCartQueries';
 
 // Wishlist Hooks
 export {
   wishlistKeys,
-  useWishlist,
-  useWishlistAddItem,
-  useWishlistRemoveItem,
-  useClearWishlist,
-  useAddAllToCart,
+  useMyWishlist,
+  useMyWishlistCount,
+  useCheckWishlistStatus,
+  useCheckWishlistStatusBulk,
+  useCourseWishlistCount,
+  useAddToWishlist,
+  useRemoveFromWishlist,
+  useToggleWishlist,
 } from './useWishlistQueries';
 
 // Notification Hooks
@@ -178,3 +179,27 @@ export {
   useLikePost,
   useUnlikePost,
 } from './useCommunityQueries';
+
+// Instructor Hooks
+export {
+  instructorKeys,
+  usePopularInstructors,
+  useInstructorProfile,
+  useInstructorCourses,
+  useInstructorRoadmaps,
+  useInstructorPosts,
+  useInstructorReviews,
+  useFollowStatus,
+  useFollowInstructor,
+  useUnfollowInstructor,
+} from './useInstructorQueries';
+
+// Program Application Hooks
+export {
+  programApplicationKeys,
+  useApplyProgram,
+  useApplyProgramsBulk,
+  toCourseForApplication,
+  type CourseForApplication,
+  type ApplicationResult,
+} from './useProgramApplicationQueries';

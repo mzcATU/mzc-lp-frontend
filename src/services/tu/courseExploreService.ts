@@ -7,9 +7,46 @@ import type {
   CourseExploreResponse,
   CourseCategoryResponse,
   CourseExploreFilter,
+  CourseExploreItem,
 } from '@/types/tu/courseExplore.types';
+import type { ApiResponse, PageResponse } from '@/types/common';
 
-const BASE_URL = '/tu/courses';
+const BASE_URL = '/courses';
+
+// 백엔드 응답 타입
+interface BackendCourseResponse {
+  courseId: number;
+  title: string;
+  description: string;
+  thumbnailUrl: string | null;
+  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  type: 'ONLINE' | 'OFFLINE' | 'BLENDED';
+  estimatedHours: number | null;
+  categoryId: number | null;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 백엔드 응답을 프론트엔드 형식으로 변환
+const transformCourse = (course: BackendCourseResponse): CourseExploreItem => ({
+  id: course.courseId,
+  title: course.title,
+  instructor: '강사명',  // 백엔드에서 강사 정보가 없어 기본값 사용
+  originalPrice: 0,
+  price: 0,
+  image: course.thumbnailUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop',
+  discount: 0,
+  rating: 4.5,
+  reviewCount: 0,
+  studentCount: 0,
+  totalHours: course.estimatedHours || 0,
+  category: course.categoryId?.toString() || 'dev',
+  level: course.level.toLowerCase() as 'beginner' | 'intermediate' | 'advanced',
+  isNew: new Date(course.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),  // 7일 이내
+  isBestseller: false,
+  tags: course.tags,
+});
 
 export const courseExploreService = {
   /**
@@ -19,71 +56,93 @@ export const courseExploreService = {
     const params = new URLSearchParams();
 
     if (filter?.search) {
-      params.append('search', filter.search);
+      params.append('keyword', filter.search);
     }
     if (filter?.category && filter.category !== 'all') {
-      params.append('category', filter.category);
-    }
-    if (filter?.level && filter.level !== 'all') {
-      params.append('level', filter.level);
-    }
-    if (filter?.rating) {
-      params.append('rating', String(filter.rating));
-    }
-    if (filter?.priceRange?.min !== undefined) {
-      params.append('minPrice', String(filter.priceRange.min));
-    }
-    if (filter?.priceRange?.max !== undefined) {
-      params.append('maxPrice', String(filter.priceRange.max));
-    }
-    if (filter?.sortBy) {
-      params.append('sortBy', filter.sortBy);
+      params.append('categoryId', filter.category);
     }
     if (filter?.page) {
       params.append('page', String(filter.page));
     }
     if (filter?.pageSize) {
-      params.append('pageSize', String(filter.pageSize));
+      params.append('size', String(filter.pageSize));
     }
 
     const query = params.toString();
     const url = query ? `${BASE_URL}?${query}` : BASE_URL;
-    const response = await axiosInstance.get<CourseExploreResponse>(url);
-    return response.data;
+    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(url);
+
+    const pageData = response.data.data;
+    return {
+      courses: pageData.content.map(transformCourse),
+      totalCount: pageData.totalElements,
+      page: pageData.number,
+      pageSize: pageData.size,
+      totalPages: pageData.totalPages,
+    };
   },
 
   /**
    * 카테고리 목록 조회
    */
   getCategories: async (): Promise<CourseCategoryResponse> => {
-    const response = await axiosInstance.get<CourseCategoryResponse>(`${BASE_URL}/categories`);
-    return response.data;
+    // 카테고리 API가 없으므로 기본 카테고리 반환
+    return {
+      categories: [
+        { id: 'all', name: '전체', count: 0 },
+        { id: 'dev', name: '개발', count: 0 },
+        { id: 'ai', name: 'AI', count: 0 },
+        { id: 'data', name: '데이터', count: 0 },
+        { id: 'design', name: '디자인', count: 0 },
+      ],
+    };
   },
 
   /**
    * 인기 강의 조회
    */
   getPopularCourses: async (limit?: number): Promise<CourseExploreResponse> => {
-    const params = limit ? `?limit=${limit}` : '';
-    const response = await axiosInstance.get<CourseExploreResponse>(`${BASE_URL}/popular${params}`);
-    return response.data;
+    const size = limit || 10;
+    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(`${BASE_URL}?size=${size}`);
+    const pageData = response.data.data;
+    return {
+      courses: pageData.content.map(transformCourse),
+      totalCount: pageData.totalElements,
+      page: pageData.number,
+      pageSize: pageData.size,
+      totalPages: pageData.totalPages,
+    };
   },
 
   /**
    * 신규 강의 조회
    */
   getNewCourses: async (limit?: number): Promise<CourseExploreResponse> => {
-    const params = limit ? `?limit=${limit}` : '';
-    const response = await axiosInstance.get<CourseExploreResponse>(`${BASE_URL}/new${params}`);
-    return response.data;
+    const size = limit || 10;
+    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(`${BASE_URL}?size=${size}`);
+    const pageData = response.data.data;
+    return {
+      courses: pageData.content.map(transformCourse),
+      totalCount: pageData.totalElements,
+      page: pageData.number,
+      pageSize: pageData.size,
+      totalPages: pageData.totalPages,
+    };
   },
 
   /**
    * 추천 강의 조회
    */
   getRecommendedCourses: async (limit?: number): Promise<CourseExploreResponse> => {
-    const params = limit ? `?limit=${limit}` : '';
-    const response = await axiosInstance.get<CourseExploreResponse>(`${BASE_URL}/recommended${params}`);
-    return response.data;
+    const size = limit || 10;
+    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(`${BASE_URL}?size=${size}`);
+    const pageData = response.data.data;
+    return {
+      courses: pageData.content.map(transformCourse),
+      totalCount: pageData.totalElements,
+      page: pageData.number,
+      pageSize: pageData.size,
+      totalPages: pageData.totalPages,
+    };
   },
 };

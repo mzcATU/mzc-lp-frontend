@@ -14,7 +14,8 @@ import { categoryService } from '@/services/common';
 import { useCourse, useUpdateCourse } from '@/hooks/tu/useCourseQueries';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse, UpdateCourseRequest } from '@/types/common';
-import { Step1BasicInfo, Step2Curriculum, Step3Review, translations } from './components';
+import { Step1BasicInfo, Step3Review, translations } from './components';
+import { Step2CurriculumTree } from './components/Step2CurriculumTree';
 import type { TranslationKey } from './components';
 
 interface CourseEditPageProps {
@@ -41,7 +42,8 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
     tags: [],
     level: '',
     type: '',
-    lessons: [],
+    lessons: [], // deprecated
+    curriculumItems: [],
     isDraft: false,
     multiLanguage: {
       enabled: false,
@@ -73,13 +75,15 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
       setFormData({
         title: courseData.title,
         description: courseData.description || '',
+        thumbnailUrl: courseData.thumbnailUrl || '',
         startDate: courseData.startDate || '',
         endDate: courseData.endDate || '',
         categoryId: courseData.categoryId,
         tags: courseData.tags || [],
         level: courseData.level || '',
         type: courseData.type || '',
-        lessons: [], // TODO: items를 lessons로 변환하는 로직 필요
+        lessons: [], // deprecated
+        curriculumItems: [], // TODO: items를 curriculumItems로 변환하는 로직 필요
         isDraft: false,
         multiLanguage: {
           enabled: false,
@@ -111,6 +115,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
       const request: UpdateCourseRequest = {
         title: formData.title,
         description: formData.description || undefined,
+        thumbnailUrl: formData.thumbnailUrl || undefined,
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
@@ -226,9 +231,9 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
             />
           )}
 
-          {/* Step 2: 회차 구성 */}
+          {/* Step 2: 커리큘럼 구성 */}
           {currentStep === 2 && (
-            <Step2Curriculum
+            <Step2CurriculumTree
               language={language}
               formData={formData}
               onFormDataChange={handleFormDataChange}

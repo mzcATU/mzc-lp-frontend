@@ -22,13 +22,19 @@ interface PageResponse<T> {
   number: number;
 }
 
+// 완료 기준 타입 (백엔드 enum과 매칭)
+type CompletionCriteria = 'BUTTON_CLICK' | 'PERCENT_90' | 'PERCENT_100';
+
 // 파일 업로드 옵션
 interface UploadFileOptions {
   folderId?: number;
   originalFileName?: string;
   description?: string;
   tags?: string;
+  category?: string;
+  completionCriteria?: CompletionCriteria;
   thumbnail?: File;
+  downloadable?: boolean;
 }
 
 export const contentService = {
@@ -49,8 +55,17 @@ export const contentService = {
     if (options?.tags) {
       formData.append('tags', options.tags);
     }
+    if (options?.category) {
+      formData.append('category', options.category);
+    }
+    if (options?.completionCriteria) {
+      formData.append('completionCriteria', options.completionCriteria);
+    }
     if (options?.thumbnail) {
       formData.append('thumbnail', options.thumbnail);
+    }
+    if (options?.downloadable !== undefined) {
+      formData.append('downloadable', String(options.downloadable));
     }
 
     const { data } = await axiosInstance.post<{ data: ContentResponse }>(
@@ -60,6 +75,7 @@ export const contentService = {
         headers: {
           'Content-Type': undefined, // 브라우저가 boundary 포함하여 자동 설정
         },
+        timeout: 300000, // 5분 (대용량 파일 업로드용)
       }
     );
     return data.data;
@@ -123,6 +139,7 @@ export const contentService = {
         headers: {
           'Content-Type': undefined, // 브라우저가 boundary 포함하여 자동 설정
         },
+        timeout: 300000, // 5분 (대용량 파일 업로드용)
       }
     );
     const result = response.data;

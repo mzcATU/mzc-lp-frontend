@@ -3,8 +3,8 @@
  * 담당: 전체 레이아웃, 상태 관리, 네비게이션
  *
  * Step별 UI는 components/ 폴더의 개별 컴포넌트 참조:
- * - Step1BasicInfo: 기본 정보 (course 테이블 담당자)
- * - Step2Curriculum: 회차 구성 (content 테이블 담당자)
+ * - Step1BasicInfo: 기본 정보 (course 테이블)
+ * - Step2CurriculumTree: 커리큘럼 트리 구성 (폴더/콘텐츠 계층)
  * - Step3Review: 검토 및 저장
  */
 import { useState, useEffect } from 'react';
@@ -15,11 +15,50 @@ import { Button } from '@/components/common';
 import { courseService, categoryService } from '@/services/common';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse, CreateCourseRequest } from '@/types/common';
-import { Step1BasicInfo, Step2Curriculum, Step3Review, translations } from './components';
+import type { CurriculumItem } from '@/types/tu';
+import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
+import { Step1BasicInfo, Step3Review, translations } from './components';
+import { Step2CurriculumTree } from './components/Step2CurriculumTree';
 import type { TranslationKey } from './components';
 
 interface CourseCreatePageProps {
   language?: 'ko' | 'en';
+}
+
+/**
+ * 커리큘럼 트리를 재귀적으로 순회하며 API 호출
+ */
+async function createCurriculumItemsRecursively(
+  courseId: number,
+  items: CurriculumItem[],
+  parentId: number | null
+): Promise<void> {
+  for (const item of items) {
+    if (isCurriculumFolder(item)) {
+      // 폴더 생성
+      const folderResponse = await courseService.createFolder(courseId, {
+        folderName: item.name,
+        parentId: parentId ?? undefined,
+      });
+      // 하위 항목 재귀 생성
+      if (item.children.length > 0) {
+        await createCurriculumItemsRecursively(
+          courseId,
+          item.children,
+          folderResponse.itemId
+        );
+      }
+    } else if (isCurriculumContent(item)) {
+      // 콘텐츠(차시) 생성 - contentId로 백엔드에서 LO 자동 생성
+      await courseService.createItem(courseId, {
+        itemName: item.name,
+        parentId: parentId ?? undefined,
+        contentId: item.contentId,
+        displayName: item.displayName || undefined,
+        description: item.description || undefined,
+      });
+    }
+  }
 }
 
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
@@ -36,7 +75,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     tags: [],
     level: '',
     type: '',
-    lessons: [],
+    lessons: [], // deprecated
+    curriculumItems: [],
     isDraft: false,
     multiLanguage: {
       enabled: false,
@@ -84,6 +124,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       const request: CreateCourseRequest = {
         title: formData.title,
         description: formData.description || undefined,
+        thumbnailUrl: formData.thumbnailUrl || undefined,
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
@@ -96,29 +137,13 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       const courseResponse = await courseService.create(request);
       const courseId = courseResponse.courseId;
 
-      // 2. 회차(폴더) 및 콘텐츠(차시) 생성
-      if (formData.lessons.length > 0) {
-        for (const lesson of formData.lessons) {
-          // 폴더 생성
-          const folderResponse = await courseService.createFolder(courseId, {
-            folderName: lesson.title || `회차 ${lesson.order}`,
-          });
-          const folderId = folderResponse.itemId;
-
-          // 해당 폴더 내 콘텐츠(차시) 생성
-          for (const content of lesson.contents) {
-            if (content.contentId) {
-              // LO가 연결된 콘텐츠인 경우 차시 생성
-              await courseService.createItem(courseId, {
-                itemName: content.name,
-                parentId: folderId,
-                learningObjectId: content.contentId,
-                displayName: content.displayName || undefined,
-                description: content.description || undefined,
-              });
-            }
-          }
-        }
+      // 2. 커리큘럼 항목 생성 (트리 구조 재귀 처리)
+      if (formData.curriculumItems.length > 0) {
+        await createCurriculumItemsRecursively(
+          courseId,
+          formData.curriculumItems,
+          null
+        );
       }
 
       alert('강의가 등록되었습니다!');
@@ -212,9 +237,9 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
             />
           )}
 
-          {/* Step 2: 회차 구성 */}
+          {/* Step 2: 커리큘럼 구성 */}
           {currentStep === 2 && (
-            <Step2Curriculum
+            <Step2CurriculumTree
               language={language}
               formData={formData}
               onFormDataChange={handleFormDataChange}

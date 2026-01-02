@@ -1,64 +1,42 @@
 /**
- * 장바구니(Cart) 관련 타입 정의
+ * 장바구니(Cart) 관련 타입 정의 - 백엔드 API 스펙 기반
  */
 
-// 장바구니 아이템
-export interface CartItem {
-  id: number;
+// 장바구니 항목 응답 (백엔드 API)
+export interface CartItemResponse {
+  cartItemId: number;
   courseId: number;
-  title: string;
-  instructor: string;
-  originalPrice: number;
-  price: number;
-  image: string;
-  discount: number;
-  rating: number;
-  reviewCount: number;
-  totalHours: number;
+  courseTitle: string;
+  courseDescription: string | null;
+  thumbnailUrl: string | null;
+  level: string | null;
+  type: string | null;
+  estimatedHours: number | null;
+  addedAt: string;
+}
+
+// 장바구니 추가 요청
+export interface CartAddRequest {
+  courseId: number;
+}
+
+// 장바구니 삭제 요청 (일괄)
+export interface CartRemoveRequest {
+  courseIds: number[];
+}
+
+// 장바구니 개수 응답
+export interface CartCountResponse {
+  count: number;
+}
+
+// UI용 장바구니 아이템 (선택 상태 포함)
+export interface CartItem extends CartItemResponse {
   isSelected: boolean;
 }
 
-// 장바구니 응답
-export interface CartResponse {
-  items: CartItem[];
-  totalCount: number;
-}
-
-// 장바구니 요약
+// 장바구니 요약 (UI용)
 export interface CartSummary {
-  originalTotal: number;
-  discountTotal: number;
-  finalTotal: number;
+  totalCount: number;
   selectedCount: number;
-}
-
-// 쿠폰 정보
-export interface Coupon {
-  code: string;
-  discountType: 'PERCENTAGE' | 'FIXED';
-  discountValue: number;
-  minPurchaseAmount?: number;
-  expiresAt?: string;
-}
-
-// 쿠폰 적용 요청
-export interface ApplyCouponRequest {
-  couponCode: string;
-}
-
-// 쿠폰 적용 응답
-export interface ApplyCouponResponse {
-  success: boolean;
-  discount: number;
-  message?: string;
-}
-
-// 장바구니 아이템 추가 요청
-export interface AddToCartRequest {
-  courseId: number;
-}
-
-// 장바구니 아이템 삭제 요청
-export interface RemoveFromCartRequest {
-  itemIds: number[];
 }

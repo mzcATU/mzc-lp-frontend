@@ -8,11 +8,17 @@ import type {
   CommunityCategoryResponse,
   CommunityFilter,
   CommunityPost,
+  CommunityPostDetail,
   CreatePostRequest,
   UpdatePostRequest,
+  CommentListResponse,
+  Comment,
+  CreateCommentRequest,
+  UpdateCommentRequest,
 } from '@/types/tu/community.types';
+import type { ApiResponse } from '@/types/common';
 
-const BASE_URL = '/tu/community';
+const BASE_URL = '/community';
 
 export const communityService = {
   /**
@@ -33,7 +39,7 @@ export const communityService = {
     if (filter?.sortBy) {
       params.append('sortBy', filter.sortBy);
     }
-    if (filter?.page) {
+    if (filter?.page !== undefined) {
       params.append('page', String(filter.page));
     }
     if (filter?.pageSize) {
@@ -42,32 +48,32 @@ export const communityService = {
 
     const query = params.toString();
     const url = query ? `${BASE_URL}/posts?${query}` : `${BASE_URL}/posts`;
-    const response = await axiosInstance.get<CommunityPostListResponse>(url);
-    return response.data;
+    const response = await axiosInstance.get<ApiResponse<CommunityPostListResponse>>(url);
+    return response.data.data;
   },
 
   /**
    * 게시글 상세 조회
    */
-  getPost: async (postId: number): Promise<CommunityPost> => {
-    const response = await axiosInstance.get<CommunityPost>(`${BASE_URL}/posts/${postId}`);
-    return response.data;
+  getPost: async (postId: number): Promise<CommunityPostDetail> => {
+    const response = await axiosInstance.get<ApiResponse<CommunityPostDetail>>(`${BASE_URL}/posts/${postId}`);
+    return response.data.data;
   },
 
   /**
    * 게시글 작성
    */
   createPost: async (data: CreatePostRequest): Promise<CommunityPost> => {
-    const response = await axiosInstance.post<CommunityPost>(`${BASE_URL}/posts`, data);
-    return response.data;
+    const response = await axiosInstance.post<ApiResponse<CommunityPost>>(`${BASE_URL}/posts`, data);
+    return response.data.data;
   },
 
   /**
    * 게시글 수정
    */
   updatePost: async (postId: number, data: UpdatePostRequest): Promise<CommunityPost> => {
-    const response = await axiosInstance.patch<CommunityPost>(`${BASE_URL}/posts/${postId}`, data);
-    return response.data;
+    const response = await axiosInstance.patch<ApiResponse<CommunityPost>>(`${BASE_URL}/posts/${postId}`, data);
+    return response.data.data;
   },
 
   /**
@@ -95,8 +101,8 @@ export const communityService = {
    * 카테고리 목록 조회
    */
   getCategories: async (): Promise<CommunityCategoryResponse> => {
-    const response = await axiosInstance.get<CommunityCategoryResponse>(`${BASE_URL}/categories`);
-    return response.data;
+    const response = await axiosInstance.get<ApiResponse<CommunityCategoryResponse>>(`${BASE_URL}/categories`);
+    return response.data.data;
   },
 
   /**
@@ -104,7 +110,104 @@ export const communityService = {
    */
   getPopularPosts: async (limit?: number): Promise<CommunityPostListResponse> => {
     const params = limit ? `?limit=${limit}` : '';
-    const response = await axiosInstance.get<CommunityPostListResponse>(`${BASE_URL}/posts/popular${params}`);
-    return response.data;
+    const response = await axiosInstance.get<ApiResponse<CommunityPostListResponse>>(`${BASE_URL}/posts/popular${params}`);
+    return response.data.data;
+  },
+
+  // ========== 댓글 관련 API ==========
+
+  /**
+   * 댓글 목록 조회
+   */
+  getComments: async (postId: number, page = 0, pageSize = 20): Promise<CommentListResponse> => {
+    const response = await axiosInstance.get<ApiResponse<CommentListResponse>>(
+      `${BASE_URL}/posts/${postId}/comments?page=${page}&pageSize=${pageSize}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 댓글 작성
+   */
+  createComment: async (data: CreateCommentRequest): Promise<Comment> => {
+    const response = await axiosInstance.post<ApiResponse<Comment>>(
+      `${BASE_URL}/posts/${data.postId}/comments`,
+      { content: data.content, parentId: data.parentId }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 댓글 수정
+   */
+  updateComment: async (postId: number, commentId: number, data: UpdateCommentRequest): Promise<Comment> => {
+    const response = await axiosInstance.patch<ApiResponse<Comment>>(
+      `${BASE_URL}/posts/${postId}/comments/${commentId}`,
+      data
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 댓글 삭제
+   */
+  deleteComment: async (postId: number, commentId: number): Promise<void> => {
+    await axiosInstance.delete(`${BASE_URL}/posts/${postId}/comments/${commentId}`);
+  },
+
+  /**
+   * 댓글 좋아요
+   */
+  likeComment: async (postId: number, commentId: number): Promise<void> => {
+    await axiosInstance.post(`${BASE_URL}/posts/${postId}/comments/${commentId}/like`);
+  },
+
+  /**
+   * 댓글 좋아요 취소
+   */
+  unlikeComment: async (postId: number, commentId: number): Promise<void> => {
+    await axiosInstance.delete(`${BASE_URL}/posts/${postId}/comments/${commentId}/like`);
+  },
+
+  // ========== 이미지 업로드 API ==========
+
+  /**
+   * 이미지 업로드 (단일)
+   */
+  uploadImage: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosInstance.post<ApiResponse<{ url: string }>>(
+      `${BASE_URL}/images/upload`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.data.url;
+  },
+
+  /**
+   * 이미지 업로드 (다중)
+   */
+  uploadMultipleImages: async (files: File[]): Promise<string[]> => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    const response = await axiosInstance.post<ApiResponse<{ urls: string[] }>>(
+      `${BASE_URL}/images/upload/multiple`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.data.urls;
   },
 };

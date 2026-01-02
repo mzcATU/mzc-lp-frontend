@@ -18,8 +18,11 @@ import type {
 
 export const instructorAssignmentKeys = {
   all: ['instructorAssignments'] as const,
+  lists: () => [...instructorAssignmentKeys.all, 'list'] as const,
+  list: (params?: InstructorAssignmentFilterParams) =>
+    [...instructorAssignmentKeys.lists(), params] as const,
   byTime: (timeId: number) => [...instructorAssignmentKeys.all, 'time', timeId] as const,
-  list: (timeId: number, params?: InstructorAssignmentFilterParams) =>
+  timeList: (timeId: number, params?: InstructorAssignmentFilterParams) =>
     [...instructorAssignmentKeys.byTime(timeId), params] as const,
 };
 
@@ -27,13 +30,21 @@ export const instructorAssignmentKeys = {
 // Query Hooks
 // ============================================
 
+/** 전체 강사 배정 목록 조회 (TO 전용) */
+export const useInstructorAssignments = (params?: InstructorAssignmentFilterParams) => {
+  return useQuery({
+    queryKey: instructorAssignmentKeys.list(params),
+    queryFn: () => instructorAssignmentService.getAssignments(params),
+  });
+};
+
 /** 차수별 강사 목록 조회 */
 export const useTimeInstructors = (
   timeId: number,
   params?: InstructorAssignmentFilterParams
 ) => {
   return useQuery({
-    queryKey: instructorAssignmentKeys.list(timeId, params),
+    queryKey: instructorAssignmentKeys.timeList(timeId, params),
     queryFn: () => instructorAssignmentService.getInstructors(timeId, params),
     enabled: !!timeId,
   });
