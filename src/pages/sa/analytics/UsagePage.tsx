@@ -30,7 +30,7 @@ export function UsagePage() {
   );
 
   // Dashboard 데이터는 추후 추가 예정
-  const dashboard: SaDashboardResponse | undefined = undefined;
+  const dashboard = null as SaDashboardResponse | null;
   const isLoading = activityLoading;
 
   // 대시보드에서 통계 추출
