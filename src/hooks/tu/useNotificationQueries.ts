@@ -4,16 +4,13 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationService } from '@/services/tu/notificationService';
-import type {
-  NotificationFilter,
-  MarkAsReadRequest,
-  DeleteNotificationRequest,
-} from '@/types/tu/notification.types';
+import type { NotificationFilter } from '@/types/tu/notification.types';
 
 // Query Keys
 export const notificationKeys = {
   all: ['notifications'] as const,
   list: (filter?: NotificationFilter) => [...notificationKeys.all, 'list', filter] as const,
+  detail: (id: number) => [...notificationKeys.all, 'detail', id] as const,
   unreadCount: () => [...notificationKeys.all, 'unreadCount'] as const,
 };
 
@@ -25,6 +22,18 @@ export function useNotifications(filter?: NotificationFilter, enabled = true) {
     queryKey: notificationKeys.list(filter),
     queryFn: () => notificationService.getNotifications(filter),
     enabled,
+    staleTime: 1000 * 60, // 1분
+  });
+}
+
+/**
+ * 알림 상세 조회 훅
+ */
+export function useNotification(notificationId: number, enabled = true) {
+  return useQuery({
+    queryKey: notificationKeys.detail(notificationId),
+    queryFn: () => notificationService.getNotification(notificationId),
+    enabled: enabled && !!notificationId,
     staleTime: 1000 * 60, // 1분
   });
 }
@@ -49,7 +58,7 @@ export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: MarkAsReadRequest) => notificationService.markAsRead(data),
+    mutationFn: (notificationId: number) => notificationService.markAsRead(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
@@ -73,11 +82,11 @@ export function useMarkAllAsRead() {
 /**
  * 알림 삭제 훅
  */
-export function useDeleteNotifications() {
+export function useDeleteNotification() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: DeleteNotificationRequest) => notificationService.deleteNotifications(data),
+    mutationFn: (notificationId: number) => notificationService.deleteNotification(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },

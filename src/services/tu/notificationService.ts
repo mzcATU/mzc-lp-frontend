@@ -5,12 +5,19 @@
 import axiosInstance from '@/services/common/api/axiosInstance';
 import type {
   NotificationListResponse,
+  NotificationItem,
   NotificationFilter,
-  MarkAsReadRequest,
-  DeleteNotificationRequest,
+  UnreadCountResponse,
 } from '@/types/tu/notification.types';
 
 const BASE_URL = '/tu/notifications';
+
+// API 응답 래퍼 타입
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
 
 export const notificationService = {
   /**
@@ -24,18 +31,34 @@ export const notificationService = {
     if (filter?.isRead !== undefined) {
       params.append('isRead', String(filter.isRead));
     }
+    if (filter?.page !== undefined) {
+      params.append('page', String(filter.page));
+    }
+    if (filter?.pageSize !== undefined) {
+      params.append('pageSize', String(filter.pageSize));
+    }
 
     const query = params.toString();
     const url = query ? `${BASE_URL}?${query}` : BASE_URL;
-    const response = await axiosInstance.get<NotificationListResponse>(url);
-    return response.data;
+    const response = await axiosInstance.get<ApiResponse<NotificationListResponse>>(url);
+    return response.data.data;
+  },
+
+  /**
+   * 알림 상세 조회
+   */
+  getNotification: async (notificationId: number): Promise<NotificationItem> => {
+    const response = await axiosInstance.get<ApiResponse<NotificationItem>>(
+      `${BASE_URL}/${notificationId}`
+    );
+    return response.data.data;
   },
 
   /**
    * 알림 읽음 처리
    */
-  markAsRead: async (data: MarkAsReadRequest): Promise<void> => {
-    await axiosInstance.patch(`${BASE_URL}/read`, data);
+  markAsRead: async (notificationId: number): Promise<void> => {
+    await axiosInstance.patch(`${BASE_URL}/${notificationId}/read`);
   },
 
   /**
@@ -48,8 +71,8 @@ export const notificationService = {
   /**
    * 알림 삭제
    */
-  deleteNotifications: async (data: DeleteNotificationRequest): Promise<void> => {
-    await axiosInstance.delete(BASE_URL, { data });
+  deleteNotification: async (notificationId: number): Promise<void> => {
+    await axiosInstance.delete(`${BASE_URL}/${notificationId}`);
   },
 
   /**
@@ -62,8 +85,10 @@ export const notificationService = {
   /**
    * 읽지 않은 알림 개수 조회
    */
-  getUnreadCount: async (): Promise<{ count: number }> => {
-    const response = await axiosInstance.get<{ count: number }>(`${BASE_URL}/unread-count`);
-    return response.data;
+  getUnreadCount: async (): Promise<UnreadCountResponse> => {
+    const response = await axiosInstance.get<ApiResponse<UnreadCountResponse>>(
+      `${BASE_URL}/unread-count`
+    );
+    return response.data.data;
   },
 };
