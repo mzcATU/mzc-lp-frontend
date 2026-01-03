@@ -130,12 +130,11 @@ export type {
   NotificationType,
   NotificationItem,
   NotificationListResponse,
-  MarkAsReadRequest,
-  DeleteNotificationRequest,
+  UnreadCountResponse,
   NotificationFilter,
 } from './notification.types';
 
-export { NOTIFICATION_TYPE_LABELS } from './notification.types';
+export { NOTIFICATION_TYPE_LABELS, NOTIFICATION_TYPE_COLORS } from './notification.types';
 
 // Course Explore (강의 탐색)
 export type {

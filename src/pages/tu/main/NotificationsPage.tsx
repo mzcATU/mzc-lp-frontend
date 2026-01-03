@@ -1,85 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, Trash2, Settings, Gift, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotifications, useDeleteReadNotifications } from '@/hooks/tu';
-import type { NotificationItem, NotificationType } from '@/types/tu';
-
-// 환경 설정: true면 API 사용, false면 더미 데이터 사용
-const USE_API = false;
-
-// 더미 알림 데이터
-const MOCK_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 1,
-    type: 'promotion',
-    title: '블랙위크 특별 할인!',
-    message: '모든 강의 25% 할인 + 100% 환급 이벤트가 시작되었습니다. 지금 바로 확인해보세요!',
-    createdAt: '2024-12-30T09:50:00Z',
-    isRead: false,
-  },
-  {
-    id: 2,
-    type: 'course',
-    title: '새 강의가 업데이트되었습니다',
-    message: '"실전! Next.js 15 완벽 마스터" 강의에 새로운 섹션이 추가되었습니다.',
-    createdAt: '2024-12-30T09:00:00Z',
-    isRead: false,
-  },
-  {
-    id: 3,
-    type: 'comment',
-    title: '질문에 답변이 달렸습니다',
-    message: '김개발 강사님이 회원님의 질문에 답변을 남겼습니다.',
-    createdAt: '2024-12-30T07:00:00Z',
-    isRead: false,
-  },
-  {
-    id: 4,
-    type: 'system',
-    title: '서비스 점검 안내',
-    message: '12월 5일 오전 2시~4시 서비스 점검이 예정되어 있습니다.',
-    createdAt: '2024-12-29T10:00:00Z',
-    isRead: true,
-  },
-  {
-    id: 5,
-    type: 'course',
-    title: '수강 완료를 축하합니다!',
-    message: '"React 기초부터 실전까지" 강의를 완료하셨습니다. 수료증을 다운로드해보세요!',
-    createdAt: '2024-12-28T10:00:00Z',
-    isRead: true,
-  },
-  {
-    id: 6,
-    type: 'promotion',
-    title: '첫 구매 할인 쿠폰 도착',
-    message: '첫 강의 구매 시 사용할 수 있는 20% 할인 쿠폰이 발급되었습니다.',
-    createdAt: '2024-12-27T10:00:00Z',
-    isRead: true,
-  },
-];
+import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications } from '@/hooks/tu';
+import type { NotificationType } from '@/types/tu';
 
 // 알림 타입별 필터 옵션
 const notificationTypes: { id: NotificationType | 'all'; label: string }[] = [
   { id: 'all', label: '전체' },
-  { id: 'promotion', label: '이벤트' },
-  { id: 'course', label: '강의' },
-  { id: 'comment', label: '댓글' },
-  { id: 'system', label: '공지' },
-  { id: 'assignment', label: '과제' },
+  { id: 'COMMENT', label: '댓글' },
+  { id: 'LIKE', label: '좋아요' },
+  { id: 'COURSE', label: '강의' },
+  { id: 'SYSTEM', label: '시스템' },
+  { id: 'ASSIGNMENT', label: '과제' },
 ];
 
 // 알림 타입별 아이콘 매핑
 const getNotificationIcon = (type: NotificationType) => {
   switch (type) {
-    case 'promotion': return Gift;
-    case 'course': return BookOpen;
-    case 'comment': return MessageSquare;
-    case 'system': return Megaphone;
-    case 'assignment': return FileText;
+    case 'COMMENT': return MessageSquare;
+    case 'LIKE': return Heart;
+    case 'COURSE': return BookOpen;
+    case 'SYSTEM': return Megaphone;
+    case 'ASSIGNMENT': return FileText;
     default: return AlertCircle;
   }
 };
@@ -87,11 +32,11 @@ const getNotificationIcon = (type: NotificationType) => {
 // 알림 타입별 색상 매핑
 const getIconColor = (type: NotificationType) => {
   switch (type) {
-    case 'promotion': return 'text-[#f59e0b] bg-[#f59e0b]/20';
-    case 'course': return 'text-[#6778ff] bg-[#6778ff]/20';
-    case 'comment': return 'text-[#10b981] bg-[#10b981]/20';
-    case 'system': return 'text-[#ec4899] bg-[#ec4899]/20';
-    case 'assignment': return 'text-[#8b5cf6] bg-[#8b5cf6]/20';
+    case 'COMMENT': return 'text-[#10b981] bg-[#10b981]/20';
+    case 'LIKE': return 'text-[#f43f5e] bg-[#f43f5e]/20';
+    case 'COURSE': return 'text-[#6778ff] bg-[#6778ff]/20';
+    case 'SYSTEM': return 'text-[#f59e0b] bg-[#f59e0b]/20';
+    case 'ASSIGNMENT': return 'text-[#8b5cf6] bg-[#8b5cf6]/20';
     default: return 'text-gray-400 bg-gray-400/20';
   }
 };
@@ -115,19 +60,16 @@ export function NotificationsPage() {
   const navigate = useNavigate();
   const [activeType, setActiveType] = useState<NotificationType | 'all'>('all');
 
-  // React Query 훅 (API 모드일 때만 활성화)
+  // React Query 훅
   const filter = activeType === 'all' ? undefined : { type: activeType };
-  const { data: apiNotificationData, isLoading, error } = useNotifications(filter, USE_API);
+  const { data: apiNotificationData, isLoading, error } = useNotifications(filter);
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
-  const deleteNotificationsMutation = useDeleteNotifications();
+  const deleteNotificationMutation = useDeleteNotification();
   const deleteReadNotificationsMutation = useDeleteReadNotifications();
 
-  // 로컬 상태 (Mock 모드에서 사용)
-  const [mockNotifications, setMockNotifications] = useState(MOCK_NOTIFICATIONS);
-
   // 실제 사용할 데이터 결정
-  const allNotifications = USE_API ? (apiNotificationData?.notifications || []) : mockNotifications;
+  const allNotifications = apiNotificationData?.notifications || [];
 
   // 필터링 적용
   const filteredNotifications = activeType === 'all'
@@ -137,41 +79,23 @@ export function NotificationsPage() {
   const unreadCount = allNotifications.filter(n => !n.isRead).length;
 
   const markAsRead = (id: number) => {
-    if (USE_API) {
-      markAsReadMutation.mutate({ notificationIds: [id] });
-    } else {
-      setMockNotifications(mockNotifications.map(n =>
-        n.id === id ? { ...n, isRead: true } : n
-      ));
-    }
+    markAsReadMutation.mutate(id);
   };
 
   const handleMarkAllAsRead = () => {
-    if (USE_API) {
-      markAllAsReadMutation.mutate();
-    } else {
-      setMockNotifications(mockNotifications.map(n => ({ ...n, isRead: true })));
-    }
+    markAllAsReadMutation.mutate();
   };
 
   const deleteNotification = (id: number) => {
-    if (USE_API) {
-      deleteNotificationsMutation.mutate({ notificationIds: [id] });
-    } else {
-      setMockNotifications(mockNotifications.filter(n => n.id !== id));
-    }
+    deleteNotificationMutation.mutate(id);
   };
 
   const handleDeleteAllRead = () => {
-    if (USE_API) {
-      deleteReadNotificationsMutation.mutate();
-    } else {
-      setMockNotifications(mockNotifications.filter(n => !n.isRead));
-    }
+    deleteReadNotificationsMutation.mutate();
   };
 
   // 로딩 상태
-  if (USE_API && isLoading) {
+  if (isLoading) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
         <LandingHeader />
@@ -189,7 +113,7 @@ export function NotificationsPage() {
   }
 
   // 에러 상태
-  if (USE_API && error) {
+  if (error) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
         <LandingHeader />
@@ -340,7 +264,7 @@ export function NotificationsPage() {
                           e.stopPropagation();
                           deleteNotification(notification.id);
                         }}
-                        disabled={deleteNotificationsMutation.isPending}
+                        disabled={deleteNotificationMutation.isPending}
                         className={`p-1 transition-colors disabled:opacity-50 ${
                           isDark
                             ? 'text-gray-500 hover:text-red-400'
