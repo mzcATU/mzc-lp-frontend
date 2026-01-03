@@ -16,8 +16,12 @@ import {
   Save,
   X,
   UserPlus,
+  FileText,
+  GraduationCap,
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import { Button, Badge, Input, Label, NativeSelect, Card } from '@/components/common';
+import { EnrollmentTab } from '@/pages/to/enrollment';
 import {
   useTime,
   useUpdateTime,
@@ -95,6 +99,9 @@ const t = {
   statusChangeError: { ko: '상태 변경에 실패했습니다.', en: 'Failed to change status.' },
   noDescription: { ko: '설명 없음', en: 'No description' },
   noLocation: { ko: '장소 미지정', en: 'No location' },
+  // Tabs
+  tabBasicInfo: { ko: '기본 정보', en: 'Basic Info' },
+  tabEnrollments: { ko: '수강생', en: 'Enrollments' },
 };
 
 // 백엔드 에러 코드 → 사용자 친화적 메시지 매핑
@@ -125,6 +132,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UpdateCourseTimeRequest>({});
+  const [activeTab, setActiveTab] = useState<'info' | 'enrollments'>('info');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -346,11 +354,54 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-border bg-bg-app sticky top-[89px] z-10">
+        <div className="px-8">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={cn(
+                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
+                activeTab === 'info'
+                  ? 'text-text-primary'
+                  : 'text-text-secondary hover:text-text-primary'
+              )}
+            >
+              <FileText size={16} />
+              {getText('tabBasicInfo')}
+              {activeTab === 'info' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('enrollments')}
+              className={cn(
+                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
+                activeTab === 'enrollments'
+                  ? 'text-text-primary'
+                  : 'text-text-secondary hover:text-text-primary'
+              )}
+            >
+              <GraduationCap size={16} />
+              {getText('tabEnrollments')}
+              <Badge variant="secondary" className="ml-1">
+                {courseTime.currentEnrollment}
+              </Badge>
+              {activeTab === 'enrollments' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8 max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 기본 정보 */}
+        {/* 기본 정보 탭 */}
+        {activeTab === 'info' && (
+          <div className="p-6 px-8 max-w-6xl">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 기본 정보 */}
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-text-primary mb-4">
                 {getText('basicInfo')}
@@ -596,8 +647,20 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                 <p className="text-text-secondary text-center py-4">{getText('noInstructors')}</p>
               )}
             </Card>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* 수강생 탭 */}
+        {activeTab === 'enrollments' && (
+          <div className="p-6 px-8">
+            <EnrollmentTab
+              courseTimeId={timeId}
+              courseTimeTitle={courseTime.title}
+              language={language}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
