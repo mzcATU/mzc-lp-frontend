@@ -230,4 +230,10 @@ export const API_ENDPOINTS = {
     ITEM: (courseId: number) => `/cart/items/${courseId}`,
     ITEM_CHECK: (courseId: number) => `/cart/items/${courseId}/check`,
   },
+
+  // System Settings (SA)
+  SYSTEM_SETTINGS: {
+    BASE: '/sa/system-settings',
+    TENANT_DEFAULTS: '/sa/system-settings/tenant-defaults',
+  },
 } as const;
