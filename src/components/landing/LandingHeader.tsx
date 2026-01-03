@@ -6,6 +6,7 @@ import { useMyProfile } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { useUnreadNotificationCount } from '@/hooks/tu';
+import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 
 export function LandingHeader() {
   const [showBanner, setShowBanner] = useState(true);
@@ -19,14 +20,28 @@ export function LandingHeader() {
   const isDark = theme === 'dark';
   const { data: unreadCountData } = useUnreadNotificationCount(isAuthenticated);
   const unreadCount = unreadCountData?.count || 0;
+  const { branding } = useTenantBranding();
+
+  // API Base URL
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
 
   // 프로필 이미지 URL 생성
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
   const profileImageUrl = profile?.profileImageUrl
     ? profile.profileImageUrl.startsWith('http')
       ? profile.profileImageUrl
       : `${apiBaseUrl}${profile.profileImageUrl}`
     : null;
+
+  // 로고 URL 계산 (다크모드 우선)
+  const logoUrl = isDark
+    ? (branding?.darkLogoUrl || branding?.logoUrl)
+    : branding?.logoUrl;
+
+  const fullLogoUrl = logoUrl
+    ? (logoUrl.startsWith('http') ? logoUrl : `${apiBaseUrl}${logoUrl}`)
+    : null;
+
+  const tenantName = branding?.tenantName || 'MZC Learn';
 
   const handleLogout = () => {
     logout();
@@ -63,8 +78,14 @@ export function LandingHeader() {
           <div className="flex items-center gap-8 ml-2 md:ml-4">
             {/* Logo */}
             <Link to="/tu/b2c" className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
-              <span className="text-2xl">M</span>
-              <span className="gradient-text">MZC Learn</span>
+              {fullLogoUrl ? (
+                <img src={fullLogoUrl} alt={tenantName} className="h-8 object-contain" />
+              ) : (
+                <>
+                  <span className="text-2xl">M</span>
+                  <span className="gradient-text">{tenantName}</span>
+                </>
+              )}
             </Link>
 
             {/* Desktop Nav Links */}
