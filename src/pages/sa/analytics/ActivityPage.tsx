@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/common/Select';
 import { useSaActivityStats, useSaRecentActivities } from '@/hooks/sa';
-import type { ActivityType } from '@/services/ta/analyticsService';
+import type { ActivityType } from '@/services/sa/analyticsService';
 
 // 활동 타입별 설정
 const activityTypeConfig: Record<string, { label: string; color: string }> = {

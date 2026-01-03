@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/common/Select';
 import { useSaActivityLogs, useSaActivityStats } from '@/hooks/sa';
-import type { ActivityType } from '@/services/ta/analyticsService';
+import type { ActivityType } from '@/services/sa/analyticsService';
 
 // 활동 타입별 레벨 매핑
 const getLogLevel = (activityType: ActivityType): 'INFO' | 'WARN' | 'ERROR' | 'DEBUG' => {
