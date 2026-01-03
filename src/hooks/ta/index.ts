@@ -28,3 +28,5 @@ export {
   useUpdateBranding,
   useUpdateUserManagement,
 } from './useTenantSettingsQueries';
+
+export { taDashboardKeys, useTaKpiDashboard } from './useDashboardQueries';

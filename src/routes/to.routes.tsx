@@ -19,7 +19,8 @@ import {
 } from '@/pages/to/program';
 import { InstructorAssignmentsPage } from '@/pages/to/instructor';
 import { UserManagementPage } from '@/pages/to/user';
-import { DashboardPage, PlaceholderPage } from './pages';
+import { DashboardPage } from '@/pages/to';
+import { PlaceholderPage } from './pages';
 
 function TenantOperatorWrapper() {
   return (
