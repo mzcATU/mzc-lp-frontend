@@ -28,3 +28,8 @@ export {
   useUpdateBranding,
   useUpdateUserManagement,
 } from './useTenantSettingsQueries';
+
+export {
+  dashboardKeys,
+  useTaDashboardKpi,
+} from './useDashboardQueries';
