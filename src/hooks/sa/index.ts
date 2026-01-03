@@ -23,18 +23,6 @@ export {
 } from './useNoticeQueries';
 
 export {
-  dashboardKeys,
-  useSaDashboard,
-} from './useDashboardQueries';
-
-export {
-  saAnalyticsKeys,
-  useSaActivityLogs,
-  useSaActivityStats,
-  useSaRecentActivities,
-} from './useAnalyticsQueries';
-
-export {
   systemSettingsKeys,
   useSystemSettings,
   useTenantDefaults,
