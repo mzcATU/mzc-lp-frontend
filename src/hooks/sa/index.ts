@@ -21,3 +21,8 @@ export {
   useDistributeNotice,
   useDistributeAllNotice,
 } from './useNoticeQueries';
+
+export {
+  dashboardKeys,
+  useSaDashboard,
+} from './useDashboardQueries';
