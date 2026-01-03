@@ -27,4 +27,26 @@ export {
   useUpdateTenantSettings,
   useUpdateBranding,
   useUpdateUserManagement,
+  // Design & Layout
+  useUpdateDesignSettings,
+  useUpdateLayoutSettings,
+  // Navigation
+  useNavigationItems,
+  useCreateNavigationItem,
+  useUpdateNavigationItem,
+  useDeleteNavigationItem,
+  useReorderNavigationItems,
+  useResetNavigationItems,
 } from './useTenantSettingsQueries';
+
+export {
+  dashboardKeys,
+  useTaDashboardKpi,
+} from './useDashboardQueries';
+
+export {
+  analyticsKeys,
+  useActivityLogs,
+  useActivityStats,
+  useRecentActivities,
+} from './useAnalyticsQueries';
