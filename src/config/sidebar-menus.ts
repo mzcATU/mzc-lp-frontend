@@ -212,6 +212,12 @@ export const tenantOperatorMenuData: MenuItem[] = [
     ],
   },
   {
+    id: 'user-management',
+    label: { ko: '사용자 관리', en: 'User Management' },
+    icon: Users,
+    path: '/to/users',
+  },
+  {
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
