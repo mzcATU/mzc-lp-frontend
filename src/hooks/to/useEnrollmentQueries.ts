@@ -80,8 +80,9 @@ export const useForceEnroll = () => {
       request: ForceEnrollRequest;
     }) => adminEnrollmentService.forceEnroll(courseTimeId, request),
     onSuccess: (_, variables) => {
+      // params가 달라도 모든 해당 courseTime의 수강생 목록을 invalidate
       queryClient.invalidateQueries({
-        queryKey: adminEnrollmentKeys.byCourseTime(variables.courseTimeId),
+        queryKey: ['admin-enrollments', 'list', 'courseTime', variables.courseTimeId],
       });
       queryClient.invalidateQueries({
         queryKey: adminEnrollmentKeys.stats(variables.courseTimeId),

@@ -9,6 +9,12 @@ import type {
   ChangeStatusRequest,
   UserFilterParams,
 } from '@/types/to/user.types';
+import type {
+  EnrollmentResponse,
+  EnrollmentFilterParams,
+  UserEnrollmentStatsResponse,
+} from '@/types/to/enrollment.types';
+import type { InstructorDetailStatResponse } from '@/types/tu/instructorAssignment.types';
 
 // Spring Page 응답 타입
 interface PageResponse<T> {
@@ -50,6 +56,38 @@ export const userService = {
     const { data } = await axiosInstance.put<{ data: TOUserDetailResponse }>(
       API_ENDPOINTS.USERS.STATUS(id),
       request
+    );
+    return data.data;
+  },
+
+  // ============================================
+  // 사용자별 수강 이력
+  // ============================================
+
+  /** 사용자별 수강 이력 조회 */
+  async getUserEnrollments(
+    userId: number,
+    params?: EnrollmentFilterParams
+  ): Promise<PageResponse<EnrollmentResponse>> {
+    const response = await axiosInstance.get<{ data: PageResponse<EnrollmentResponse> }>(
+      API_ENDPOINTS.USERS.ENROLLMENTS(userId),
+      { params }
+    );
+    return response.data.data;
+  },
+
+  /** 사용자별 수강 통계 조회 */
+  async getUserEnrollmentStats(userId: number): Promise<UserEnrollmentStatsResponse> {
+    const { data } = await axiosInstance.get<{ data: UserEnrollmentStatsResponse }>(
+      API_ENDPOINTS.USERS.ENROLLMENT_STATS(userId)
+    );
+    return data.data;
+  },
+
+  /** 사용자별 강사 통계 조회 (DESIGNER 역할용) */
+  async getUserInstructorStats(userId: number): Promise<InstructorDetailStatResponse> {
+    const { data } = await axiosInstance.get<{ data: InstructorDetailStatResponse }>(
+      API_ENDPOINTS.USERS.INSTRUCTOR_STATS(userId)
     );
     return data.data;
   },

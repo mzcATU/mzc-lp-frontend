@@ -12,7 +12,6 @@ import {
   Users,
   GraduationCap,
   UserPlus,
-  UserX,
   MoreHorizontal,
   CheckCircle,
   XCircle,
@@ -26,7 +25,6 @@ import {
   Badge,
   DataTable,
   DataTableColumnHeader,
-  IconStatCard,
   Label,
   Textarea,
   Input,
@@ -42,7 +40,6 @@ import {
   useForceEnroll,
   useCompleteEnrollment,
   useUpdateEnrollmentStatus,
-  useAdminCancelEnrollment,
 } from '@/hooks/to/useEnrollmentQueries';
 import { useUsers } from '@/hooks/to/useUserQueries';
 import type {
@@ -73,7 +70,7 @@ const t = {
   noEnrollmentsDescription: { ko: '수강생이 등록되면 여기에 표시됩니다.', en: 'Enrollments will appear here when registered.' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
-  prev: { ko: '이전', en: 'Prev' },
+  prev: { ko: '이전', en: 'Previous' },
   next: { ko: '다음', en: 'Next' },
   enrollmentCount: { ko: '명의 수강생', en: ' enrollments' },
   columnName: { ko: '이름', en: 'Name' },
@@ -84,14 +81,12 @@ const t = {
   columnEnrolledAt: { ko: '등록일', en: 'Enrolled' },
   columnActions: { ko: '액션', en: 'Actions' },
   complete: { ko: '수료 처리', en: 'Complete' },
-  drop: { ko: '중도 탈락', en: 'Drop' },
-  cancel: { ko: '취소', en: 'Cancel' },
+  drop: { ko: '수강 취소', en: 'Cancel Enrollment' },
   forceEnroll: { ko: '강제 배정', en: 'Force Enroll' },
   confirm: { ko: '확인', en: 'Confirm' },
   completing: { ko: '처리 중...', en: 'Processing...' },
   confirmComplete: { ko: '수료 처리하시겠습니까?', en: 'Complete this enrollment?' },
-  confirmDrop: { ko: '중도 탈락 처리 사유를 입력하세요.', en: 'Enter drop reason.' },
-  confirmCancel: { ko: '수강을 취소하시겠습니까?', en: 'Cancel this enrollment?' },
+  confirmDrop: { ko: '수강 취소 사유를 입력하세요.', en: 'Enter cancellation reason.' },
   reasonRequired: { ko: '사유를 입력해주세요.', en: 'Reason is required.' },
   reasonPlaceholder: { ko: '사유를 입력하세요...', en: 'Enter reason...' },
   reason: { ko: '사유', en: 'Reason' },
@@ -102,6 +97,11 @@ const t = {
   enrolling: { ko: '배정 중...', en: 'Enrolling...' },
   forceEnrollSuccess: { ko: '명 배정 완료', en: ' enrolled successfully' },
   forceEnrollFail: { ko: '명 배정 실패', en: ' failed to enroll' },
+  cancel: { ko: '취소', en: 'Cancel' },
+  // 복귀 액션
+  reinstate: { ko: '수강 복귀', en: 'Reinstate' },
+  confirmReinstate: { ko: '이 수강생을 다시 수강 상태로 복귀시키시겠습니까?', en: 'Reinstate this enrollment?' },
+  reinstating: { ko: '복귀 중...', en: 'Reinstating...' },
 };
 
 const statusBadgeVariant: Record<EnrollmentStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -110,6 +110,41 @@ const statusBadgeVariant: Record<EnrollmentStatus, 'default' | 'secondary' | 'su
   DROPPED: 'destructive',
   FAILED: 'default',
 };
+
+// 아이콘 색상별 스타일 (디자인 토큰 기반)
+const iconColorStyles = {
+  blue: 'bg-badge-blue-bg text-badge-blue',
+  green: 'bg-badge-green-bg text-badge-green',
+  yellow: 'bg-badge-yellow-bg text-badge-yellow',
+  indigo: 'bg-badge-indigo-bg text-badge-indigo',
+} as const;
+
+type IconColor = keyof typeof iconColorStyles;
+
+// 통계 카드 컴포넌트 (White Surface + Colored Icon)
+function StatCard({
+  icon,
+  label,
+  value,
+  iconColor
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  iconColor: IconColor;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-bg-default p-5 shadow-sm transition-all hover:shadow-md">
+      <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', iconColorStyles[iconColor])}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-text-secondary">{label}</p>
+        <p className="text-2xl font-bold text-text-primary">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<EnrollmentTabProps>) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,6 +156,7 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
   const [selectedEnrollment, setSelectedEnrollment] = useState<EnrollmentResponse | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showDropModal, setShowDropModal] = useState(false);
+  const [showReinstateModal, setShowReinstateModal] = useState(false);
   const [showForceEnrollModal, setShowForceEnrollModal] = useState(false);
   const [completeScore, setCompleteScore] = useState('');
   const [dropReason, setDropReason] = useState('');
@@ -132,18 +168,17 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
   // API 파라미터 구성
   const params: EnrollmentFilterParams = {
     page,
-    size: 20,
+    size: 10,
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
 
   // React Query 훅 사용
   const { data, isLoading, error } = useEnrollmentsByCourseTime(courseTimeId, params);
   const { data: stats } = useCourseTimeEnrollmentStats(courseTimeId);
-  const { data: usersData } = useUsers({ size: 100 });
+  const { data: usersData } = useUsers({ size: 100, role: 'USER' });
   const forceEnroll = useForceEnroll();
   const completeEnrollment = useCompleteEnrollment();
   const updateStatus = useUpdateEnrollmentStatus();
-  const cancelEnrollment = useAdminCancelEnrollment();
 
   const enrollments = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
@@ -205,12 +240,17 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
     }
   };
 
-  const handleCancel = async (enrollment: EnrollmentResponse) => {
-    if (!confirm(getText('confirmCancel'))) return;
+  const handleReinstate = async () => {
+    if (!selectedEnrollment) return;
     try {
-      await cancelEnrollment.mutateAsync(enrollment.id);
+      await updateStatus.mutateAsync({
+        id: selectedEnrollment.id,
+        request: { status: 'ENROLLED' },
+      });
+      setShowReinstateModal(false);
+      setSelectedEnrollment(null);
     } catch (err) {
-      console.error('Cancel failed:', err);
+      console.error('Reinstate failed:', err);
     }
   };
 
@@ -267,14 +307,18 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
                 <XCircle size={14} />
                 {getText('drop')}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleCancel(item)}
-                variant="destructive"
-              >
-                <UserX size={14} />
-                {getText('cancel')}
-              </DropdownMenuItem>
             </>
+          )}
+          {item.status === 'DROPPED' && (
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedEnrollment(item);
+                setShowReinstateModal(true);
+              }}
+            >
+              <UserPlus size={14} />
+              {getText('reinstate')}
+            </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -472,25 +516,29 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <IconStatCard
+        <StatCard
           icon={<Users size={20} />}
           label={getText('totalEnrollments')}
           value={stats?.totalEnrollments ?? totalElements}
+          iconColor="blue"
         />
-        <IconStatCard
+        <StatCard
           icon={<TrendingUp size={20} />}
           label={getText('inProgress')}
           value={stats?.enrolledCount ?? 0}
+          iconColor="yellow"
         />
-        <IconStatCard
+        <StatCard
           icon={<GraduationCap size={20} />}
           label={getText('completed')}
           value={stats?.completedCount ?? 0}
+          iconColor="green"
         />
-        <IconStatCard
+        <StatCard
           icon={<Percent size={20} />}
           label={getText('completionRate')}
           value={`${stats?.completionRate?.toFixed(1) ?? 0}%`}
+          iconColor="indigo"
         />
       </div>
 
@@ -533,36 +581,19 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
           columns={columns}
           data={filteredEnrollments}
           showColumnToggle={false}
-          showPagination={false}
+          showPagination={true}
+          manualPagination={true}
+          pageCount={data?.totalPages ?? 0}
+          pageIndex={page}
+          pageSize={10}
+          onPageChange={setPage}
           labels={{
             noResults: getText('noResults'),
+            rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',
+            pageOf: language === 'ko' ? '페이지 {current} / {total}' : 'Page {current} of {total}',
+            rowsSelected: '',
           }}
         />
-      )}
-
-      {/* Pagination */}
-      {data && data.totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            {getText('prev')}
-          </Button>
-          <span className="px-4 py-2 text-sm text-text-secondary">
-            {page + 1} / {data.totalPages}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={page >= data.totalPages - 1}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {getText('next')}
-          </Button>
-        </div>
       )}
 
       {/* Complete Modal */}
@@ -646,6 +677,41 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
                 className="bg-status-error hover:bg-status-error/90 text-white"
               >
                 {updateStatus.isPending ? getText('completing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reinstate Modal */}
+      {showReinstateModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <UserPlus size={20} className="text-text-secondary" />
+              {getText('reinstate')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName || `User ${selectedEnrollment.userId}`}
+            </p>
+            <p className="text-sm text-text-primary mb-4">
+              {getText('confirmReinstate')}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowReinstateModal(false);
+                  setSelectedEnrollment(null);
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleReinstate}
+                disabled={updateStatus.isPending}
+              >
+                {updateStatus.isPending ? getText('reinstating') : getText('confirm')}
               </Button>
             </div>
           </div>

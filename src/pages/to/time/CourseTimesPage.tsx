@@ -23,7 +23,6 @@ import {
   Badge,
   DataTable,
   DataTableColumnHeader,
-  IconStatCard,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -67,7 +66,7 @@ const t = {
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   confirmDelete: { ko: '정말 삭제하시겠습니까?', en: 'Are you sure you want to delete?' },
-  prev: { ko: '이전', en: 'Prev' },
+  prev: { ko: '이전', en: 'Previous' },
   next: { ko: '다음', en: 'Next' },
   timeCount: { ko: '개의 차수', en: ' course times' },
   columnTitle: { ko: '차수명', en: 'Title' },
@@ -105,6 +104,41 @@ const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'su
   ARCHIVED: 'destructive',
 };
 
+// 아이콘 색상별 스타일 (디자인 토큰 기반)
+const iconColorStyles = {
+  blue: 'bg-badge-blue-bg text-badge-blue',
+  indigo: 'bg-badge-indigo-bg text-badge-indigo',
+  green: 'bg-badge-green-bg text-badge-green',
+  gray: 'bg-badge-gray-bg text-badge-gray',
+} as const;
+
+type IconColor = keyof typeof iconColorStyles;
+
+// 통계 카드 컴포넌트 (White Surface + Colored Icon)
+function StatCard({
+  icon,
+  label,
+  value,
+  iconColor
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  iconColor: IconColor;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-bg-default p-5 shadow-sm transition-all hover:shadow-md">
+      <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', iconColorStyles[iconColor])}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-text-secondary">{label}</p>
+        <p className="text-2xl font-bold text-text-primary">{value}</p>
+      </div>
+    </div>
+  );
+}
+
 export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPageProps>) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -117,7 +151,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
   // API 파라미터 구성
   const params: CourseTimeFilterParams = {
     page,
-    size: 20,
+    size: 10,
     sort: 'createdAt,desc', // 최신 생성순 정렬
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
@@ -431,25 +465,29 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
         <div className="p-6 px-8 pt-0">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <IconStatCard
+            <StatCard
               icon={<LayoutGrid size={20} />}
               label={getText('totalTimes')}
               value={timeStats.total}
+              iconColor="blue"
             />
-            <IconStatCard
+            <StatCard
               icon={<Users size={20} />}
               label={getText('recruitingTimes')}
               value={timeStats.recruiting}
+              iconColor="indigo"
             />
-            <IconStatCard
+            <StatCard
               icon={<Clock size={20} />}
               label={getText('ongoingTimes')}
               value={timeStats.ongoing}
+              iconColor="green"
             />
-            <IconStatCard
+            <StatCard
               icon={<Calendar size={20} />}
               label={getText('closedTimes')}
               value={timeStats.closed}
+              iconColor="gray"
             />
           </div>
 
@@ -493,36 +531,19 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
               data={filteredTimes}
               showColumnToggle={false}
               showPagination={true}
+              manualPagination={true}
+              pageCount={data?.totalPages ?? 0}
+              pageIndex={page}
+              pageSize={10}
+              onPageChange={setPage}
               onRowClick={(item) => navigate(`/to/times/${item.id}`)}
               labels={{
                 noResults: getText('noResults'),
+                rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',
+                pageOf: language === 'ko' ? '페이지 {current} / {total}' : 'Page {current} of {total}',
+                rowsSelected: '',
               }}
             />
-          )}
-
-          {/* Pagination */}
-          {data && data.totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {getText('prev')}
-              </Button>
-              <span className="px-4 py-2 text-sm text-text-secondary">
-                {page + 1} / {data.totalPages}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page >= data.totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {getText('next')}
-              </Button>
-            </div>
           )}
         </div>
       </div>

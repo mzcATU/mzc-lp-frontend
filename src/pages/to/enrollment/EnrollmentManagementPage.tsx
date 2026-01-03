@@ -24,7 +24,6 @@ import {
   Badge,
   DataTable,
   DataTableColumnHeader,
-  IconStatCard,
   Label,
   Textarea,
   Input,
@@ -113,6 +112,41 @@ const statusBadgeVariant: Record<EnrollmentStatus, 'default' | 'secondary' | 'su
   FAILED: 'default',
 };
 
+// 아이콘 색상별 스타일 (디자인 토큰 기반)
+const iconColorStyles = {
+  blue: 'bg-badge-blue-bg text-badge-blue',
+  green: 'bg-badge-green-bg text-badge-green',
+  yellow: 'bg-badge-yellow-bg text-badge-yellow',
+  indigo: 'bg-badge-indigo-bg text-badge-indigo',
+} as const;
+
+type IconColor = keyof typeof iconColorStyles;
+
+// 통계 카드 컴포넌트 (White Surface + Colored Icon)
+function StatCard({
+  icon,
+  label,
+  value,
+  iconColor
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  iconColor: IconColor;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-bg-default p-5 shadow-sm transition-all hover:shadow-md">
+      <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', iconColorStyles[iconColor])}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-text-secondary">{label}</p>
+        <p className="text-2xl font-bold text-text-primary">{value}</p>
+      </div>
+    </div>
+  );
+}
+
 export function EnrollmentManagementPage({ language = 'ko' }: Readonly<EnrollmentManagementPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -141,7 +175,7 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
   // API 파라미터 구성
   const params: EnrollmentFilterParams = {
     page,
-    size: 20,
+    size: 10,
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
 
@@ -525,25 +559,29 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
         <div className="p-6 px-8 pt-0">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <IconStatCard
+            <StatCard
               icon={<Users size={20} />}
               label={getText('totalEnrollments')}
               value={stats?.totalEnrollments ?? totalElements}
+              iconColor="blue"
             />
-            <IconStatCard
+            <StatCard
               icon={<TrendingUp size={20} />}
               label={getText('inProgress')}
               value={stats?.enrolledCount ?? 0}
+              iconColor="yellow"
             />
-            <IconStatCard
+            <StatCard
               icon={<GraduationCap size={20} />}
               label={getText('completed')}
               value={stats?.completedCount ?? 0}
+              iconColor="green"
             />
-            <IconStatCard
+            <StatCard
               icon={<Percent size={20} />}
               label={getText('completionRate')}
               value={`${stats?.completionRate?.toFixed(1) ?? 0}%`}
+              iconColor="indigo"
             />
           </div>
 
@@ -586,36 +624,19 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
               columns={columns}
               data={filteredEnrollments}
               showColumnToggle={false}
-              showPagination={false}
+              showPagination={true}
+              manualPagination={true}
+              pageCount={data?.totalPages ?? 0}
+              pageIndex={page}
+              pageSize={10}
+              onPageChange={setPage}
               labels={{
                 noResults: getText('noResults'),
+                rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',
+                pageOf: language === 'ko' ? '페이지 {current} / {total}' : 'Page {current} of {total}',
+                rowsSelected: '',
               }}
             />
-          )}
-
-          {/* Pagination */}
-          {data && data.totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {getText('prev')}
-              </Button>
-              <span className="px-4 py-2 text-sm text-text-secondary">
-                {page + 1} / {data.totalPages}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page >= data.totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {getText('next')}
-              </Button>
-            </div>
           )}
         </div>
       </div>
