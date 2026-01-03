@@ -72,6 +72,11 @@ function DataTable<TData, TValue>({
   labels: customLabels,
   onRowClick,
   rowClassName,
+  manualPagination = false,
+  pageCount,
+  pageIndex = 0,
+  onPageChange,
+  onPageSizeChange,
 }: DataTableProps<TData, TValue>) {
   const labels = { ...defaultLabels, ...customLabels };
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -81,21 +86,30 @@ function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [internalPageIndex, setInternalPageIndex] = React.useState(0);
+  const [internalPageSize, setInternalPageSize] = React.useState(pageSize);
+
+  // 서버사이드 페이지네이션 시 외부 pageIndex 사용
+  const currentPageIndex = manualPagination ? pageIndex : internalPageIndex;
+  const currentPageSize = manualPagination ? pageSize : internalPageSize;
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: manualPagination ? undefined : getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    manualPagination,
+    pageCount: manualPagination ? pageCount : undefined,
     initialState: {
       pagination: {
-        pageSize,
+        pageSize: currentPageSize,
+        pageIndex: currentPageIndex,
       },
     },
     state: {
@@ -103,6 +117,27 @@ function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination: {
+        pageIndex: currentPageIndex,
+        pageSize: currentPageSize,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const newState = typeof updater === 'function'
+        ? updater({ pageIndex: currentPageIndex, pageSize: currentPageSize })
+        : updater;
+
+      if (manualPagination) {
+        if (newState.pageIndex !== currentPageIndex) {
+          onPageChange?.(newState.pageIndex);
+        }
+        if (newState.pageSize !== currentPageSize) {
+          onPageSizeChange?.(newState.pageSize);
+        }
+      } else {
+        setInternalPageIndex(newState.pageIndex);
+        setInternalPageSize(newState.pageSize);
+      }
     },
   });
 

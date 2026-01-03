@@ -67,12 +67,21 @@ export const useAssignInstructor = () => {
       request: AssignInstructorRequest;
     }) => instructorAssignmentService.assignInstructor(timeId, request),
     onSuccess: (_, variables) => {
+      // 차수별 강사 목록 갱신
       queryClient.invalidateQueries({
         queryKey: instructorAssignmentKeys.byTime(variables.timeId),
+      });
+      // 전체 배정 목록 갱신 (params 관계없이 모든 list 쿼리)
+      queryClient.invalidateQueries({
+        queryKey: instructorAssignmentKeys.lists(),
       });
       // CourseTimeDetailResponse.instructors 필드 갱신
       queryClient.invalidateQueries({
         queryKey: timeKeys.detail(variables.timeId),
+      });
+      // 차수 목록도 갱신 (instructors 필드 포함)
+      queryClient.invalidateQueries({
+        queryKey: timeKeys.lists(),
       });
     },
   });

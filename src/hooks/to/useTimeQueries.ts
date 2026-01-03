@@ -1,7 +1,7 @@
 /**
  * TO(Tenant Operator) 차수(CourseTime) React Query Hooks
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
 import { timeService } from '@/services/to';
 import type {
@@ -19,6 +19,7 @@ export const timeKeys = {
   all: ['times'] as const,
   lists: () => [...timeKeys.all, 'list'] as const,
   list: (params?: CourseTimeFilterParams) => [...timeKeys.lists(), params] as const,
+  infinite: (params?: Omit<CourseTimeFilterParams, 'page'>) => [...timeKeys.all, 'infinite', params] as const,
   details: () => [...timeKeys.all, 'detail'] as const,
   detail: (id: number) => [...timeKeys.details(), id] as const,
   capacity: (id: number) => [...timeKeys.detail(id), 'capacity'] as const,
@@ -36,6 +37,26 @@ export const useTimes = (params?: CourseTimeFilterParams) => {
   return useQuery({
     queryKey: timeKeys.list(params),
     queryFn: () => timeService.getTimes(params),
+    enabled: !!accessToken,
+  });
+};
+
+/** 차수 목록 무한 스크롤 조회 */
+export const useTimesInfinite = (params?: Omit<CourseTimeFilterParams, 'page'>) => {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const pageSize = params?.size ?? 20;
+
+  return useInfiniteQuery({
+    queryKey: timeKeys.infinite(params),
+    queryFn: ({ pageParam = 0 }) =>
+      timeService.getTimes({ ...params, page: pageParam, size: pageSize }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.number >= lastPage.totalPages - 1) {
+        return undefined;
+      }
+      return lastPage.number + 1;
+    },
     enabled: !!accessToken,
   });
 };

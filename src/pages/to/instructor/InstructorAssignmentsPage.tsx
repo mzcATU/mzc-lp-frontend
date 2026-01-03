@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -16,6 +16,8 @@ import {
   ExternalLink,
   Clock,
   CheckCircle2,
+  Plus,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -32,7 +34,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/common';
-import { useInstructorAssignments } from '@/hooks/to/useInstructorAssignmentQueries';
+import { useInstructorAssignments, useAssignInstructor } from '@/hooks/to/useInstructorAssignmentQueries';
+import { useTimesInfinite, useTime } from '@/hooks/to/useTimeQueries';
+import { useUsersInfinite } from '@/hooks/to/useUserQueries';
 import type {
   InstructorAssignmentListResponse,
   InstructorAssignmentFilterParams,
@@ -77,7 +81,7 @@ const t = {
   noAssignmentsDescription: { ko: '차수에 강사를 배정하면 여기에 표시됩니다.', en: 'Assign instructors to course times to see them here.' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
-  prev: { ko: '이전', en: 'Prev' },
+  prev: { ko: '이전', en: 'Previous' },
   next: { ko: '다음', en: 'Next' },
   assignmentCount: { ko: '개의 배정', en: ' assignments' },
   // 사이드 패널
@@ -89,6 +93,26 @@ const t = {
   programName: { ko: '과정명', en: 'Course Name' },
   learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
   goToCourseTime: { ko: '차수 상세 페이지로 이동', en: 'Go to Course Time' },
+  // 배정 생성
+  createAssignment: { ko: '배정 생성', en: 'Create Assignment' },
+  createAssignmentTitle: { ko: '새 강사 배정', en: 'New Instructor Assignment' },
+  selectCourseTime: { ko: '차수 선택', en: 'Select Course Time' },
+  selectCourseTimePlaceholder: { ko: '차수를 선택하세요', en: 'Select a course time' },
+  selectInstructor: { ko: '강사 선택', en: 'Select Instructor' },
+  selectInstructorPlaceholder: { ko: '강사를 선택하세요', en: 'Select an instructor' },
+  selectRole: { ko: '역할 선택', en: 'Select Role' },
+  forceAssign: { ko: '일정 충돌 무시', en: 'Ignore schedule conflicts' },
+  forceAssignDescription: { ko: '다른 차수와 일정이 겹치더라도 배정합니다.', en: 'Assign even if schedule conflicts with other course times.' },
+  cancel: { ko: '취소', en: 'Cancel' },
+  create: { ko: '배정', en: 'Assign' },
+  creating: { ko: '배정 중...', en: 'Assigning...' },
+  createSuccess: { ko: '강사가 성공적으로 배정되었습니다.', en: 'Instructor assigned successfully.' },
+  createError: { ko: '강사 배정에 실패했습니다.', en: 'Failed to assign instructor.' },
+  requiredField: { ko: '필수 항목입니다.', en: 'This field is required.' },
+  searchInstructor: { ko: '강사 검색...', en: 'Search instructor...' },
+  existingInstructors: { ko: '현재 배정된 강사', en: 'Currently Assigned' },
+  alreadyAssigned: { ko: '이미 배정됨', en: 'Already assigned' },
+  noInstructorsFound: { ko: '강사를 찾을 수 없습니다.', en: 'No instructors found.' },
 };
 
 // Badge 색상 스타일 (디자인 토큰 기반)
@@ -148,6 +172,17 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
   const [page, setPage] = useState(0);
   const [selectedAssignment, setSelectedAssignment] = useState<InstructorAssignmentListResponse | null>(null);
 
+  // 생성 모달 상태
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    timeId: '',
+    userId: '',
+    role: 'MAIN' as InstructorRole,
+    forceAssign: false,
+  });
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [instructorSearch, setInstructorSearch] = useState('');
+
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
   const getRoleLabel = (role: InstructorRole) =>
     language === 'ko' ? INSTRUCTOR_ROLE_LABELS[role].ko : INSTRUCTOR_ROLE_LABELS[role].en;
@@ -157,13 +192,34 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
   // API 파라미터 구성
   const params: InstructorAssignmentFilterParams = {
     page,
-    size: 20,
+    size: 10,
     ...(roleFilter !== 'all' && { role: roleFilter }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
 
   // React Query 훅 사용
   const { data, isLoading, error } = useInstructorAssignments(params);
+
+  // 생성용 데이터 조회
+  const {
+    data: timesData,
+    fetchNextPage: fetchNextTimesPage,
+    hasNextPage: hasNextTimesPage,
+    isFetchingNextPage: isFetchingNextTimesPage,
+  } = useTimesInfinite({ size: 20 });
+  const {
+    data: usersData,
+    fetchNextPage: fetchNextUsersPage,
+    hasNextPage: hasNextUsersPage,
+    isFetchingNextPage: isFetchingNextUsersPage,
+  } = useUsersInfinite({ size: 20, role: 'DESIGNER' }); // DESIGNER 권한만 조회
+
+  // 선택된 차수의 상세 정보 (기존 강사 확인용)
+  const selectedTimeId = createForm.timeId ? Number(createForm.timeId) : 0;
+  const { data: selectedTimeData } = useTime(selectedTimeId);
+
+  // 생성 mutation
+  const assignInstructor = useAssignInstructor();
 
   const assignments = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
@@ -187,6 +243,133 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
     sub: assignments.filter((a) => a.role === 'SUB').length,
     active: assignments.filter((a) => a.status === 'ACTIVE').length,
   }), [assignments, totalElements]);
+
+  // 무한 스크롤 데이터에서 모든 차수 추출
+  const allTimes = useMemo(() => {
+    if (!timesData?.pages) return [];
+    return timesData.pages.flatMap((page) => page.content);
+  }, [timesData]);
+
+  // 선택된 차수에 이미 배정된 강사 ID 목록
+  const assignedInstructorIds = useMemo(() => {
+    if (!selectedTimeData?.instructors) return new Set<number>();
+    return new Set(
+      selectedTimeData.instructors
+        .filter((i) => i.status === 'ACTIVE')
+        .map((i) => i.userId)
+    );
+  }, [selectedTimeData]);
+
+  // 무한 스크롤 데이터에서 모든 사용자 추출
+  const allUsers = useMemo(() => {
+    if (!usersData?.pages) return [];
+    return usersData.pages.flatMap((page) => page.content);
+  }, [usersData]);
+
+  // 검색 필터링된 강사 목록
+  const filteredUserOptions = useMemo(() => {
+    const query = instructorSearch.toLowerCase().trim();
+
+    return allUsers
+      .filter((user) => {
+        if (!query) return true;
+        return (
+          user.name.toLowerCase().includes(query) ||
+          user.email.toLowerCase().includes(query)
+        );
+      })
+      .map((user) => ({
+        value: String(user.userId),
+        label: user.name,
+        email: user.email,
+        isAssigned: assignedInstructorIds.has(user.userId),
+      }));
+  }, [allUsers, instructorSearch, assignedInstructorIds]);
+
+  // 검색 필터링된 차수 목록
+  const [timeSearch, setTimeSearch] = useState('');
+  const filteredTimeOptions = useMemo(() => {
+    const query = timeSearch.toLowerCase().trim();
+
+    return allTimes
+      .filter((time) => {
+        if (!query) return true;
+        return time.title.toLowerCase().includes(query);
+      })
+      .map((time) => ({
+        value: String(time.id),
+        label: time.title,
+        status: time.status,
+      }));
+  }, [allTimes, timeSearch]);
+
+  // 무한 스크롤용 ref
+  const instructorListRef = useRef<HTMLDivElement>(null);
+  const timeListRef = useRef<HTMLDivElement>(null);
+
+  // 강사 목록 스크롤 이벤트 핸들러
+  const handleInstructorListScroll = useCallback(() => {
+    const listElement = instructorListRef.current;
+    if (!listElement || isFetchingNextUsersPage || !hasNextUsersPage) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = listElement;
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      fetchNextUsersPage();
+    }
+  }, [fetchNextUsersPage, hasNextUsersPage, isFetchingNextUsersPage]);
+
+  // 차수 목록 스크롤 이벤트 핸들러
+  const handleTimeListScroll = useCallback(() => {
+    const listElement = timeListRef.current;
+    if (!listElement || isFetchingNextTimesPage || !hasNextTimesPage) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = listElement;
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      fetchNextTimesPage();
+    }
+  }, [fetchNextTimesPage, hasNextTimesPage, isFetchingNextTimesPage]);
+
+  // 생성 모달 핸들러
+  const handleOpenCreateModal = () => {
+    setCreateForm({
+      timeId: '',
+      userId: '',
+      role: 'MAIN',
+      forceAssign: false,
+    });
+    setCreateError(null);
+    setTimeSearch('');
+    setInstructorSearch('');
+    setShowCreateModal(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+    setCreateError(null);
+    setTimeSearch('');
+    setInstructorSearch('');
+  };
+
+  const handleCreateAssignment = async () => {
+    if (!createForm.timeId || !createForm.userId) {
+      setCreateError(getText('requiredField'));
+      return;
+    }
+
+    try {
+      await assignInstructor.mutateAsync({
+        timeId: Number(createForm.timeId),
+        request: {
+          userId: Number(createForm.userId),
+          role: createForm.role,
+          forceAssign: createForm.forceAssign,
+        },
+      });
+      handleCloseCreateModal();
+    } catch {
+      setCreateError(getText('createError'));
+    }
+  };
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '-';
@@ -360,6 +543,10 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
               <h1 className="text-text-primary mb-1">{getText('title')}</h1>
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
+            <Button onClick={handleOpenCreateModal}>
+              <Plus size={16} />
+              {getText('createAssignment')}
+            </Button>
           </div>
 
           {/* Search and Filter Bar */}
@@ -505,39 +692,20 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
               columns={columns}
               data={filteredAssignments}
               showColumnToggle={false}
-              showPagination={false}
+              showPagination={true}
+              manualPagination={true}
+              pageCount={data?.totalPages ?? 0}
+              pageIndex={page}
+              pageSize={10}
+              onPageChange={setPage}
               onRowClick={(item) => setSelectedAssignment(item)}
               labels={{
                 noResults: getText('noResults'),
+                rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',
+                pageOf: language === 'ko' ? '페이지 {current} / {total}' : 'Page {current} of {total}',
+                rowsSelected: '',
               }}
             />
-          )}
-
-          {/* Pagination */}
-          {data && data.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-xs text-text-secondary">
-                {page * 20 + 1} - {Math.min((page + 1) * 20, totalElements)} / {totalElements}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  {getText('prev')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={page >= data.totalPages - 1}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  {getText('next')}
-                </Button>
-              </div>
-            </div>
           )}
         </div>
       </div>
@@ -694,6 +862,262 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Assignment Modal */}
+      <Dialog open={showCreateModal} onOpenChange={(open: boolean) => !open && handleCloseCreateModal()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{getText('createAssignmentTitle')}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* 차수 선택 */}
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                {getText('selectCourseTime')} <span className="text-red-500">*</span>
+              </label>
+
+              {/* 검색 입력 */}
+              <div className="relative mb-2">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
+                />
+                <input
+                  type="text"
+                  placeholder={language === 'ko' ? '차수 검색...' : 'Search course time...'}
+                  value={timeSearch}
+                  onChange={(e) => setTimeSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-bg-default border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-btn-neutral"
+                />
+              </div>
+
+              {/* 차수 목록 */}
+              <div
+                ref={timeListRef}
+                onScroll={handleTimeListScroll}
+                className="border border-border rounded-lg max-h-[200px] overflow-auto"
+              >
+                {filteredTimeOptions.length === 0 && !isFetchingNextTimesPage ? (
+                  <div className="p-4 text-center text-sm text-text-secondary">
+                    {language === 'ko' ? '차수를 찾을 수 없습니다.' : 'No course times found.'}
+                  </div>
+                ) : (
+                  <>
+                    {filteredTimeOptions.map((time) => (
+                      <label
+                        key={time.value}
+                        className={cn(
+                          'flex items-center gap-3 p-3 cursor-pointer border-b border-border last:border-0 transition-colors',
+                          createForm.timeId === time.value
+                            ? 'bg-badge-indigo-bg'
+                            : 'hover:bg-bg-secondary'
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="courseTime"
+                          value={time.value}
+                          checked={createForm.timeId === time.value}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, timeId: e.target.value }))}
+                          className="w-4 h-4"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">
+                            {time.label}
+                          </p>
+                          <p className="text-xs text-text-secondary truncate">
+                            {time.status}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                    {/* 로딩 인디케이터 */}
+                    {isFetchingNextTimesPage && (
+                      <div className="flex items-center justify-center p-3 border-t border-border">
+                        <Loader2 size={16} className="animate-spin text-text-secondary" />
+                        <span className="ml-2 text-xs text-text-secondary">{getText('loading')}</span>
+                      </div>
+                    )}
+                    {/* 더 불러올 데이터 있음 표시 */}
+                    {hasNextTimesPage && !isFetchingNextTimesPage && (
+                      <div className="p-2 text-center text-xs text-text-placeholder border-t border-border">
+                        ↓ {language === 'ko' ? '스크롤하여 더 보기' : 'Scroll for more'}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* 강사 선택 */}
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                {getText('selectInstructor')} <span className="text-red-500">*</span>
+              </label>
+
+              {/* 검색 입력 */}
+              <div className="relative mb-2">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
+                />
+                <input
+                  type="text"
+                  placeholder={getText('searchInstructor')}
+                  value={instructorSearch}
+                  onChange={(e) => setInstructorSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-bg-default border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-btn-neutral"
+                />
+              </div>
+
+              {/* 선택된 차수에 배정된 강사 표시 */}
+              {selectedTimeData?.instructors && selectedTimeData.instructors.filter((i) => i.status === 'ACTIVE').length > 0 && (
+                <div className="mb-2 p-2 bg-badge-blue-bg rounded-lg">
+                  <p className="text-xs font-medium text-badge-blue mb-1">{getText('existingInstructors')}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedTimeData.instructors
+                      .filter((i) => i.status === 'ACTIVE')
+                      .map((instructor) => (
+                        <span
+                          key={instructor.id}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-bg-default text-text-primary"
+                        >
+                          {instructor.userName} ({getRoleLabel(instructor.role)})
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 강사 목록 */}
+              <div
+                ref={instructorListRef}
+                onScroll={handleInstructorListScroll}
+                className="border border-border rounded-lg max-h-[200px] overflow-auto"
+              >
+                {filteredUserOptions.length === 0 && !isFetchingNextUsersPage ? (
+                  <div className="p-4 text-center text-sm text-text-secondary">
+                    {getText('noInstructorsFound')}
+                  </div>
+                ) : (
+                  <>
+                    {filteredUserOptions.map((user) => (
+                      <label
+                        key={user.value}
+                        className={cn(
+                          'flex items-center gap-3 p-3 cursor-pointer border-b border-border last:border-0 transition-colors',
+                          createForm.userId === user.value
+                            ? 'bg-badge-indigo-bg'
+                            : 'hover:bg-bg-secondary',
+                          user.isAssigned && 'opacity-50'
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="instructor"
+                          value={user.value}
+                          checked={createForm.userId === user.value}
+                          onChange={(e) => setCreateForm((prev) => ({ ...prev, userId: e.target.value }))}
+                          disabled={user.isAssigned}
+                          className="w-4 h-4"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">
+                            {user.label}
+                            {user.isAssigned && (
+                              <span className="ml-2 text-xs text-text-secondary">
+                                ({getText('alreadyAssigned')})
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                        </div>
+                      </label>
+                    ))}
+                    {/* 로딩 인디케이터 */}
+                    {isFetchingNextUsersPage && (
+                      <div className="flex items-center justify-center p-3 border-t border-border">
+                        <Loader2 size={16} className="animate-spin text-text-secondary" />
+                        <span className="ml-2 text-xs text-text-secondary">{getText('loading')}</span>
+                      </div>
+                    )}
+                    {/* 더 불러올 데이터 있음 표시 */}
+                    {hasNextUsersPage && !isFetchingNextUsersPage && (
+                      <div className="p-2 text-center text-xs text-text-placeholder border-t border-border">
+                        ↓ {language === 'ko' ? '스크롤하여 더 보기' : 'Scroll for more'}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* 역할 선택 */}
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                {getText('selectRole')}
+              </label>
+              <NativeSelect
+                value={createForm.role}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, role: e.target.value as InstructorRole }))}
+                options={[
+                  { value: 'MAIN', label: getRoleLabel('MAIN') },
+                  { value: 'SUB', label: getRoleLabel('SUB') },
+                  { value: 'ASSISTANT', label: getRoleLabel('ASSISTANT') },
+                ]}
+              />
+            </div>
+
+            {/* 일정 충돌 무시 */}
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="forceAssign"
+                checked={createForm.forceAssign}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, forceAssign: e.target.checked }))}
+                className="mt-1 h-4 w-4 rounded border-border text-btn-primary focus:ring-btn-primary"
+              />
+              <div>
+                <label htmlFor="forceAssign" className="text-sm font-medium text-text-primary cursor-pointer">
+                  {getText('forceAssign')}
+                </label>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  {getText('forceAssignDescription')}
+                </p>
+              </div>
+            </div>
+
+            {/* 에러 메시지 */}
+            {createError && (
+              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                <AlertCircle size={16} />
+                {createError}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 pt-4 border-t border-border">
+            <Button variant="ghost" onClick={handleCloseCreateModal}>
+              {getText('cancel')}
+            </Button>
+            <Button
+              onClick={handleCreateAssignment}
+              disabled={assignInstructor.isPending}
+            >
+              {assignInstructor.isPending ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  {getText('creating')}
+                </>
+              ) : (
+                getText('create')
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

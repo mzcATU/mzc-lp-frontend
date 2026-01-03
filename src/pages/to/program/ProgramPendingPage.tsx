@@ -12,12 +12,12 @@ import {
   MoreHorizontal,
   AlertCircle,
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import {
   Button,
   Badge,
   DataTable,
   DataTableColumnHeader,
-  IconStatCard,
   Label,
   Textarea,
   DropdownMenu,
@@ -76,6 +76,40 @@ const t = {
   confirm: { ko: '확인', en: 'Confirm' },
 };
 
+// 아이콘 색상별 스타일 (디자인 토큰 기반)
+const iconColorStyles = {
+  yellow: 'bg-badge-yellow-bg text-badge-yellow',
+  green: 'bg-badge-green-bg text-badge-green',
+  red: 'bg-badge-red-bg text-badge-red',
+} as const;
+
+type IconColor = keyof typeof iconColorStyles;
+
+// 통계 카드 컴포넌트 (White Surface + Colored Icon)
+function StatCard({
+  icon,
+  label,
+  value,
+  iconColor
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  iconColor: IconColor;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-bg-default p-5 shadow-sm transition-all hover:shadow-md">
+      <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', iconColorStyles[iconColor])}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-text-secondary">{label}</p>
+        <p className="text-2xl font-bold text-text-primary">{value}</p>
+      </div>
+    </div>
+  );
+}
+
 export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingPageProps>) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,7 +125,7 @@ export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingP
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   // React Query 훅 사용 - PENDING 상태만 조회
-  const { data, isLoading, error } = usePendingPrograms({ page, size: 20 });
+  const { data, isLoading, error } = usePendingPrograms({ page, size: 10 });
   const approveProgram = useApproveProgram();
   const rejectProgram = useRejectProgram();
 
@@ -339,20 +373,23 @@ export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingP
         <div className="p-6 px-8 pt-0">
           {/* Statistics Card */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <IconStatCard
+            <StatCard
               icon={<Clock size={20} />}
               label={getText('pendingCourses')}
               value={totalElements}
+              iconColor="yellow"
             />
-            <IconStatCard
+            <StatCard
               icon={<CheckCircle size={20} />}
               label="승인 처리"
               value="-"
+              iconColor="green"
             />
-            <IconStatCard
+            <StatCard
               icon={<XCircle size={20} />}
               label="반려 처리"
               value="-"
+              iconColor="red"
             />
           </div>
 
@@ -396,37 +433,20 @@ export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingP
               columns={columns}
               data={filteredPrograms}
               showColumnToggle={false}
-              showPagination={false}
+              showPagination={true}
+              manualPagination={true}
+              pageCount={data?.totalPages ?? 0}
+              pageIndex={page}
+              pageSize={10}
+              onPageChange={setPage}
               onRowClick={(item) => navigate(`/to/courses/${item.id}`)}
               labels={{
                 noResults: getText('noResults'),
+                rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',
+                pageOf: language === 'ko' ? '페이지 {current} / {total}' : 'Page {current} of {total}',
+                rowsSelected: '',
               }}
             />
-          )}
-
-          {/* Pagination */}
-          {data && data.totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {getText('prev')}
-              </Button>
-              <span className="px-4 py-2 text-sm text-text-secondary">
-                {page + 1} / {data.totalPages}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page >= data.totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {getText('next')}
-              </Button>
-            </div>
           )}
         </div>
       </div>

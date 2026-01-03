@@ -36,7 +36,6 @@ import {
   Layers,
   Calendar,
   UserCheck,
-  ClipboardList,
   BookOpen,
   BookCheck,
   Home,
@@ -188,8 +187,8 @@ export const tenantOperatorMenuData: MenuItem[] = [
     label: { ko: '교육 운영 관리', en: 'Program Management' },
     icon: Layers,
     subItems: [
-      { id: 'time-management', label: { ko: '차수 관리', en: 'Course Time Management' }, icon: Calendar, path: '/to/times' },
-      { id: 'instructor-assignment', label: { ko: '강사 배정', en: 'Instructor Assignment' }, icon: UserCheck, path: '/to/instructors' },
+      { id: 'time-management', label: { ko: '차수 운영', en: 'Course Time Operations' }, icon: Calendar, path: '/to/times' },
+      { id: 'instructor-management', label: { ko: '강사 배정 관리', en: 'Instructor Assignment' }, icon: UserCheck, path: '/to/instructors' },
     ],
   },
   // TODO: TO 콘텐츠 관리 기능 - 개발 예정으로 임시 숨김
@@ -203,13 +202,10 @@ export const tenantOperatorMenuData: MenuItem[] = [
   //   ],
   // },
   {
-    id: 'enrollment-instructor-data',
-    label: { ko: '수강 및 강사 정보', en: 'Enrollment & Instructor Data' },
-    icon: ClipboardList,
-    subItems: [
-      { id: 'sis-lookup', label: { ko: '학생 수강 정보 확인', en: 'SIS Lookup' }, icon: BookOpen, path: '/to/sis' },
-      { id: 'iis-lookup', label: { ko: '강사 배정 정보 확인', en: 'IIS Lookup' }, icon: BookCheck, path: '/to/instructor-assignments' },
-    ],
+    id: 'user-management',
+    label: { ko: '사용자 관리', en: 'User Management' },
+    icon: Users,
+    path: '/to/users',
   },
   {
     id: 'settings',
