@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Settings,
   Save,
@@ -6,6 +6,7 @@ import {
   Shield,
   Database,
   Mail,
+  Loader2,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -20,9 +21,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
+import { useSystemSettings, useUpdateSystemSettings } from '@/hooks/sa';
+import type { UpdateSystemSettingsRequest } from '@/services/sa/systemSettingsService';
 
-// Mock 데이터
-const mockSettings = {
+// 로컬 설정 타입
+interface LocalSettings {
+  general: {
+    platformName: string;
+    timezone: string;
+    language: string;
+    maintenanceMode: boolean;
+  };
+  security: {
+    sessionTimeout: number;
+    maxLoginAttempts: number;
+    passwordExpiry: number;
+    mfaRequired: boolean;
+    ipWhitelist: string;
+  };
+  storage: {
+    maxUploadSize: number;
+    allowedFormats: string;
+    autoCleanup: boolean;
+    cleanupDays: number;
+  };
+  email: {
+    smtpHost: string;
+    smtpPort: number;
+    smtpUser: string;
+    useTls: boolean;
+  };
+}
+
+// 기본 설정값
+const defaultSettings: LocalSettings = {
   general: {
     platformName: 'MZC Learn Platform',
     timezone: 'Asia/Seoul',
@@ -43,19 +75,122 @@ const mockSettings = {
     cleanupDays: 30,
   },
   email: {
-    smtpHost: 'smtp.example.com',
+    smtpHost: '',
     smtpPort: 587,
-    smtpUser: 'noreply@mzc.com',
+    smtpUser: '',
     useTls: true,
   },
 };
 
 export function SystemSettingsPage() {
-  const [settings, setSettings] = useState(mockSettings);
+  const [settings, setSettings] = useState<LocalSettings>(defaultSettings);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const { data: serverSettings, isLoading } = useSystemSettings();
+  const updateSettings = useUpdateSystemSettings();
+
+  // 서버 데이터로 초기화
+  useEffect(() => {
+    if (serverSettings) {
+      setSettings({
+        general: {
+          platformName: serverSettings.general.platformName,
+          timezone: serverSettings.general.timezone,
+          language: serverSettings.general.language,
+          maintenanceMode: serverSettings.general.maintenanceMode,
+        },
+        security: {
+          sessionTimeout: serverSettings.security.sessionTimeout,
+          maxLoginAttempts: serverSettings.security.maxLoginAttempts,
+          passwordExpiry: serverSettings.security.passwordExpiry,
+          mfaRequired: serverSettings.security.mfaRequired,
+          ipWhitelist: serverSettings.security.ipWhitelist || '',
+        },
+        storage: {
+          maxUploadSize: serverSettings.storage.maxUploadSize,
+          allowedFormats: serverSettings.storage.allowedFormats,
+          autoCleanup: serverSettings.storage.autoCleanup,
+          cleanupDays: serverSettings.storage.cleanupDays,
+        },
+        email: {
+          smtpHost: serverSettings.email.smtpHost || '',
+          smtpPort: serverSettings.email.smtpPort,
+          smtpUser: serverSettings.email.smtpUser || '',
+          useTls: serverSettings.email.useTls,
+        },
+      });
+      setHasChanges(false);
+    }
+  }, [serverSettings]);
 
   const handleReset = () => {
-    setSettings(mockSettings);
+    if (serverSettings) {
+      setSettings({
+        general: {
+          platformName: serverSettings.general.platformName,
+          timezone: serverSettings.general.timezone,
+          language: serverSettings.general.language,
+          maintenanceMode: serverSettings.general.maintenanceMode,
+        },
+        security: {
+          sessionTimeout: serverSettings.security.sessionTimeout,
+          maxLoginAttempts: serverSettings.security.maxLoginAttempts,
+          passwordExpiry: serverSettings.security.passwordExpiry,
+          mfaRequired: serverSettings.security.mfaRequired,
+          ipWhitelist: serverSettings.security.ipWhitelist || '',
+        },
+        storage: {
+          maxUploadSize: serverSettings.storage.maxUploadSize,
+          allowedFormats: serverSettings.storage.allowedFormats,
+          autoCleanup: serverSettings.storage.autoCleanup,
+          cleanupDays: serverSettings.storage.cleanupDays,
+        },
+        email: {
+          smtpHost: serverSettings.email.smtpHost || '',
+          smtpPort: serverSettings.email.smtpPort,
+          smtpUser: serverSettings.email.smtpUser || '',
+          useTls: serverSettings.email.useTls,
+        },
+      });
+      setHasChanges(false);
+    }
   };
+
+  const handleSave = () => {
+    const request: UpdateSystemSettingsRequest = {
+      platformName: settings.general.platformName,
+      timezone: settings.general.timezone,
+      language: settings.general.language,
+      maintenanceMode: settings.general.maintenanceMode,
+      sessionTimeout: settings.security.sessionTimeout,
+      maxLoginAttempts: settings.security.maxLoginAttempts,
+      passwordExpiry: settings.security.passwordExpiry,
+      mfaRequired: settings.security.mfaRequired,
+      ipWhitelist: settings.security.ipWhitelist || null,
+      maxUploadSize: settings.storage.maxUploadSize,
+      allowedFormats: settings.storage.allowedFormats,
+      autoCleanup: settings.storage.autoCleanup,
+      cleanupDays: settings.storage.cleanupDays,
+      smtpHost: settings.email.smtpHost || null,
+      smtpPort: settings.email.smtpPort,
+      smtpUser: settings.email.smtpUser || null,
+      useTls: settings.email.useTls,
+    };
+
+    updateSettings.mutate(request, {
+      onSuccess: () => {
+        setHasChanges(false);
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -64,12 +199,16 @@ export function SystemSettingsPage() {
         description="플랫폼 전역 시스템 설정을 관리합니다"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleReset}>
+            <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
               <RotateCcw className="mr-2 h-4 w-4" />
               초기화
             </Button>
-            <Button>
-              <Save className="mr-2 h-4 w-4" />
+            <Button onClick={handleSave} disabled={!hasChanges || updateSettings.isPending}>
+              {updateSettings.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               저장
             </Button>
           </div>
@@ -92,20 +231,26 @@ export function SystemSettingsPage() {
                 <Label>플랫폼 이름</Label>
                 <Input
                   value={settings.general.platformName}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    general: { ...settings.general, platformName: e.target.value },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      general: { ...settings.general, platformName: e.target.value },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label>타임존</Label>
                 <Select
                   value={settings.general.timezone}
-                  onValueChange={(v) => setSettings({
-                    ...settings,
-                    general: { ...settings.general, timezone: v },
-                  })}
+                  onValueChange={(v) => {
+                    setSettings({
+                      ...settings,
+                      general: { ...settings.general, timezone: v },
+                    });
+                    setHasChanges(true);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -126,10 +271,13 @@ export function SystemSettingsPage() {
               </div>
               <Switch
                 checked={settings.general.maintenanceMode}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  general: { ...settings.general, maintenanceMode: v },
-                })}
+                onCheckedChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    general: { ...settings.general, maintenanceMode: v },
+                  });
+                  setHasChanges(true);
+                }}
               />
             </div>
           </CardContent>
@@ -151,10 +299,13 @@ export function SystemSettingsPage() {
                 <Input
                   type="number"
                   value={settings.security.sessionTimeout}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    security: { ...settings.security, sessionTimeout: Number(e.target.value) },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      security: { ...settings.security, sessionTimeout: Number(e.target.value) },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -162,10 +313,13 @@ export function SystemSettingsPage() {
                 <Input
                   type="number"
                   value={settings.security.maxLoginAttempts}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    security: { ...settings.security, maxLoginAttempts: Number(e.target.value) },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      security: { ...settings.security, maxLoginAttempts: Number(e.target.value) },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -173,10 +327,13 @@ export function SystemSettingsPage() {
                 <Input
                   type="number"
                   value={settings.security.passwordExpiry}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    security: { ...settings.security, passwordExpiry: Number(e.target.value) },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      security: { ...settings.security, passwordExpiry: Number(e.target.value) },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
             </div>
@@ -185,10 +342,13 @@ export function SystemSettingsPage() {
               <Input
                 placeholder="예: 192.168.1.0/24, 10.0.0.1"
                 value={settings.security.ipWhitelist}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  security: { ...settings.security, ipWhitelist: e.target.value },
-                })}
+                onChange={(e) => {
+                  setSettings({
+                    ...settings,
+                    security: { ...settings.security, ipWhitelist: e.target.value },
+                  });
+                  setHasChanges(true);
+                }}
               />
               <p className="text-xs text-text-secondary">비워두면 모든 IP에서 접근 가능합니다</p>
             </div>
@@ -199,10 +359,13 @@ export function SystemSettingsPage() {
               </div>
               <Switch
                 checked={settings.security.mfaRequired}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  security: { ...settings.security, mfaRequired: v },
-                })}
+                onCheckedChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    security: { ...settings.security, mfaRequired: v },
+                  });
+                  setHasChanges(true);
+                }}
               />
             </div>
           </CardContent>
@@ -224,10 +387,13 @@ export function SystemSettingsPage() {
                 <Input
                   type="number"
                   value={settings.storage.maxUploadSize}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    storage: { ...settings.storage, maxUploadSize: Number(e.target.value) },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      storage: { ...settings.storage, maxUploadSize: Number(e.target.value) },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -235,10 +401,13 @@ export function SystemSettingsPage() {
                 <Input
                   type="number"
                   value={settings.storage.cleanupDays}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    storage: { ...settings.storage, cleanupDays: Number(e.target.value) },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      storage: { ...settings.storage, cleanupDays: Number(e.target.value) },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
             </div>
@@ -246,10 +415,13 @@ export function SystemSettingsPage() {
               <Label>허용 파일 형식</Label>
               <Input
                 value={settings.storage.allowedFormats}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  storage: { ...settings.storage, allowedFormats: e.target.value },
-                })}
+                onChange={(e) => {
+                  setSettings({
+                    ...settings,
+                    storage: { ...settings.storage, allowedFormats: e.target.value },
+                  });
+                  setHasChanges(true);
+                }}
               />
               <p className="text-xs text-text-secondary">쉼표로 구분하여 입력</p>
             </div>
@@ -260,10 +432,13 @@ export function SystemSettingsPage() {
               </div>
               <Switch
                 checked={settings.storage.autoCleanup}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  storage: { ...settings.storage, autoCleanup: v },
-                })}
+                onCheckedChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    storage: { ...settings.storage, autoCleanup: v },
+                  });
+                  setHasChanges(true);
+                }}
               />
             </div>
           </CardContent>
@@ -284,10 +459,13 @@ export function SystemSettingsPage() {
                 <Label>SMTP 호스트</Label>
                 <Input
                   value={settings.email.smtpHost}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    email: { ...settings.email, smtpHost: e.target.value },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      email: { ...settings.email, smtpHost: e.target.value },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -295,10 +473,13 @@ export function SystemSettingsPage() {
                 <Input
                   type="number"
                   value={settings.email.smtpPort}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    email: { ...settings.email, smtpPort: Number(e.target.value) },
-                  })}
+                  onChange={(e) => {
+                    setSettings({
+                      ...settings,
+                      email: { ...settings.email, smtpPort: Number(e.target.value) },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
             </div>
@@ -306,10 +487,13 @@ export function SystemSettingsPage() {
               <Label>SMTP 사용자</Label>
               <Input
                 value={settings.email.smtpUser}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  email: { ...settings.email, smtpUser: e.target.value },
-                })}
+                onChange={(e) => {
+                  setSettings({
+                    ...settings,
+                    email: { ...settings.email, smtpUser: e.target.value },
+                  });
+                  setHasChanges(true);
+                }}
               />
             </div>
             <div className="flex items-center justify-between pt-4 border-t">
@@ -319,10 +503,13 @@ export function SystemSettingsPage() {
               </div>
               <Switch
                 checked={settings.email.useTls}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  email: { ...settings.email, useTls: v },
-                })}
+                onCheckedChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    email: { ...settings.email, useTls: v },
+                  });
+                  setHasChanges(true);
+                }}
               />
             </div>
           </CardContent>
