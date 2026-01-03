@@ -23,8 +23,8 @@ export {
 } from './useNoticeQueries';
 
 export {
-  analyticsKeys,
-  useActivityLogs,
-  useActivityStats,
-  useSystemUsage,
+  saAnalyticsKeys,
+  useSaActivityLogs,
+  useSaActivityStats,
+  useSaRecentActivities,
 } from './useAnalyticsQueries';
