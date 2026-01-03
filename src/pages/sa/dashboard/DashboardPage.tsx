@@ -1,53 +1,48 @@
-import { Building2, Users, Activity, Server } from 'lucide-react';
+import { Building2, Users, Activity, Loader2 } from 'lucide-react';
 import {
   AdminPageHeader,
   AdminStatsCard,
   AdminStatsGrid,
   StatusBadge,
   PlanBadge,
-  
 } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
 import { Progress } from '@/components/common/Progress';
+import { useSaDashboard } from '@/hooks/sa';
 import type { TenantStatus, PlanType } from '@/types/admin';
 
-// Mock 데이터 (추후 API 연동)
-const mockStats = {
-  tenants: {
-    total: 24,
-    active: 20,
-    inactive: 3,
-    suspended: 1,
-  },
-  users: {
-    total: 1250,
-    activeToday: 342,
-  },
-  systemHealth: {
-    status: 'healthy' as const,
-    uptime: '99.9%',
-    cpuUsage: 45,
-    memoryUsage: 62,
-    diskUsage: 38,
-  },
-};
-
-const mockRecentTenants: {
-  id: number;
-  name: string;
-  code: string;
-  status: TenantStatus;
-  plan: PlanType;
-  createdAt: string;
-}[] = [
-  { id: 1, name: '메가존클라우드', code: 'mzc', status: 'ACTIVE', plan: 'ENTERPRISE', createdAt: '2025-12-28' },
-  { id: 2, name: '삼성전자', code: 'samsung', status: 'ACTIVE', plan: 'ENTERPRISE', createdAt: '2025-12-27' },
-  { id: 3, name: '네이버', code: 'naver', status: 'PENDING', plan: 'PRO', createdAt: '2025-12-26' },
-  { id: 4, name: '카카오', code: 'kakao', status: 'ACTIVE', plan: 'PRO', createdAt: '2025-12-25' },
-  { id: 5, name: '라인', code: 'line', status: 'INACTIVE', plan: 'BASIC', createdAt: '2025-12-24' },
-];
-
 export function DashboardPage() {
+  const { data: dashboard, isLoading, error } = useSaDashboard();
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <AdminPageHeader
+          title="대시보드"
+          description="시스템 전체 현황을 확인합니다"
+        />
+        <div className="text-center py-12 text-text-secondary">
+          데이터를 불러오는 중 오류가 발생했습니다.
+        </div>
+      </div>
+    );
+  }
+
+  const tenantStats = dashboard?.tenantStats ?? { total: 0, active: 0, pending: 0, suspended: 0, terminated: 0, byPlan: {} };
+  const userStats = dashboard?.userStats ?? { total: 0, active: 0, suspended: 0, withdrawn: 0 };
+  const recentTenants = dashboard?.recentTenants ?? [];
+
+  const safePercentage = (value: number, total: number) =>
+    total > 0 ? (value / total) * 100 : 0;
+
   return (
     <div className="p-6">
       <AdminPageHeader
@@ -59,32 +54,30 @@ export function DashboardPage() {
       <AdminStatsGrid columns={4} className="mb-6">
         <AdminStatsCard
           title="전체 테넌트"
-          value={mockStats.tenants.total}
-          subtitle={`활성 ${mockStats.tenants.active}개`}
+          value={tenantStats.total}
+          subtitle={`활성 ${tenantStats.active}개`}
           icon={Building2}
           variant="primary"
-          trend={{ value: 12, label: '지난 달 대비' }}
         />
         <AdminStatsCard
           title="전체 사용자"
-          value={mockStats.users.total.toLocaleString()}
-          subtitle={`오늘 활성 ${mockStats.users.activeToday}명`}
+          value={userStats.total.toLocaleString()}
+          subtitle={`활성 ${userStats.active.toLocaleString()}명`}
           icon={Users}
           variant="success"
-          trend={{ value: 8, label: '지난 달 대비' }}
         />
         <AdminStatsCard
-          title="시스템 상태"
-          value={mockStats.systemHealth.status === 'healthy' ? '정상' : '점검 필요'}
-          subtitle={`가동률 ${mockStats.systemHealth.uptime}`}
+          title="대기 테넌트"
+          value={tenantStats.pending}
+          subtitle="승인 대기"
           icon={Activity}
-          variant={mockStats.systemHealth.status === 'healthy' ? 'success' : 'warning'}
+          variant="warning"
         />
         <AdminStatsCard
-          title="서버 리소스"
-          value={`${mockStats.systemHealth.cpuUsage}%`}
-          subtitle="CPU 사용률"
-          icon={Server}
+          title="정지 사용자"
+          value={userStats.suspended}
+          subtitle="정지 상태"
+          icon={Users}
           variant="default"
         />
       </AdminStatsGrid>
@@ -100,62 +93,91 @@ export function DashboardPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm">활성</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.tenants.active / mockStats.tenants.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-8">{mockStats.tenants.active}</span>
+                  <Progress value={safePercentage(tenantStats.active, tenantStats.total)} className="w-32" />
+                  <span className="text-sm font-medium w-8">{tenantStats.active}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">비활성</span>
+                <span className="text-sm">대기</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.tenants.inactive / mockStats.tenants.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-8">{mockStats.tenants.inactive}</span>
+                  <Progress value={safePercentage(tenantStats.pending, tenantStats.total)} className="w-32" />
+                  <span className="text-sm font-medium w-8">{tenantStats.pending}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">정지</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.tenants.suspended / mockStats.tenants.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-8">{mockStats.tenants.suspended}</span>
+                  <Progress value={safePercentage(tenantStats.suspended, tenantStats.total)} className="w-32" />
+                  <span className="text-sm font-medium w-8">{tenantStats.suspended}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">해지</span>
+                <div className="flex items-center gap-2">
+                  <Progress value={safePercentage(tenantStats.terminated, tenantStats.total)} className="w-32" />
+                  <span className="text-sm font-medium w-8">{tenantStats.terminated}</span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* 시스템 리소스 */}
+        {/* 사용자 현황 */}
         <Card>
           <CardHeader>
-            <CardTitle>시스템 리소스</CardTitle>
+            <CardTitle>사용자 현황</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm">CPU</span>
+                <span className="text-sm">활성</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={mockStats.systemHealth.cpuUsage} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.systemHealth.cpuUsage}%</span>
+                  <Progress value={safePercentage(userStats.active, userStats.total)} className="w-32" />
+                  <span className="text-sm font-medium w-12">{userStats.active.toLocaleString()}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">메모리</span>
+                <span className="text-sm">정지</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={mockStats.systemHealth.memoryUsage} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.systemHealth.memoryUsage}%</span>
+                  <Progress value={safePercentage(userStats.suspended, userStats.total)} className="w-32" />
+                  <span className="text-sm font-medium w-12">{userStats.suspended.toLocaleString()}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">디스크</span>
+                <span className="text-sm">탈퇴</span>
                 <div className="flex items-center gap-2">
-                  <Progress value={mockStats.systemHealth.diskUsage} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.systemHealth.diskUsage}%</span>
+                  <Progress value={safePercentage(userStats.withdrawn, userStats.total)} className="w-32" />
+                  <span className="text-sm font-medium w-12">{userStats.withdrawn.toLocaleString()}</span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* 플랜별 테넌트 */}
+        {Object.keys(tenantStats.byPlan).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>플랜별 테넌트</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {Object.entries(tenantStats.byPlan).map(([plan, count]) => (
+                  <div key={plan} className="flex items-center justify-between">
+                    <span className="text-sm">{plan}</span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={safePercentage(count, tenantStats.total)} className="w-32" />
+                      <span className="text-sm font-medium w-8">{count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 최근 생성된 테넌트 */}
-        <Card className="lg:col-span-2">
+        <Card className={Object.keys(tenantStats.byPlan).length > 0 ? '' : 'lg:col-span-2'}>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>최근 생성된 테넌트</CardTitle>
             <a href="/sa/tenants" className="text-sm text-brand-primary hover:underline">
@@ -163,34 +185,40 @@ export function DashboardPage() {
             </a>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">테넌트명</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">코드</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">상태</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">플랜</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">생성일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockRecentTenants.map((tenant) => (
-                    <tr key={tenant.id} className="border-b last:border-b-0 hover:bg-bg-secondary">
-                      <td className="py-3 px-4 font-medium">{tenant.name}</td>
-                      <td className="py-3 px-4 text-text-secondary">{tenant.code}</td>
-                      <td className="py-3 px-4">
-                        <StatusBadge status={tenant.status} />
-                      </td>
-                      <td className="py-3 px-4">
-                        <PlanBadge plan={tenant.plan} />
-                      </td>
-                      <td className="py-3 px-4 text-text-secondary">{tenant.createdAt}</td>
+            {recentTenants.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">테넌트명</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">코드</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">상태</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">플랜</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">생성일</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {recentTenants.map((tenant) => (
+                      <tr key={tenant.id} className="border-b last:border-b-0 hover:bg-bg-secondary">
+                        <td className="py-3 px-4 font-medium">{tenant.name}</td>
+                        <td className="py-3 px-4 text-text-secondary">{tenant.code}</td>
+                        <td className="py-3 px-4">
+                          <StatusBadge status={tenant.status as TenantStatus} />
+                        </td>
+                        <td className="py-3 px-4">
+                          <PlanBadge plan={tenant.plan as PlanType} />
+                        </td>
+                        <td className="py-3 px-4 text-text-secondary">{tenant.createdAt}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-text-secondary text-sm">
+                등록된 테넌트가 없습니다
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
