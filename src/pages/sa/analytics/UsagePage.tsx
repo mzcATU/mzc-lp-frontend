@@ -19,17 +19,18 @@ import {
   SelectValue,
 } from '@/components/common/Select';
 import { Progress } from '@/components/common/Progress';
-import { useSaDashboard, useSaActivityStats } from '@/hooks/sa';
+import { useSaActivityStats } from '@/hooks/sa';
 
 export function UsagePage() {
   const [period, setPeriod] = useState('30d');
 
-  const { data: dashboard, isLoading: dashboardLoading } = useSaDashboard();
   const { data: activityStats, isLoading: activityLoading } = useSaActivityStats(
     period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30
   );
 
-  const isLoading = dashboardLoading || activityLoading;
+  // Dashboard 데이터는 추후 추가 예정
+  const dashboard = undefined;
+  const isLoading = activityLoading;
 
   // 대시보드에서 통계 추출
   const totalUsers = dashboard?.userStats?.total || 0;
