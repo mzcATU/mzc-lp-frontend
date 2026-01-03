@@ -38,15 +38,3 @@ export {
   useReorderNavigationItems,
   useResetNavigationItems,
 } from './useTenantSettingsQueries';
-
-export {
-  dashboardKeys,
-  useTaDashboardKpi,
-} from './useDashboardQueries';
-
-export {
-  analyticsKeys,
-  useActivityLogs,
-  useActivityStats,
-  useRecentActivities,
-} from './useAnalyticsQueries';
