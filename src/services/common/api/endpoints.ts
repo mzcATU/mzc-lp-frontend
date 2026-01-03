@@ -230,4 +230,10 @@ export const API_ENDPOINTS = {
     ITEM: (courseId: number) => `/cart/items/${courseId}`,
     ITEM_CHECK: (courseId: number) => `/cart/items/${courseId}/check`,
   },
+
+  // Dashboard
+  DASHBOARD: {
+    SA: '/sa/dashboard',
+    TA_KPI: '/tenant/dashboard/kpi',
+  },
 } as const;
