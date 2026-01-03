@@ -28,3 +28,10 @@ export {
   useUpdateBranding,
   useUpdateUserManagement,
 } from './useTenantSettingsQueries';
+
+export {
+  analyticsKeys,
+  useActivityLogs,
+  useActivityStats,
+  useRecentActivities,
+} from './useAnalyticsQueries';
