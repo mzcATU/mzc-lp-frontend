@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import {
   Clock,
   Users,
@@ -11,6 +12,8 @@ import {
 import {
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -25,10 +28,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
 import { Progress } from '@/components/common/Progress';
 import { Skeleton } from '@/components/common/Skeleton';
+import { NoDataEmpty } from '@/components/common/EmptyState';
 import { useToDashboard } from '@/hooks/to';
+
+type DateRange = '7d' | '30d' | 'all';
+
+const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: '7d', label: '최근 7일' },
+  { value: '30d', label: '이번 달' },
+];
 
 export function DashboardPage() {
   const { data, isLoading, error } = useToDashboard();
+  const [dateRange, setDateRange] = useState<DateRange>('all');
 
   if (error) {
     return (
@@ -66,11 +79,46 @@ export function DashboardPage() {
   };
   const dailyTrend = data?.dailyTrend ?? [];
 
+  // 선택한 기간에 따라 데이터 필터링
+  const filteredDailyTrend = useMemo(() => {
+    if (dailyTrend.length === 0) return [];
+    if (dateRange === 'all') return dailyTrend;
+
+    const days = dateRange === '7d' ? 7 : 30;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    return dailyTrend.filter((item) => {
+      const itemDate = new Date(item.date);
+      return itemDate >= cutoffDate;
+    });
+  }, [dailyTrend, dateRange]);
+
+  // 선택된 기간 라벨 가져오기
+  const selectedRangeLabel = DATE_RANGE_OPTIONS.find((opt) => opt.value === dateRange)?.label ?? '';
+
   return (
     <div className="p-6">
       <AdminPageHeader
         title="대시보드"
-        description="운영 현황을 한눈에 확인합니다"
+        description={`운영 현황을 한눈에 확인합니다 • ${selectedRangeLabel} 기준`}
+        actions={
+          <div className="flex gap-1">
+            {DATE_RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setDateRange(option.value)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  dateRange === option.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        }
       />
 
       {/* Stats Grid */}
@@ -311,45 +359,101 @@ export function DashboardPage() {
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-64" />
-            ) : dailyTrend.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-text-secondary">
-                데이터가 없습니다
-              </div>
+            ) : filteredDailyTrend.length === 0 ? (
+              <NoDataEmpty
+                title="데이터가 없습니다"
+                description="선택한 기간에 수강 신청 데이터가 없습니다."
+                className="h-64"
+              />
             ) : (
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={dailyTrend}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis
-                      dataKey="date"
-                      className="text-xs fill-text-secondary"
-                      tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return `${date.getMonth() + 1}/${date.getDate()}`;
-                      }}
-                    />
-                    <YAxis className="text-xs fill-text-secondary" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--bg-default))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                      }}
-                      labelFormatter={(value) => {
-                        const date = new Date(value);
-                        return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-                      }}
-                    />
-                    <Bar
-                      dataKey="enrollments"
-                      name="수강 신청"
-                      fill="hsl(var(--brand-primary))"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
+                  {filteredDailyTrend.length >= 7 ? (
+                    // 7일 이상: AreaChart로 트렌드 시각화
+                    <AreaChart
+                      data={filteredDailyTrend}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <defs>
+                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#4C2D9A" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="#4C2D9A" stopOpacity={0.05} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--card)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                        }}
+                        labelFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="enrollments"
+                        name="수강 신청"
+                        stroke="#4C2D9A"
+                        strokeWidth={2}
+                        fill="url(#areaGradient)"
+                      />
+                    </AreaChart>
+                  ) : (
+                    // 7일 미만: BarChart (막대 너비 제한 + 호버 효과 + 그라데이션)
+                    <BarChart
+                      data={filteredDailyTrend}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#4C2D9A" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#4C2D9A" stopOpacity={0.7} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }}
+                      />
+                      <YAxis tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'var(--card)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                        }}
+                        labelFormatter={(value) => {
+                          const date = new Date(value);
+                          return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+                        }}
+                        cursor={{ fill: 'var(--muted)', opacity: 0.1 }}
+                      />
+                      <Bar
+                        dataKey="enrollments"
+                        name="수강 신청"
+                        fill="url(#barGradient)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={60}
+                        activeBar={{ fill: '#3D2478', opacity: 0.9 }}
+                      />
+                    </BarChart>
+                  )}
                 </ResponsiveContainer>
               </div>
             )}

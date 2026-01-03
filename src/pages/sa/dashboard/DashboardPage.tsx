@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Building2, Users, AlertCircle, Clock } from 'lucide-react';
 import {
   AdminPageHeader,
@@ -9,11 +10,24 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
 import { Progress } from '@/components/common/Progress';
 import { Skeleton } from '@/components/common/Skeleton';
+import { NoDataEmpty } from '@/components/common/EmptyState';
 import { useSaDashboard } from '@/hooks/sa';
 import type { TenantStatus, PlanType } from '@/types/admin';
 
+type DateRange = '7d' | '30d' | 'all';
+
+const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: '7d', label: '최근 7일' },
+  { value: '30d', label: '이번 달' },
+];
+
 export function DashboardPage() {
   const { data, isLoading, error } = useSaDashboard();
+  const [dateRange, setDateRange] = useState<DateRange>('all');
+
+  // 선택된 기간 라벨 가져오기
+  const selectedRangeLabel = DATE_RANGE_OPTIONS.find((opt) => opt.value === dateRange)?.label ?? '';
 
   if (error) {
     return (
@@ -43,7 +57,24 @@ export function DashboardPage() {
     <div className="p-6">
       <AdminPageHeader
         title="대시보드"
-        description="시스템 전체 현황을 확인합니다"
+        description={`시스템 전체 현황을 확인합니다 • ${selectedRangeLabel} 기준`}
+        actions={
+          <div className="flex gap-1">
+            {DATE_RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setDateRange(option.value)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  dateRange === option.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        }
       />
 
       {/* Stats Grid */}
@@ -196,9 +227,11 @@ export function DashboardPage() {
                 <Skeleton className="h-12" />
               </div>
             ) : recentTenants.length === 0 ? (
-              <div className="py-8 text-center text-text-secondary">
-                최근 생성된 테넌트가 없습니다
-              </div>
+              <NoDataEmpty
+                title="최근 생성된 테넌트가 없습니다"
+                description="새로운 테넌트가 등록되면 여기에 표시됩니다."
+                className="py-8"
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
