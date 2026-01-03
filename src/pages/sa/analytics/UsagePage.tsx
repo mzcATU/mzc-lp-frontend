@@ -20,6 +20,7 @@ import {
 } from '@/components/common/Select';
 import { Progress } from '@/components/common/Progress';
 import { useSaActivityStats } from '@/hooks/sa';
+import type { SaDashboardResponse } from '@/types/admin';
 
 export function UsagePage() {
   const [period, setPeriod] = useState('30d');
@@ -29,7 +30,7 @@ export function UsagePage() {
   );
 
   // Dashboard 데이터는 추후 추가 예정
-  const dashboard = undefined;
+  const dashboard: SaDashboardResponse | undefined = undefined;
   const isLoading = activityLoading;
 
   // 대시보드에서 통계 추출
