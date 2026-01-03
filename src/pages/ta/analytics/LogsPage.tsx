@@ -8,6 +8,7 @@ import {
   CheckCircle,
   Calendar,
   User,
+  Loader2,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -21,27 +22,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
+import { useActivityLogs, useActivityStats } from '@/hooks/ta';
+import type { ActivityType } from '@/services/ta/analyticsService';
 
-// Mock 데이터
-const mockLogs: {
-  id: number;
-  timestamp: string;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS';
-  category: string;
-  action: string;
-  user?: string;
-  details: string;
-  ip?: string;
-}[] = [
-  { id: 1, timestamp: '2025-12-30 10:45:23', level: 'INFO', category: '인증', action: '로그인', user: '김학습', details: '로그인 성공', ip: '192.168.1.100' },
-  { id: 2, timestamp: '2025-12-30 10:44:18', level: 'SUCCESS', category: '학습', action: '강좌 완료', user: '이수강', details: 'AWS 기초 과정 수료', ip: '192.168.1.101' },
-  { id: 3, timestamp: '2025-12-30 10:43:55', level: 'WARN', category: '시스템', action: '파일 업로드', user: '박강사', details: '파일 크기 제한 초과 (500MB)', ip: '192.168.1.102' },
-  { id: 4, timestamp: '2025-12-30 10:42:30', level: 'INFO', category: '관리', action: '사용자 생성', user: '관리자', details: '신규 사용자 10명 일괄 등록', ip: '192.168.1.1' },
-  { id: 5, timestamp: '2025-12-30 10:41:12', level: 'ERROR', category: '인증', action: '로그인', user: '최사용', details: '비밀번호 5회 오류, 계정 잠금', ip: '192.168.1.103' },
-  { id: 6, timestamp: '2025-12-30 10:40:45', level: 'INFO', category: '학습', action: '영상 시청', user: '정학생', details: 'React 입문 3강 시청 완료', ip: '192.168.1.104' },
-  { id: 7, timestamp: '2025-12-30 10:39:20', level: 'SUCCESS', category: '관리', action: '강좌 게시', user: '관리자', details: 'Python 고급 과정 게시됨', ip: '192.168.1.1' },
-  { id: 8, timestamp: '2025-12-30 10:38:05', level: 'INFO', category: '인증', action: '로그아웃', user: '김학습', details: '정상 로그아웃', ip: '192.168.1.100' },
-];
+// 활동 타입별 레벨 매핑
+const getLogLevel = (activityType: ActivityType): 'INFO' | 'WARN' | 'ERROR' | 'SUCCESS' => {
+  const errorTypes: ActivityType[] = ['LOGIN_FAILED'];
+  const successTypes: ActivityType[] = ['ENROLLMENT_COMPLETE', 'CONTENT_COMPLETE', 'PROGRAM_APPROVE'];
+  const warnTypes: ActivityType[] = ['USER_DELETE', 'COURSE_DELETE', 'ENROLLMENT_DROP', 'PROGRAM_REJECT'];
+
+  if (errorTypes.includes(activityType)) return 'ERROR';
+  if (successTypes.includes(activityType)) return 'SUCCESS';
+  if (warnTypes.includes(activityType)) return 'WARN';
+  return 'INFO';
+};
+
+// 활동 타입별 카테고리 매핑
+const getCategory = (activityType: ActivityType): string => {
+  if (['LOGIN', 'LOGOUT', 'LOGIN_FAILED', 'PASSWORD_CHANGE'].includes(activityType)) return '인증';
+  if (['USER_CREATE', 'USER_UPDATE', 'USER_DELETE', 'ROLE_CHANGE'].includes(activityType)) return '사용자';
+  if (['COURSE_VIEW', 'COURSE_CREATE', 'COURSE_UPDATE', 'COURSE_DELETE'].includes(activityType)) return '강좌';
+  if (['PROGRAM_CREATE', 'PROGRAM_UPDATE', 'PROGRAM_APPROVE', 'PROGRAM_REJECT'].includes(activityType)) return '프로그램';
+  if (['ENROLLMENT_CREATE', 'ENROLLMENT_COMPLETE', 'ENROLLMENT_DROP'].includes(activityType)) return '수강';
+  if (['CONTENT_VIEW', 'CONTENT_COMPLETE'].includes(activityType)) return '콘텐츠';
+  if (['SETTINGS_UPDATE', 'TENANT_CREATE', 'TENANT_UPDATE'].includes(activityType)) return '설정';
+  return '기타';
+};
 
 const levelConfig = {
   INFO: { icon: Info, color: 'bg-blue-100 text-blue-700' },
@@ -50,21 +56,66 @@ const levelConfig = {
   SUCCESS: { icon: CheckCircle, color: 'bg-green-100 text-green-700' },
 };
 
+const activityTypeOptions: { value: ActivityType; label: string }[] = [
+  { value: 'LOGIN', label: '로그인' },
+  { value: 'LOGOUT', label: '로그아웃' },
+  { value: 'LOGIN_FAILED', label: '로그인 실패' },
+  { value: 'USER_CREATE', label: '사용자 생성' },
+  { value: 'USER_UPDATE', label: '사용자 수정' },
+  { value: 'USER_DELETE', label: '사용자 삭제' },
+  { value: 'COURSE_VIEW', label: '강좌 조회' },
+  { value: 'COURSE_CREATE', label: '강좌 생성' },
+  { value: 'ENROLLMENT_CREATE', label: '수강 신청' },
+  { value: 'ENROLLMENT_COMPLETE', label: '수강 완료' },
+];
+
 export function LogsPage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<ActivityType | undefined>(undefined);
+  const [page, setPage] = useState(0);
 
-  const categories = [...new Set(mockLogs.map(log => log.category))];
-
-  const filteredLogs = mockLogs.filter((log) => {
-    const matchesSearch = log.details.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      log.user?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      log.action.toLowerCase().includes(searchKeyword.toLowerCase());
-    const matchesLevel = levelFilter === 'all' || log.level === levelFilter;
-    const matchesCategory = categoryFilter === 'all' || log.category === categoryFilter;
-    return matchesSearch && matchesLevel && matchesCategory;
+  const { data: logsData, isLoading, error } = useActivityLogs({
+    type: typeFilter,
+    page,
+    size: 50,
   });
+  const { data: stats } = useActivityStats(30);
+
+  const logs = logsData?.content || [];
+
+  // 클라이언트 사이드 필터링 (검색어, 레벨)
+  const filteredLogs = logs.filter((log) => {
+    const matchesSearch = !searchKeyword ||
+      log.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      log.userName?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      log.activityTypeLabel?.toLowerCase().includes(searchKeyword.toLowerCase());
+
+    const logLevel = getLogLevel(log.activityType);
+    const matchesLevel = levelFilter === 'all' || logLevel === levelFilter;
+
+    return matchesSearch && matchesLevel;
+  });
+
+  // 레벨별 카운트
+  const levelCounts = {
+    INFO: logs.filter(l => getLogLevel(l.activityType) === 'INFO').length,
+    SUCCESS: logs.filter(l => getLogLevel(l.activityType) === 'SUCCESS').length,
+    WARN: logs.filter(l => getLogLevel(l.activityType) === 'WARN').length,
+    ERROR: logs.filter(l => getLogLevel(l.activityType) === 'ERROR').length,
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
 
   return (
     <div className="p-6">
@@ -88,8 +139,8 @@ export function LogsPage() {
                 <Info className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.filter(l => l.level === 'INFO').length}</p>
-                <p className="text-sm text-text-secondary">정보</p>
+                <p className="text-2xl font-bold">{stats?.totalActivities || levelCounts.INFO}</p>
+                <p className="text-sm text-text-secondary">전체 활동</p>
               </div>
             </div>
           </CardContent>
@@ -101,8 +152,8 @@ export function LogsPage() {
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.filter(l => l.level === 'SUCCESS').length}</p>
-                <p className="text-sm text-text-secondary">성공</p>
+                <p className="text-2xl font-bold">{stats?.todayActivities || levelCounts.SUCCESS}</p>
+                <p className="text-sm text-text-secondary">오늘 활동</p>
               </div>
             </div>
           </CardContent>
@@ -114,7 +165,7 @@ export function LogsPage() {
                 <AlertTriangle className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.filter(l => l.level === 'WARN').length}</p>
+                <p className="text-2xl font-bold">{levelCounts.WARN}</p>
                 <p className="text-sm text-text-secondary">경고</p>
               </div>
             </div>
@@ -127,7 +178,7 @@ export function LogsPage() {
                 <AlertCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.filter(l => l.level === 'ERROR').length}</p>
+                <p className="text-2xl font-bold">{levelCounts.ERROR}</p>
                 <p className="text-sm text-text-secondary">오류</p>
               </div>
             </div>
@@ -165,14 +216,17 @@ export function LogsPage() {
                   <SelectItem value="ERROR">오류</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-28">
-                  <SelectValue placeholder="카테고리" />
+              <Select
+                value={typeFilter || 'all'}
+                onValueChange={(v) => setTypeFilter(v === 'all' ? undefined : v as ActivityType)}
+              >
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="활동 유형" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  {activityTypeOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -180,41 +234,87 @@ export function LogsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {filteredLogs.map((log) => {
-              const config = levelConfig[log.level];
-              const LevelIcon = config.icon;
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-red-500">
+              데이터를 불러오는 중 오류가 발생했습니다.
+            </div>
+          ) : filteredLogs.length === 0 ? (
+            <div className="text-center py-12 text-text-secondary">
+              활동 로그가 없습니다.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredLogs.map((log) => {
+                const level = getLogLevel(log.activityType);
+                const category = getCategory(log.activityType);
+                const config = levelConfig[level];
+                const LevelIcon = config.icon;
 
-              return (
-                <div key={log.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-bg-secondary">
-                  <Badge className={`${config.color} shrink-0`}>
-                    <LevelIcon className="h-3 w-3 mr-1" />
-                    {log.level}
-                  </Badge>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{log.category}</Badge>
-                      <span className="font-medium">{log.action}</span>
-                      {log.user && (
-                        <span className="text-sm text-text-secondary flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          {log.user}
-                        </span>
+                return (
+                  <div key={log.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-bg-secondary">
+                    <Badge className={`${config.color} shrink-0`}>
+                      <LevelIcon className="h-3 w-3 mr-1" />
+                      {level}
+                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline">{category}</Badge>
+                        <span className="font-medium">{log.activityTypeLabel}</span>
+                        {log.userName && (
+                          <span className="text-sm text-text-secondary flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {log.userName}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm mt-1">{log.description}</p>
+                      {log.targetName && (
+                        <p className="text-xs text-text-secondary mt-1">
+                          대상: {log.targetType} - {log.targetName}
+                        </p>
                       )}
-                    </div>
-                    <p className="text-sm mt-1">{log.details}</p>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-text-secondary">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {log.timestamp}
-                      </span>
-                      {log.ip && <span>IP: {log.ip}</span>}
+                      <div className="flex items-center gap-4 mt-1 text-xs text-text-secondary">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(log.createdAt)}
+                        </span>
+                        {log.ipAddress && <span>IP: {log.ipAddress}</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {logsData && logsData.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={logsData.first}
+              >
+                이전
+              </Button>
+              <span className="text-sm text-text-secondary">
+                {logsData.number + 1} / {logsData.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => p + 1)}
+                disabled={logsData.last}
+              >
+                다음
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
