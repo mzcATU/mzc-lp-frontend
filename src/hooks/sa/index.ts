@@ -28,3 +28,5 @@ export {
   useSaActivityStats,
   useSaRecentActivities,
 } from './useAnalyticsQueries';
+
+export { saDashboardKeys, useSaDashboard } from './useDashboardQueries';

@@ -34,6 +34,21 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenants/${id}`,
   },
 
+  // SA Dashboard (SYSTEM_ADMIN)
+  SA_DASHBOARD: {
+    BASE: '/sa/dashboard',
+  },
+
+  // TA Dashboard (TENANT_ADMIN)
+  TA_DASHBOARD: {
+    KPI: '/admin/dashboard/kpi',
+  },
+
+  // TO Dashboard (OPERATOR)
+  TO_DASHBOARD: {
+    TASKS: '/operator/dashboard/tasks',
+  },
+
   // Tenant Settings (TA)
   TENANT_SETTINGS: {
     BASE: '/tenant/settings',
