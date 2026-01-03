@@ -44,6 +44,11 @@ export const API_ENDPOINTS = {
     KPI: '/admin/dashboard/kpi',
   },
 
+  // TO Dashboard (OPERATOR)
+  TO_DASHBOARD: {
+    TASKS: '/operator/dashboard/tasks',
+  },
+
   // Tenant Settings (TA)
   TENANT_SETTINGS: {
     BASE: '/tenant/settings',
