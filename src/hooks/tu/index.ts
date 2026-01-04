@@ -237,3 +237,15 @@ export {
 } from './usePublicBranding';
 
 export { useBrandingApply } from './useBrandingApply';
+
+// Learning Stats Hooks (내 학습 통계)
+export {
+  learningStatsKeys,
+  useMyLearningStats,
+} from './useLearningStatsQueries';
+
+// Owner Stats Hooks (강사 통계)
+export {
+  ownerStatsKeys,
+  useMyOwnerStats,
+} from './useOwnerStatsQueries';

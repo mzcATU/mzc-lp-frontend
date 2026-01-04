@@ -62,6 +62,7 @@ type TranslationKeys = {
     completedCourses: string;
     completedComingSoon: string;
     pending: string;
+    dropped: string;
     total: string;
     recentLearning: string;
     viewAll: string;
@@ -115,6 +116,22 @@ type TranslationKeys = {
     courseDesignTitle: string;
     navigateConfirm: string;
     proceed: string;
+    // Owner Stats
+    totalPrograms: string;
+    totalCourseTimes: string;
+    totalStudents: string;
+    enrollmentStats: string;
+    totalEnrollments: string;
+    completed: string;
+    inProgress: string;
+    dropped: string;
+    failed: string;
+    averageCompletionRate: string;
+    completionRate: string;
+    programStats: string;
+    noProgramStats: string;
+    noProgramStatsDesc: string;
+    courseTimes: string;
   };
   // 프로필 및 보안
   profileSecurity: {
@@ -348,6 +365,7 @@ const ko: TranslationKeys = {
     completedCourses: '완료한 강의 목록',
     completedComingSoon: '완료한 강의 기능은 현재 개발 중입니다. 곧 완료한 강의 목록과 수료증을 확인할 수 있습니다.',
     pending: '승인 대기',
+    dropped: '중도 포기',
     total: '전체',
     recentLearning: '최근 학습',
     viewAll: '전체보기',
@@ -400,6 +418,22 @@ const ko: TranslationKeys = {
     courseDesignTitle: '강의 설계 / 개설',
     navigateConfirm: '강의 설계 / 개설 페이지로 이동하시겠습니까?',
     proceed: '이동',
+    // Owner Stats
+    totalPrograms: '총 프로그램',
+    totalCourseTimes: '총 차수',
+    totalStudents: '총 수강생',
+    enrollmentStats: '수강 현황',
+    totalEnrollments: '총 수강 신청',
+    completed: '수료 완료',
+    inProgress: '진행 중',
+    dropped: '중도 포기',
+    failed: '미수료',
+    averageCompletionRate: '평균 수료율',
+    completionRate: '수료율',
+    programStats: '프로그램별 통계',
+    noProgramStats: '프로그램 통계가 없습니다',
+    noProgramStatsDesc: '담당 프로그램이 없습니다. 프로그램에 강사로 배정되면 통계를 확인할 수 있습니다.',
+    courseTimes: '차수',
   },
   profileSecurity: {
     title: '프로필 및 보안',
@@ -619,6 +653,7 @@ const en: TranslationKeys = {
     completedCourses: 'Completed Courses List',
     completedComingSoon: 'Completed courses feature is currently under development. You will soon be able to view your completed courses and certificates.',
     pending: 'Pending',
+    dropped: 'Dropped',
     total: 'Total',
     recentLearning: 'Recent Learning',
     viewAll: 'View All',
@@ -671,6 +706,22 @@ const en: TranslationKeys = {
     courseDesignTitle: 'Course Design / Creation',
     navigateConfirm: 'Would you like to proceed to the course design / creation page?',
     proceed: 'Proceed',
+    // Owner Stats
+    totalPrograms: 'Total Programs',
+    totalCourseTimes: 'Total Sessions',
+    totalStudents: 'Total Students',
+    enrollmentStats: 'Enrollment Stats',
+    totalEnrollments: 'Total Enrollments',
+    completed: 'Completed',
+    inProgress: 'In Progress',
+    dropped: 'Dropped',
+    failed: 'Failed',
+    averageCompletionRate: 'Avg. Completion Rate',
+    completionRate: 'Completion Rate',
+    programStats: 'Program Stats',
+    noProgramStats: 'No program statistics',
+    noProgramStatsDesc: 'No programs assigned. Statistics will be available once you are assigned as an instructor.',
+    courseTimes: 'Sessions',
   },
   profileSecurity: {
     title: 'Profile & Security',

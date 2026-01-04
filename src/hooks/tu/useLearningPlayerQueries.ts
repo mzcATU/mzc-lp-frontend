@@ -6,6 +6,8 @@ import { useAuthStore } from '@/store/common/authStore';
 import { enrollmentService } from '@/services/tu/enrollmentService';
 import type { UpdateProgressRequest } from '@/types/tu';
 import { enrollmentKeys } from './useEnrollmentQueries';
+import { ownerStatsKeys } from './useOwnerStatsQueries';
+import { learningStatsKeys } from './useLearningStatsQueries';
 
 // Query Keys
 export const learningPlayerKeys = {
@@ -61,6 +63,9 @@ export const useMarkItemComplete = () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.detail(enrollmentId) });
       // 내 수강 목록도 갱신 (진도율 반영)
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.my() });
+      // 통계 갱신 (수료 상태 변경 가능)
+      queryClient.invalidateQueries({ queryKey: ownerStatsKeys.all });
+      queryClient.invalidateQueries({ queryKey: learningStatsKeys.all });
     },
   });
 };

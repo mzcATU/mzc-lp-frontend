@@ -241,3 +241,19 @@ export {
   PROGRAM_TYPE_LABELS,
   COURSE_TIME_STATUS_COLORS,
 } from './courseTimeCatalog.types';
+
+// Learning Stats (내 학습 통계)
+export type {
+  LearningStatsByType,
+  LearningStatsOverview,
+  LearningStatsProgress,
+  LearningStatsResponse,
+} from './learningStats.types';
+
+// Owner Stats (강사 통계)
+export type {
+  OwnerStatsOverview,
+  OwnerEnrollmentStats,
+  OwnerProgramStats,
+  OwnerStatsResponse,
+} from './ownerStats.types';

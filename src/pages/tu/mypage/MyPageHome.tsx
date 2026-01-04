@@ -19,7 +19,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useUploadProfileImage } from '@/hooks/common';
-import { useMyEnrollments } from '@/hooks/tu';
+import { useMyEnrollments, useMyLearningStats } from '@/hooks/tu';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
 import { Button, Card, CardContent, Badge } from '@/components/common';
@@ -136,18 +136,21 @@ export function MyPageHome() {
     fileInputRef.current?.click();
   };
 
-  // 학습 현황 조회
+  // 학습 통계 API 조회
+  const { data: learningStats, isLoading: isLoadingStats } = useMyLearningStats();
+
+  // 최근 학습을 위한 enrollment 목록 조회 (수강 중인 강의만)
   const { data: enrollmentData, isLoading: isLoadingEnrollments } = useMyEnrollments({
     page: 0,
-    size: 100,
+    size: 3,
   });
 
-  // 통계 계산
+  // 통계 (API에서 가져온 데이터 사용, 없으면 기본값)
   const stats = {
-    inProgress: enrollmentData?.content.filter((e) => e.status === 'APPROVED').length ?? 0,
-    completed: enrollmentData?.content.filter((e) => e.status === 'COMPLETED').length ?? 0,
-    pending: enrollmentData?.content.filter((e) => e.status === 'PENDING').length ?? 0,
-    total: enrollmentData?.content.length ?? 0,
+    inProgress: learningStats?.overview.inProgress ?? 0,
+    completed: learningStats?.overview.completed ?? 0,
+    dropped: learningStats?.overview.dropped ?? 0,
+    total: learningStats?.overview.totalCourses ?? 0,
   };
 
   // 최근 학습 (수강 중인 강의 최대 3개)
@@ -232,7 +235,7 @@ export function MyPageHome() {
             {[
               { label: t.mypage.inProgress, value: stats.inProgress, icon: <PlayCircle className="w-5 h-5" />, color: 'blue' },
               { label: t.mypage.completed, value: stats.completed, icon: <CheckCircle className="w-5 h-5" />, color: 'green' },
-              { label: t.mypage.pending, value: stats.pending, icon: <Clock className="w-5 h-5" />, color: 'orange' },
+              { label: t.mypage.dropped, value: stats.dropped, icon: <Clock className="w-5 h-5" />, color: 'orange' },
               { label: t.mypage.total, value: stats.total, icon: <TrendingUp className="w-5 h-5" />, color: 'purple' },
             ].map((stat) => (
               <div
@@ -262,7 +265,7 @@ export function MyPageHome() {
                   </span>
                 </div>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {isLoadingEnrollments ? '-' : stat.value}
+                  {isLoadingStats ? '-' : stat.value}
                 </p>
               </div>
             ))}
