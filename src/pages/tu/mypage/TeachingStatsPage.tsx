@@ -295,7 +295,7 @@ export function TeachingStatsPage() {
               />
             ) : (
               <div className="space-y-3">
-                {stats.programStats.map((program) => (
+                {stats.programStats.map((program, index) => (
                   <div
                     key={program.programId}
                     onClick={() => navigate(`/tu/teaching/programs/${program.programId}`)}
@@ -319,7 +319,7 @@ export function TeachingStatsPage() {
                         {t.teaching.students}: {program.totalStudents}
                       </span>
                     </div>
-                    {/* 수료율 Progress Bar */}
+                    {/* 수료율 Progress Bar with Entrance Animation */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
                         <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
@@ -338,7 +338,7 @@ export function TeachingStatsPage() {
                         }`}
                       >
                         <div
-                          className={`h-full transition-all rounded-full ${
+                          className={`h-full rounded-full animate-[grow-width_0.8s_ease-out_forwards] ${
                             isDark
                               ? 'bg-gradient-to-r from-violet-400 to-purple-400'
                               : ''
@@ -349,6 +349,10 @@ export function TeachingStatsPage() {
                             boxShadow: isDark
                               ? '0 0 8px rgba(167, 139, 250, 0.4)'
                               : '0 1px 3px rgba(0, 0, 0, 0.15)',
+                            animationDelay: `${index * 0.15}s`,
+                            opacity: 0,
+                            transform: 'scaleX(0)',
+                            transformOrigin: 'left',
                           }}
                         />
                       </div>
