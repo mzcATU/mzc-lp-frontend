@@ -117,9 +117,9 @@ const t = {
   ownedPrograms: { ko: '소유 프로그램', en: 'Owned Programs' },
   revenueShare: { ko: '수익 분배', en: 'Revenue Share' },
   noCourseRoles: { ko: '부여된 프로그램 역할이 없습니다.', en: 'No program roles assigned.' },
-  courseRoleDesigner: { ko: '설계자', en: 'Designer' },
-  courseRoleOwner: { ko: '소유자', en: 'Owner' },
-  courseRoleInstructor: { ko: '강사', en: 'Instructor' },
+  courseRoleDesigner: { ko: 'Designer', en: 'Designer' },
+  courseRoleOwner: { ko: 'Owner', en: 'Owner' },
+  courseRoleInstructor: { ko: 'Instructor', en: 'Instructor' },
 };
 
 const statusBadgeVariant: Record<UserStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -792,17 +792,17 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
                           <div className="flex items-center gap-2">
                             <Badge
                               variant={
-                                courseRole.role === 'OWNER'
+                                courseRole.role.toUpperCase() === 'OWNER'
                                   ? 'warning'
-                                  : courseRole.role === 'INSTRUCTOR'
+                                  : courseRole.role.toUpperCase() === 'INSTRUCTOR'
                                     ? 'success'
                                     : 'secondary'
                               }
                             >
-                              {getText(`courseRole${courseRole.role.charAt(0)}${courseRole.role.slice(1).toLowerCase()}` as keyof typeof t)}
+                              {getText(`courseRole${courseRole.role.charAt(0).toUpperCase()}${courseRole.role.slice(1).toLowerCase()}` as keyof typeof t)}
                             </Badge>
                             <span className="text-sm font-medium text-text-primary">
-                              {courseRole.programTitle ?? '-'}
+                              {courseRole.courseName ?? '-'}
                             </span>
                           </div>
                           {courseRole.revenueSharePercent !== null && (

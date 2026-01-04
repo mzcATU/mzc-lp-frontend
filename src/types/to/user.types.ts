@@ -17,7 +17,7 @@ export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR';
 export interface CourseRoleResponse {
   courseRoleId: number;
   programId: number | null;
-  programTitle: string | null;
+  courseName: string | null;
   role: CourseRole;
   revenueSharePercent: number | null;
   createdAt: string;
@@ -80,8 +80,8 @@ export interface UserFilterParams {
 export const TENANT_ROLE_LABELS: Record<TenantRole, string> = {
   SYSTEM_ADMIN: '시스템 관리자',
   TENANT_ADMIN: '테넌트 관리자',
-  OPERATOR: '운영자',
-  DESIGNER: '설계자',
+  OPERATOR: '강의소유자',
+  DESIGNER: '강의설계자',
   USER: '사용자',
 };
 
@@ -93,7 +93,7 @@ export const USER_STATUS_LABELS: Record<UserStatus, string> = {
 };
 
 export const COURSE_ROLE_LABELS: Record<CourseRole, string> = {
-  DESIGNER: '설계자',
-  OWNER: '소유자',
-  INSTRUCTOR: '강사',
+  DESIGNER: 'Designer',
+  OWNER: 'Owner',
+  INSTRUCTOR: 'Instructor',
 };
