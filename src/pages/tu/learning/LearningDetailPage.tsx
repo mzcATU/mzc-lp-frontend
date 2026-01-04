@@ -198,8 +198,8 @@ export function LearningDetailPage() {
     );
   }
 
-  const completedCount = mockCurriculum.filter((item) => item.completed).length;
-  const progressPercent = Math.round((completedCount / mockCurriculum.length) * 100);
+  // 실제 enrollment 데이터에서 진도율 가져오기 (API 데이터 우선)
+  const progressPercent = enrollment.progress ?? 0;
 
   return (
     <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
@@ -282,7 +282,7 @@ export function LearningDetailPage() {
 
               {/* Stats */}
               <div className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                {completedCount} / {mockCurriculum.length} {t.learning.completed}
+                {progressPercent === 100 ? t.learning.statusCompleted : `${progressPercent}% ${t.learning.completed}`}
               </div>
 
               {/* Continue Button */}
