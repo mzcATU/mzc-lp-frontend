@@ -40,3 +40,10 @@ export {
 } from './useTenantSettingsQueries';
 
 export { taDashboardKeys, useTaKpiDashboard } from './useDashboardQueries';
+
+export {
+  analyticsKeys,
+  useActivityLogs,
+  useActivityStats,
+  useRecentActivities,
+} from './useAnalyticsQueries';
