@@ -22,4 +22,11 @@ export {
   useDistributeAllNotice,
 } from './useNoticeQueries';
 
+export {
+  saAnalyticsKeys,
+  useSaActivityLogs,
+  useSaActivityStats,
+  useSaRecentActivities,
+} from './useAnalyticsQueries';
+
 export { saDashboardKeys, useSaDashboard } from './useDashboardQueries';

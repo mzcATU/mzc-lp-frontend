@@ -1,4 +1,5 @@
 export { tenantService } from './tenantService';
 export type { TenantFilterParams } from './tenantService';
 export { noticeService } from './noticeService';
+export { saAnalyticsService } from './analyticsService';
 export { saDashboardService } from './dashboardService';

@@ -7,6 +7,8 @@ import {
   Info,
   AlertCircle,
   CheckCircle,
+  Loader2,
+  Building2,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -20,27 +22,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
+import { useSaActivityLogs, useSaActivityStats } from '@/hooks/sa';
+import type { ActivityType } from '@/services/sa/analyticsService';
 
-// Mock 데이터
-const mockLogs: {
-  id: number;
-  timestamp: string;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
-  category: string;
-  message: string;
-  source: string;
-  userId?: string;
-  tenantId?: string;
-}[] = [
-  { id: 1, timestamp: '2025-12-30 10:45:23', level: 'INFO', category: 'AUTH', message: '사용자 로그인 성공', source: 'auth-service', userId: 'user-123', tenantId: 'tenant-1' },
-  { id: 2, timestamp: '2025-12-30 10:44:18', level: 'WARN', category: 'API', message: 'Rate limit 임계치 도달 (80%)', source: 'api-gateway', tenantId: 'tenant-2' },
-  { id: 3, timestamp: '2025-12-30 10:43:55', level: 'ERROR', category: 'VIDEO', message: '비디오 트랜스코딩 실패', source: 'video-service', tenantId: 'tenant-1' },
-  { id: 4, timestamp: '2025-12-30 10:42:30', level: 'INFO', category: 'COURSE', message: '강좌 생성 완료', source: 'course-service', userId: 'admin-1', tenantId: 'tenant-3' },
-  { id: 5, timestamp: '2025-12-30 10:41:12', level: 'DEBUG', category: 'SYSTEM', message: '캐시 갱신 완료', source: 'cache-service' },
-  { id: 6, timestamp: '2025-12-30 10:40:45', level: 'INFO', category: 'BILLING', message: '결제 처리 완료', source: 'billing-service', tenantId: 'tenant-1' },
-  { id: 7, timestamp: '2025-12-30 10:39:20', level: 'WARN', category: 'STORAGE', message: '스토리지 사용량 90% 초과', source: 'storage-service', tenantId: 'tenant-2' },
-  { id: 8, timestamp: '2025-12-30 10:38:05', level: 'ERROR', category: 'AUTH', message: '비밀번호 5회 오류로 계정 잠금', source: 'auth-service', userId: 'user-456', tenantId: 'tenant-1' },
-];
+// 활동 타입별 레벨 매핑
+const getLogLevel = (activityType: ActivityType): 'INFO' | 'WARN' | 'ERROR' | 'DEBUG' => {
+  const errorTypes: ActivityType[] = ['LOGIN_FAILED'];
+  const warnTypes: ActivityType[] = ['USER_DELETE', 'COURSE_DELETE', 'ENROLLMENT_DROP', 'PROGRAM_REJECT'];
+
+  if (errorTypes.includes(activityType)) return 'ERROR';
+  if (warnTypes.includes(activityType)) return 'WARN';
+  return 'INFO';
+};
+
+// 활동 타입별 카테고리 매핑
+const getCategory = (activityType: ActivityType): string => {
+  if (['LOGIN', 'LOGOUT', 'LOGIN_FAILED', 'PASSWORD_CHANGE'].includes(activityType)) return 'AUTH';
+  if (['USER_CREATE', 'USER_UPDATE', 'USER_DELETE', 'ROLE_CHANGE'].includes(activityType)) return 'USER';
+  if (['COURSE_VIEW', 'COURSE_CREATE', 'COURSE_UPDATE', 'COURSE_DELETE'].includes(activityType)) return 'COURSE';
+  if (['PROGRAM_CREATE', 'PROGRAM_UPDATE', 'PROGRAM_APPROVE', 'PROGRAM_REJECT'].includes(activityType)) return 'PROGRAM';
+  if (['ENROLLMENT_CREATE', 'ENROLLMENT_COMPLETE', 'ENROLLMENT_DROP'].includes(activityType)) return 'ENROLLMENT';
+  if (['CONTENT_VIEW', 'CONTENT_COMPLETE'].includes(activityType)) return 'CONTENT';
+  if (['SETTINGS_UPDATE'].includes(activityType)) return 'SETTINGS';
+  if (['TENANT_CREATE', 'TENANT_UPDATE'].includes(activityType)) return 'TENANT';
+  return 'SYSTEM';
+};
 
 const levelConfig = {
   INFO: { icon: Info, color: 'bg-blue-100 text-blue-700' },
@@ -49,20 +55,128 @@ const levelConfig = {
   DEBUG: { icon: CheckCircle, color: 'bg-gray-100 text-gray-700' },
 };
 
+const activityTypeOptions: { value: ActivityType; label: string }[] = [
+  { value: 'LOGIN', label: '로그인' },
+  { value: 'LOGOUT', label: '로그아웃' },
+  { value: 'LOGIN_FAILED', label: '로그인 실패' },
+  { value: 'USER_CREATE', label: '사용자 생성' },
+  { value: 'USER_DELETE', label: '사용자 삭제' },
+  { value: 'COURSE_CREATE', label: '강좌 생성' },
+  { value: 'TENANT_CREATE', label: '테넌트 생성' },
+  { value: 'TENANT_UPDATE', label: '테넌트 수정' },
+  { value: 'SETTINGS_UPDATE', label: '설정 변경' },
+];
+
 export function LogsPage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<ActivityType | undefined>(undefined);
+  const [page, setPage] = useState(0);
 
-  const categories = [...new Set(mockLogs.map(log => log.category))];
-
-  const filteredLogs = mockLogs.filter((log) => {
-    const matchesSearch = log.message.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      log.source.toLowerCase().includes(searchKeyword.toLowerCase());
-    const matchesLevel = levelFilter === 'all' || log.level === levelFilter;
-    const matchesCategory = categoryFilter === 'all' || log.category === categoryFilter;
-    return matchesSearch && matchesLevel && matchesCategory;
+  const { data: logsData, isLoading, error } = useSaActivityLogs({
+    type: typeFilter,
+    page,
+    size: 50,
   });
+  const { data: stats } = useSaActivityStats(30);
+
+  const logs = logsData?.content || [];
+
+  // 클라이언트 사이드 필터링 (검색어, 레벨)
+  const filteredLogs = logs.filter((log) => {
+    const matchesSearch = !searchKeyword ||
+      log.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      log.userName?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      log.activityTypeLabel?.toLowerCase().includes(searchKeyword.toLowerCase());
+
+    const logLevel = getLogLevel(log.activityType);
+    const matchesLevel = levelFilter === 'all' || logLevel === levelFilter;
+
+    return matchesSearch && matchesLevel;
+  });
+
+  // 레벨별 카운트
+  const levelCounts = {
+    INFO: logs.filter(l => getLogLevel(l.activityType) === 'INFO').length,
+    WARN: logs.filter(l => getLogLevel(l.activityType) === 'WARN').length,
+    ERROR: logs.filter(l => getLogLevel(l.activityType) === 'ERROR').length,
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-center py-12 text-red-500">
+          데이터를 불러오는 중 오류가 발생했습니다.
+        </div>
+      );
+    }
+
+    if (filteredLogs.length === 0) {
+      return (
+        <div className="text-center py-12 text-text-secondary">
+          시스템 로그가 없습니다.
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {filteredLogs.map((log) => {
+          const level = getLogLevel(log.activityType);
+          const category = getCategory(log.activityType);
+          const config = levelConfig[level];
+          const LevelIcon = config.icon;
+
+          return (
+            <div key={log.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-bg-secondary font-mono text-sm">
+              <Badge className={`${config.color} shrink-0`}>
+                <LevelIcon className="h-3 w-3 mr-1" />
+                {level}
+              </Badge>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-text-secondary">{formatDate(log.createdAt)}</span>
+                  <Badge variant="outline">{category}</Badge>
+                  <span className="text-text-secondary">[{log.activityTypeLabel}]</span>
+                </div>
+                <p className="truncate">{log.description}</p>
+                <div className="flex gap-2 mt-1 text-xs text-text-secondary">
+                  {log.userName && <span>User: {log.userName}</span>}
+                  {log.tenantId && (
+                    <span className="flex items-center gap-1">
+                      <Building2 className="h-3 w-3" />
+                      Tenant: {log.tenantId}
+                    </span>
+                  )}
+                  {log.ipAddress && <span>IP: {log.ipAddress}</span>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="p-6">
@@ -86,7 +200,7 @@ export function LogsPage() {
                 <Info className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.filter(l => l.level === 'INFO').length}</p>
+                <p className="text-2xl font-bold">{stats?.totalActivities || levelCounts.INFO}</p>
                 <p className="text-sm text-text-secondary">INFO</p>
               </div>
             </div>
@@ -99,7 +213,7 @@ export function LogsPage() {
                 <AlertTriangle className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.filter(l => l.level === 'WARN').length}</p>
+                <p className="text-2xl font-bold">{levelCounts.WARN}</p>
                 <p className="text-sm text-text-secondary">WARNING</p>
               </div>
             </div>
@@ -112,7 +226,7 @@ export function LogsPage() {
                 <AlertCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.filter(l => l.level === 'ERROR').length}</p>
+                <p className="text-2xl font-bold">{levelCounts.ERROR}</p>
                 <p className="text-sm text-text-secondary">ERROR</p>
               </div>
             </div>
@@ -125,7 +239,7 @@ export function LogsPage() {
                 <FileText className="h-5 w-5 text-gray-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{mockLogs.length}</p>
+                <p className="text-2xl font-bold">{stats?.totalActivities || logs.length}</p>
                 <p className="text-sm text-text-secondary">전체 로그</p>
               </div>
             </div>
@@ -160,17 +274,19 @@ export function LogsPage() {
                   <SelectItem value="INFO">INFO</SelectItem>
                   <SelectItem value="WARN">WARN</SelectItem>
                   <SelectItem value="ERROR">ERROR</SelectItem>
-                  <SelectItem value="DEBUG">DEBUG</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="카테고리" />
+              <Select
+                value={typeFilter || 'all'}
+                onValueChange={(v) => setTypeFilter(v === 'all' ? undefined : v as ActivityType)}
+              >
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="활동 유형" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  {activityTypeOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -178,35 +294,32 @@ export function LogsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {filteredLogs.map((log) => {
-              const config = levelConfig[log.level];
-              const LevelIcon = config.icon;
+          {renderContent()}
 
-              return (
-                <div key={log.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-bg-secondary font-mono text-sm">
-                  <Badge className={`${config.color} shrink-0`}>
-                    <LevelIcon className="h-3 w-3 mr-1" />
-                    {log.level}
-                  </Badge>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-text-secondary">{log.timestamp}</span>
-                      <Badge variant="outline">{log.category}</Badge>
-                      <span className="text-text-secondary">[{log.source}]</span>
-                    </div>
-                    <p className="truncate">{log.message}</p>
-                    {(log.userId || log.tenantId) && (
-                      <div className="flex gap-2 mt-1 text-xs text-text-secondary">
-                        {log.userId && <span>User: {log.userId}</span>}
-                        {log.tenantId && <span>Tenant: {log.tenantId}</span>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {/* Pagination */}
+          {logsData && logsData.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={logsData.first}
+              >
+                이전
+              </Button>
+              <span className="text-sm text-text-secondary">
+                {logsData.number + 1} / {logsData.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => p + 1)}
+                disabled={logsData.last}
+              >
+                다음
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

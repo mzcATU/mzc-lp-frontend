@@ -3,9 +3,10 @@ import {
   BarChart3,
   TrendingUp,
   Users,
-  BookOpen,
   HardDrive,
   Calendar,
+  Loader2,
+  Building2,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -18,36 +19,28 @@ import {
   SelectValue,
 } from '@/components/common/Select';
 import { Progress } from '@/components/common/Progress';
-
-// Mock 데이터
-const mockUsageStats = {
-  totalUsers: 12450,
-  activeUsers: 8920,
-  totalCourses: 156,
-  activeCourses: 134,
-  storageUsed: 245.8,
-  storageLimit: 500,
-  apiCalls: 1250000,
-  bandwidth: 2.4,
-};
-
-const mockTenantUsage: {
-  id: number;
-  name: string;
-  users: number;
-  courses: number;
-  storage: number;
-  storageLimit: number;
-}[] = [
-  { id: 1, name: '메가존클라우드', users: 2500, courses: 45, storage: 85.2, storageLimit: 100 },
-  { id: 2, name: '삼성전자', users: 3200, courses: 38, storage: 62.4, storageLimit: 100 },
-  { id: 3, name: 'LG전자', users: 1800, courses: 28, storage: 45.6, storageLimit: 100 },
-  { id: 4, name: '카카오', users: 1500, courses: 22, storage: 32.8, storageLimit: 50 },
-  { id: 5, name: '네이버', users: 1200, courses: 18, storage: 19.8, storageLimit: 50 },
-];
+import { useSaActivityStats } from '@/hooks/sa';
+import type { SaDashboardResponse } from '@/types/admin';
 
 export function UsagePage() {
   const [period, setPeriod] = useState('30d');
+
+  const { data: activityStats, isLoading: activityLoading } = useSaActivityStats(
+    period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30
+  );
+
+  // Dashboard 데이터는 추후 추가 예정
+  const dashboard = null as SaDashboardResponse | null;
+  const isLoading = activityLoading;
+
+  // 대시보드에서 통계 추출
+  const totalUsers = dashboard?.userStats?.total || 0;
+  const activeUsers = dashboard?.userStats?.active || 0;
+  const totalTenants = dashboard?.tenantStats?.total || 0;
+  const activeTenants = dashboard?.tenantStats?.active || 0;
+
+  // 활동 통계
+  const totalActivities = activityStats?.totalActivities || 0;
 
   return (
     <div className="p-6">
@@ -70,127 +63,218 @@ export function UsagePage() {
         }
       />
 
-      {/* Overview Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-brand-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-brand-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{mockUsageStats.totalUsers.toLocaleString()}</p>
-                <p className="text-sm text-text-secondary">전체 사용자</p>
-              </div>
-            </div>
-            <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              활성: {mockUsageStats.activeUsers.toLocaleString()}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BookOpen className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{mockUsageStats.totalCourses}</p>
-                <p className="text-sm text-text-secondary">전체 강좌</p>
-              </div>
-            </div>
-            <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              활성: {mockUsageStats.activeCourses}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <HardDrive className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{mockUsageStats.storageUsed} GB</p>
-                <p className="text-sm text-text-secondary">스토리지 사용</p>
-              </div>
-            </div>
-            <div className="mt-2">
-              <Progress value={(mockUsageStats.storageUsed / mockUsageStats.storageLimit) * 100} className="h-1" />
-              <p className="text-xs text-text-secondary mt-1">{mockUsageStats.storageLimit} GB 중</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <BarChart3 className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{(mockUsageStats.apiCalls / 1000000).toFixed(1)}M</p>
-                <p className="text-sm text-text-secondary">API 호출</p>
-              </div>
-            </div>
-            <div className="mt-2 text-xs text-text-secondary">
-              대역폭: {mockUsageStats.bandwidth} TB
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tenant Usage */}
-      <Card>
-        <CardHeader>
-          <CardTitle>테넌트별 사용량</CardTitle>
-          <CardDescription>각 테넌트의 리소스 사용 현황입니다</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {mockTenantUsage.map((tenant) => {
-              const storagePercent = (tenant.storage / tenant.storageLimit) * 100;
-
-              return (
-                <div key={tenant.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium">{tenant.name}</h3>
-                    <Button variant="ghost" size="sm">상세 보기</Button>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+        </div>
+      ) : (
+        <>
+          {/* Overview Stats */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-brand-primary/10 rounded-lg">
+                    <Users className="h-5 w-5 text-brand-primary" />
                   </div>
+                  <div>
+                    <p className="text-2xl font-bold">{totalUsers.toLocaleString()}</p>
+                    <p className="text-sm text-text-secondary">전체 사용자</p>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  활성: {activeUsers.toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Building2 className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{totalTenants}</p>
+                    <p className="text-sm text-text-secondary">전체 테넌트</p>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  활성: {activeTenants}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <BarChart3 className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{totalActivities.toLocaleString()}</p>
+                    <p className="text-sm text-text-secondary">총 활동</p>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-text-secondary">
+                  오늘: {activityStats?.todayActivities || 0}건
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <HardDrive className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{activityStats?.activeUsers || 0}</p>
+                    <p className="text-sm text-text-secondary">활성 사용자</p>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-text-secondary">
+                  최근 활동 기준
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 text-sm text-text-secondary mb-1">
-                        <Users className="h-4 w-4" />
-                        사용자
-                      </div>
-                      <p className="text-lg font-semibold">{tenant.users.toLocaleString()}</p>
+          {/* Tenant Stats by Plan */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>테넌트 상태별 현황</CardTitle>
+                <CardDescription>테넌트 상태 분포</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">활성</span>
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={totalTenants > 0 ? (activeTenants / totalTenants) * 100 : 0}
+                        className="w-32 h-2"
+                      />
+                      <span className="text-sm font-medium w-8">{activeTenants}</span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 text-sm text-text-secondary mb-1">
-                        <BookOpen className="h-4 w-4" />
-                        강좌
-                      </div>
-                      <p className="text-lg font-semibold">{tenant.courses}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">대기</span>
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={totalTenants > 0 ? ((dashboard?.tenantStats?.pending || 0) / totalTenants) * 100 : 0}
+                        className="w-32 h-2"
+                      />
+                      <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.pending || 0}</span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 text-sm text-text-secondary mb-1">
-                        <HardDrive className="h-4 w-4" />
-                        스토리지
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Progress value={storagePercent} className="flex-1 h-2" />
-                        <span className="text-sm">{tenant.storage} / {tenant.storageLimit} GB</span>
-                      </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">정지</span>
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={totalTenants > 0 ? ((dashboard?.tenantStats?.suspended || 0) / totalTenants) * 100 : 0}
+                        className="w-32 h-2"
+                      />
+                      <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.suspended || 0}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">종료</span>
+                    <div className="flex items-center gap-2">
+                      <Progress
+                        value={totalTenants > 0 ? ((dashboard?.tenantStats?.terminated || 0) / totalTenants) * 100 : 0}
+                        className="w-32 h-2"
+                      />
+                      <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.terminated || 0}</span>
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>요금제별 테넌트</CardTitle>
+                <CardDescription>요금제 분포 현황</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {dashboard?.tenantStats?.byPlan && Object.entries(dashboard.tenantStats.byPlan).length > 0 ? (
+                    Object.entries(dashboard.tenantStats.byPlan).map(([plan, count]) => (
+                      <div key={plan} className="flex items-center justify-between">
+                        <span className="text-sm capitalize">{plan}</span>
+                        <div className="flex items-center gap-2">
+                          <Progress
+                            value={totalTenants > 0 ? (count / totalTenants) * 100 : 0}
+                            className="w-32 h-2"
+                          />
+                          <span className="text-sm font-medium w-8">{count}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-text-secondary">
+                      요금제 데이터가 없습니다.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Recent Tenants */}
+          <Card>
+            <CardHeader>
+              <CardTitle>최근 등록 테넌트</CardTitle>
+              <CardDescription>최근에 등록된 테넌트 목록입니다</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {dashboard?.recentTenants && dashboard.recentTenants.length > 0 ? (
+                  dashboard.recentTenants.map((tenant) => (
+                    <div key={tenant.id} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h3 className="font-medium">{tenant.name}</h3>
+                          <p className="text-xs text-text-secondary">{tenant.code}</p>
+                        </div>
+                        <Button variant="ghost" size="sm">상세 보기</Button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 text-sm text-text-secondary mb-1">
+                            상태
+                          </div>
+                          <p className="text-sm font-semibold capitalize">{tenant.status}</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 text-sm text-text-secondary mb-1">
+                            요금제
+                          </div>
+                          <p className="text-sm font-semibold capitalize">{tenant.plan}</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 text-sm text-text-secondary mb-1">
+                            등록일
+                          </div>
+                          <p className="text-sm font-semibold">
+                            {new Date(tenant.createdAt).toLocaleDateString('ko-KR')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-text-secondary">
+                    최근 등록된 테넌트가 없습니다.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }
