@@ -118,3 +118,32 @@ export interface UpdateUserDetailRequest {
   status?: UserStatus;
   systemRole?: SystemRole;
 }
+
+// Bulk Create Users Request/Response
+export interface BulkCreateUsersRequest {
+  emailPrefix: string;
+  emailDomain: string;
+  count: number;
+  password: string;
+  startNumber?: number;
+  role?: SystemRole;
+}
+
+export interface BulkCreateUsersResponse {
+  totalRequested: number;
+  successCount: number;
+  failedCount: number;
+  createdUsers: CreatedUserInfo[];
+  failedUsers: FailedUserInfo[];
+}
+
+export interface CreatedUserInfo {
+  id: number;
+  email: string;
+  name: string;
+}
+
+export interface FailedUserInfo {
+  email: string;
+  reason: string;
+}

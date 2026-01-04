@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MoreHorizontal, Eye, Edit, Trash2, Mail, UserPlus, Loader2 } from 'lucide-react';
+import { Search, MoreHorizontal, Eye, Edit, Trash2, Mail, UserPlus, Users, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -52,8 +52,9 @@ import {
   useUpdateUser,
   useUpdateUserRole,
   useDeleteUser,
+  useBulkCreateUsers,
 } from '@/hooks/ta';
-import type { AdminUser, UserStatus, SystemRole, UpdateUserDetailRequest } from '@/types/admin';
+import type { AdminUser, UserStatus, SystemRole, UpdateUserDetailRequest, BulkCreateUsersRequest } from '@/types/admin';
 
 interface UserFormData {
   name: string;
@@ -64,6 +65,14 @@ interface UserFormData {
   status?: UserStatus;
 }
 
+interface BulkCreateFormData {
+  emailPrefix: string;
+  emailDomain: string;
+  count: number;
+  password: string;
+  startNumber: number;
+}
+
 export function UsersPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,6 +81,7 @@ export function UsersPage() {
   const [page, setPage] = useState(0);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isBulkCreateDialogOpen, setIsBulkCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
 
@@ -87,10 +97,27 @@ export function UsersPage() {
   const updateMutation = useUpdateUser();
   const updateRoleMutation = useUpdateUserRole();
   const deleteMutation = useDeleteUser();
+  const bulkCreateMutation = useBulkCreateUsers();
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<UserFormData>({
     defaultValues: {
       systemRole: 'USER',
+    },
+  });
+
+  const {
+    register: registerBulk,
+    handleSubmit: handleSubmitBulk,
+    reset: resetBulk,
+    watch: watchBulk,
+    formState: { errors: bulkErrors },
+  } = useForm<BulkCreateFormData>({
+    defaultValues: {
+      emailPrefix: '',
+      emailDomain: '@company.com',
+      count: 10,
+      password: '',
+      startNumber: 1,
     },
   });
 
@@ -243,6 +270,53 @@ export function UsersPage() {
     }
   };
 
+  const onBulkCreateSubmit = async (data: BulkCreateFormData) => {
+    try {
+      const request: BulkCreateUsersRequest = {
+        emailPrefix: data.emailPrefix,
+        emailDomain: data.emailDomain,
+        count: data.count,
+        password: data.password,
+        startNumber: data.startNumber,
+      };
+      const result = await bulkCreateMutation.mutateAsync(request);
+
+      if (result.failedCount > 0) {
+        toast.warning(
+          `${result.successCount}개 계정 생성 완료, ${result.failedCount}개 실패`
+        );
+      } else {
+        toast.success(`${result.successCount}개 계정이 생성되었습니다.`);
+      }
+
+      setIsBulkCreateDialogOpen(false);
+      resetBulk();
+    } catch {
+      toast.error('단체 계정 생성에 실패했습니다.');
+    }
+  };
+
+  // 미리보기용 이메일 생성
+  const previewEmails = () => {
+    const prefix = watchBulk('emailPrefix');
+    const domain = watchBulk('emailDomain');
+    const start = watchBulk('startNumber') || 1;
+    const count = watchBulk('count') || 0;
+
+    if (!prefix || !domain || count === 0) return [];
+
+    const emails: string[] = [];
+    const showCount = Math.min(count, 3);
+    for (let i = 0; i < showCount; i++) {
+      emails.push(`${prefix}${start + i}${domain}`);
+    }
+    if (count > 3) {
+      emails.push('...');
+      emails.push(`${prefix}${start + count - 1}${domain}`);
+    }
+    return emails;
+  };
+
   // Loading skeleton
   if (isLoading) {
     return (
@@ -285,6 +359,10 @@ export function UsersPage() {
         description="테넌트 내 사용자를 관리합니다"
         actions={
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsBulkCreateDialogOpen(true)}>
+              <Users className="mr-2 h-4 w-4" />
+              단체 계정 생성
+            </Button>
             <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
               <Mail className="mr-2 h-4 w-4" />
               초대하기
@@ -543,6 +621,126 @@ export function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 단체 계정 생성 다이얼로그 */}
+      <Dialog open={isBulkCreateDialogOpen} onOpenChange={setIsBulkCreateDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>단체 계정 생성</DialogTitle>
+            <DialogDescription>
+              동일한 패턴의 이메일로 여러 계정을 한 번에 생성합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitBulk(onBulkCreateSubmit)}>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="emailPrefix">이메일 접두사</Label>
+                  <Input
+                    id="emailPrefix"
+                    placeholder="예: sam_user"
+                    {...registerBulk('emailPrefix', { required: '이메일 접두사를 입력하세요' })}
+                  />
+                  {bulkErrors.emailPrefix && (
+                    <p className="text-xs text-red-500">{bulkErrors.emailPrefix.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="emailDomain">이메일 도메인</Label>
+                  <Input
+                    id="emailDomain"
+                    placeholder="예: @company.com"
+                    {...registerBulk('emailDomain', { required: '이메일 도메인을 입력하세요' })}
+                  />
+                  {bulkErrors.emailDomain && (
+                    <p className="text-xs text-red-500">{bulkErrors.emailDomain.message}</p>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startNumber">시작 번호</Label>
+                  <Input
+                    id="startNumber"
+                    type="number"
+                    min={1}
+                    {...registerBulk('startNumber', { valueAsNumber: true, min: 1 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="count">생성 개수</Label>
+                  <Input
+                    id="count"
+                    type="number"
+                    min={1}
+                    max={100}
+                    {...registerBulk('count', {
+                      valueAsNumber: true,
+                      required: '생성 개수를 입력하세요',
+                      min: { value: 1, message: '최소 1개 이상' },
+                      max: { value: 100, message: '최대 100개까지' },
+                    })}
+                  />
+                  {bulkErrors.count && (
+                    <p className="text-xs text-red-500">{bulkErrors.count.message}</p>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">초기 비밀번호</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="8자 이상 입력하세요"
+                  {...registerBulk('password', {
+                    required: '비밀번호를 입력하세요',
+                    minLength: { value: 8, message: '8자 이상 입력하세요' },
+                  })}
+                />
+                {bulkErrors.password && (
+                  <p className="text-xs text-red-500">{bulkErrors.password.message}</p>
+                )}
+                <p className="text-xs text-text-secondary">
+                  모든 계정에 동일한 초기 비밀번호가 설정됩니다.
+                </p>
+              </div>
+
+              {/* 미리보기 */}
+              {previewEmails().length > 0 && (
+                <div className="rounded-lg border bg-muted/50 p-3">
+                  <p className="text-sm font-medium mb-2">생성될 계정 미리보기</p>
+                  <div className="space-y-1">
+                    {previewEmails().map((email, index) => (
+                      <p key={index} className="text-sm text-text-secondary font-mono">
+                        {email}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsBulkCreateDialogOpen(false);
+                  resetBulk();
+                }}
+              >
+                취소
+              </Button>
+              <Button type="submit" disabled={bulkCreateMutation.isPending}>
+                {bulkCreateMutation.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                <Users className="mr-2 h-4 w-4" />
+                {watchBulk('count') || 0}개 계정 생성
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
