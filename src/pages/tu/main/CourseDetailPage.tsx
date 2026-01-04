@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
   Clock,
@@ -18,9 +18,10 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useAuthStore } from '@/store/common/authStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCourseTimeDetail } from '@/hooks/tu';
+import { useCourseTimeDetail, useEnroll, useMyEnrollments } from '@/hooks/tu';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
 import {
   DELIVERY_TYPE_LABELS,
@@ -155,9 +156,25 @@ function CurriculumSection({ item, isExpanded, onToggle, isDark }: CurriculumSec
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const courseTimeId = id ? parseInt(id, 10) : 0;
+  const navigate = useNavigate();
 
   // CourseTime 상세 조회
   const { data: courseTime, isLoading, error } = useCourseTimeDetail(courseTimeId);
+
+  // 수강 신청 mutation
+  const enrollMutation = useEnroll();
+
+  // 인증 상태
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // 내 수강 신청 목록 조회 (이미 수강 중인지 확인용)
+  const { data: myEnrollments } = useMyEnrollments({ size: 100 });
+
+  // 이미 수강 신청된 강의인지 확인
+  const existingEnrollment = myEnrollments?.content.find(
+    (enrollment) => enrollment.courseTimeId === courseTimeId
+  );
+  const isAlreadyEnrolled = !!existingEnrollment;
 
   const [expandedSections, setExpandedSections] = useState<number[]>([0]);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -225,7 +242,31 @@ export function CourseDetailPage() {
   };
 
   const handleEnroll = () => {
-    toast.success('수강 신청이 완료되었습니다.');
+    // 로그인 체크
+    if (!isAuthenticated) {
+      toast.error('로그인이 필요합니다.');
+      navigate('/auth/login', { state: { from: `/tu/b2c/courses/${courseTimeId}` } });
+      return;
+    }
+
+    // 이미 수강 신청된 강의인지 체크
+    if (isAlreadyEnrolled) {
+      toast.error('이미 수강 신청된 강의입니다.');
+      return;
+    }
+
+    // 수강 신청 API 호출
+    enrollMutation.mutate(courseTimeId, {
+      onSuccess: () => {
+        toast.success('수강 신청이 완료되었습니다.');
+        // 내 학습 페이지로 이동
+        navigate('/tu/b2c/mypage/learning');
+      },
+      onError: (error: Error & { response?: { data?: { error?: { message?: string } } } }) => {
+        const message = error.response?.data?.error?.message || '수강 신청에 실패했습니다.';
+        toast.error(message);
+      },
+    });
   };
 
   // 로딩 상태
@@ -552,13 +593,34 @@ export function CourseDetailPage() {
 
                   {/* Buttons */}
                   <div className="space-y-3">
-                    {canEnroll ? (
+                    {isAlreadyEnrolled ? (
+                      <>
+                        <button
+                          onClick={() => navigate(`/tu/b2c/mypage/learning/${existingEnrollment?.id}`)}
+                          className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2"
+                        >
+                          <PlayCircle className="w-5 h-5" />
+                          학습 계속하기
+                        </button>
+                        <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          이미 수강 신청된 강의입니다
+                        </p>
+                      </>
+                    ) : canEnroll ? (
                       <>
                         <button
                           onClick={handleEnroll}
-                          className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg"
+                          disabled={enrollMutation.isPending}
+                          className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
-                          수강 신청
+                          {enrollMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              신청 중...
+                            </>
+                          ) : (
+                            '수강 신청'
+                          )}
                         </button>
                         {!courseTime.isFree && (
                           <button
