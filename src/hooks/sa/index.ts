@@ -30,3 +30,11 @@ export {
 } from './useAnalyticsQueries';
 
 export { saDashboardKeys, useSaDashboard } from './useDashboardQueries';
+
+export {
+  systemSettingsKeys,
+  useSystemSettings,
+  useTenantDefaults,
+  useUpdateSystemSettings,
+  useUpdateTenantDefaults,
+} from './useSystemSettingsQueries';
