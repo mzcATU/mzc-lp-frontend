@@ -21,6 +21,7 @@ import {
   BookOpen,
   Clock,
   Presentation,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -111,6 +112,14 @@ const t = {
   mainInstructor: { ko: '주강사', en: 'Main' },
   subInstructor: { ko: '보조강사', en: 'Sub' },
   noAssignments: { ko: '강의 배정 이력이 없습니다.', en: 'No teaching assignments.' },
+  // CourseRole
+  courseRoles: { ko: '프로그램 역할', en: 'Program Roles' },
+  ownedPrograms: { ko: '소유 프로그램', en: 'Owned Programs' },
+  revenueShare: { ko: '수익 분배', en: 'Revenue Share' },
+  noCourseRoles: { ko: '부여된 프로그램 역할이 없습니다.', en: 'No program roles assigned.' },
+  courseRoleDesigner: { ko: 'Designer', en: 'Designer' },
+  courseRoleOwner: { ko: 'Owner', en: 'Owner' },
+  courseRoleInstructor: { ko: 'Instructor', en: 'Instructor' },
 };
 
 const statusBadgeVariant: Record<UserStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -759,6 +768,51 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
                         </dd>
                       </div>
                     )}
+                  </div>
+                </section>
+              )}
+
+              {/* 프로그램 역할 섹션 (CourseRole) */}
+              {!isDetailLoading && userDetail?.courseRoles && userDetail.courseRoles.length > 0 && (
+                <section className="border-t border-border pt-6">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-badge-purple-bg text-badge-purple">
+                      <Briefcase size={14} />
+                    </span>
+                    {getText('courseRoles')}
+                  </h3>
+
+                  <div className="space-y-3">
+                    {userDetail.courseRoles.map((courseRole) => (
+                      <div
+                        key={courseRole.courseRoleId}
+                        className="bg-bg-secondary rounded-lg p-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                courseRole.role.toUpperCase() === 'OWNER'
+                                  ? 'warning'
+                                  : courseRole.role.toUpperCase() === 'INSTRUCTOR'
+                                    ? 'success'
+                                    : 'secondary'
+                              }
+                            >
+                              {getText(`courseRole${courseRole.role.charAt(0).toUpperCase()}${courseRole.role.slice(1).toLowerCase()}` as keyof typeof t)}
+                            </Badge>
+                            <span className="text-sm font-medium text-text-primary">
+                              {courseRole.courseName ?? '-'}
+                            </span>
+                          </div>
+                          {courseRole.revenueSharePercent !== null && (
+                            <span className="text-xs text-text-secondary">
+                              {getText('revenueShare')}: {courseRole.revenueSharePercent}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </section>
               )}

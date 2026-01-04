@@ -7,6 +7,23 @@ import type { TenantRole, UserStatus } from '@/types/common';
 export type { TenantRole, UserStatus } from '@/types/common';
 
 // ============================================
+// CourseRole 관련 타입
+// ============================================
+
+/** 프로그램 역할 타입 */
+export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR';
+
+/** CourseRole 응답 */
+export interface CourseRoleResponse {
+  courseRoleId: number;
+  programId: number | null;
+  courseName: string | null;
+  role: CourseRole;
+  revenueSharePercent: number | null;
+  createdAt: string;
+}
+
+// ============================================
 // Response DTOs
 // ============================================
 
@@ -32,6 +49,8 @@ export interface TOUserDetailResponse {
   tenantId: number;
   createdAt: string;
   updatedAt: string;
+  /** 프로그램 역할 목록 */
+  courseRoles?: CourseRoleResponse[];
 }
 
 // ============================================
@@ -61,8 +80,8 @@ export interface UserFilterParams {
 export const TENANT_ROLE_LABELS: Record<TenantRole, string> = {
   SYSTEM_ADMIN: '시스템 관리자',
   TENANT_ADMIN: '테넌트 관리자',
-  OPERATOR: '운영자',
-  DESIGNER: '설계자',
+  OPERATOR: '강의소유자',
+  DESIGNER: '강의설계자',
   USER: '사용자',
 };
 
@@ -71,4 +90,10 @@ export const USER_STATUS_LABELS: Record<UserStatus, string> = {
   INACTIVE: '비활성',
   SUSPENDED: '정지',
   WITHDRAWN: '탈퇴',
+};
+
+export const COURSE_ROLE_LABELS: Record<CourseRole, string> = {
+  DESIGNER: 'Designer',
+  OWNER: 'Owner',
+  INSTRUCTOR: 'Instructor',
 };
