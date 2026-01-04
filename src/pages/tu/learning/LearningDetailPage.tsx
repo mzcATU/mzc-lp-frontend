@@ -200,7 +200,6 @@ export function LearningDetailPage() {
 
   // 실제 enrollment 데이터에서 진도율 가져오기 (API 데이터 우선)
   const progressPercent = enrollment.progress ?? 0;
-  const completedCount = mockCurriculum.filter((item) => item.completed).length;
 
   return (
     <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
