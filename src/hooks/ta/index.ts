@@ -27,6 +27,16 @@ export {
   useUpdateTenantSettings,
   useUpdateBranding,
   useUpdateUserManagement,
+  // Design & Layout
+  useUpdateDesignSettings,
+  useUpdateLayoutSettings,
+  // Navigation
+  useNavigationItems,
+  useCreateNavigationItem,
+  useUpdateNavigationItem,
+  useDeleteNavigationItem,
+  useReorderNavigationItems,
+  useResetNavigationItems,
 } from './useTenantSettingsQueries';
 
 export { taDashboardKeys, useTaKpiDashboard } from './useDashboardQueries';
