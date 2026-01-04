@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Save,
   RotateCcw,
@@ -6,6 +6,7 @@ import {
   Sidebar,
   PanelTop,
   PanelBottom,
+  Loader2,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -19,9 +20,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
+import { useTenantSettings, useUpdateLayoutSettings } from '@/hooks/ta';
+import type { HeaderSettings, SidebarSettings, FooterSettings, ContentSettings } from '@/types/admin';
 
-// Mock 데이터
-const mockLayoutSettings = {
+// 레이아웃 설정 타입
+interface LayoutSettings {
+  header: HeaderSettings;
+  sidebar: SidebarSettings;
+  footer: FooterSettings;
+  content: ContentSettings;
+}
+
+// 기본 설정값
+const defaultLayoutSettings: LayoutSettings = {
   header: {
     style: 'fixed',
     showLogo: true,
@@ -45,11 +56,57 @@ const mockLayoutSettings = {
 };
 
 export function LayoutSettingsPage() {
-  const [settings, setSettings] = useState(mockLayoutSettings);
+  const [settings, setSettings] = useState<LayoutSettings>(defaultLayoutSettings);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const { data: tenantSettings, isLoading } = useTenantSettings();
+  const updateLayout = useUpdateLayoutSettings();
+
+  // 서버 데이터로 초기화
+  useEffect(() => {
+    if (tenantSettings) {
+      setSettings({
+        header: tenantSettings.headerSettings || defaultLayoutSettings.header,
+        sidebar: tenantSettings.sidebarSettings || defaultLayoutSettings.sidebar,
+        footer: tenantSettings.footerSettings || defaultLayoutSettings.footer,
+        content: tenantSettings.contentSettings || defaultLayoutSettings.content,
+      });
+      setHasChanges(false);
+    }
+  }, [tenantSettings]);
 
   const handleReset = () => {
-    setSettings(mockLayoutSettings);
+    if (tenantSettings) {
+      setSettings({
+        header: tenantSettings.headerSettings || defaultLayoutSettings.header,
+        sidebar: tenantSettings.sidebarSettings || defaultLayoutSettings.sidebar,
+        footer: tenantSettings.footerSettings || defaultLayoutSettings.footer,
+        content: tenantSettings.contentSettings || defaultLayoutSettings.content,
+      });
+      setHasChanges(false);
+    }
   };
+
+  const handleSave = () => {
+    updateLayout.mutate({
+      headerSettings: settings.header as HeaderSettings,
+      sidebarSettings: settings.sidebar as SidebarSettings,
+      footerSettings: settings.footer as FooterSettings,
+      contentSettings: settings.content as ContentSettings,
+    }, {
+      onSuccess: () => {
+        setHasChanges(false);
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -58,12 +115,16 @@ export function LayoutSettingsPage() {
         description="플랫폼의 레이아웃과 UI 구성을 설정합니다"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleReset}>
+            <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
               <RotateCcw className="mr-2 h-4 w-4" />
               초기화
             </Button>
-            <Button>
-              <Save className="mr-2 h-4 w-4" />
+            <Button onClick={handleSave} disabled={!hasChanges || updateLayout.isPending}>
+              {updateLayout.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               저장
             </Button>
           </div>
@@ -85,10 +146,13 @@ export function LayoutSettingsPage() {
               <Label>헤더 스타일</Label>
               <Select
                 value={settings.header.style}
-                onValueChange={(v) => setSettings({
-                  ...settings,
-                  header: { ...settings.header, style: v },
-                })}
+                onValueChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    header: { ...settings.header, style: v as HeaderSettings['style'] },
+                  });
+                  setHasChanges(true);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -105,30 +169,39 @@ export function LayoutSettingsPage() {
                 <span className="text-sm">로고 표시</span>
                 <Switch
                   checked={settings.header.showLogo}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    header: { ...settings.header, showLogo: v },
-                  })}
+                  onCheckedChange={(v) => {
+                    setSettings({
+                      ...settings,
+                      header: { ...settings.header, showLogo: v },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">검색창 표시</span>
                 <Switch
                   checked={settings.header.showSearch}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    header: { ...settings.header, showSearch: v },
-                  })}
+                  onCheckedChange={(v) => {
+                    setSettings({
+                      ...settings,
+                      header: { ...settings.header, showSearch: v },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">알림 표시</span>
                 <Switch
                   checked={settings.header.showNotifications}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    header: { ...settings.header, showNotifications: v },
-                  })}
+                  onCheckedChange={(v) => {
+                    setSettings({
+                      ...settings,
+                      header: { ...settings.header, showNotifications: v },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
             </div>
@@ -149,10 +222,13 @@ export function LayoutSettingsPage() {
               <Label>사이드바 스타일</Label>
               <Select
                 value={settings.sidebar.style}
-                onValueChange={(v) => setSettings({
-                  ...settings,
-                  sidebar: { ...settings.sidebar, style: v },
-                })}
+                onValueChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    sidebar: { ...settings.sidebar, style: v as SidebarSettings['style'] },
+                  });
+                  setHasChanges(true);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -170,20 +246,26 @@ export function LayoutSettingsPage() {
                 <span className="text-sm">기본 접힌 상태</span>
                 <Switch
                   checked={settings.sidebar.defaultCollapsed}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    sidebar: { ...settings.sidebar, defaultCollapsed: v },
-                  })}
+                  onCheckedChange={(v) => {
+                    setSettings({
+                      ...settings,
+                      sidebar: { ...settings.sidebar, defaultCollapsed: v },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">아이콘 표시</span>
                 <Switch
                   checked={settings.sidebar.showIcons}
-                  onCheckedChange={(v) => setSettings({
-                    ...settings,
-                    sidebar: { ...settings.sidebar, showIcons: v },
-                  })}
+                  onCheckedChange={(v) => {
+                    setSettings({
+                      ...settings,
+                      sidebar: { ...settings.sidebar, showIcons: v },
+                    });
+                    setHasChanges(true);
+                  }}
                 />
               </div>
             </div>
@@ -207,10 +289,13 @@ export function LayoutSettingsPage() {
               </div>
               <Switch
                 checked={settings.footer.enabled}
-                onCheckedChange={(v) => setSettings({
-                  ...settings,
-                  footer: { ...settings.footer, enabled: v },
-                })}
+                onCheckedChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    footer: { ...settings.footer, enabled: v },
+                  });
+                  setHasChanges(true);
+                }}
               />
             </div>
             {settings.footer.enabled && (
@@ -219,20 +304,26 @@ export function LayoutSettingsPage() {
                   <span className="text-sm">링크 표시</span>
                   <Switch
                     checked={settings.footer.showLinks}
-                    onCheckedChange={(v) => setSettings({
-                      ...settings,
-                      footer: { ...settings.footer, showLinks: v },
-                    })}
+                    onCheckedChange={(v) => {
+                      setSettings({
+                        ...settings,
+                        footer: { ...settings.footer, showLinks: v },
+                      });
+                      setHasChanges(true);
+                    }}
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">저작권 표시</span>
                   <Switch
                     checked={settings.footer.showCopyright}
-                    onCheckedChange={(v) => setSettings({
-                      ...settings,
-                      footer: { ...settings.footer, showCopyright: v },
-                    })}
+                    onCheckedChange={(v) => {
+                      setSettings({
+                        ...settings,
+                        footer: { ...settings.footer, showCopyright: v },
+                      });
+                      setHasChanges(true);
+                    }}
                   />
                 </div>
               </>
@@ -254,10 +345,13 @@ export function LayoutSettingsPage() {
               <Label>최대 너비</Label>
               <Select
                 value={settings.content.maxWidth}
-                onValueChange={(v) => setSettings({
-                  ...settings,
-                  content: { ...settings.content, maxWidth: v },
-                })}
+                onValueChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    content: { ...settings.content, maxWidth: v as ContentSettings['maxWidth'] },
+                  });
+                  setHasChanges(true);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -274,10 +368,13 @@ export function LayoutSettingsPage() {
               <Label>여백</Label>
               <Select
                 value={settings.content.padding}
-                onValueChange={(v) => setSettings({
-                  ...settings,
-                  content: { ...settings.content, padding: v },
-                })}
+                onValueChange={(v) => {
+                  setSettings({
+                    ...settings,
+                    content: { ...settings.content, padding: v as ContentSettings['padding'] },
+                  });
+                  setHasChanges(true);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />

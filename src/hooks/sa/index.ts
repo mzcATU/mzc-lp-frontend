@@ -22,7 +22,4 @@ export {
   useDistributeAllNotice,
 } from './useNoticeQueries';
 
-export {
-  dashboardKeys,
-  useSaDashboard,
-} from './useDashboardQueries';
+export { saDashboardKeys, useSaDashboard } from './useDashboardQueries';

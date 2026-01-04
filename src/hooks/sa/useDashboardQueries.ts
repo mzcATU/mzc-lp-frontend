@@ -1,25 +1,19 @@
 /**
- * SA Dashboard React Query Hooks
+ * SA Dashboard React Query Hooks (SYSTEM_ADMIN)
  */
 import { useQuery } from '@tanstack/react-query';
-import { dashboardService } from '@/services/sa/dashboardService';
+import { saDashboardService } from '@/services/sa';
 
 // Query Keys
-export const dashboardKeys = {
+export const saDashboardKeys = {
   all: ['sa-dashboard'] as const,
-  dashboard: () => [...dashboardKeys.all, 'main'] as const,
+  dashboard: () => [...saDashboardKeys.all, 'stats'] as const,
 };
 
-// ============================================
-// Queries
-// ============================================
-
-/** SA 대시보드 조회 */
+/** SA 대시보드 통계 조회 */
 export const useSaDashboard = () => {
   return useQuery({
-    queryKey: dashboardKeys.dashboard(),
-    queryFn: () => dashboardService.getDashboard(),
-    staleTime: 1000 * 60 * 5, // 5분
-    refetchOnWindowFocus: false,
+    queryKey: saDashboardKeys.dashboard(),
+    queryFn: () => saDashboardService.getDashboard(),
   });
 };

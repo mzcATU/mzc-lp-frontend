@@ -34,11 +34,33 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenants/${id}`,
   },
 
+  // SA Dashboard (SYSTEM_ADMIN)
+  SA_DASHBOARD: {
+    BASE: '/sa/dashboard',
+  },
+
+  // TA Dashboard (TENANT_ADMIN)
+  TA_DASHBOARD: {
+    KPI: '/admin/dashboard/kpi',
+  },
+
+  // TO Dashboard (OPERATOR)
+  TO_DASHBOARD: {
+    TASKS: '/operator/dashboard/tasks',
+  },
+
   // Tenant Settings (TA)
   TENANT_SETTINGS: {
     BASE: '/tenant/settings',
+    DESIGN: '/tenant/settings/design',
+    LAYOUT: '/tenant/settings/layout',
     BRANDING: '/tenant/settings/branding',
     USER_MANAGEMENT: '/tenant/settings/user-management',
+    // Navigation
+    NAVIGATION: '/tenant/settings/navigation',
+    NAVIGATION_ITEM: (id: number) => `/tenant/settings/navigation/${id}`,
+    NAVIGATION_REORDER: '/tenant/settings/navigation/reorder',
+    NAVIGATION_RESET: '/tenant/settings/navigation/reset',
   },
 
   // User Groups (TA)
@@ -231,8 +253,27 @@ export const API_ENDPOINTS = {
     ITEM_CHECK: (courseId: number) => `/cart/items/${courseId}/check`,
   },
 
-  // Dashboard
+  // Dashboard (TA, SA)
   DASHBOARD: {
+    TA_KPI: '/admin/dashboard/kpi',
     SA: '/sa/dashboard',
+  },
+
+  // Analytics (TA, SA)
+  ANALYTICS: {
+    // TA용 (테넌트 단위)
+    TA_LOGS: '/admin/analytics/logs',
+    TA_STATS: '/admin/analytics/stats',
+    TA_RECENT: '/admin/analytics/recent',
+    // SA용 (전체 시스템)
+    SA_LOGS: '/sa/analytics/logs',
+    SA_STATS: '/sa/analytics/stats',
+    SA_RECENT: '/sa/analytics/recent',
+  },
+
+  // System Settings (SA)
+  SYSTEM_SETTINGS: {
+    BASE: '/admin/system/settings',
+    TENANT_DEFAULTS: '/admin/system/tenant-defaults',
   },
 } as const;
