@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
 import { enrollmentService, type EnrollmentFilterParams } from '@/services/tu/enrollmentService';
 import { catalogKeys } from './useCatalogQueries';
+import { ownerStatsKeys } from './useOwnerStatsQueries';
+import { learningStatsKeys } from './useLearningStatsQueries';
 
 // Query Keys
 export const enrollmentKeys = {
@@ -54,6 +56,9 @@ export const useEnroll = () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.my() });
       // 해당 차수의 수강 인원 갱신
       queryClient.invalidateQueries({ queryKey: catalogKeys.courseTime(courseTimeId) });
+      // 통계 갱신
+      queryClient.invalidateQueries({ queryKey: ownerStatsKeys.all });
+      queryClient.invalidateQueries({ queryKey: learningStatsKeys.all });
     },
   });
 };
@@ -71,6 +76,9 @@ export const useCancelEnrollment = () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.my() });
       // 해당 신청 상세 갱신
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.detail(id) });
+      // 통계 갱신
+      queryClient.invalidateQueries({ queryKey: ownerStatsKeys.all });
+      queryClient.invalidateQueries({ queryKey: learningStatsKeys.all });
     },
   });
 };

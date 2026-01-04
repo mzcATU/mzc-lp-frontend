@@ -125,7 +125,9 @@ type TranslationKeys = {
     completed: string;
     inProgress: string;
     dropped: string;
+    failed: string;
     averageCompletionRate: string;
+    completionRate: string;
     programStats: string;
     noProgramStats: string;
     noProgramStatsDesc: string;
@@ -425,7 +427,9 @@ const ko: TranslationKeys = {
     completed: '수료 완료',
     inProgress: '진행 중',
     dropped: '중도 포기',
+    failed: '미수료',
     averageCompletionRate: '평균 수료율',
+    completionRate: '수료율',
     programStats: '프로그램별 통계',
     noProgramStats: '프로그램 통계가 없습니다',
     noProgramStatsDesc: '담당 프로그램이 없습니다. 프로그램에 강사로 배정되면 통계를 확인할 수 있습니다.',
@@ -711,7 +715,9 @@ const en: TranslationKeys = {
     completed: 'Completed',
     inProgress: 'In Progress',
     dropped: 'Dropped',
+    failed: 'Failed',
     averageCompletionRate: 'Avg. Completion Rate',
+    completionRate: 'Completion Rate',
     programStats: 'Program Stats',
     noProgramStats: 'No program statistics',
     noProgramStatsDesc: 'No programs assigned. Statistics will be available once you are assigned as an instructor.',

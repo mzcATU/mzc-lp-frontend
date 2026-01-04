@@ -23,6 +23,8 @@ export interface OwnerEnrollmentStats {
   inProgress: number;
   /** 중도 포기 수 */
   dropped: number;
+  /** 미수료 (기간 만료) 수 */
+  failed: number;
   /** 평균 수료율 (%) */
   averageCompletionRate: number;
 }
