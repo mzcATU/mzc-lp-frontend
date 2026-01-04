@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
     ME_PROFILE_IMAGE: '/users/me/profile-image',
     ME_COURSE_ROLES: '/users/me/course-roles',
     ME_COURSE_ROLES_DESIGNER: '/users/me/course-roles/designer',
+    ME_LEARNING_STATS: '/users/me/learning-stats',
     BY_ID: (id: number) => `/users/${id}`,
     ROLE: (id: number) => `/users/${id}/role`,
     STATUS: (id: number) => `/users/${id}/status`,
@@ -26,6 +27,11 @@ export const API_ENDPOINTS = {
     ENROLLMENTS: (id: number) => `/users/${id}/enrollments`,
     ENROLLMENT_STATS: (id: number) => `/users/${id}/enrollments/stats`,
     INSTRUCTOR_STATS: (id: number) => `/users/${id}/instructor-statistics`,
+  },
+
+  // Owners (강사/콘텐츠 소유자)
+  OWNERS: {
+    ME_STATS: '/owners/me/stats',
   },
 
   // Tenants (SA)

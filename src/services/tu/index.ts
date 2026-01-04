@@ -13,3 +13,5 @@ export { communityService } from './communityService';
 export { instructorService } from './instructorService';
 export { courseTimeCatalogService } from './courseTimeCatalogService';
 export { publicBrandingService } from './publicBrandingService';
+export { learningStatsService } from './learningStatsService';
+export { ownerStatsService } from './ownerStatsService';
