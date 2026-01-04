@@ -1,8 +1,11 @@
 import { Youtube, Instagram } from 'lucide-react';
 import { useTranslation } from '@/store/common/languageStore';
+import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 
 export function LandingFooter() {
   const { t } = useTranslation();
+  const { branding } = useTenantBranding();
+  const tenantName = branding?.tenantName || 'MEGAZONECLOUD';
 
   return (
     <footer className="landing-footer-wrapper landing-text-secondary text-sm py-16">
@@ -12,7 +15,7 @@ export function LandingFooter() {
           <div className="flex flex-col lg:flex-row justify-between items-start gap-8">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold gradient-text">MEGAZONECLOUD</span>
+                <span className="text-2xl font-bold gradient-text">{tenantName}</span>
               </div>
               <div className="text-[12px] landing-text-muted leading-relaxed space-y-1">
                 <p>{t.footer.company} | {t.footer.ceo}</p>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -11,6 +11,7 @@ import {
   HelpCircle,
   Settings,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -25,23 +26,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
+import {
+  useNavigationItems,
+  useCreateNavigationItem,
+  useUpdateNavigationItem,
+  useDeleteNavigationItem,
+  useResetNavigationItems,
+} from '@/hooks/ta';
+import type { NavigationItemRequest } from '@/services/ta/brandingService';
 
-// Mock 데이터
-const mockNavItems: {
-  id: number;
-  label: string;
-  icon: string;
-  path: string;
-  enabled: boolean;
-  order: number;
-}[] = [
-  { id: 1, label: '홈', icon: 'Home', path: '/', enabled: true, order: 1 },
-  { id: 2, label: '강좌', icon: 'BookOpen', path: '/courses', enabled: true, order: 2 },
-  { id: 3, label: '내 학습', icon: 'Award', path: '/my-learning', enabled: true, order: 3 },
-  { id: 4, label: '도움말', icon: 'HelpCircle', path: '/help', enabled: true, order: 4 },
-  { id: 5, label: '외부 링크', icon: 'ExternalLink', path: 'https://example.com', enabled: false, order: 5 },
-];
-
+// 아이콘 매핑
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Home,
   BookOpen,
@@ -51,36 +45,146 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ExternalLink,
 };
 
+// 로컬 편집용 타입
+interface LocalNavItem {
+  id: number;
+  label: string;
+  icon: string;
+  path: string;
+  enabled: boolean;
+  displayOrder: number;
+  target: string | null;
+  isNew?: boolean; // 새로 추가된 항목 표시
+  isDirty?: boolean; // 수정된 항목 표시
+}
+
 export function NavigationSettingsPage() {
-  const [navItems, setNavItems] = useState(mockNavItems);
+  const [navItems, setNavItems] = useState<LocalNavItem[]>([]);
   const [editingItem, setEditingItem] = useState<number | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // API Hooks
+  const { data: serverItems, isLoading } = useNavigationItems();
+  const createItem = useCreateNavigationItem();
+  const updateItem = useUpdateNavigationItem();
+  const deleteItem = useDeleteNavigationItem();
+  const resetItems = useResetNavigationItems();
+
+  // 서버 데이터로 초기화
+  useEffect(() => {
+    if (serverItems) {
+      setNavItems(serverItems.map(item => ({
+        id: item.id,
+        label: item.label,
+        icon: item.icon,
+        path: item.path,
+        enabled: item.enabled,
+        displayOrder: item.displayOrder,
+        target: item.target,
+      })));
+      setHasUnsavedChanges(false);
+    }
+  }, [serverItems]);
 
   const handleToggle = (id: number) => {
     setNavItems(navItems.map(item =>
-      item.id === id ? { ...item, enabled: !item.enabled } : item
+      item.id === id ? { ...item, enabled: !item.enabled, isDirty: true } : item
     ));
+    setHasUnsavedChanges(true);
   };
 
-  const handleDelete = (id: number) => {
-    setNavItems(navItems.filter(item => item.id !== id));
+  const handleDelete = async (id: number) => {
+    const item = navItems.find(i => i.id === id);
+    if (!item) return;
+
+    if (item.isNew) {
+      // 새로 추가된 항목은 로컬에서만 삭제
+      setNavItems(navItems.filter(i => i.id !== id));
+    } else {
+      // 기존 항목은 서버에서 삭제
+      await deleteItem.mutateAsync(id);
+    }
   };
 
-  const handleReset = () => {
-    setNavItems(mockNavItems);
+  const handleReset = async () => {
+    await resetItems.mutateAsync();
+    setEditingItem(null);
+    setHasUnsavedChanges(false);
   };
 
   const handleAddItem = () => {
-    const newId = Math.max(...navItems.map(i => i.id)) + 1;
-    setNavItems([...navItems, {
+    const newId = Math.min(...navItems.map(i => i.id), 0) - 1; // 음수 ID로 새 항목 구분
+    const newItem: LocalNavItem = {
       id: newId,
       label: '새 메뉴',
       icon: 'Home',
       path: '/',
       enabled: true,
-      order: navItems.length + 1,
-    }]);
+      displayOrder: navItems.length + 1,
+      target: null,
+      isNew: true,
+      isDirty: true,
+    };
+    setNavItems([...navItems, newItem]);
     setEditingItem(newId);
+    setHasUnsavedChanges(true);
   };
+
+  const handleUpdateLocalItem = (id: number, updates: Partial<LocalNavItem>) => {
+    setNavItems(navItems.map(item =>
+      item.id === id ? { ...item, ...updates, isDirty: true } : item
+    ));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSaveItem = async (id: number) => {
+    const item = navItems.find(i => i.id === id);
+    if (!item) return;
+
+    const request: NavigationItemRequest = {
+      label: item.label,
+      icon: item.icon,
+      path: item.path,
+      enabled: item.enabled,
+      displayOrder: item.displayOrder,
+      target: item.target || undefined,
+    };
+
+    if (item.isNew) {
+      // 새 항목 생성
+      const created = await createItem.mutateAsync(request);
+      // 로컬 상태 업데이트 (새 ID로 교체)
+      setNavItems(navItems.map(i =>
+        i.id === id ? { ...i, id: created.id, isNew: false, isDirty: false } : i
+      ));
+    } else {
+      // 기존 항목 수정
+      await updateItem.mutateAsync({ id, request });
+      setNavItems(navItems.map(i =>
+        i.id === id ? { ...i, isDirty: false } : i
+      ));
+    }
+    setHasUnsavedChanges(navItems.some(i => i.id !== id && i.isDirty));
+  };
+
+  const handleSaveAll = async () => {
+    const dirtyItems = navItems.filter(i => i.isDirty);
+
+    for (const item of dirtyItems) {
+      await handleSaveItem(item.id);
+    }
+    setHasUnsavedChanges(false);
+  };
+
+  const isSaving = createItem.isPending || updateItem.isPending || deleteItem.isPending || resetItems.isPending;
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -89,13 +193,28 @@ export function NavigationSettingsPage() {
         description="사이드바 및 상단 네비게이션 메뉴를 설정합니다"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleReset}>
-              <RotateCcw className="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={resetItems.isPending}
+            >
+              {resetItems.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="mr-2 h-4 w-4" />
+              )}
               초기화
             </Button>
-            <Button>
-              <Save className="mr-2 h-4 w-4" />
-              저장
+            <Button
+              onClick={handleSaveAll}
+              disabled={!hasUnsavedChanges || isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              전체 저장
             </Button>
           </div>
         }
@@ -108,7 +227,7 @@ export function NavigationSettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>네비게이션 메뉴</CardTitle>
-                <CardDescription>메뉴 항목을 드래그하여 순서를 변경할 수 있습니다</CardDescription>
+                <CardDescription>메뉴 항목을 추가하고 편집할 수 있습니다</CardDescription>
               </div>
               <Button onClick={handleAddItem}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -118,7 +237,7 @@ export function NavigationSettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {navItems.sort((a, b) => a.order - b.order).map((item) => {
+              {navItems.sort((a, b) => a.displayOrder - b.displayOrder).map((item) => {
                 const IconComponent = iconMap[item.icon] || Home;
 
                 return (
@@ -126,7 +245,7 @@ export function NavigationSettingsPage() {
                     key={item.id}
                     className={`flex items-center justify-between p-3 border rounded-lg ${
                       item.enabled ? 'bg-white' : 'bg-gray-50 opacity-60'
-                    }`}
+                    } ${item.isDirty ? 'border-yellow-400' : ''} ${item.isNew ? 'border-green-400' : ''}`}
                   >
                     <div className="flex items-center gap-3">
                       <GripVertical className="h-4 w-4 text-text-secondary cursor-grab" />
@@ -134,7 +253,15 @@ export function NavigationSettingsPage() {
                         <IconComponent className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="font-medium">{item.label}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{item.label}</p>
+                          {item.isNew && (
+                            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">새 항목</span>
+                          )}
+                          {item.isDirty && !item.isNew && (
+                            <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">수정됨</span>
+                          )}
+                        </div>
                         <p className="text-xs text-text-secondary">{item.path}</p>
                       </div>
                     </div>
@@ -150,18 +277,43 @@ export function NavigationSettingsPage() {
                       >
                         <Settings className="h-4 w-4" />
                       </Button>
+                      {item.isDirty && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600"
+                          onClick={() => handleSaveItem(item.id)}
+                          disabled={isSaving}
+                        >
+                          {(createItem.isPending || updateItem.isPending) ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-red-500"
                         onClick={() => handleDelete(item.id)}
+                        disabled={deleteItem.isPending}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {deleteItem.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
                 );
               })}
+              {navItems.length === 0 && (
+                <div className="text-center py-8 text-text-secondary">
+                  네비게이션 항목이 없습니다. 메뉴를 추가해 주세요.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -185,18 +337,14 @@ export function NavigationSettingsPage() {
                         <Label>메뉴 이름</Label>
                         <Input
                           value={item.label}
-                          onChange={(e) => setNavItems(navItems.map(i =>
-                            i.id === editingItem ? { ...i, label: e.target.value } : i
-                          ))}
+                          onChange={(e) => handleUpdateLocalItem(editingItem, { label: e.target.value })}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label>경로</Label>
                         <Input
                           value={item.path}
-                          onChange={(e) => setNavItems(navItems.map(i =>
-                            i.id === editingItem ? { ...i, path: e.target.value } : i
-                          ))}
+                          onChange={(e) => handleUpdateLocalItem(editingItem, { path: e.target.value })}
                           placeholder="/path 또는 https://..."
                         />
                       </div>
@@ -204,9 +352,7 @@ export function NavigationSettingsPage() {
                         <Label>아이콘</Label>
                         <Select
                           value={item.icon}
-                          onValueChange={(v) => setNavItems(navItems.map(i =>
-                            i.id === editingItem ? { ...i, icon: v } : i
-                          ))}
+                          onValueChange={(v) => handleUpdateLocalItem(editingItem, { icon: v })}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -220,6 +366,35 @@ export function NavigationSettingsPage() {
                             <SelectItem value="ExternalLink">외부 링크</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>링크 대상</Label>
+                        <Select
+                          value={item.target || '_self'}
+                          onValueChange={(v) => handleUpdateLocalItem(editingItem, { target: v === '_self' ? null : v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_self">현재 창</SelectItem>
+                            <SelectItem value="_blank">새 창</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="pt-4 border-t">
+                        <Button
+                          onClick={() => handleSaveItem(item.id)}
+                          disabled={!item.isDirty || isSaving}
+                          className="w-full"
+                        >
+                          {isSaving ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="mr-2 h-4 w-4" />
+                          )}
+                          {item.isNew ? '항목 추가' : '변경사항 저장'}
+                        </Button>
                       </div>
                     </>
                   );
@@ -241,7 +416,7 @@ export function NavigationSettingsPage() {
                   <div className="space-y-1">
                     {navItems
                       .filter(item => item.enabled)
-                      .sort((a, b) => a.order - b.order)
+                      .sort((a, b) => a.displayOrder - b.displayOrder)
                       .map((item) => {
                         const IconComponent = iconMap[item.icon] || Home;
                         return (
@@ -257,6 +432,11 @@ export function NavigationSettingsPage() {
                           </div>
                         );
                       })}
+                    {navItems.filter(item => item.enabled).length === 0 && (
+                      <div className="text-center py-4 text-text-secondary text-sm">
+                        활성화된 메뉴가 없습니다
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
