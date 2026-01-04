@@ -1,17 +1,14 @@
-import { useState } from 'react';
 import {
-  Save,
-  RotateCcw,
   Users,
   BookOpen,
   FileText,
   Settings,
   BarChart3,
+  Shield,
+  Info,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
-import { Button } from '@/components/common/Button';
-import { Switch } from '@/components/common/Switch';
 import {
   Select,
   SelectContent,
@@ -19,16 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common/Select';
+import { useState } from 'react';
 
-// Mock 데이터
-const mockRoles = [
-  { id: 'TENANT_ADMIN', name: '테넌트 관리자' },
-  { id: 'CONTENT_MANAGER', name: '콘텐츠 관리자' },
-  { id: 'INSTRUCTOR', name: '강사' },
-  { id: 'LEARNER', name: '학습자' },
+// 역할 정의
+const systemRoles = [
+  { id: 'TENANT_ADMIN', name: '테넌트 관리자', description: '테넌트 전체 관리 권한' },
+  { id: 'OPERATOR', name: '운영자', description: '운영 관련 기능 접근 권한' },
+  { id: 'USER', name: '일반 사용자', description: '학습 및 기본 기능 접근 권한' },
 ];
 
-const mockPermissions: {
+// 권한 매트릭스 (시스템에서 정의된 권한)
+const permissionMatrix: {
   category: string;
   icon: React.ComponentType<{ className?: string }>;
   items: {
@@ -42,104 +40,130 @@ const mockPermissions: {
     category: '사용자 관리',
     icon: Users,
     items: [
-      { id: 'users.view', name: '사용자 조회', description: '사용자 목록 및 상세 정보 조회', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: false, LEARNER: false } },
-      { id: 'users.create', name: '사용자 생성', description: '새 사용자 계정 생성', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: false, INSTRUCTOR: false, LEARNER: false } },
-      { id: 'users.edit', name: '사용자 수정', description: '사용자 정보 수정', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: false, INSTRUCTOR: false, LEARNER: false } },
-      { id: 'users.delete', name: '사용자 삭제', description: '사용자 계정 삭제', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: false, INSTRUCTOR: false, LEARNER: false } },
+      { id: 'users.view', name: '사용자 조회', description: '사용자 목록 및 상세 정보 조회', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
+      { id: 'users.create', name: '사용자 생성', description: '새 사용자 계정 생성', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
+      { id: 'users.edit', name: '사용자 수정', description: '사용자 정보 수정', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
+      { id: 'users.delete', name: '사용자 삭제', description: '사용자 계정 삭제', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
+      { id: 'users.role', name: '역할 변경', description: '사용자 역할 변경', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
     ],
   },
   {
     category: '강좌 관리',
     icon: BookOpen,
     items: [
-      { id: 'courses.view', name: '강좌 조회', description: '모든 강좌 목록 조회', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: true, LEARNER: false } },
-      { id: 'courses.create', name: '강좌 생성', description: '새 강좌 생성', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: true, LEARNER: false } },
-      { id: 'courses.edit', name: '강좌 수정', description: '강좌 정보 수정', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: true, LEARNER: false } },
-      { id: 'courses.publish', name: '강좌 게시', description: '강좌 공개 및 게시', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: false, LEARNER: false } },
+      { id: 'courses.view', name: '강좌 조회', description: '모든 강좌 목록 조회', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: true } },
+      { id: 'courses.create', name: '강좌 생성', description: '새 강좌 생성', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
+      { id: 'courses.edit', name: '강좌 수정', description: '강좌 정보 수정', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
+      { id: 'courses.delete', name: '강좌 삭제', description: '강좌 삭제', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
+      { id: 'programs.approve', name: '프로그램 승인', description: '프로그램 승인/반려', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
     ],
   },
   {
     category: '콘텐츠 관리',
     icon: FileText,
     items: [
-      { id: 'content.upload', name: '콘텐츠 업로드', description: '영상, 문서 등 콘텐츠 업로드', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: true, LEARNER: false } },
-      { id: 'content.delete', name: '콘텐츠 삭제', description: '업로드된 콘텐츠 삭제', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: false, LEARNER: false } },
+      { id: 'content.view', name: '콘텐츠 조회', description: '콘텐츠 목록 조회', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: true } },
+      { id: 'content.upload', name: '콘텐츠 업로드', description: '영상, 문서 등 콘텐츠 업로드', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
+      { id: 'content.delete', name: '콘텐츠 삭제', description: '업로드된 콘텐츠 삭제', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
     ],
   },
   {
     category: '분석 및 리포트',
     icon: BarChart3,
     items: [
-      { id: 'analytics.view', name: '분석 조회', description: '학습 분석 및 통계 조회', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: true, LEARNER: false } },
-      { id: 'analytics.export', name: '리포트 내보내기', description: '분석 리포트 다운로드', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: true, INSTRUCTOR: false, LEARNER: false } },
+      { id: 'analytics.view', name: '통계 조회', description: '학습 분석 및 통계 조회', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
+      { id: 'analytics.export', name: '리포트 내보내기', description: '분석 리포트 다운로드', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
     ],
   },
   {
-    category: '설정',
+    category: '테넌트 설정',
     icon: Settings,
     items: [
-      { id: 'settings.view', name: '설정 조회', description: '테넌트 설정 조회', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: false, INSTRUCTOR: false, LEARNER: false } },
-      { id: 'settings.edit', name: '설정 수정', description: '테넌트 설정 변경', roles: { TENANT_ADMIN: true, CONTENT_MANAGER: false, INSTRUCTOR: false, LEARNER: false } },
+      { id: 'settings.view', name: '설정 조회', description: '테넌트 설정 조회', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
+      { id: 'settings.edit', name: '설정 수정', description: '테넌트 설정 변경', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
+      { id: 'settings.branding', name: '브랜딩 설정', description: '로고, 색상 등 브랜딩 변경', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
     ],
   },
 ];
 
 export function PermissionsPage() {
-  const [permissions, setPermissions] = useState(mockPermissions);
-  const [selectedRole, setSelectedRole] = useState('TENANT_ADMIN');
+  const [selectedRole, setSelectedRole] = useState<string>('all');
 
-  const handlePermissionChange = (categoryIndex: number, itemIndex: number, roleId: string, value: boolean) => {
-    const newPermissions = [...permissions];
-    newPermissions[categoryIndex].items[itemIndex].roles[roleId] = value;
-    setPermissions(newPermissions);
-  };
-
-  const handleReset = () => {
-    setPermissions(mockPermissions);
-  };
+  const filteredMatrix = selectedRole === 'all'
+    ? permissionMatrix
+    : permissionMatrix.map(category => ({
+        ...category,
+        items: category.items.filter(item => item.roles[selectedRole]),
+      })).filter(category => category.items.length > 0);
 
   return (
     <div className="p-6">
       <AdminPageHeader
-        title="접근 권한 설정"
-        description="역할별 기능 접근 권한을 설정합니다"
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleReset}>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              초기화
-            </Button>
-            <Button>
-              <Save className="mr-2 h-4 w-4" />
-              저장
-            </Button>
-          </div>
-        }
+        title="접근 권한 안내"
+        description="역할별 시스템 접근 권한을 확인합니다"
       />
 
-      {/* Role Selector */}
+      {/* Info Banner */}
+      <Card className="mb-6 bg-blue-50 border-blue-200">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <p className="font-medium text-blue-900">권한 안내</p>
+              <p className="text-sm text-blue-700">
+                아래는 각 역할별로 접근 가능한 기능 목록입니다. 권한은 시스템에서 관리되며,
+                역할 변경은 사용자 관리 페이지에서 가능합니다.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Role Cards */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {systemRoles.map((role) => (
+          <Card key={role.id} className={selectedRole === role.id ? 'ring-2 ring-brand-primary' : ''}>
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-brand-primary/10 rounded-lg">
+                  <Shield className="h-5 w-5 text-brand-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">{role.name}</p>
+                  <p className="text-sm text-text-secondary">{role.description}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Role Filter */}
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
-            <span className="font-medium">역할 선택:</span>
+            <span className="font-medium">역할 필터:</span>
             <Select value={selectedRole} onValueChange={setSelectedRole}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {mockRoles.map((role) => (
+                <SelectItem value="all">전체 보기</SelectItem>
+                {systemRoles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm text-text-secondary">선택한 역할의 권한을 확인하고 수정합니다</span>
+            <span className="text-sm text-text-secondary">
+              {selectedRole === 'all' ? '모든 권한을 표시합니다' : `${systemRoles.find(r => r.id === selectedRole)?.name}의 권한만 표시합니다`}
+            </span>
           </div>
         </CardContent>
       </Card>
 
       {/* Permission Matrix */}
       <div className="space-y-6">
-        {permissions.map((category, categoryIndex) => {
+        {filteredMatrix.map((category) => {
           const IconComponent = category.icon;
 
           return (
@@ -151,27 +175,23 @@ export function PermissionsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {category.items.map((item, itemIndex) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="space-y-3">
+                  {category.items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg bg-bg-secondary/50">
                       <div>
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-text-secondary">{item.description}</p>
                       </div>
-                      <div className="flex items-center gap-6">
-                        {mockRoles.map((role) => (
-                          <div key={role.id} className="flex flex-col items-center gap-1">
-                            {selectedRole === role.id || selectedRole === 'all' ? (
-                              <>
-                                <Switch
-                                  checked={item.roles[role.id]}
-                                  onCheckedChange={(v) => handlePermissionChange(categoryIndex, itemIndex, role.id, v)}
-                                  disabled={role.id === 'TENANT_ADMIN'}
-                                />
-                                <span className="text-xs text-text-secondary">{role.name}</span>
-                              </>
-                            ) : null}
-                          </div>
+                      <div className="flex items-center gap-2">
+                        {systemRoles.map((role) => (
+                          item.roles[role.id] && (
+                            <span
+                              key={role.id}
+                              className="px-2 py-1 text-xs rounded bg-green-100 text-green-700"
+                            >
+                              {role.name}
+                            </span>
+                          )
                         ))}
                       </div>
                     </div>
@@ -183,34 +203,42 @@ export function PermissionsPage() {
         })}
       </div>
 
-      {/* Quick Reference */}
+      {/* Summary Table */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>권한 요약</CardTitle>
-          <CardDescription>각 역할별 권한 요약입니다</CardDescription>
+          <CardTitle>권한 요약표</CardTitle>
+          <CardDescription>각 역할별 전체 권한 현황입니다</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">권한</th>
-                  {mockRoles.map((role) => (
-                    <th key={role.id} className="text-center p-2">{role.name}</th>
+                <tr className="border-b bg-bg-secondary">
+                  <th className="text-left p-3 font-medium">기능</th>
+                  {systemRoles.map((role) => (
+                    <th key={role.id} className="text-center p-3 font-medium">{role.name}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {permissions.flatMap((category) =>
-                  category.items.map((item) => (
-                    <tr key={item.id} className="border-b">
-                      <td className="p-2">{item.name}</td>
-                      {mockRoles.map((role) => (
-                        <td key={role.id} className="text-center p-2">
+                {permissionMatrix.flatMap((category) =>
+                  category.items.map((item, idx) => (
+                    <tr key={item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-bg-secondary/30'}>
+                      <td className="p-3">
+                        <span className="text-text-secondary text-xs">[{category.category}]</span>
+                        <br />
+                        {item.name}
+                      </td>
+                      {systemRoles.map((role) => (
+                        <td key={role.id} className="text-center p-3">
                           {item.roles[role.id] ? (
-                            <span className="text-green-600">&#10003;</span>
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600">
+                              ✓
+                            </span>
                           ) : (
-                            <span className="text-gray-300">&#8212;</span>
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400">
+                              -
+                            </span>
                           )}
                         </td>
                       ))}
