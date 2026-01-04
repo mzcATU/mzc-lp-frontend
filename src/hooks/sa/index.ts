@@ -22,6 +22,8 @@ export {
   useDistributeAllNotice,
 } from './useNoticeQueries';
 
+export { saDashboardKeys, useSaDashboard } from './useDashboardQueries';
+
 export {
   systemSettingsKeys,
   useSystemSettings,
