@@ -280,7 +280,7 @@ export function MyTeachingPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewCourse(String(course.courseId))}
-                          className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                          className={isDark ? '!bg-transparent !border-white/20 !text-white hover:!bg-white/10' : ''}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           {t.common.view}
@@ -289,7 +289,7 @@ export function MyTeachingPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditCourse(String(course.courseId))}
-                          className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                          className={isDark ? '!bg-transparent !border-white/20 !text-white hover:!bg-white/10' : ''}
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           {t.common.edit}
@@ -297,7 +297,7 @@ export function MyTeachingPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={isDark ? 'text-gray-400 hover:text-white' : ''}
+                          className={isDark ? '!text-gray-400 hover:!text-white hover:!bg-white/10' : ''}
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
