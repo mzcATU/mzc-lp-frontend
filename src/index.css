@@ -121,6 +121,15 @@
   /* === TU Theme Colors === */
   --tu-bg-light: #f9fafb;
   --tu-bg-dark: #1e1e1e;
+
+  /* === Dynamic Landing Branding Variables (Updated by JavaScript) === */
+  --landing-primary-color: #6778ff;
+  --landing-secondary-color: #a855f7;
+  --landing-accent-color: #10B981;
+  --landing-gradient-from: #6778ff;
+  --landing-gradient-to: #a855f7;
+  --landing-heading-font: 'Pretendard', sans-serif;
+  --landing-body-font: 'Pretendard', sans-serif;
 }
 
 @layer base {

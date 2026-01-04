@@ -10,6 +10,8 @@ import {
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { usePopularInstructors, useCourseTimeCatalog } from '@/hooks/tu';
+import { useTenantBranding } from '@/contexts/TenantBrandingContext';
+import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
 import type { InstructorSummary } from '@/types/tu';
 import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
 
@@ -132,6 +134,10 @@ export function LandingPage() {
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
+  const { branding } = useTenantBranding();
+
+  // 브랜딩 CSS 적용
+  useBrandingApply(branding);
 
   // CourseTime API로 강의 데이터 로드 (모집중/진행중, 카테고리 필터 적용)
   const { data: courseTimeData, isLoading: isCoursesLoading } = useCourseTimeCatalog({

@@ -1,4 +1,15 @@
-import { Users, BookOpen, TrendingUp, GraduationCap, Loader2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Users, BookOpen, TrendingUp, GraduationCap, AlertCircle, UserPlus, FileText, CheckCircle } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import {
   AdminPageHeader,
   AdminStatsCard,
@@ -6,18 +17,24 @@ import {
 } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
 import { Progress } from '@/components/common/Progress';
-import { useTaDashboardKpi } from '@/hooks/ta';
+import { Skeleton } from '@/components/common/Skeleton';
+import { NoDataEmpty } from '@/components/common/EmptyState';
+import { useTaKpiDashboard } from '@/hooks/ta';
+
+type DateRange = '7d' | '30d' | 'all';
+
+const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: '7d', label: '최근 7일' },
+  { value: '30d', label: '이번 달' },
+];
 
 export function DashboardPage() {
-  const { data: kpi, isLoading, error } = useTaDashboardKpi();
+  const { data, isLoading, error } = useTaKpiDashboard();
+  const [dateRange, setDateRange] = useState<DateRange>('all');
 
-  if (isLoading) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-      </div>
-    );
-  }
+  // 선택된 기간 라벨 가져오기
+  const selectedRangeLabel = DATE_RANGE_OPTIONS.find((opt) => opt.value === dateRange)?.label ?? '';
 
   if (error) {
     return (
@@ -26,98 +43,226 @@ export function DashboardPage() {
           title="대시보드"
           description="테넌트 현황을 한눈에 확인합니다"
         />
-        <div className="text-center py-12 text-text-secondary">
-          데이터를 불러오는 중 오류가 발생했습니다.
-        </div>
+        <Card className="mt-6">
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center text-center">
+              <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+              <p className="text-lg font-medium text-text-primary">데이터를 불러올 수 없습니다</p>
+              <p className="text-sm text-text-secondary mt-1">잠시 후 다시 시도해주세요</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const userStats = kpi?.userStats ?? { active: 0, inactive: 0, suspended: 0, withdrawn: 0, total: 0, newThisMonth: 0 };
-  const programStats = kpi?.programStats ?? { draft: 0, pending: 0, approved: 0, rejected: 0, closed: 0, total: 0 };
-  const enrollmentStats = kpi?.enrollmentStats ?? { totalEnrollments: 0, byStatus: { enrolled: 0, completed: 0, dropped: 0, failed: 0 }, completionRate: 0 };
-  const monthlyTrend = kpi?.monthlyTrend ?? [];
+  const userStats = data?.userStats ?? { total: 0, active: 0, inactive: 0, suspended: 0, withdrawn: 0, newThisMonth: 0 };
+  const programStats = data?.programStats ?? { total: 0, draft: 0, pending: 0, approved: 0, rejected: 0, closed: 0 };
+  const enrollmentStats = data?.enrollmentStats ?? { totalEnrollments: 0, byStatus: { enrolled: 0, completed: 0, dropped: 0, failed: 0 }, completionRate: 0 };
+  const monthlyTrend = data?.monthlyTrend ?? [];
 
-  const safePercentage = (value: number, total: number) =>
-    total > 0 ? (value / total) * 100 : 0;
+  // 1~12월 전체 X축 데이터 생성 (미래 데이터는 null로 처리)
+  const fullYearChartData = useMemo(() => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+
+    // 1~12월 기본 데이터 생성
+    const fullYearData = Array.from({ length: 12 }, (_, i) => {
+      const month = i + 1;
+      const monthKey = `${currentYear}-${String(month).padStart(2, '0')}`;
+
+      // 기존 데이터에서 해당 월 찾기
+      const existingData = monthlyTrend.find((item) => item.month === monthKey);
+
+      // 미래 데이터는 null, 과거/현재는 데이터 또는 0
+      if (month > currentMonth) {
+        return {
+          month: monthKey,
+          enrollments: null,
+          completions: null,
+        };
+      }
+
+      return {
+        month: monthKey,
+        enrollments: existingData?.enrollments ?? 0,
+        completions: existingData?.completions ?? 0,
+      };
+    });
+
+    return fullYearData;
+  }, [monthlyTrend]);
+
+  // 선택한 기간에 따라 월별 트렌드 필터링 + 가짜 시작점 추가
+  const filteredMonthlyTrend = useMemo(() => {
+    let baseData: typeof fullYearChartData;
+
+    if (dateRange === 'all') {
+      baseData = fullYearChartData;
+    } else {
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth(); // 0-11
+
+      if (dateRange === '7d') {
+        // 이번 달만
+        baseData = fullYearChartData.slice(currentMonth, currentMonth + 1);
+      } else {
+        // 30d: 최근 6개월
+        const startMonth = Math.max(0, currentMonth - 5);
+        baseData = fullYearChartData.slice(startMonth, currentMonth + 1);
+      }
+    }
+
+    // 실제 데이터가 있는 포인트 개수 확인 (null이 아닌 데이터)
+    const validDataPoints = baseData.filter(
+      (item) => item.enrollments !== null || item.completions !== null
+    ).length;
+
+    // 데이터 포인트가 1개일 때: 가짜 시작점 추가 (바닥에서 올라가는 삼각형 효과)
+    if (validDataPoints === 1 && baseData.length > 0) {
+      const firstDataIndex = baseData.findIndex(
+        (item) => item.enrollments !== null || item.completions !== null
+      );
+
+      if (firstDataIndex > 0) {
+        // 앞에 데이터가 있으면 이전 월을 0으로 설정
+        const newData = [...baseData];
+        const prevMonth = newData[firstDataIndex - 1];
+        newData[firstDataIndex - 1] = {
+          ...prevMonth,
+          enrollments: 0,
+          completions: 0,
+        };
+        return newData;
+      } else {
+        // 첫 번째 월이 데이터 포인트면 앞에 가짜 시작점 추가
+        const currentYear = new Date().getFullYear();
+        const dummyStart = {
+          month: `${currentYear}-00`, // 가상의 0월 (표시 안 됨)
+          enrollments: 0,
+          completions: 0,
+        };
+        return [dummyStart, ...baseData];
+      }
+    }
+
+    return baseData;
+  }, [fullYearChartData, dateRange]);
 
   return (
     <div className="p-6">
       <AdminPageHeader
         title="대시보드"
-        description="테넌트 현황을 한눈에 확인합니다"
+        description={`테넌트 현황을 한눈에 확인합니다 • ${selectedRangeLabel} 기준`}
+        actions={
+          <div className="flex gap-1">
+            {DATE_RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setDateRange(option.value)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  dateRange === option.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        }
       />
 
       {/* Stats Grid */}
       <AdminStatsGrid columns={4} className="mb-6">
-        <AdminStatsCard
-          title="전체 사용자"
-          value={userStats.total}
-          subtitle={`활성 ${userStats.active}명`}
-          icon={Users}
-          variant="primary"
-          trend={userStats.newThisMonth > 0 ? { value: userStats.newThisMonth, label: '이번 달 신규' } : undefined}
-        />
-        <AdminStatsCard
-          title="전체 프로그램"
-          value={programStats.total}
-          subtitle={`승인됨 ${programStats.approved}개`}
-          icon={BookOpen}
-          variant="success"
-        />
-        <AdminStatsCard
-          title="평균 완료율"
-          value={`${enrollmentStats.completionRate}%`}
-          subtitle="전체 수강 기준"
-          icon={TrendingUp}
-          variant="warning"
-        />
-        <AdminStatsCard
-          title="총 수강 신청"
-          value={enrollmentStats.totalEnrollments}
-          subtitle={`완료 ${enrollmentStats.byStatus.completed}건`}
-          icon={GraduationCap}
-          variant="default"
-        />
+        {isLoading ? (
+          <>
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+          </>
+        ) : (
+          <>
+            <AdminStatsCard
+              title="전체 사용자"
+              value={userStats.total.toLocaleString()}
+              subtitle={`활성 ${userStats.active.toLocaleString()}명`}
+              icon={Users}
+              variant="primary"
+            />
+            <AdminStatsCard
+              title="이번 달 신규"
+              value={userStats.newThisMonth.toLocaleString()}
+              subtitle="신규 가입자"
+              icon={UserPlus}
+              variant="success"
+            />
+            <AdminStatsCard
+              title="전체 프로그램"
+              value={programStats.total.toLocaleString()}
+              subtitle={`승인 ${programStats.approved}개`}
+              icon={BookOpen}
+              variant="warning"
+            />
+            <AdminStatsCard
+              title="수강 완료율"
+              value={`${enrollmentStats.completionRate}%`}
+              subtitle={`전체 ${enrollmentStats.totalEnrollments.toLocaleString()}건`}
+              icon={GraduationCap}
+              variant="default"
+            />
+          </>
+        )}
       </AdminStatsGrid>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* 사용자 현황 */}
         <Card>
           <CardHeader>
             <CardTitle>사용자 현황</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">활성</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(userStats.active, userStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{userStats.active}명</span>
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">활성</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.active / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.active.toLocaleString()}명</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">비활성</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.inactive / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.inactive.toLocaleString()}명</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">정지</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.suspended / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.suspended.toLocaleString()}명</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">탈퇴</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.withdrawn / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.withdrawn.toLocaleString()}명</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">비활성</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(userStats.inactive, userStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{userStats.inactive}명</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">정지</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(userStats.suspended, userStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{userStats.suspended}명</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">탈퇴</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(userStats.withdrawn, userStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{userStats.withdrawn}명</span>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -127,103 +272,204 @@ export function DashboardPage() {
             <CardTitle>프로그램 현황</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">승인됨</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(programStats.approved, programStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{programStats.approved}개</span>
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-text-secondary" />
+                    <span className="text-sm">작성중</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.draft}개</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-warning" />
+                    <span className="text-sm">검토 대기</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.pending}개</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">승인됨</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.approved}개</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <span className="text-sm">반려됨</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.rejected}개</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">대기중</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(programStats.pending, programStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{programStats.pending}개</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">초안</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(programStats.draft, programStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{programStats.draft}개</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">종료</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(programStats.closed, programStats.total)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{programStats.closed}개</span>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 수강 현황 */}
         <Card>
           <CardHeader>
             <CardTitle>수강 현황</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">수강중</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(enrollmentStats.byStatus.enrolled, enrollmentStats.totalEnrollments)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{enrollmentStats.byStatus.enrolled}건</span>
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">수강 중</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.enrolled / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.enrolled.toLocaleString()}건</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">수료</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.completed / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.completed.toLocaleString()}건</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">중도 포기</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.dropped / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.dropped.toLocaleString()}건</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">미수료</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.failed / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.failed.toLocaleString()}건</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">완료</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(enrollmentStats.byStatus.completed, enrollmentStats.totalEnrollments)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{enrollmentStats.byStatus.completed}건</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">중도포기</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(enrollmentStats.byStatus.dropped, enrollmentStats.totalEnrollments)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{enrollmentStats.byStatus.dropped}건</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">미이수</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={safePercentage(enrollmentStats.byStatus.failed, enrollmentStats.totalEnrollments)} className="w-32" />
-                  <span className="text-sm font-medium w-12">{enrollmentStats.byStatus.failed}건</span>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* 월별 추이 */}
+        {/* 월별 수강 추이 차트 */}
         <Card>
           <CardHeader>
             <CardTitle>월별 수강 추이</CardTitle>
           </CardHeader>
           <CardContent>
-            {monthlyTrend.length > 0 ? (
-              <div className="space-y-3">
-                {monthlyTrend.slice(-6).map((trend) => (
-                  <div key={trend.month} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                    <span className="text-sm font-medium">{trend.month}</span>
-                    <div className="flex gap-6 text-sm">
-                      <span className="text-text-secondary">
-                        수강 <span className="font-medium text-text-primary">{trend.enrollments}</span>건
-                      </span>
-                      <span className="text-text-secondary">
-                        완료 <span className="font-medium text-brand-primary">{trend.completions}</span>건
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {isLoading ? (
+              <Skeleton className="h-64" />
+            ) : filteredMonthlyTrend.length === 0 ? (
+              <NoDataEmpty
+                title="데이터가 없습니다"
+                description="선택한 기간에 수강 데이터가 없습니다."
+                className="h-64"
+              />
             ) : (
-              <div className="text-center py-8 text-text-secondary text-sm">
-                데이터가 없습니다
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={filteredMonthlyTrend}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <defs>
+                      {/* 수강 신청: indigo (브랜드 컬러) - 낮은 투명도 */}
+                      <linearGradient id="enrollmentGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#4C2D9A" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="#4C2D9A" stopOpacity={0.02} />
+                      </linearGradient>
+                      {/* 수료: green (성공 컬러) - 낮은 투명도 */}
+                      <linearGradient id="completionGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3D7A4A" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="#3D7A4A" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                      tickFormatter={(value) => {
+                        const [, month] = value.split('-');
+                        const monthNum = parseInt(month);
+                        // 가짜 0월은 표시하지 않음
+                        if (monthNum === 0) return '';
+                        return `${monthNum}월`;
+                      }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                      }}
+                      labelFormatter={(value) => {
+                        const [year, month] = value.split('-');
+                        const monthNum = parseInt(month);
+                        // 가짜 0월은 "시작점"으로 표시
+                        if (monthNum === 0) return '시작점';
+                        return `${year}년 ${monthNum}월`;
+                      }}
+                      formatter={(value, name) => {
+                        if (value === null) return ['데이터 없음', name];
+                        return [value, name];
+                      }}
+                    />
+                    <Legend />
+                    {/* 수강 신청을 먼저 그려서 뒤에 배치 (값이 보통 더 큼) */}
+                    <Area
+                      type="monotone"
+                      dataKey="enrollments"
+                      name="수강 신청"
+                      stroke="#4C2D9A"
+                      strokeWidth={3}
+                      fill="url(#enrollmentGradient)"
+                      connectNulls={false}
+                      dot={{ fill: '#4C2D9A', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 2 }}
+                    />
+                    {/* 수료를 나중에 그려서 앞에 배치 */}
+                    <Area
+                      type="monotone"
+                      dataKey="completions"
+                      name="수료"
+                      stroke="#3D7A4A"
+                      strokeWidth={3}
+                      fill="url(#completionGradient)"
+                      connectNulls={false}
+                      dot={{ fill: '#3D7A4A', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>

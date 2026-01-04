@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Palette,
   Upload,
   Trash2,
   Save,
   RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -12,9 +13,10 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Label } from '@/components/common/Label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/common/Tabs';
+import { useTenantSettings, useUpdateDesignSettings } from '@/hooks/ta';
 
-// Mock 데이터
-const mockBrandingSettings = {
+// 기본 설정값
+const defaultSettings = {
   logo: {
     lightUrl: '',
     darkUrl: '',
@@ -32,19 +34,90 @@ const mockBrandingSettings = {
 };
 
 export function DesignSettingsPage() {
-  const [settings, setSettings] = useState(mockBrandingSettings);
+  const [settings, setSettings] = useState(defaultSettings);
   const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const { data: tenantSettings, isLoading } = useTenantSettings();
+  const updateDesign = useUpdateDesignSettings();
+
+  // 서버 데이터로 초기화
+  useEffect(() => {
+    if (tenantSettings) {
+      setSettings({
+        logo: {
+          lightUrl: tenantSettings.logoUrl || '',
+          darkUrl: tenantSettings.darkLogoUrl || '',
+        },
+        favicon: tenantSettings.faviconUrl || '',
+        colors: {
+          primary: tenantSettings.primaryColor || '#3B82F6',
+          secondary: tenantSettings.secondaryColor || '#1E40AF',
+          accent: tenantSettings.accentColor || '#10B981',
+        },
+        fonts: {
+          heading: tenantSettings.headingFont || 'Pretendard',
+          body: tenantSettings.bodyFont || 'Pretendard',
+        },
+      });
+      setHasChanges(false);
+    }
+  }, [tenantSettings]);
 
   const handleColorChange = (key: string, value: string) => {
     setSettings({
       ...settings,
       colors: { ...settings.colors, [key]: value },
     });
+    setHasChanges(true);
   };
 
   const handleReset = () => {
-    setSettings(mockBrandingSettings);
+    if (tenantSettings) {
+      setSettings({
+        logo: {
+          lightUrl: tenantSettings.logoUrl || '',
+          darkUrl: tenantSettings.darkLogoUrl || '',
+        },
+        favicon: tenantSettings.faviconUrl || '',
+        colors: {
+          primary: tenantSettings.primaryColor || '#3B82F6',
+          secondary: tenantSettings.secondaryColor || '#1E40AF',
+          accent: tenantSettings.accentColor || '#10B981',
+        },
+        fonts: {
+          heading: tenantSettings.headingFont || 'Pretendard',
+          body: tenantSettings.bodyFont || 'Pretendard',
+        },
+      });
+      setHasChanges(false);
+    }
   };
+
+  const handleSave = () => {
+    updateDesign.mutate({
+      logoUrl: settings.logo.lightUrl || null,
+      darkLogoUrl: settings.logo.darkUrl || null,
+      faviconUrl: settings.favicon || null,
+      primaryColor: settings.colors.primary,
+      secondaryColor: settings.colors.secondary,
+      accentColor: settings.colors.accent,
+      headingFont: settings.fonts.heading,
+      bodyFont: settings.fonts.body,
+    }, {
+      onSuccess: () => {
+        setHasChanges(false);
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -53,12 +126,16 @@ export function DesignSettingsPage() {
         description="테넌트의 브랜드 아이덴티티를 설정합니다"
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleReset}>
+            <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
               <RotateCcw className="mr-2 h-4 w-4" />
               초기화
             </Button>
-            <Button>
-              <Save className="mr-2 h-4 w-4" />
+            <Button onClick={handleSave} disabled={!hasChanges || updateDesign.isPending}>
+              {updateDesign.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               저장
             </Button>
           </div>
@@ -164,9 +241,11 @@ export function DesignSettingsPage() {
                        key === 'accent' ? '강조 색상' : key}
                     </Label>
                     <div className="flex gap-2">
-                      <div
+                      <input
+                        type="color"
+                        value={value}
+                        onChange={(e) => handleColorChange(key, e.target.value)}
                         className="w-10 h-10 rounded-lg border cursor-pointer"
-                        style={{ backgroundColor: value }}
                       />
                       <Input
                         id={key}

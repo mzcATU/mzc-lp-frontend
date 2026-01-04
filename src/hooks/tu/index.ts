@@ -229,3 +229,11 @@ export {
   useCourseTimeCatalog,
   useCourseTimeDetail,
 } from './useCourseTimeCatalogQueries';
+
+// Public Branding Hooks
+export {
+  publicBrandingKeys,
+  usePublicBranding,
+} from './usePublicBranding';
+
+export { useBrandingApply } from './useBrandingApply';

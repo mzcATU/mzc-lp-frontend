@@ -12,3 +12,4 @@ export { roadmapExploreService } from './roadmapExploreService';
 export { communityService } from './communityService';
 export { instructorService } from './instructorService';
 export { courseTimeCatalogService } from './courseTimeCatalogService';
+export { publicBrandingService } from './publicBrandingService';

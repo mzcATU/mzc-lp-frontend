@@ -1,25 +1,19 @@
 /**
- * TA Dashboard React Query Hooks
+ * TA Dashboard React Query Hooks (TENANT_ADMIN)
  */
 import { useQuery } from '@tanstack/react-query';
-import { dashboardService } from '@/services/ta/dashboardService';
+import { taDashboardService } from '@/services/ta';
 
 // Query Keys
-export const dashboardKeys = {
+export const taDashboardKeys = {
   all: ['ta-dashboard'] as const,
-  kpi: () => [...dashboardKeys.all, 'kpi'] as const,
+  kpi: () => [...taDashboardKeys.all, 'kpi'] as const,
 };
 
-// ============================================
-// Queries
-// ============================================
-
-/** TA KPI 대시보드 조회 */
-export const useTaDashboardKpi = () => {
+/** TA KPI 대시보드 통계 조회 */
+export const useTaKpiDashboard = () => {
   return useQuery({
-    queryKey: dashboardKeys.kpi(),
-    queryFn: () => dashboardService.getKpi(),
-    staleTime: 1000 * 60 * 5, // 5분
-    refetchOnWindowFocus: false,
+    queryKey: taDashboardKeys.kpi(),
+    queryFn: () => taDashboardService.getKpiDashboard(),
   });
 };
