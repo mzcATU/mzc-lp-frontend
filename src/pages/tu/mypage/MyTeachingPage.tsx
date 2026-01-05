@@ -54,7 +54,7 @@ export function MyTeachingPage() {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const isDark = theme === 'dark';
 
   // 상태 라벨 (다국어)
@@ -67,17 +67,24 @@ export function MyTeachingPage() {
 
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
-  const [hasDesignerRole, setHasDesignerRole] = useState(false);
+  // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
   const [isCheckingRole, setIsCheckingRole] = useState(true);
 
-  // CourseRole API로 DESIGNER 역할 확인
+  // CourseRole API로 역할 확인
   useEffect(() => {
-    const checkDesignerRole = async () => {
+    const checkCourseRole = async () => {
       try {
         const roles = await userService.getMyCourseRoles();
         if (Array.isArray(roles) && roles.length > 0) {
-          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER' || r.role === 'OWNER');
-          setHasDesignerRole(hasDesigner);
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+
+          if (hasOwner) {
+            setCourseRoleStatus('OWNER');
+          } else if (hasDesigner) {
+            setCourseRoleStatus('DESIGNER');
+          }
         }
       } catch (error) {
         console.error('Failed to fetch course roles:', error);
@@ -85,11 +92,11 @@ export function MyTeachingPage() {
         setIsCheckingRole(false);
       }
     };
-    checkDesignerRole();
+    checkCourseRole();
   }, []);
 
-  // 사용자가 DESIGNER 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
-  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || hasDesignerRole;
+  // 사용자가 DESIGNER 이상의 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
+  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || courseRoleStatus !== 'USER';
 
   // 내 강의 목록 조회
   const { data: coursesData, isLoading: isLoadingCourses } = useQuery({
@@ -163,8 +170,15 @@ export function MyTeachingPage() {
 
   // 다이얼로그 설명 텍스트
   const getDialogDescription = () => {
-    if (isDesigner) {
-      return t.teaching.navigateConfirm;
+    if (courseRoleStatus === 'OWNER') {
+      return language === 'ko'
+        ? '이미 강의 소유자입니다. 새 강의를 만드시겠습니까?'
+        : 'You are already a course owner. Would you like to create a new course?';
+    }
+    if (courseRoleStatus === 'DESIGNER') {
+      return language === 'ko'
+        ? '이미 강의 개설 권한이 있습니다. 강의 설계 페이지로 이동하시겠습니까?'
+        : 'You already have course creation permission. Would you like to go to the course design page?';
     }
     return t.teaching.grantPermissionDesc;
   };
