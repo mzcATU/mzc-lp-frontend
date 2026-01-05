@@ -140,6 +140,7 @@ export const tenantAdminMenuData: MenuItem[] = [
     label: { ko: '사용자 및 권한', en: 'Operator & Access Mgmt' },
     icon: Users,
     subItems: [
+      { id: 'user-mgmt', label: { ko: '사용자 관리', en: 'User Management' }, icon: Users, path: '/ta/users' },
       { id: 'operator-mgmt', label: { ko: '운영자 관리', en: 'Operator Management' }, icon: UserCog, path: '/ta/users/operators' },
       { id: 'user-group-roles', label: { ko: '사용자 그룹 및 역할 관리', en: 'User Group & Roles Mgmt' }, icon: Users, path: '/ta/users/groups' },
       { id: 'access-permissions', label: { ko: '접근 권한 설정', en: 'Access Permissions Setup' }, icon: Shield, path: '/ta/users/permissions' },
