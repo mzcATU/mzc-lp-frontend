@@ -394,14 +394,14 @@ export const BulkAccountCreationPage = () => {
                       </p>
                       <p
                         className="text-2xl font-semibold mt-1"
-                        style={{ color: designTokens.status.info_text }}
+                        style={{ color: designTokens.badge.blue.text }}
                       >
                         {uploadResult.autoLinked}
                       </p>
                     </div>
                     <UserPlus
                       className="w-8 h-8"
-                      style={{ color: designTokens.status.info_text }}
+                      style={{ color: designTokens.badge.blue.text }}
                     />
                   </div>
                 </CardContent>

@@ -9,7 +9,6 @@ import {
   Building2,
   ChevronRight,
   Save,
-  X,
   FolderTree,
 } from 'lucide-react';
 import { designTokens } from '@/styles/admin-design-tokens';

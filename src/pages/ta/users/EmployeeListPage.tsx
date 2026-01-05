@@ -32,7 +32,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
   Checkbox,
   Table,
   TableBody,
@@ -400,16 +399,16 @@ export const EmployeeListPage = () => {
                   </p>
                   <p
                     className="text-2xl font-semibold mt-1"
-                    style={{ color: designTokens.status.info_text }}
+                    style={{ color: designTokens.badge.blue.text }}
                   >
                     {stats.withLmsAccount}
                   </p>
                 </div>
                 <div
                   className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: designTokens.status.info_background }}
+                  style={{ backgroundColor: designTokens.badge.blue.bg }}
                 >
-                  <CheckCircle2 className="w-5 h-5" style={{ color: designTokens.status.info_text }} />
+                  <CheckCircle2 className="w-5 h-5" style={{ color: designTokens.badge.blue.text }} />
                 </div>
               </div>
             </CardContent>
@@ -1152,9 +1151,9 @@ export const EmployeeListPage = () => {
 
               <div
                 className="p-3 rounded-lg border"
-                style={{ borderColor: designTokens.status.info_text, backgroundColor: designTokens.status.info_background }}
+                style={{ borderColor: designTokens.badge.blue.text, backgroundColor: designTokens.badge.blue.bg }}
               >
-                <p className="text-sm" style={{ color: designTokens.status.info_text }}>
+                <p className="text-sm" style={{ color: designTokens.badge.blue.text }}>
                   <AlertCircle className="w-4 h-4 inline mr-1" />
                   이메일 주소로 LMS 계정이 생성되며, 초기 비밀번호는 이메일로 발송됩니다.
                 </p>

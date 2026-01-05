@@ -7,7 +7,6 @@ import {
   Trash2,
   FolderTree,
   UserPlus,
-  X,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -33,7 +32,7 @@ import {
   useDeleteGroup,
   useUsers,
 } from '@/hooks/ta';
-import type { UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest, AdminUser } from '@/types/admin';
+import type { UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest } from '@/types/admin';
 
 export function GroupsPage() {
   const [searchKeyword, setSearchKeyword] = useState('');

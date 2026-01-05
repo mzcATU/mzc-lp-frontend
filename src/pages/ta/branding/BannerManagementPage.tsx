@@ -474,7 +474,7 @@ export const BannerManagementPage = () => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         const newItems = arrayMove(items, oldIndex, newIndex);
-        return newItems.map((item, idx) => ({ ...item, order: idx + 1 }));
+        return newItems.map((item: Banner, idx: number) => ({ ...item, order: idx + 1 }));
       });
     }
   };
