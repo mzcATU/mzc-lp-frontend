@@ -32,6 +32,10 @@ export interface CourseResponse {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  /** 완성 여부 (title, description, categoryId, items 1개 이상) */
+  isComplete: boolean;
+  /** 커리큘럼 아이템 개수 */
+  itemCount: number;
 }
 
 /** 강의 아이템 응답 (CourseDetailResponse에서 사용) */
@@ -75,6 +79,8 @@ export interface CourseDetailResponse {
   tags: string[];
   items: CourseItemResponse[];
   itemCount: number;
+  /** 완성 여부 (title, description, categoryId, items 1개 이상) */
+  isComplete: boolean;
   createdAt: string;
   updatedAt: string;
 }
