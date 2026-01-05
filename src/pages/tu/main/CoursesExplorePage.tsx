@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Loader2, Heart, Clock, Users, Calendar, X } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCourseTimeCatalog } from '@/hooks/tu';
+import { useCourseTimeCatalog, useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
 import { useAuthStore } from '@/store/common/authStore';
+import { toast } from 'sonner';
 import type {
   CourseTimeCatalogResponse,
   CourseTimeCatalogParams,
@@ -72,17 +73,34 @@ function formatShortDate(dateString: string): string {
  * 기존 CourseCard 디자인 유지 + CourseTime 정보 추가
  */
 function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
+  // 찜 상태 확인 및 토글
+  const { data: isWishlisted = false, isLoading: isWishlistChecking } = useCheckWishlistStatus(
+    courseTime.id,
+    isAuthenticated
+  );
+  const { toggle: toggleWishlist, isLoading: isWishlistToggling } = useToggleWishlist();
+
+  const isWishlistLoading = isWishlistChecking || isWishlistToggling;
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
     if (!isAuthenticated) {
-      alert('로그인이 필요합니다.');
+      toast.error('로그인이 필요합니다.');
+      navigate('/auth/login', { state: { from: `/tu/b2c/times/${courseTime.id}` } });
       return;
     }
-    setIsWishlisted(!isWishlisted);
+
+    try {
+      await toggleWishlist(courseTime.id, isWishlisted);
+      toast.success(isWishlisted ? '찜 목록에서 제거되었습니다.' : '찜 목록에 추가되었습니다.');
+    } catch {
+      toast.error('찜 목록 변경에 실패했습니다.');
+    }
   };
 
   // 태그 생성
@@ -91,6 +109,8 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
     tags.push('상시모집');
   } else if (courseTime.status === 'RECRUITING') {
     tags.push('모집중');
+  } else if (courseTime.status === 'ONGOING') {
+    tags.push('진행중');
   }
   if (courseTime.isFree) {
     tags.push('무료');
@@ -155,14 +175,19 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
           {/* 찜 버튼 */}
           <button
             onClick={handleWishlistToggle}
-            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-300 ${
+            disabled={isWishlistLoading}
+            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-300 disabled:opacity-50 ${
               isWishlisted
                 ? 'bg-red-500 text-white'
                 : 'bg-black/50 text-white hover:bg-red-500'
             }`}
             aria-label={isWishlisted ? '찜 해제' : '찜하기'}
           >
-            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+            {isWishlistLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+            )}
           </button>
         </div>
 

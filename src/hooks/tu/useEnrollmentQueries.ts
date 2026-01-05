@@ -82,3 +82,27 @@ export const useCancelEnrollment = () => {
     },
   });
 };
+
+/**
+ * 일괄 수강 신청 뮤테이션 훅
+ */
+export const useEnrollBulk = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (courseTimeIds: number[]) => enrollmentService.enrollBulk(courseTimeIds),
+    onSuccess: (_, courseTimeIds) => {
+      // 내 수강 목록 갱신
+      queryClient.invalidateQueries({ queryKey: enrollmentKeys.my() });
+      // 성공한 차수들의 수강 인원 갱신
+      courseTimeIds.forEach((courseTimeId) => {
+        queryClient.invalidateQueries({ queryKey: catalogKeys.courseTime(courseTimeId) });
+      });
+      // 통계 갱신
+      queryClient.invalidateQueries({ queryKey: ownerStatsKeys.all });
+      queryClient.invalidateQueries({ queryKey: learningStatsKeys.all });
+      // 장바구니 갱신 (수강 신청 후 장바구니에서 제거될 수 있음)
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    },
+  });
+};

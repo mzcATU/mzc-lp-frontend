@@ -29,6 +29,9 @@ export const tuB2cRoutes = (
     <Route path="/tu/b2c/courses" element={<CoursesExplorePage />} />
     <Route path="/tu/b2c/courses/:id" element={<CourseDetailPage />} />
 
+    {/* 차수(Times) 상세 - CourseTime 기반 */}
+    <Route path="/tu/b2c/times/:id" element={<CourseDetailPage />} />
+
     {/* 로드맵 */}
     <Route path="/tu/b2c/roadmaps" element={<RoadmapExplorePage />} />
     <Route path="/tu/b2c/roadmaps/:id" element={<RoadmapDetailPage />} />

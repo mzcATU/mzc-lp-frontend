@@ -16,6 +16,16 @@ const LEVEL_LABELS: Record<string, string> = {
   EXPERT: '고급',
 };
 
+/**
+ * 가격 포맷팅 (₩180,000 형식)
+ */
+function formatPrice(price: string | null | undefined): string {
+  if (!price) return '';
+  const numPrice = parseFloat(price);
+  if (isNaN(numPrice)) return price;
+  return `₩${numPrice.toLocaleString()}`;
+}
+
 export function WishlistPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -33,8 +43,8 @@ export function WishlistPage() {
   const totalPages = wishlistData?.totalPages || 0;
   const totalElements = wishlistData?.totalElements || 0;
 
-  const removeItem = (courseId: number) => {
-    removeFromWishlistMutation.mutate(courseId);
+  const removeItem = (courseTimeId: number) => {
+    removeFromWishlistMutation.mutate(courseTimeId);
   };
 
   // 비로그인 상태
@@ -152,46 +162,50 @@ export function WishlistPage() {
                   }`}
                 >
                   {/* Image */}
-                  <Link to={`/tu/b2c/courses/${item.courseId}`} className="block relative">
+                  <Link to={`/tu/b2c/times/${item.courseTimeId}`} className="block relative">
                     <div className="w-full aspect-video bg-gradient-to-br from-[#6778ff]/20 to-[#a855f7]/20 flex items-center justify-center">
-                      {item.courseThumbnailUrl ? (
+                      {item.thumbnailUrl ? (
                         <img
-                          src={item.courseThumbnailUrl}
-                          alt={item.courseTitle || '강의 썸네일'}
+                          src={item.thumbnailUrl}
+                          alt={item.courseTimeTitle || '강의 썸네일'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
                         <Heart className={`w-12 h-12 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
                       )}
                     </div>
-                    {item.courseLevel && (
+                    {item.level && (
                       <span className="absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-bold bg-[#6778ff] text-white">
-                        {LEVEL_LABELS[item.courseLevel] || item.courseLevel}
+                        {LEVEL_LABELS[item.level] || item.level}
                       </span>
                     )}
                   </Link>
 
                   {/* Content */}
                   <div className="p-4">
-                    <Link to={`/tu/b2c/courses/${item.courseId}`}>
+                    <Link to={`/tu/b2c/times/${item.courseTimeId}`}>
                       <h3 className={`font-semibold mb-2 line-clamp-2 group-hover:text-[#6778ff] transition-colors ${
                         isDark ? 'text-white' : 'text-gray-900'
                       }`}>
-                        {item.courseTitle || '제목 없음'}
+                        {item.courseTimeTitle || '제목 없음'}
                       </h3>
                     </Link>
 
                     {/* Stats */}
                     <div className={`flex items-center gap-3 mb-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                      {item.courseType && (
-                        <span className={`px-2 py-0.5 rounded ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}>
-                          {item.courseType}
-                        </span>
-                      )}
-                      {item.courseEstimatedHours && (
+                      {item.estimatedHours && (
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5" />
-                          {item.courseEstimatedHours}시간
+                          {item.estimatedHours}시간
+                        </span>
+                      )}
+                      {item.isFree ? (
+                        <span className={`px-2 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
+                          무료
+                        </span>
+                      ) : item.price && (
+                        <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {formatPrice(item.price)}
                         </span>
                       )}
                     </div>
@@ -204,13 +218,13 @@ export function WishlistPage() {
                     {/* Actions */}
                     <div className="flex gap-2">
                       <Link
-                        to={`/tu/b2c/courses/${item.courseId}`}
+                        to={`/tu/b2c/times/${item.courseTimeId}`}
                         className="flex-1 py-2.5 rounded-lg font-medium text-sm landing-btn-primary text-white flex items-center justify-center gap-2"
                       >
                         상세보기
                       </Link>
                       <button
-                        onClick={() => removeItem(item.courseId)}
+                        onClick={() => removeItem(item.courseTimeId)}
                         disabled={removeFromWishlistMutation.isPending}
                         className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 ${
                           isDark

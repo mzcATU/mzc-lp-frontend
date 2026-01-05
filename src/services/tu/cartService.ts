@@ -1,5 +1,6 @@
 /**
- * 장바구니(Cart) API 서비스 - 백엔드 API 스펙 기반
+ * 장바구니(Cart) API 서비스
+ * CourseTime 기반으로 변경 (#207)
  */
 
 import axiosInstance from '@/services/common/api/axiosInstance';
@@ -24,7 +25,7 @@ export const cartService = {
   },
 
   /**
-   * 장바구니에 강의 추가
+   * 장바구니에 CourseTime 추가
    */
   addToCart: async (request: CartAddRequest): Promise<CartItemResponse> => {
     const response = await axiosInstance.post<ApiResponse<CartItemResponse>>(
@@ -35,14 +36,14 @@ export const cartService = {
   },
 
   /**
-   * 장바구니에서 강의 삭제
+   * 장바구니에서 CourseTime 삭제
    */
-  removeFromCart: async (courseId: number): Promise<void> => {
-    await axiosInstance.delete(API_ENDPOINTS.CART.ITEM(courseId));
+  removeFromCart: async (courseTimeId: number): Promise<void> => {
+    await axiosInstance.delete(API_ENDPOINTS.CART.ITEM(courseTimeId));
   },
 
   /**
-   * 장바구니에서 여러 강의 삭제 (선택 삭제)
+   * 장바구니에서 여러 CourseTime 삭제 (선택 삭제)
    */
   removeFromCartBulk: async (request: CartRemoveRequest): Promise<void> => {
     await axiosInstance.delete(API_ENDPOINTS.CART.ITEMS, { data: request });
@@ -59,11 +60,11 @@ export const cartService = {
   },
 
   /**
-   * 특정 강의 장바구니 여부 확인
+   * 특정 CourseTime 장바구니 여부 확인
    */
-  checkCartStatus: async (courseId: number): Promise<boolean> => {
+  checkCartStatus: async (courseTimeId: number): Promise<boolean> => {
     const response = await axiosInstance.get<ApiResponse<boolean>>(
-      API_ENDPOINTS.CART.ITEM_CHECK(courseId)
+      API_ENDPOINTS.CART.ITEM_CHECK(courseTimeId)
     );
     return response.data.data;
   },
