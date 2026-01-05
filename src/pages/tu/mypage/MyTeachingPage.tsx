@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -67,16 +67,38 @@ export function MyTeachingPage() {
 
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
+  const [hasDesignerRole, setHasDesignerRole] = useState(false);
+  const [isCheckingRole, setIsCheckingRole] = useState(true);
 
-  // 사용자가 DESIGNER 역할을 가지고 있는지 확인
-  const isDesigner = user?.role === 'DESIGNER' || user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN';
+  // CourseRole API로 DESIGNER 역할 확인
+  useEffect(() => {
+    const checkDesignerRole = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        if (Array.isArray(roles) && roles.length > 0) {
+          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER' || r.role === 'OWNER');
+          setHasDesignerRole(hasDesigner);
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      } finally {
+        setIsCheckingRole(false);
+      }
+    };
+    checkDesignerRole();
+  }, []);
+
+  // 사용자가 DESIGNER 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
+  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || hasDesignerRole;
 
   // 내 강의 목록 조회
-  const { data: coursesData, isLoading } = useQuery({
+  const { data: coursesData, isLoading: isLoadingCourses } = useQuery({
     queryKey: ['myCourses'],
     queryFn: () => courseService.getMyCourses(),
-    enabled: isDesigner,
+    enabled: !isCheckingRole && isDesigner,
   });
+
+  const isLoading = isCheckingRole || isLoadingCourses;
   const courses = coursesData?.content || [];
 
   const handleCreateCourse = () => {
