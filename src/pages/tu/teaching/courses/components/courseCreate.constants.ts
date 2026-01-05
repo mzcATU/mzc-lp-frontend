@@ -3,7 +3,7 @@
  */
 
 export const translations = {
-  title: { ko: '강의 등록', en: 'Create Course' },
+  title: { ko: '강의 디자인', en: 'Course Design' },
   editTitle: { ko: '강의 수정', en: 'Edit Course' },
   editSubmit: { ko: '수정 완료', en: 'Save Changes' },
   loadTemplate: { ko: '템플릿 불러오기', en: 'Load Template' },

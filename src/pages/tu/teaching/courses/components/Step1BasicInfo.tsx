@@ -70,12 +70,15 @@ export function Step1BasicInfo({
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-2">
-        <Label htmlFor="title">{getText('courseName')}</Label>
+        <Label htmlFor="title">
+          {getText('courseName')} <span className="text-status-error">*</span>
+        </Label>
         <Input
           id="title"
           value={formData.title}
           onChange={(e) => onFormDataChange({ title: e.target.value })}
           placeholder={getText('courseNamePlaceholder')}
+          required
         />
       </div>
 
