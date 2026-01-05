@@ -11,6 +11,8 @@ import type {
   UserStats,
   UpdateUserDetailRequest,
   UpdateUserRoleRequest,
+  BulkCreateUsersRequest,
+  BulkCreateUsersResponse,
 } from '@/types/admin';
 
 export const userService = {
@@ -75,6 +77,19 @@ export const userService = {
   async getStats(): Promise<UserStats> {
     const { data } = await axiosInstance.get<{ data: UserStats }>(
       `${API_ENDPOINTS.USERS.BASE}/stats`
+    );
+    return data.data;
+  },
+
+  // ============================================
+  // Bulk Operations
+  // ============================================
+
+  /** 단체 계정 생성 */
+  async bulkCreateUsers(request: BulkCreateUsersRequest): Promise<BulkCreateUsersResponse> {
+    const { data } = await axiosInstance.post<{ data: BulkCreateUsersResponse }>(
+      API_ENDPOINTS.USERS.BULK,
+      request
     );
     return data.data;
   },

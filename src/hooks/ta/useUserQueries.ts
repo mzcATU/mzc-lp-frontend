@@ -7,6 +7,7 @@ import type {
   UserListParams,
   UpdateUserDetailRequest,
   UpdateUserRoleRequest,
+  BulkCreateUsersRequest,
 } from '@/types/admin';
 
 // Query Keys
@@ -100,6 +101,19 @@ export const useDeleteUser = () => {
 
   return useMutation({
     mutationFn: (id: number) => userService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.stats() });
+    },
+  });
+};
+
+/** 단체 계정 생성 */
+export const useBulkCreateUsers = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: BulkCreateUsersRequest) => userService.bulkCreateUsers(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.stats() });
