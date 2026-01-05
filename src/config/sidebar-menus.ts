@@ -231,7 +231,7 @@ export const tenantUserMenuData: MenuItem[] = [
     label: { ko: '내 강의', en: 'My Teaching' },
     icon: Briefcase,
     subItems: [
-      { id: 'my-courses', label: { ko: '내 강의계획', en: 'My Course Plans' }, icon: BookOpen, path: '/tu/teaching/courses' },
+      { id: 'my-courses', label: { ko: '내 강의 계획', en: 'My Course Plans' }, icon: BookOpen, path: '/tu/teaching/courses' },
       { id: 'my-programs', label: { ko: '내 프로그램', en: 'My Programs' }, icon: Package, path: '/tu/teaching/programs' },
       { id: 'my-content', label: { ko: '내 콘텐츠', en: 'My Content' }, icon: PenTool, path: '/tu/teaching/content' },
       { id: 'my-assignments', label: { ko: '내 과제', en: 'My Assignments' }, icon: CheckSquare, path: '/tu/teaching/assignments' },

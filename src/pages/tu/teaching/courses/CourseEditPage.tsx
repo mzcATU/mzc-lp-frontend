@@ -11,9 +11,10 @@ import { ArrowLeft, ArrowRight, Save, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
 import { categoryService } from '@/services/common';
-import { useCourse, useUpdateCourse } from '@/hooks/tu/useCourseQueries';
+import { useCourse, useCourseItemsHierarchy, useUpdateCourse } from '@/hooks/tu/useCourseQueries';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse, UpdateCourseRequest } from '@/types/common';
+import { convertHierarchyToCurriculumItems } from '@/types/tu/curriculum.types';
 import { Step1BasicInfo, Step3Review, translations } from './components';
 import { Step2CurriculumTree } from './components/Step2CurriculumTree';
 import type { TranslationKey } from './components';
@@ -28,6 +29,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const courseIdNum = Number(courseId);
 
   const { data: courseData, isLoading, isError } = useCourse(courseIdNum);
+  const { data: hierarchyData } = useCourseItemsHierarchy(courseIdNum);
   const updateCourseMutation = useUpdateCourse();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -71,7 +73,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
 
   // 기존 강의 데이터 로드
   useEffect(() => {
-    if (courseData && !isInitialized) {
+    if (courseData && hierarchyData && !isInitialized) {
       setFormData({
         title: courseData.title,
         description: courseData.description || '',
@@ -83,7 +85,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         level: courseData.level || '',
         type: courseData.type || '',
         lessons: [], // deprecated
-        curriculumItems: [], // TODO: items를 curriculumItems로 변환하는 로직 필요
+        curriculumItems: convertHierarchyToCurriculumItems(hierarchyData),
         isDraft: false,
         multiLanguage: {
           enabled: false,
@@ -92,7 +94,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
       });
       setIsInitialized(true);
     }
-  }, [courseData, isInitialized]);
+  }, [courseData, hierarchyData, isInitialized]);
 
   // 네비게이션 핸들러
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
