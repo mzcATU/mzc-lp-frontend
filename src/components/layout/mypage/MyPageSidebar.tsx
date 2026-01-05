@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -38,9 +38,33 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
+  // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
 
-  // 사용자가 DESIGNER 역할을 가지고 있는지 확인
-  const isDesigner = user?.role === 'DESIGNER' || user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN';
+  // CourseRole API로 역할 확인
+  useEffect(() => {
+    const checkCourseRole = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        if (Array.isArray(roles) && roles.length > 0) {
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+
+          if (hasOwner) {
+            setCourseRoleStatus('OWNER');
+          } else if (hasDesigner) {
+            setCourseRoleStatus('DESIGNER');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      }
+    };
+    checkCourseRole();
+  }, []);
+
+  // 사용자가 DESIGNER 이상의 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
+  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || courseRoleStatus !== 'USER';
 
   // 강의 개설하기 클릭 핸들러
   const handleCreateCourseClick = () => {
@@ -101,14 +125,19 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
 
   // 강의 개설 다이얼로그 설명 텍스트
   const getCreateCourseDialogDescription = () => {
-    if (user?.role === 'USER') {
+    if (courseRoleStatus === 'OWNER') {
       return language === 'ko'
-        ? '강의 개설을 위해 디자이너 권한이 부여됩니다. 강의 설계 / 개설 페이지로 이동하시겠습니까?'
-        : 'Designer permission will be granted for course creation. Would you like to proceed to the course design / creation page?';
+        ? '이미 강의 소유자입니다. 새 강의를 만드시겠습니까?'
+        : 'You are already a course owner. Would you like to create a new course?';
+    }
+    if (courseRoleStatus === 'DESIGNER') {
+      return language === 'ko'
+        ? '이미 강의 개설 권한이 있습니다. 강의 설계 페이지로 이동하시겠습니까?'
+        : 'You already have course creation permission. Would you like to go to the course design page?';
     }
     return language === 'ko'
-      ? '강의 설계 / 개설 페이지로 이동하시겠습니까?'
-      : 'Would you like to proceed to the course design / creation page?';
+      ? '강의 개설을 위해 디자이너 권한이 부여됩니다. 강의 설계 / 개설 페이지로 이동하시겠습니까?'
+      : 'Designer permission will be granted for course creation. Would you like to proceed to the course design / creation page?';
   };
 
   // 현재 유저 롤로 subItem 필터링
