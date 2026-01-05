@@ -91,7 +91,7 @@ export const useEnrollBulk = () => {
 
   return useMutation({
     mutationFn: (courseTimeIds: number[]) => enrollmentService.enrollBulk(courseTimeIds),
-    onSuccess: (result, courseTimeIds) => {
+    onSuccess: (_, courseTimeIds) => {
       // 내 수강 목록 갱신
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.my() });
       // 성공한 차수들의 수강 인원 갱신
