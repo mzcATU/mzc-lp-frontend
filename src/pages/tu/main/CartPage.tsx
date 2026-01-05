@@ -108,11 +108,8 @@ export function CartPage() {
       return;
     }
 
-    console.log('수강신청 시작:', selectedCourseTimeIds);
-
     enrollBulkMutation.mutate(selectedCourseTimeIds, {
       onSuccess: (result) => {
-        console.log('수강신청 응답:', result);
 
         // 응답 구조 확인 및 기본값 처리
         const successCount = result?.successCount ?? 0;
@@ -142,7 +139,6 @@ export function CartPage() {
 
         if (failureCount > 0) {
           const failedItems = results.filter(r => !r.success);
-          console.log('실패 항목:', failedItems);
           if (failedItems.length > 0) {
             // 첫 번째 실패 메시지만 표시 (너무 많은 토스트 방지)
             const firstError = failedItems[0];

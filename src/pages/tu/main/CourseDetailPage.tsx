@@ -355,8 +355,8 @@ export function CourseDetailPage() {
     ? PROGRAM_LEVEL_LABELS[courseTime.program.level]
     : null;
 
-  // 모집 가능 여부
-  const canEnroll = courseTime.status === 'RECRUITING';
+  // 모집 가능 여부 (모집중 또는 진행중일 때 수강 신청 가능)
+  const canEnroll = courseTime.status === 'RECRUITING' || courseTime.status === 'ONGOING';
 
   return (
     <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
@@ -656,26 +656,24 @@ export function CourseDetailPage() {
                             '수강 신청'
                           )}
                         </button>
-                        {!courseTime.isFree && (
-                          <button
-                            onClick={handleAddToCart}
-                            disabled={toggleCartMutation.isPending || isCartChecking}
-                            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                              isInCart
-                                ? 'bg-green-500 text-white hover:bg-green-600'
-                                : isDark
-                                  ? 'bg-white text-gray-900 hover:bg-gray-100'
-                                  : 'bg-gray-900 text-white hover:bg-gray-800'
-                            }`}
-                          >
-                            {toggleCartMutation.isPending ? (
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                              <ShoppingCart className="w-5 h-5" />
-                            )}
-                            {isInCart ? '장바구니에 담김' : '장바구니 담기'}
-                          </button>
-                        )}
+                        <button
+                          onClick={handleAddToCart}
+                          disabled={toggleCartMutation.isPending || isCartChecking}
+                          className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            isInCart
+                              ? 'bg-green-500 text-white hover:bg-green-600'
+                              : isDark
+                                ? 'bg-white text-gray-900 hover:bg-gray-100'
+                                : 'bg-gray-900 text-white hover:bg-gray-800'
+                          }`}
+                        >
+                          {toggleCartMutation.isPending ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <ShoppingCart className="w-5 h-5" />
+                          )}
+                          {isInCart ? '장바구니에 담김' : '장바구니 담기'}
+                        </button>
                       </>
                     ) : (
                       <button

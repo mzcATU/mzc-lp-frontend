@@ -109,6 +109,8 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
     tags.push('상시모집');
   } else if (courseTime.status === 'RECRUITING') {
     tags.push('모집중');
+  } else if (courseTime.status === 'ONGOING') {
+    tags.push('진행중');
   }
   if (courseTime.isFree) {
     tags.push('무료');
