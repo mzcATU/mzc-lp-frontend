@@ -6,6 +6,8 @@ import {
   Edit,
   Trash2,
   FolderTree,
+  UserPlus,
+  X,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -19,21 +21,28 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/common/Dialog';
+import { Checkbox } from '@/components/common/Checkbox';
+import { Avatar, AvatarFallback } from '@/components/common/Avatar';
 import {
   useGroups,
   useCreateGroup,
   useUpdateGroup,
   useDeleteGroup,
+  useUsers,
 } from '@/hooks/ta';
-import type { UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest } from '@/types/admin';
+import type { UserGroup, CreateUserGroupRequest, UpdateUserGroupRequest, AdminUser } from '@/types/admin';
 
 export function GroupsPage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<UserGroup | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<UserGroup | null>(null);
+  const [managingGroup, setManagingGroup] = useState<UserGroup | null>(null);
+  const [memberSearchKeyword, setMemberSearchKeyword] = useState('');
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
 
   // Form state
   const [formData, setFormData] = useState<CreateUserGroupRequest>({
@@ -43,6 +52,7 @@ export function GroupsPage() {
 
   // API Hooks
   const { data: groupsData, isLoading } = useGroups({ keyword: searchKeyword || undefined });
+  const { data: usersData } = useUsers({ search: memberSearchKeyword || undefined, size: 100 });
   const createMutation = useCreateGroup();
   const updateMutation = useUpdateGroup();
   const deleteMutation = useDeleteGroup();
@@ -85,6 +95,34 @@ export function GroupsPage() {
     await deleteMutation.mutateAsync(deleteTarget.id);
     setDeleteTarget(null);
   };
+
+  const handleManageMembersOpen = (group: UserGroup) => {
+    setManagingGroup(group);
+    setSelectedUserIds(new Set());
+    setMemberSearchKeyword('');
+    // TODO: 실제로는 그룹의 현재 멤버 ID를 가져와서 setSelectedUserIds에 설정
+  };
+
+  const handleToggleUser = (userId: number) => {
+    setSelectedUserIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSaveMembers = async () => {
+    if (!managingGroup) return;
+    // TODO: API 호출하여 그룹 멤버 업데이트
+    console.log('Saving members for group:', managingGroup.id, 'Users:', Array.from(selectedUserIds));
+    setManagingGroup(null);
+  };
+
+  const availableUsers = usersData?.content || [];
 
   if (isLoading) {
     return (
@@ -203,6 +241,14 @@ export function GroupsPage() {
                   <div className="flex items-center gap-4">
                     <Badge variant="outline">{group.memberCount}명</Badge>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleManageMembersOpen(group)}
+                      >
+                        <UserPlus className="h-4 w-4 mr-1" />
+                        멤버 관리
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -328,6 +374,88 @@ export function GroupsPage() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Members Dialog */}
+      <Dialog open={!!managingGroup} onOpenChange={() => setManagingGroup(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]" aria-describedby="member-management-description">
+          <DialogHeader>
+            <DialogTitle>멤버 관리 - {managingGroup?.name}</DialogTitle>
+            <DialogDescription id="member-management-description">
+              그룹에 추가할 사용자를 선택하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* 검색 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+              <Input
+                placeholder="사용자 검색..."
+                value={memberSearchKeyword}
+                onChange={(e) => setMemberSearchKeyword(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* 선택된 멤버 수 */}
+            <div className="flex items-center justify-between p-3 bg-bg-secondary rounded-lg">
+              <span className="text-sm text-text-secondary">선택된 멤버</span>
+              <Badge>{selectedUserIds.size}명</Badge>
+            </div>
+
+            {/* 사용자 목록 */}
+            <div className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto">
+              {availableUsers.length === 0 ? (
+                <div className="p-8 text-center text-text-secondary">
+                  사용자가 없습니다
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {availableUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-3 p-3 hover:bg-bg-secondary cursor-pointer"
+                      onClick={() => handleToggleUser(user.id)}
+                    >
+                      <Checkbox
+                        checked={selectedUserIds.has(user.id)}
+                        onCheckedChange={() => handleToggleUser(user.id)}
+                      />
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          {user.name.substring(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{user.name}</p>
+                        <p className="text-xs text-text-secondary">{user.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {user.department && (
+                          <Badge variant="secondary" className="text-xs">
+                            {user.department}
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className="text-xs">
+                          {user.systemRole}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManagingGroup(null)}>
+              취소
+            </Button>
+            <Button onClick={handleSaveMembers}>
+              <Users className="h-4 w-4 mr-2" />
+              {selectedUserIds.size}명 저장
             </Button>
           </DialogFooter>
         </DialogContent>
