@@ -14,6 +14,8 @@ import {
   MyProgramsPage,
   TuProgramDetailPage,
   TuProgramEditPage,
+  RoadmapListPage,
+  RoadmapCreatePage,
 } from '@/pages/tu';
 import { DashboardPage, PlaceholderPage } from './pages';
 
@@ -57,6 +59,12 @@ export const tuTeachingRoutes = (
     {/* 내 과제 */}
     <Route path="teaching/assignments" element={<MyAssignmentsPage />} />
     <Route path="teaching/assignments/:id" element={<AssignmentDetailPage />} />
+
+    {/* 로드맵 */}
+    <Route path="teaching/roadmaps" element={<RoadmapListPage />} />
+    <Route path="teaching/roadmaps/create" element={<RoadmapCreatePage />} />
+    <Route path="teaching/roadmaps/:id" element={<PlaceholderPage title="로드맵 상세" />} />
+    <Route path="teaching/roadmaps/:id/edit" element={<RoadmapCreatePage />} />
 
     {/* 교육 과정 탐색 */}
     <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
