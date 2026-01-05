@@ -129,7 +129,6 @@ export {
   useMyWishlistCount,
   useCheckWishlistStatus,
   useCheckWishlistStatusBulk,
-  useCourseWishlistCount,
   useAddToWishlist,
   useRemoveFromWishlist,
   useToggleWishlist,
