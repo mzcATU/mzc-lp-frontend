@@ -49,6 +49,19 @@ const contentTypeIcons: Record<string, React.ReactNode> = {
   EXTERNAL_LINK: <LinkIcon className="w-4 h-4" />,
 };
 
+// itemType을 PlayerContentType으로 매핑
+const mapItemTypeToContentType = (itemType: string | null | undefined): PlayerContentType => {
+  if (!itemType) return 'VIDEO';
+  const typeMap: Record<string, PlayerContentType> = {
+    VIDEO: 'VIDEO',
+    AUDIO: 'VIDEO', // 오디오도 비디오 플레이어로 재생
+    DOCUMENT: 'DOCUMENT',
+    IMAGE: 'DOCUMENT', // 이미지는 문서 뷰어로 표시
+    EXTERNAL_LINK: 'EXTERNAL_LINK',
+  };
+  return typeMap[itemType.toUpperCase()] || 'VIDEO';
+};
+
 // API 응답 타입
 interface ApiResponse<T> {
   success: boolean;
@@ -286,7 +299,8 @@ export function CurriculumSidebar({
             const isCompleted = progressRecord?.completed ?? false;
             const progress = progressRecord?.progressPercent ?? 0;
             const contentId = demoContentId ?? item.snapshotLearningObject?.contentId ?? 0;
-            const contentType = demoContentType ?? 'VIDEO';
+            // 데모 모드에서는 demoContentType 사용, 실제 모드에서는 itemType을 매핑
+            const contentType = demoContentType ?? mapItemTypeToContentType(item.itemType);
 
             return (
               <CurriculumItem

@@ -116,3 +116,23 @@ export const COMPLETION_THRESHOLD = 0.8; // 80%
  * 자동 저장 간격 (ms)
  */
 export const AUTO_SAVE_INTERVAL = 30000; // 30초
+
+/**
+ * 플레이어용 Enrollment 데이터
+ * - Enrollment + CourseTime + Program 조합
+ */
+export interface EnrollmentPlayerData {
+  enrollmentId: number;
+  userId: number;
+  courseTimeId: number;
+  courseTimeName: string;
+  programId: number;
+  programTitle: string;
+  snapshotId: number;
+  status: string;
+  progressPercent: number;
+  enrolledAt: string;
+  completedAt: string | null;
+  classStartDate: string;
+  classEndDate: string;
+}

@@ -18,11 +18,14 @@ import {
 import { Button, Badge } from '@/components/common';
 import { useTranslation } from '@/store/common/languageStore';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useQuery } from '@tanstack/react-query';
 import {
-  useEnrollment,
+  useEnrollmentForPlayer,
   useUpdateProgress,
   useMarkItemComplete,
 } from '@/hooks/tu';
+import axiosInstance from '@/services/common/api/axiosInstance';
+import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import { VideoPlayer, CurriculumSidebar, DocumentViewer, ExternalLinkViewer } from './components';
 import {
   COMPLETION_THRESHOLD,
@@ -30,6 +33,26 @@ import {
   type PlayerContentType,
   type ProgressRecordResponse,
 } from '@/types/tu';
+import type { SnapshotItemResponse, SnapshotRelationsResponse } from '@/types/common/snapshot.types';
+
+// API 응답 타입
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+}
+
+// itemType을 PlayerContentType으로 매핑
+const mapItemTypeToContentType = (itemType: string | null | undefined): PlayerContentType => {
+  if (!itemType) return 'VIDEO';
+  const typeMap: Record<string, PlayerContentType> = {
+    VIDEO: 'VIDEO',
+    AUDIO: 'VIDEO',
+    DOCUMENT: 'DOCUMENT',
+    IMAGE: 'DOCUMENT',
+    EXTERNAL_LINK: 'EXTERNAL_LINK',
+  };
+  return typeMap[itemType.toUpperCase()] || 'VIDEO';
+};
 
 // ============================================
 // Demo Mode Mock Data
@@ -89,7 +112,7 @@ export function LearningPlayerPage() {
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Queries & Mutations (데모 모드에서는 비활성화)
-  const { data: apiEnrollment, isLoading, isError } = useEnrollment(
+  const { data: playerData, isLoading, isError } = useEnrollmentForPlayer(
     isDemoMode ? 0 : Number(enrollmentId),
     { enabled: !isDemoMode }
   );
@@ -97,20 +120,104 @@ export function LearningPlayerPage() {
   const markItemComplete = useMarkItemComplete();
 
   // 데모 모드 또는 API 데이터 사용
-  const enrollment = isDemoMode ? DEMO_ENROLLMENT : apiEnrollment;
+  const enrollment = isDemoMode ? DEMO_ENROLLMENT : playerData ? {
+    enrollmentId: playerData.enrollmentId,
+    programId: playerData.programId,
+    programTitle: playerData.programTitle,
+    timeId: playerData.courseTimeId,
+    snapshotId: playerData.snapshotId,
+    startDate: playerData.classStartDate,
+    endDate: playerData.classEndDate,
+    progressRate: playerData.progressPercent,
+    status: playerData.status,
+    enrolledAt: playerData.enrolledAt,
+  } : null;
 
   // Mock 진도 기록 (실제로는 API에서 가져와야 함)
   const [progressRecords, setProgressRecords] = useState<ProgressRecordResponse[]>([]);
 
-  // snapshotId (데모 모드에서는 mock 사용)
-  const snapshotId = isDemoMode ? 999 : 1; // enrollment?.snapshotId || 1;
+  // snapshotId (데모 모드에서는 mock 사용, 실제 모드에서는 playerData에서 가져옴)
+  const snapshotId = isDemoMode ? 999 : (enrollment?.snapshotId ?? 0);
+
+  // 스냅샷 아이템 조회 (실제 모드에서만)
+  const { data: snapshotItems } = useQuery({
+    queryKey: ['snapshot', 'items', snapshotId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<ApiResponse<SnapshotItemResponse[]>>(
+        API_ENDPOINTS.SNAPSHOTS.ITEMS(snapshotId)
+      );
+      return response.data.data;
+    },
+    enabled: !isDemoMode && snapshotId > 0,
+  });
+
+  // 스냅샷 관계(순서) 조회 (실제 모드에서만)
+  const { data: relationsData } = useQuery({
+    queryKey: ['snapshot', 'relations', 'ordered', snapshotId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<ApiResponse<SnapshotRelationsResponse>>(
+        API_ENDPOINTS.SNAPSHOTS.RELATIONS_ORDERED(snapshotId)
+      );
+      return response.data.data;
+    },
+    enabled: !isDemoMode && snapshotId > 0,
+  });
 
   // 데모 커리큘럼 아이템 (사이드바용)
   const demoCurriculumItems = useMemo(() => DEMO_CURRICULUM_ITEMS, []);
 
+  // 순서가 있는 커리큘럼 아이템 목록 (실제 API 또는 데모)
+  interface OrderedCurriculumItem {
+    itemId: number;
+    itemName: string;
+    contentId: number;
+    contentType: PlayerContentType;
+    seq: number;
+  }
+
+  const orderedCurriculumItems = useMemo((): OrderedCurriculumItem[] => {
+    // 데모 모드
+    if (isDemoMode) {
+      return demoCurriculumItems.map((item, index) => ({
+        ...item,
+        seq: index + 1,
+      }));
+    }
+
+    // 실제 모드 - API 데이터
+    if (!snapshotItems || !relationsData) return [];
+
+    // 아이템을 Map으로 변환 (평탄화)
+    const itemsMap = new Map<number, SnapshotItemResponse>();
+    const flattenItems = (items: SnapshotItemResponse[]) => {
+      items.forEach((item) => {
+        itemsMap.set(item.itemId, item);
+        if (item.children && item.children.length > 0) {
+          flattenItems(item.children);
+        }
+      });
+    };
+    flattenItems(snapshotItems);
+
+    // 순서대로 아이템 반환
+    return relationsData.orderedItems
+      .map((orderedItem) => {
+        const item = itemsMap.get(orderedItem.itemId);
+        if (!item || item.isFolder) return null;
+        return {
+          itemId: item.itemId,
+          itemName: item.itemName,
+          contentId: item.snapshotLearningObject?.contentId ?? 0,
+          contentType: mapItemTypeToContentType(item.itemType),
+          seq: orderedItem.seq,
+        };
+      })
+      .filter((item): item is OrderedCurriculumItem => item !== null && item.contentId > 0);
+  }, [isDemoMode, demoCurriculumItems, snapshotItems, relationsData]);
+
   // 현재 아이템 인덱스 및 이전/다음 아이템 계산
   const { hasPrevious, hasNext, previousItem, nextItem } = useMemo(() => {
-    const items = isDemoMode ? demoCurriculumItems : [];
+    const items = orderedCurriculumItems;
     const index = items.findIndex((item) => item.itemId === currentItemId);
     return {
       currentIndex: index,
@@ -119,19 +226,19 @@ export function LearningPlayerPage() {
       previousItem: index > 0 ? items[index - 1] : null,
       nextItem: index >= 0 && index < items.length - 1 ? items[index + 1] : null,
     };
-  }, [isDemoMode, demoCurriculumItems, currentItemId]);
+  }, [orderedCurriculumItems, currentItemId]);
 
-  // 데모 모드에서 첫 번째 아이템 자동 선택
+  // 첫 번째 아이템 자동 선택 (데모/실제 공통)
   useEffect(() => {
-    if (isDemoMode && !currentContentId && demoCurriculumItems.length > 0) {
-      const targetItemId = itemId ? Number(itemId) : demoCurriculumItems[0].itemId;
-      const targetItem = demoCurriculumItems.find(item => item.itemId === targetItemId) || demoCurriculumItems[0];
+    if (!currentContentId && orderedCurriculumItems.length > 0) {
+      const targetItemId = itemId ? Number(itemId) : orderedCurriculumItems[0].itemId;
+      const targetItem = orderedCurriculumItems.find(item => item.itemId === targetItemId) || orderedCurriculumItems[0];
 
       setCurrentItemId(targetItem.itemId);
       setCurrentContentId(targetItem.contentId);
       setCurrentContentType(targetItem.contentType);
     }
-  }, [isDemoMode, currentContentId, demoCurriculumItems, itemId]);
+  }, [currentContentId, orderedCurriculumItems, itemId]);
 
   // 진도 저장
   const saveProgress = useCallback(async () => {
@@ -408,7 +515,7 @@ export function LearningPlayerPage() {
               {currentItemId && (
                 <div className={`rounded-lg p-3 mb-2 ${isDark ? 'bg-[#2a2a2a] border border-white/10' : 'bg-[#ffffff] border border-gray-200'}`}>
                   <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {demoCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || '콘텐츠'}
+                    {orderedCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || '콘텐츠'}
                   </h2>
                   {isCompleted && (
                     <div className="flex items-center gap-2 mt-2 text-green-500">
