@@ -1,8 +1,26 @@
 /**
  * Step 2: 커리큘럼 구성 (트리 구조)
  * 폴더와 콘텐츠를 계층적으로 관리
+ * @dnd-kit을 사용한 드래그앤드롭 지원
  */
 import { useState, useCallback } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { List, Plus, Info } from 'lucide-react';
+import { Button, Alert, AlertDescription } from '@/components/common';
 import type { CourseFormData, ContentAttachment } from '@/types';
 import type { CurriculumItem, CurriculumFolderItem } from '@/types/tu';
 import {
@@ -11,8 +29,7 @@ import {
   createContentItem,
 } from '@/types/tu';
 import { translations, type TranslationKey } from './courseCreate.constants';
-import { CurriculumItemCard } from './CurriculumItemCard';
-import { AddCurriculumItemButton } from './AddCurriculumItemButton';
+import { SortableCurriculumCard } from './SortableCurriculumCard';
 import { ExistingContentModal } from './ExistingContentModal';
 import { FileUploadModal } from './FileUploadModal';
 import { ExternalLinkModal } from './ExternalLinkModal';
@@ -39,6 +56,18 @@ export function Step2CurriculumTree({
 
   const items = formData.curriculumItems || [];
 
+  // 드래그 센서 설정
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   // 트리 업데이트 헬퍼
   const updateTree = useCallback(
     (newItems: CurriculumItem[]) => {
@@ -46,6 +75,21 @@ export function Step2CurriculumTree({
     },
     [onFormDataChange]
   );
+
+  // 드래그 종료 핸들러 (루트 레벨만)
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        updateTree(newItems.map((item, idx) => ({ ...item, order: idx })));
+      }
+    }
+  };
 
   // 재귀적으로 트리에서 항목 업데이트
   const updateItemInTree = useCallback(
@@ -123,6 +167,34 @@ export function Step2CurriculumTree({
     []
   );
 
+  // 폴더 내 항목 순서 변경
+  const reorderChildrenInTree = useCallback(
+    (
+      items: CurriculumItem[],
+      parentId: string,
+      oldIndex: number,
+      newIndex: number
+    ): CurriculumItem[] => {
+      return items.map((item) => {
+        if (item.id === parentId && isCurriculumFolder(item)) {
+          const newChildren = arrayMove(item.children, oldIndex, newIndex);
+          return {
+            ...item,
+            children: newChildren.map((child, idx) => ({ ...child, order: idx })),
+          };
+        }
+        if (isCurriculumFolder(item)) {
+          return {
+            ...item,
+            children: reorderChildrenInTree(item.children, parentId, oldIndex, newIndex),
+          };
+        }
+        return item;
+      });
+    },
+    []
+  );
+
   // 항목 업데이트 핸들러
   const handleUpdateItem = useCallback(
     (itemId: string, updates: Partial<CurriculumItem>) => {
@@ -151,19 +223,33 @@ export function Step2CurriculumTree({
     [items, updateTree, updateItemInTree]
   );
 
-  // 폴더 추가
+  // 폴더 추가 (회차 추가)
   const handleAddFolder = useCallback(
     (parentId: string | null) => {
       const parentItem = parentId ? findItemById(items, parentId) : null;
       const depth =
         parentItem && isCurriculumFolder(parentItem) ? parentItem.depth + 1 : 0;
-      const newFolder = createFolderItem(
-        language === 'ko' ? '새 폴더' : 'New Folder',
-        depth
-      );
+
+      // 루트 레벨이면 "N차시", 하위면 "새 폴더"
+      const folderCount = parentId === null
+        ? items.filter(i => isCurriculumFolder(i)).length + 1
+        : null;
+      const folderName = folderCount
+        ? (language === 'ko' ? `${folderCount}차시` : `Lesson ${folderCount}`)
+        : (language === 'ko' ? '새 폴더' : 'New Folder');
+
+      const newFolder = createFolderItem(folderName, depth);
       updateTree(addItemToTree(items, parentId, newFolder));
     },
     [items, updateTree, addItemToTree, language]
+  );
+
+  // 자식 항목 순서 변경 핸들러
+  const handleReorderChildren = useCallback(
+    (parentId: string, oldIndex: number, newIndex: number) => {
+      updateTree(reorderChildrenInTree(items, parentId, oldIndex, newIndex));
+    },
+    [items, updateTree, reorderChildrenInTree]
   );
 
   // 모달 열기 핸들러들
@@ -238,60 +324,72 @@ export function Step2CurriculumTree({
   return (
     <>
       <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-text-primary mb-2">{getText('curriculumTitle')}</h2>
-          <p className="text-text-secondary m-0">{getText('curriculumDesc')}</p>
+        {/* 헤더 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <List size={20} className="text-btn-brand" />
+            <h2 className="text-text-primary m-0">{getText('curriculumTitle')}</h2>
+          </div>
+          <Button onClick={() => handleAddFolder(null)}>
+            <Plus size={18} />
+            {language === 'ko' ? '차시 추가' : 'Add Lesson'}
+          </Button>
         </div>
 
         {/* 커리큘럼 트리 */}
         <div className="border border-border rounded-lg bg-bg-default overflow-hidden">
           {items.length === 0 ? (
             <div className="p-12 text-center">
+              <List size={48} className="text-text-placeholder mx-auto mb-4" />
               <p className="text-text-secondary mb-4">
                 {language === 'ko'
-                  ? '커리큘럼 항목이 없습니다. 폴더 또는 콘텐츠를 추가해주세요.'
-                  : 'No curriculum items. Add a folder or content.'}
+                  ? '차시를 추가하여 강의를 구성하세요.'
+                  : 'Add lessons to structure your course.'}
               </p>
-              <AddCurriculumItemButton
-                language={language}
-                parentId={null}
-                onAddFolder={handleAddFolder}
-                onUpload={handleOpenUploadModal}
-                onLink={handleOpenLinkModal}
-                onExisting={handleOpenExistingModal}
-                variant="default"
-              />
+              <Button onClick={() => handleAddFolder(null)}>
+                <Plus size={18} />
+                {language === 'ko' ? '첫 번째 차시 추가' : 'Add First Lesson'}
+              </Button>
             </div>
           ) : (
-            <div className="p-4">
-              {/* 트리 렌더링 */}
-              {items.map((item) => (
-                <CurriculumItemCard
-                  key={item.id}
-                  language={language}
-                  item={item}
-                  onUpdate={handleUpdateItem}
-                  onDelete={handleDeleteItem}
-                  onAddItem={handleAddItem}
-                  onToggleExpand={handleToggleExpand}
-                />
-              ))}
-
-              {/* 루트에 항목 추가 버튼 */}
-              <div className="mt-4">
-                <AddCurriculumItemButton
-                  language={language}
-                  parentId={null}
-                  onAddFolder={handleAddFolder}
-                  onUpload={handleOpenUploadModal}
-                  onLink={handleOpenLinkModal}
-                  onExisting={handleOpenExistingModal}
-                  variant="dashed"
-                />
-              </div>
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={items.map((item) => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="p-4 space-y-3">
+                  {items.map((item, index) => (
+                    <SortableCurriculumCard
+                      key={item.id}
+                      language={language}
+                      item={item}
+                      index={index}
+                      onUpdate={handleUpdateItem}
+                      onDelete={handleDeleteItem}
+                      onAddItem={handleAddItem}
+                      onToggleExpand={handleToggleExpand}
+                      onReorderChildren={handleReorderChildren}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
+
+        {/* 도움말 */}
+        <Alert variant="info">
+          <Info size={16} />
+          <AlertDescription>
+            {language === 'ko'
+              ? '차시를 드래그하여 순서를 변경할 수 있습니다. 각 차시에 콘텐츠를 연결하여 학습 경로를 구성하세요.'
+              : 'Drag lessons to reorder. Connect content to each lesson to build your learning path.'}
+          </AlertDescription>
+        </Alert>
       </div>
 
       {/* 파일 업로드 모달 */}
