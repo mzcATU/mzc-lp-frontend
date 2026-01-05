@@ -32,7 +32,7 @@ function mapCourseResponseToCourse(response: CourseResponse): Course {
 }
 
 const t = {
-  title: { ko: '내 강의 계획', en: 'My Course Plans' },
+  title: { ko: '강의 디자인', en: 'Course Design' },
   subtitle: { ko: '개설한 강의를 관리하고 수강생을 확인하세요', en: 'Manage your courses and track student progress' },
   createCourse: { ko: '강의 생성', en: 'Create Course' },
   all: { ko: '전체', en: 'All' },
@@ -234,7 +234,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
         <div className="flex gap-2 items-center">
           <Filter size={18} className="text-text-secondary" />
           <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg">
-            {(['all', 'active', 'completed', 'draft'] as const).map((status) => (
+            {(['all', 'draft'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}

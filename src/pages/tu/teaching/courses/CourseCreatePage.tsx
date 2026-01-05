@@ -166,7 +166,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   return (
     <div className="bg-bg-app min-h-screen">
       {/* Header */}
-      <div className="bg-bg-default border-b border-border px-6 py-4">
+      <div className="bg-bg-app border-b border-border px-6 py-4">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <h1 className="text-text-primary m-0">{getText('title')}</h1>
           <div className="flex gap-3 items-center">
@@ -191,7 +191,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       </div>
 
       {/* Progress Steps */}
-      <div className="bg-bg-default border-b border-border px-6 py-6">
+      <div className="bg-bg-app border-b border-border px-6 py-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2">
             {[1, 2, 3].map((step) => (
@@ -199,7 +199,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 <div
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm',
-                    currentStep >= step ? 'bg-btn-neutral text-white' : 'bg-border text-text-secondary'
+                    currentStep >= step ? 'bg-btn-brand text-white' : 'bg-border text-text-secondary'
                   )}
                 >
                   {step}
@@ -215,7 +215,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 </span>
                 {step < 3 && (
                   <div
-                    className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-neutral' : 'bg-border')}
+                    className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-brand' : 'bg-border')}
                   />
                 )}
               </div>

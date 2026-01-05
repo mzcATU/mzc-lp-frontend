@@ -13,6 +13,8 @@ import {
   CheckCircle,
   XCircle,
   Archive,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, Card } from '@/components/common';
@@ -32,10 +34,10 @@ const DEFAULT_THUMBNAIL =
   'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
 const t = {
-  title: { ko: '내 프로그램', en: 'My Programs' },
+  title: { ko: '강의 개설', en: 'Create Course' },
   subtitle: {
-    ko: '신청한 프로그램의 상태를 확인하고 관리하세요',
-    en: 'Check the status and manage your submitted programs',
+    ko: '신청한 강의의 상태를 확인하고 관리하세요',
+    en: 'Check the status and manage your submitted courses',
   },
   all: { ko: '전체', en: 'All' },
   draft: { ko: '임시저장', en: 'Draft' },
@@ -104,6 +106,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
   const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<'all' | ProgramStatus>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'title'>('recent');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -224,118 +227,248 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
             <option value="recent">{getText('recent')}</option>
             <option value="title">{getText('titleSort')}</option>
           </select>
+
+          {/* View Toggle */}
+          <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg ml-2">
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn(
+                'p-2 rounded-md transition-colors',
+                viewMode === 'list'
+                  ? 'bg-btn-neutral text-white'
+                  : 'bg-transparent text-text-secondary hover:bg-bg-secondary'
+              )}
+            >
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                'p-2 rounded-md transition-colors',
+                viewMode === 'grid'
+                  ? 'bg-btn-neutral text-white'
+                  : 'bg-transparent text-text-secondary hover:bg-bg-secondary'
+              )}
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Program Grid */}
+      {/* Program List/Grid */}
       {sortedPrograms.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedPrograms.map((program) => (
-            <Card key={program.id} className="overflow-hidden">
-              {/* Thumbnail */}
-              <div className="aspect-video relative overflow-hidden bg-bg-secondary">
-                <img
-                  src={program.thumbnailUrl || DEFAULT_THUMBNAIL}
-                  alt={program.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 left-3">
-                  <Badge
-                    variant={statusBadgeVariant[program.status]}
-                    className="flex items-center gap-1"
-                  >
-                    {statusIcons[program.status]}
-                    {PROGRAM_STATUS_LABELS[program.status]}
-                  </Badge>
+        viewMode === 'list' ? (
+          /* List View */
+          <div className="flex flex-col gap-3">
+            {sortedPrograms.map((program) => (
+              <Card key={program.id} className="p-4">
+                <div className="flex items-center gap-4">
+                  {/* Thumbnail */}
+                  <div className="w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-bg-secondary">
+                    <img
+                      src={program.thumbnailUrl || DEFAULT_THUMBNAIL}
+                      alt={program.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-text-primary font-medium truncate">
+                        {program.title}
+                      </h3>
+                      <Badge
+                        variant={statusBadgeVariant[program.status]}
+                        className="flex items-center gap-1 flex-shrink-0"
+                      >
+                        {statusIcons[program.status]}
+                        {PROGRAM_STATUS_LABELS[program.status]}
+                      </Badge>
+                    </div>
+                    {program.description && (
+                      <p className="text-text-secondary text-sm truncate">
+                        {program.description}
+                      </p>
+                    )}
+                    <div className="flex gap-2 mt-1 text-xs text-text-secondary">
+                      {program.level && (
+                        <span>{PROGRAM_LEVEL_LABELS[program.level]}</span>
+                      )}
+                      {program.type && (
+                        <span>• {PROGRAM_TYPE_LABELS[program.type]}</span>
+                      )}
+                      {program.estimatedHours && (
+                        <span>• {program.estimatedHours} {getText('hours')}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="border border-border"
+                      onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
+                    >
+                      <Eye size={14} />
+                      {getText('view')}
+                    </Button>
+
+                    {canEdit(program.status) && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="border border-border"
+                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
+                      >
+                        <Edit2 size={14} />
+                        {getText('edit')}
+                      </Button>
+                    )}
+
+                    {canSubmit(program.status) && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleSubmit(program)}
+                        disabled={isActionPending}
+                      >
+                        {submitMutation.isPending ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Send size={14} />
+                        )}
+                        {getText('submit')}
+                      </Button>
+                    )}
+
+                    {canDelete(program.status) && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(program)}
+                        disabled={isActionPending}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <h3 className="text-text-primary font-medium mb-2 line-clamp-2">
-                  {program.title}
-                </h3>
-
-                {program.description && (
-                  <p className="text-text-secondary text-sm mb-3 line-clamp-2">
-                    {program.description}
-                  </p>
-                )}
-
-                {/* Meta Info */}
-                <div className="flex flex-wrap gap-2 text-xs text-text-secondary mb-4">
-                  {program.level && (
-                    <span className="px-2 py-1 bg-bg-secondary rounded">
-                      {PROGRAM_LEVEL_LABELS[program.level]}
-                    </span>
-                  )}
-                  {program.type && (
-                    <span className="px-2 py-1 bg-bg-secondary rounded">
-                      {PROGRAM_TYPE_LABELS[program.type]}
-                    </span>
-                  )}
-                  {program.estimatedHours && (
-                    <span className="px-2 py-1 bg-bg-secondary rounded">
-                      {program.estimatedHours} {getText('hours')}
-                    </span>
-                  )}
+              </Card>
+            ))}
+          </div>
+        ) : (
+          /* Grid View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedPrograms.map((program) => (
+              <Card key={program.id} className="overflow-hidden">
+                {/* Thumbnail */}
+                <div className="aspect-video relative overflow-hidden bg-bg-secondary">
+                  <img
+                    src={program.thumbnailUrl || DEFAULT_THUMBNAIL}
+                    alt={program.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <Badge
+                      variant={statusBadgeVariant[program.status]}
+                      className="flex items-center gap-1"
+                    >
+                      {statusIcons[program.status]}
+                      {PROGRAM_STATUS_LABELS[program.status]}
+                    </Badge>
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="flex-1 border border-border"
-                    onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
-                  >
-                    <Eye size={14} />
-                    {getText('view')}
-                  </Button>
+                {/* Content */}
+                <div className="p-4">
+                  <h3 className="text-text-primary font-medium mb-2 line-clamp-2">
+                    {program.title}
+                  </h3>
 
-                  {canEdit(program.status) && (
+                  {program.description && (
+                    <p className="text-text-secondary text-sm mb-3 line-clamp-2">
+                      {program.description}
+                    </p>
+                  )}
+
+                  {/* Meta Info */}
+                  <div className="flex flex-wrap gap-2 text-xs text-text-secondary mb-4">
+                    {program.level && (
+                      <span className="px-2 py-1 bg-bg-secondary rounded">
+                        {PROGRAM_LEVEL_LABELS[program.level]}
+                      </span>
+                    )}
+                    {program.type && (
+                      <span className="px-2 py-1 bg-bg-secondary rounded">
+                        {PROGRAM_TYPE_LABELS[program.type]}
+                      </span>
+                    )}
+                    {program.estimatedHours && (
+                      <span className="px-2 py-1 bg-bg-secondary rounded">
+                        {program.estimatedHours} {getText('hours')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="ghost"
                       className="flex-1 border border-border"
-                      onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
+                      onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
                     >
-                      <Edit2 size={14} />
-                      {getText('edit')}
+                      <Eye size={14} />
+                      {getText('view')}
                     </Button>
-                  )}
 
-                  {canSubmit(program.status) && (
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleSubmit(program)}
-                      disabled={isActionPending}
-                    >
-                      {submitMutation.isPending ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Send size={14} />
-                      )}
-                      {getText('submit')}
-                    </Button>
-                  )}
+                    {canEdit(program.status) && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="flex-1 border border-border"
+                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
+                      >
+                        <Edit2 size={14} />
+                        {getText('edit')}
+                      </Button>
+                    )}
 
-                  {canDelete(program.status) && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(program)}
-                      disabled={isActionPending}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  )}
+                    {canSubmit(program.status) && (
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleSubmit(program)}
+                        disabled={isActionPending}
+                      >
+                        {submitMutation.isPending ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Send size={14} />
+                        )}
+                        {getText('submit')}
+                      </Button>
+                    )}
+
+                    {canDelete(program.status) && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(program)}
+                        disabled={isActionPending}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )
       ) : (
         /* Empty State */
         <div className="text-center py-20 px-5 bg-bg-secondary rounded-xl border border-border">
