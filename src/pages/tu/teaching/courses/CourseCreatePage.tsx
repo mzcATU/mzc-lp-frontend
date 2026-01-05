@@ -8,8 +8,8 @@
  * - Step3Review: 검토 및 저장
  */
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, FileText, Upload } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Save, FileText, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
 import { courseService, categoryService } from '@/services/common';
@@ -63,9 +63,17 @@ async function createCurriculumItemsRecursively(
 
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const courseIdParam = searchParams.get('courseId');
+
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [courseId, setCourseId] = useState<number | null>(
+    courseIdParam ? Number(courseIdParam) : null
+  );
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
@@ -102,15 +110,88 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     fetchCategories();
   }, []);
 
+  // 기존 강의 불러오기 (courseId가 있는 경우)
+  useEffect(() => {
+    const loadExistingCourse = async () => {
+      if (!courseId) return;
+
+      setIsLoading(true);
+      try {
+        const course = await courseService.getCourse(courseId);
+        setFormData((prev) => ({
+          ...prev,
+          title: course.title,
+          description: course.description || '',
+          thumbnailUrl: course.thumbnailUrl || undefined,
+          level: course.level || '',
+          type: course.type || '',
+          categoryId: course.categoryId,
+          startDate: course.startDate || '',
+          endDate: course.endDate || '',
+          tags: course.tags || [],
+          isDraft: !course.isComplete,
+          lastSaved: course.updatedAt,
+        }));
+      } catch (error) {
+        console.error('강의 불러오기 실패:', error);
+        alert('강의를 불러오는데 실패했습니다.');
+        navigate('/tu/teaching/courses');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadExistingCourse();
+  }, [courseId, navigate]);
+
   // 네비게이션 핸들러
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
   const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   const handleGoToStep = (step: number) => setCurrentStep(step);
   const handleClose = () => navigate('/tu/teaching/courses');
 
-  const handleSaveDraft = () => {
-    setFormData({ ...formData, isDraft: true, lastSaved: new Date().toISOString() });
-    alert('임시저장되었습니다.');
+  const handleSaveDraft = async () => {
+    if (!formData.title) {
+      alert('강의명을 입력해주세요.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const request: CreateCourseRequest = {
+        title: formData.title,
+        description: formData.description || undefined,
+        thumbnailUrl: formData.thumbnailUrl || undefined,
+        level: formData.level || undefined,
+        type: formData.type || undefined,
+        categoryId: formData.categoryId ?? undefined,
+        startDate: formData.startDate || undefined,
+        endDate: formData.endDate || undefined,
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
+      };
+
+      if (courseId) {
+        // 기존 강의 수정
+        await courseService.update(courseId, request);
+      } else {
+        // 새 강의 생성
+        const response = await courseService.create(request);
+        setCourseId(response.courseId);
+        // URL 업데이트 (뒤로가기 시에도 courseId 유지)
+        navigate(`/tu/teaching/courses/create?courseId=${response.courseId}`, { replace: true });
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        isDraft: true,
+        lastSaved: new Date().toISOString(),
+      }));
+      alert('저장되었습니다.');
+    } catch (error) {
+      console.error('저장 실패:', error);
+      alert('저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -133,14 +214,22 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
-      // 1. 강의 생성
-      const courseResponse = await courseService.create(request);
-      const courseId = courseResponse.courseId;
+      let targetCourseId = courseId;
 
-      // 2. 커리큘럼 항목 생성 (트리 구조 재귀 처리)
-      if (formData.curriculumItems.length > 0) {
+      if (courseId) {
+        // 기존 강의 수정
+        await courseService.update(courseId, request);
+      } else {
+        // 새 강의 생성
+        const courseResponse = await courseService.create(request);
+        targetCourseId = courseResponse.courseId;
+      }
+
+      // 커리큘럼 항목 생성 (트리 구조 재귀 처리)
+      // 참고: 기존 강의 수정 시에는 이미 저장된 커리큘럼이 있을 수 있음
+      if (targetCourseId && formData.curriculumItems.length > 0) {
         await createCurriculumItemsRecursively(
-          courseId,
+          targetCourseId,
           formData.curriculumItems,
           null
         );
@@ -162,6 +251,18 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   };
 
   const stepLabels = [getText('step1'), getText('step2'), getText('step3')];
+
+  // 로딩 중일 때
+  if (isLoading) {
+    return (
+      <div className="bg-bg-app min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={32} className="animate-spin text-text-secondary mx-auto mb-4" />
+          <p className="text-text-secondary">강의 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-bg-app min-h-screen">
@@ -266,9 +367,14 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 {getText('previous')}
               </Button>
             )}
-            <Button variant="ghost" onClick={handleSaveDraft} className="border border-border">
-              <Save size={18} />
-              {getText('saveDraft')}
+            <Button
+              variant="ghost"
+              onClick={handleSaveDraft}
+              disabled={isSaving}
+              className="border border-border"
+            >
+              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+              {isSaving ? '저장 중...' : getText('saveDraft')}
             </Button>
           </div>
 

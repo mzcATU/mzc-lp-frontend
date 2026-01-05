@@ -45,6 +45,10 @@ import {
   Briefcase,
   MessageSquare,
   Package,
+  Image,
+  Zap,
+  FolderTree,
+  Map,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -133,17 +137,28 @@ export const tenantAdminMenuData: MenuItem[] = [
       { id: 'layout-ui', label: { ko: '레이아웃/UI 설정 및 관리', en: 'Layout/UI Settings & Mgmt' }, icon: Layout, path: '/ta/branding/layout' },
       { id: 'branding-mgmt', label: { ko: '브랜딩 관리', en: 'Branding Management' }, icon: Paintbrush, path: '/ta/branding/design' },
       { id: 'navigation-config', label: { ko: '네비게이션 구성 관리', en: 'Navigation Config Mgmt' }, icon: Menu, path: '/ta/branding/navigation' },
+      { id: 'banner-mgmt', label: { ko: '배너 관리', en: 'Banner Management' }, icon: Image, path: '/ta/branding/banners' },
     ],
   },
   {
     id: 'operator-access',
-    label: { ko: '사용자 및 권한', en: 'Operator & Access Mgmt' },
+    label: { ko: '사용자 및 권한', en: 'User & Access Management' },
     icon: Users,
     subItems: [
       { id: 'user-mgmt', label: { ko: '사용자 관리', en: 'User Management' }, icon: Users, path: '/ta/users' },
-      { id: 'operator-mgmt', label: { ko: '운영자 관리', en: 'Operator Management' }, icon: UserCog, path: '/ta/users/operators' },
-      { id: 'user-group-roles', label: { ko: '사용자 그룹 및 역할 관리', en: 'User Group & Roles Mgmt' }, icon: Users, path: '/ta/users/groups' },
-      { id: 'access-permissions', label: { ko: '접근 권한 설정', en: 'Access Permissions Setup' }, icon: Shield, path: '/ta/users/permissions' },
+      { id: 'department-mgmt', label: { ko: '부서 관리', en: 'Department Management' }, icon: FolderTree, path: '/ta/users/departments' },
+      { id: 'employee-mgmt', label: { ko: '임직원 관리', en: 'Employee Management' }, icon: Building2, path: '/ta/users/employees' },
+      { id: 'user-group-roles', label: { ko: '그룹 및 역할', en: 'Groups & Roles' }, icon: Users, path: '/ta/users/groups' },
+      { id: 'access-permissions', label: { ko: '접근 권한', en: 'Access Permissions' }, icon: Shield, path: '/ta/users/permissions' },
+    ],
+  },
+  {
+    id: 'automation',
+    label: { ko: '자동화', en: 'Automation' },
+    icon: Zap,
+    subItems: [
+      { id: 'auto-enrollment', label: { ko: '자동 입과 규칙', en: 'Auto Enrollment' }, icon: Zap, path: '/ta/automation/rules' },
+      { id: 'member-pools', label: { ko: '입과 그룹 관리', en: 'Enrollment Group Management' }, icon: Users, path: '/ta/automation/pools' },
     ],
   },
   {
@@ -231,10 +246,11 @@ export const tenantUserMenuData: MenuItem[] = [
     label: { ko: '내 강의', en: 'My Teaching' },
     icon: Briefcase,
     subItems: [
-      { id: 'my-courses', label: { ko: '내 강의계획', en: 'My Course Plans' }, icon: BookOpen, path: '/tu/teaching/courses' },
+      { id: 'my-courses', label: { ko: '내 강의 계획', en: 'My Course Plans' }, icon: BookOpen, path: '/tu/teaching/courses' },
       { id: 'my-programs', label: { ko: '내 프로그램', en: 'My Programs' }, icon: Package, path: '/tu/teaching/programs' },
       { id: 'my-content', label: { ko: '내 콘텐츠', en: 'My Content' }, icon: PenTool, path: '/tu/teaching/content' },
       { id: 'my-assignments', label: { ko: '내 과제', en: 'My Assignments' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
+      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'] },
     ],
   },
   {

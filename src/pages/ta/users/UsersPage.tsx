@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MoreHorizontal, Eye, Edit, Trash2, Mail, UserPlus, Users, Loader2 } from 'lucide-react';
+import { Search, MoreHorizontal, Eye, Edit, Trash2, Mail, UserPlus, Users, Loader2, Upload, FileSpreadsheet, Download, AlertCircle, CheckCircle2, X, FileDown } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -47,6 +48,10 @@ import {
 import { Label } from '@/components/common/Label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/Avatar';
 import { Skeleton } from '@/components/common/Skeleton';
+import { Progress } from '@/components/common/Progress';
+import { Badge } from '@/components/common/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/common/Tabs';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   useUsers,
   useUpdateUser,
@@ -73,6 +78,32 @@ interface BulkCreateFormData {
   startNumber: number;
 }
 
+interface UploadResult {
+  total: number;
+  success: number;
+  failed: number;
+  autoLinked: number;              // 임직원 자동 연동 개수
+  errors: { row: number; email: string; error: string }[];
+  preview: AccountPreview[];
+}
+
+interface AccountPreview {
+  email: string;
+  name: string;
+  department?: string;
+  role?: string;
+  status: 'valid' | 'duplicate' | 'error';
+  errorMessage?: string;
+  employeeLinked?: boolean;        // 임직원 연동 여부
+  employeeInfo?: {                 // 연동된 임직원 정보
+    employeeId: string;
+    department: string;
+    position: string;
+    rank: string;
+    jobRole: string;
+  };
+}
+
 export function UsersPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +115,10 @@ export function UsersPage() {
   const [isBulkCreateDialogOpen, setIsBulkCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [bulkCreateMethod, setBulkCreateMethod] = useState<'pattern' | 'file'>('pattern');
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
 
   // API Hooks
   const { data: usersData, isLoading, isError } = useUsers({
@@ -296,6 +331,164 @@ export function UsersPage() {
     }
   };
 
+  // 파일 드롭존
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    setProcessingProgress(0);
+
+    // 파일 파싱 시뮬레이션
+    setTimeout(() => setProcessingProgress(30), 300);
+    setTimeout(() => setProcessingProgress(60), 600);
+
+    setTimeout(() => {
+      setProcessingProgress(100);
+
+      // 시뮬레이션 데이터 - 임직원 자동 매칭 포함
+      setUploadResult({
+        total: 25,
+        success: 22,
+        failed: 3,
+        autoLinked: 18,  // 22명 중 18명이 임직원 정보와 자동 연동됨
+        errors: [
+          { row: 5, email: 'invalid-email', error: '이메일 형식이 올바르지 않습니다.' },
+          { row: 12, email: 'duplicate@company.com', error: '이미 존재하는 이메일입니다.' },
+          { row: 18, email: 'test@company.com', error: '필수 항목(이름)이 누락되었습니다.' },
+        ],
+        preview: [
+          {
+            email: 'cskim@company.com',
+            name: '김철수',
+            department: '개발팀',
+            role: 'USER',
+            status: 'valid',
+            employeeLinked: true,
+            employeeInfo: {
+              employeeId: 'E001',
+              department: '개발팀',
+              position: '팀원',
+              rank: '대리',
+              jobRole: '백엔드 개발자'
+            }
+          },
+          {
+            email: 'yhlee@company.com',
+            name: '이영희',
+            department: '개발팀',
+            role: 'USER',
+            status: 'valid',
+            employeeLinked: true,
+            employeeInfo: {
+              employeeId: 'E002',
+              department: '개발팀',
+              position: '팀원',
+              rank: '과장',
+              jobRole: '프론트엔드 개발자'
+            }
+          },
+          {
+            email: 'duplicate@company.com',
+            name: '박민수',
+            department: '개발팀',
+            role: 'USER',
+            status: 'duplicate',
+            errorMessage: '이미 존재하는 이메일',
+            employeeLinked: false
+          },
+          {
+            email: 'sjchoi@company.com',
+            name: '최수진',
+            department: '인사팀',
+            role: 'USER',
+            status: 'valid',
+            employeeLinked: true,
+            employeeInfo: {
+              employeeId: 'E004',
+              department: '인사팀',
+              position: '팀원',
+              rank: '사원',
+              jobRole: '인사 담당'
+            }
+          },
+          {
+            email: 'invalid-email',
+            name: '정민호',
+            department: '영업팀',
+            role: 'USER',
+            status: 'error',
+            errorMessage: '잘못된 이메일 형식',
+            employeeLinked: false
+          },
+        ],
+      });
+      setIsProcessing(false);
+    }, 900);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+    },
+    maxFiles: 1,
+    maxSize: 10 * 1024 * 1024, // 10MB
+  });
+
+  // 파일 업로드 계정 생성 확정
+  const handleFileUploadConfirm = () => {
+    if (!uploadResult) return;
+    // API 호출 시뮬레이션
+    console.log('Creating accounts from file:', uploadResult);
+    toast.success(`${uploadResult.success}개의 계정이 생성되었습니다.`);
+    setUploadResult(null);
+    setIsBulkCreateDialogOpen(false);
+    setBulkCreateMethod('pattern');
+  };
+
+  // 파일 업로드 리셋
+  const handleFileUploadReset = () => {
+    setUploadResult(null);
+    setProcessingProgress(0);
+  };
+
+  // 템플릿 다운로드
+  const handleDownloadTemplate = () => {
+    // CSV 템플릿 생성
+    const headers = ['email', 'name', 'department', 'role'];
+    const exampleRows = [
+      ['user1@company.com', '홍길동', '개발팀', 'USER'],
+      ['user2@company.com', '김영희', '마케팅팀', 'USER'],
+      ['user3@company.com', '이철수', '인사팀', 'OPERATOR'],
+    ];
+
+    // CSV 콘텐츠 생성
+    const csvContent = [
+      headers.join(','),
+      ...exampleRows.map(row => row.join(','))
+    ].join('\n');
+
+    // BOM 추가 (Excel에서 한글이 깨지지 않도록)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // 다운로드 링크 생성
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'bulk_account_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success('템플릿 파일이 다운로드되었습니다.');
+  };
+
   // 미리보기용 이메일 생성
   const previewEmails = () => {
     const prefix = watchBulk('emailPrefix');
@@ -371,7 +564,37 @@ export function UsersPage() {
         }
       />
 
-      {/* 필터 영역 */}
+      {/* 역할별 탭 필터 */}
+      <Tabs value={roleFilter} onValueChange={setRoleFilter} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="all">
+            전체 사용자
+            {usersData && roleFilter === 'all' && (
+              <Badge variant="gray" className="ml-2">{usersData.totalElements}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="USER">
+            일반 사용자
+            {usersData && roleFilter === 'USER' && (
+              <Badge variant="gray" className="ml-2">{usersData.totalElements}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="OPERATOR">
+            운영자
+            {usersData && roleFilter === 'OPERATOR' && (
+              <Badge variant="gray" className="ml-2">{usersData.totalElements}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="TENANT_ADMIN">
+            테넌트 관리자
+            {usersData && roleFilter === 'TENANT_ADMIN' && (
+              <Badge variant="gray" className="ml-2">{usersData.totalElements}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* 검색 및 상태 필터 영역 */}
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
@@ -392,17 +615,6 @@ export function UsersPage() {
             <SelectItem value="INACTIVE">비활성</SelectItem>
             <SelectItem value="PENDING">대기</SelectItem>
             <SelectItem value="BLOCKED">차단</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="역할" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 역할</SelectItem>
-            <SelectItem value="TENANT_ADMIN">테넌트 관리자</SelectItem>
-            <SelectItem value="OPERATOR">운영자</SelectItem>
-            <SelectItem value="USER">일반 사용자</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -623,122 +835,389 @@ export function UsersPage() {
       </AlertDialog>
 
       {/* 단체 계정 생성 다이얼로그 */}
-      <Dialog open={isBulkCreateDialogOpen} onOpenChange={setIsBulkCreateDialogOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={isBulkCreateDialogOpen} onOpenChange={(open) => {
+        setIsBulkCreateDialogOpen(open);
+        if (!open) {
+          setBulkCreateMethod('pattern');
+          setUploadResult(null);
+          resetBulk();
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>단체 계정 생성</DialogTitle>
             <DialogDescription>
-              동일한 패턴의 이메일로 여러 계정을 한 번에 생성합니다.
+              패턴 입력 또는 Excel/CSV 파일 업로드로 여러 계정을 한 번에 생성합니다.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmitBulk(onBulkCreateSubmit)}>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="emailPrefix">이메일 접두사</Label>
-                  <Input
-                    id="emailPrefix"
-                    placeholder="예: sam_user"
-                    {...registerBulk('emailPrefix', { required: '이메일 접두사를 입력하세요' })}
-                  />
-                  {bulkErrors.emailPrefix && (
-                    <p className="text-xs text-red-500">{bulkErrors.emailPrefix.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emailDomain">이메일 도메인</Label>
-                  <Input
-                    id="emailDomain"
-                    placeholder="예: @company.com"
-                    {...registerBulk('emailDomain', { required: '이메일 도메인을 입력하세요' })}
-                  />
-                  {bulkErrors.emailDomain && (
-                    <p className="text-xs text-red-500">{bulkErrors.emailDomain.message}</p>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startNumber">시작 번호</Label>
-                  <Input
-                    id="startNumber"
-                    type="number"
-                    min={1}
-                    {...registerBulk('startNumber', { valueAsNumber: true, min: 1 })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="count">생성 개수</Label>
-                  <Input
-                    id="count"
-                    type="number"
-                    min={1}
-                    max={100}
-                    {...registerBulk('count', {
-                      valueAsNumber: true,
-                      required: '생성 개수를 입력하세요',
-                      min: { value: 1, message: '최소 1개 이상' },
-                      max: { value: 100, message: '최대 100개까지' },
-                    })}
-                  />
-                  {bulkErrors.count && (
-                    <p className="text-xs text-red-500">{bulkErrors.count.message}</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">초기 비밀번호</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="8자 이상 입력하세요"
-                  {...registerBulk('password', {
-                    required: '비밀번호를 입력하세요',
-                    minLength: { value: 8, message: '8자 이상 입력하세요' },
-                  })}
-                />
-                {bulkErrors.password && (
-                  <p className="text-xs text-red-500">{bulkErrors.password.message}</p>
-                )}
-                <p className="text-xs text-text-secondary">
-                  모든 계정에 동일한 초기 비밀번호가 설정됩니다.
-                </p>
-              </div>
 
-              {/* 미리보기 */}
-              {previewEmails().length > 0 && (
-                <div className="rounded-lg border bg-muted/50 p-3">
-                  <p className="text-sm font-medium mb-2">생성될 계정 미리보기</p>
-                  <div className="space-y-1">
-                    {previewEmails().map((email, index) => (
-                      <p key={index} className="text-sm text-text-secondary font-mono">
-                        {email}
+          <Tabs value={bulkCreateMethod} onValueChange={(v) => setBulkCreateMethod(v as 'pattern' | 'file')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="pattern">패턴 입력</TabsTrigger>
+              <TabsTrigger value="file">파일 업로드</TabsTrigger>
+            </TabsList>
+
+            {/* 패턴 입력 탭 */}
+            <TabsContent value="pattern" className="mt-4">
+              <form onSubmit={handleSubmitBulk(onBulkCreateSubmit)}>
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="emailPrefix">이메일 접두사</Label>
+                      <Input
+                        id="emailPrefix"
+                        placeholder="예: sam_user"
+                        {...registerBulk('emailPrefix', { required: '이메일 접두사를 입력하세요' })}
+                      />
+                      {bulkErrors.emailPrefix && (
+                        <p className="text-xs text-red-500">{bulkErrors.emailPrefix.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emailDomain">이메일 도메인</Label>
+                      <Input
+                        id="emailDomain"
+                        placeholder="예: @company.com"
+                        {...registerBulk('emailDomain', { required: '이메일 도메인을 입력하세요' })}
+                      />
+                      {bulkErrors.emailDomain && (
+                        <p className="text-xs text-red-500">{bulkErrors.emailDomain.message}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startNumber">시작 번호</Label>
+                      <Input
+                        id="startNumber"
+                        type="number"
+                        min={1}
+                        {...registerBulk('startNumber', { valueAsNumber: true, min: 1 })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="count">생성 개수</Label>
+                      <Input
+                        id="count"
+                        type="number"
+                        min={1}
+                        max={100}
+                        {...registerBulk('count', {
+                          valueAsNumber: true,
+                          required: '생성 개수를 입력하세요',
+                          min: { value: 1, message: '최소 1개 이상' },
+                          max: { value: 100, message: '최대 100개까지' },
+                        })}
+                      />
+                      {bulkErrors.count && (
+                        <p className="text-xs text-red-500">{bulkErrors.count.message}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">초기 비밀번호</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="8자 이상 입력하세요"
+                      {...registerBulk('password', {
+                        required: '비밀번호를 입력하세요',
+                        minLength: { value: 8, message: '8자 이상 입력하세요' },
+                      })}
+                    />
+                    {bulkErrors.password && (
+                      <p className="text-xs text-red-500">{bulkErrors.password.message}</p>
+                    )}
+                    <p className="text-xs text-text-secondary">
+                      모든 계정에 동일한 초기 비밀번호가 설정됩니다.
+                    </p>
+                  </div>
+
+                  {/* 미리보기 */}
+                  {previewEmails().length > 0 && (
+                    <div className="rounded-lg border bg-muted/50 p-3">
+                      <p className="text-sm font-medium mb-2">생성될 계정 미리보기</p>
+                      <div className="space-y-1">
+                        {previewEmails().map((email, index) => (
+                          <p key={`${email}-${index}`} className="text-sm text-text-secondary font-mono">
+                            {email}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsBulkCreateDialogOpen(false);
+                      resetBulk();
+                    }}
+                  >
+                    취소
+                  </Button>
+                  <Button type="submit" disabled={bulkCreateMutation.isPending}>
+                    {bulkCreateMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    <Users className="mr-2 h-4 w-4" />
+                    {watchBulk('count') || 0}개 계정 생성
+                  </Button>
+                </DialogFooter>
+              </form>
+            </TabsContent>
+
+            {/* 파일 업로드 탭 */}
+            <TabsContent value="file" className="mt-4">
+              {!uploadResult ? (
+                <div className="space-y-6">
+                  {/* 업로드 영역 */}
+                  <div
+                    {...getRootProps()}
+                    className="border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all"
+                    style={{
+                      borderColor: isDragActive ? designTokens.button.brand_default : designTokens.bg.border,
+                      backgroundColor: isDragActive
+                        ? `${designTokens.button.brand_default}08`
+                        : designTokens.bg.secondary,
+                    }}
+                  >
+                    <input {...getInputProps()} />
+                    {isProcessing ? (
+                      <div className="space-y-4">
+                        <FileSpreadsheet
+                          className="w-16 h-16 mx-auto animate-pulse"
+                          style={{ color: designTokens.button.brand_default }}
+                        />
+                        <p className="text-lg font-medium" style={{ color: designTokens.text.primary }}>
+                          파일 처리 중...
+                        </p>
+                        <div className="max-w-md mx-auto">
+                          <Progress value={processingProgress} />
+                          <p className="text-sm mt-2" style={{ color: designTokens.text.secondary }}>
+                            {processingProgress}%
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload
+                          className="w-16 h-16 mx-auto mb-4"
+                          style={{ color: designTokens.text.placeholder }}
+                        />
+                        <p className="text-lg font-medium mb-2" style={{ color: designTokens.text.primary }}>
+                          {isDragActive
+                            ? '여기에 파일을 놓으세요'
+                            : 'Excel 또는 CSV 파일을 드래그하거나 클릭하여 업로드'}
+                        </p>
+                        <p className="text-sm mb-4" style={{ color: designTokens.text.placeholder }}>
+                          .xlsx, .xls, .csv (최대 10MB)
+                        </p>
+                        <Button type="button" variant="outline">파일 선택</Button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* 템플릿 다운로드 */}
+                  <div className="rounded-lg border p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: designTokens.bg.secondary }}
+                        >
+                          <FileDown
+                            className="w-6 h-6"
+                            style={{ color: designTokens.button.brand_default }}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium mb-1" style={{ color: designTokens.text.primary }}>
+                            템플릿 다운로드
+                          </p>
+                          <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+                            계정 생성에 필요한 양식을 다운로드하세요
+                          </p>
+                        </div>
+                      </div>
+                      <Button type="button" variant="outline" onClick={handleDownloadTemplate} className="gap-2">
+                        <Download className="w-4 h-4" />
+                        템플릿 다운로드
+                      </Button>
+                    </div>
+
+                    {/* 필수 컬럼 안내 */}
+                    <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: designTokens.bg.secondary }}>
+                      <p className="text-sm font-medium mb-2" style={{ color: designTokens.text.primary }}>
+                        필수 컬럼
                       </p>
-                    ))}
+                      <ul className="space-y-1">
+                        <li className="text-sm" style={{ color: designTokens.text.secondary }}>
+                          • <strong>email</strong>: 이메일 주소 (중복 불가)
+                        </li>
+                        <li className="text-sm" style={{ color: designTokens.text.secondary }}>
+                          • <strong>name</strong>: 사용자 이름
+                        </li>
+                        <li className="text-sm" style={{ color: designTokens.text.secondary }}>
+                          • department: 부서 (선택사항)
+                        </li>
+                        <li className="text-sm" style={{ color: designTokens.text.secondary }}>
+                          • role: 역할 (USER, OPERATOR) (선택사항, 기본값: USER)
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* 업로드 결과 */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+                            전체
+                          </p>
+                          <p className="text-2xl font-semibold mt-1" style={{ color: designTokens.text.primary }}>
+                            {uploadResult.total}
+                          </p>
+                        </div>
+                        <Users className="w-8 h-8" style={{ color: designTokens.text.placeholder }} />
+                      </div>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+                            성공
+                          </p>
+                          <p className="text-2xl font-semibold mt-1" style={{ color: designTokens.status.success_text }}>
+                            {uploadResult.success}
+                          </p>
+                        </div>
+                        <CheckCircle2 className="w-8 h-8" style={{ color: designTokens.status.success_text }} />
+                      </div>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+                            실패
+                          </p>
+                          <p
+                            className="text-2xl font-semibold mt-1"
+                            style={{
+                              color: uploadResult.failed > 0 ? designTokens.status.error_text : designTokens.text.primary
+                            }}
+                          >
+                            {uploadResult.failed}
+                          </p>
+                        </div>
+                        <AlertCircle
+                          className="w-8 h-8"
+                          style={{
+                            color: uploadResult.failed > 0 ? designTokens.status.error_text : designTokens.text.placeholder
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 오류 목록 */}
+                  {uploadResult.errors.length > 0 && (
+                    <div className="rounded-lg border p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <AlertCircle className="w-5 h-5" style={{ color: designTokens.status.error_text }} />
+                        <h3 className="font-medium" style={{ color: designTokens.status.error_text }}>
+                          {uploadResult.errors.length}개의 오류 발견
+                        </h3>
+                      </div>
+                      <div className="space-y-2">
+                        {uploadResult.errors.map((error, idx) => (
+                          <div
+                            key={`error-${idx}`}
+                            className="p-3 rounded-lg"
+                            style={{ backgroundColor: designTokens.status.error_background }}
+                          >
+                            <p className="text-sm font-medium" style={{ color: designTokens.status.error_text }}>
+                              행 {error.row}: {error.email}
+                            </p>
+                            <p className="text-xs mt-0.5" style={{ color: designTokens.status.error_text }}>
+                              {error.error}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 미리보기 테이블 */}
+                  <div className="rounded-lg border">
+                    <div className="p-4 border-b">
+                      <h3 className="font-medium" style={{ color: designTokens.text.primary }}>
+                        데이터 미리보기 (상위 5건)
+                      </h3>
+                    </div>
+                    <div className="p-4">
+                      <div className="space-y-2">
+                        {uploadResult.preview.map((account, idx) => (
+                          <div
+                            key={`preview-${idx}`}
+                            className="flex items-center justify-between p-3 rounded-lg border"
+                            style={{
+                              backgroundColor: account.status !== 'valid' ? designTokens.status.error_background : 'transparent'
+                            }}
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-medium" style={{ color: designTokens.text.primary }}>
+                                {account.name}
+                              </p>
+                              <p className="text-xs" style={{ color: designTokens.text.secondary }}>
+                                {account.email}
+                              </p>
+                              {account.errorMessage && (
+                                <p className="text-xs mt-1" style={{ color: designTokens.status.error_text }}>
+                                  {account.errorMessage}
+                                </p>
+                              )}
+                            </div>
+                            {account.department && (
+                              <Badge variant="gray">{account.department}</Badge>
+                            )}
+                            <Badge variant={account.status === 'valid' ? 'green' : 'red'}>
+                              {account.status === 'valid' ? '정상' : account.status === 'duplicate' ? '중복' : '오류'}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={handleFileUploadReset} className="gap-2">
+                      <X className="w-4 h-4" />
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleFileUploadConfirm}
+                      disabled={uploadResult.failed > 0}
+                      className="gap-2"
+                      style={{
+                        backgroundColor: uploadResult.failed > 0 ? designTokens.bg.border : designTokens.button.brand_default,
+                        color: designTokens.button.brand_text,
+                      }}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      {uploadResult.success}개 계정 생성
+                    </Button>
+                  </DialogFooter>
+                </div>
               )}
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setIsBulkCreateDialogOpen(false);
-                  resetBulk();
-                }}
-              >
-                취소
-              </Button>
-              <Button type="submit" disabled={bulkCreateMutation.isPending}>
-                {bulkCreateMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                <Users className="mr-2 h-4 w-4" />
-                {watchBulk('count') || 0}개 계정 생성
-              </Button>
-            </DialogFooter>
-          </form>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

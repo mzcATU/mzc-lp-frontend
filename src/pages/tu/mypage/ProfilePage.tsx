@@ -31,6 +31,7 @@ import {
   useUploadProfileImage,
   useWithdraw,
 } from '@/hooks/common';
+import { userService } from '@/services/common/userService';
 
 export function ProfilePage() {
   const { theme } = useThemeStore();
@@ -73,6 +74,31 @@ export function ProfilePage() {
       }
     }
   }, [profile, apiBaseUrl]);
+
+  // Fetch course roles on mount
+  useEffect(() => {
+    const fetchCourseRoles = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        console.log('CourseRoles API response:', roles);
+
+        if (Array.isArray(roles) && roles.length > 0) {
+          // OWNER > DESIGNER 우선순위로 체크
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+
+          if (hasOwner) {
+            setDesignAuthStatus('OWNER');
+          } else if (hasDesigner) {
+            setDesignAuthStatus('DESIGNER');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      }
+    };
+    fetchCourseRoles();
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -143,13 +169,25 @@ export function ProfilePage() {
     }
   };
 
-  const handleRequestDesignAuth = () => {
+  const handleRequestDesignAuth = async () => {
     setIsRequestPending(true);
-    setTimeout(() => {
+    try {
+      await userService.applyDesignerRole();
       setDesignAuthStatus('DESIGNER');
+      toast.success('강의 개설 권한이 부여되었습니다.');
+    } catch (error) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
+        // 이미 권한이 있음
+        setDesignAuthStatus('DESIGNER');
+        toast.info('이미 강의 개설 권한이 있습니다.');
+      } else {
+        console.error('Failed to apply designer role:', error);
+        toast.error('권한 신청에 실패했습니다.');
+      }
+    } finally {
       setIsRequestPending(false);
-      toast.success('권한이 승인되었습니다.');
-    }, 1500);
+    }
   };
 
   const handleWithdraw = async () => {

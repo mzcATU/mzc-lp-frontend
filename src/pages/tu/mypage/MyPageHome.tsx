@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useUploadProfileImage } from '@/hooks/common';
 import { useMyEnrollments, useMyLearningStats } from '@/hooks/tu';
+import { userService } from '@/services/common/userService';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
 import { Button, Card, CardContent, Badge } from '@/components/common';
@@ -80,6 +81,8 @@ export function MyPageHome() {
   const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  // USER: 일반 회원, CAN_CREATE: 강의 개설 가능, DESIGNER: 강의 설계자, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'CAN_CREATE' | 'DESIGNER' | 'OWNER'>('USER');
 
   // 프로필 이미지 URL 생성
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -93,6 +96,40 @@ export function MyPageHome() {
       setProfileImagePreview(imageUrl);
     }
   }, [profile, apiBaseUrl]);
+
+  // Fetch course roles on mount
+  useEffect(() => {
+    const fetchCourseRoles = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        console.log('MyPageHome - CourseRoles API response:', roles);
+
+        if (Array.isArray(roles) && roles.length > 0) {
+          // OWNER가 있으면 → 강의 소유자 (승인된 강의 있음)
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          // DESIGNER 중 programId가 있는 것 → 강의 설계자 (생성했지만 미승인)
+          const hasDesignerWithProgram = roles.some(
+            (r: { role: string; programId?: number | null }) => r.role === 'DESIGNER' && r.programId != null
+          );
+          // DESIGNER 중 programId가 없는 것 → 강의 개설 가능 (권한만 있음)
+          const hasDesignerOnly = roles.some(
+            (r: { role: string; programId?: number | null }) => r.role === 'DESIGNER' && r.programId == null
+          );
+
+          if (hasOwner) {
+            setCourseRoleStatus('OWNER');
+          } else if (hasDesignerWithProgram) {
+            setCourseRoleStatus('DESIGNER');
+          } else if (hasDesignerOnly) {
+            setCourseRoleStatus('CAN_CREATE');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      }
+    };
+    fetchCourseRoles();
+  }, []);
 
   // 상태 라벨 (다국어)
   const statusLabels: Record<EnrollmentStatus, string> = {
@@ -209,8 +246,21 @@ export function MyPageHome() {
                 <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   {user?.email}
                 </p>
-                <Badge variant="blue" className="text-xs">
-                  {user?.role === 'USER' ? t.mypage.generalMember : user?.role}
+                <Badge
+                  variant={
+                    courseRoleStatus === 'USER' ? 'gray' :
+                    courseRoleStatus === 'CAN_CREATE' ? 'blue' :
+                    courseRoleStatus === 'DESIGNER' ? 'indigo' : 'orange'
+                  }
+                  className="text-xs"
+                >
+                  {courseRoleStatus === 'USER'
+                    ? t.mypage.generalMember
+                    : courseRoleStatus === 'CAN_CREATE'
+                      ? (language === 'ko' ? '강의 개설 가능' : 'Can Create Course')
+                      : courseRoleStatus === 'DESIGNER'
+                        ? (language === 'ko' ? '강의 설계자' : 'Course Designer')
+                        : (language === 'ko' ? '강의 소유자' : 'Course Owner')}
                 </Badge>
               </div>
 
