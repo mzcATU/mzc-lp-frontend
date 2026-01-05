@@ -233,6 +233,7 @@ export const API_ENDPOINTS = {
   // Enrollments (수강 신청) - TU
   ENROLLMENTS: {
     BASE: '/enrollments',
+    BULK: '/enrollments/bulk',
     MY: '/users/me/enrollments',
     BY_ID: (id: number) => `/enrollments/${id}`,
     CANCEL: (id: number) => `/enrollments/${id}/cancel`,

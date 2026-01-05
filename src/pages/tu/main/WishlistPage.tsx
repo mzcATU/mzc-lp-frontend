@@ -16,6 +16,16 @@ const LEVEL_LABELS: Record<string, string> = {
   EXPERT: '고급',
 };
 
+/**
+ * 가격 포맷팅 (₩180,000 형식)
+ */
+function formatPrice(price: string | null | undefined): string {
+  if (!price) return '';
+  const numPrice = parseFloat(price);
+  if (isNaN(numPrice)) return price;
+  return `₩${numPrice.toLocaleString()}`;
+}
+
 export function WishlistPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -195,7 +205,7 @@ export function WishlistPage() {
                         </span>
                       ) : item.price && (
                         <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {item.price}
+                          {formatPrice(item.price)}
                         </span>
                       )}
                     </div>

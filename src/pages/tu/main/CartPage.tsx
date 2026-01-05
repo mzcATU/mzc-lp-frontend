@@ -1,22 +1,35 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingCart, ChevronRight, Loader2, Heart, Plus, Check } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCart, useRemoveFromCart, useRemoveFromCartBulk, useAddToCart, useMyWishlist } from '@/hooks/tu';
+import { useCart, useRemoveFromCart, useRemoveFromCartBulk, useAddToCart, useMyWishlist, useEnrollBulk } from '@/hooks/tu';
+import { toast } from 'sonner';
 import type { CartItemResponse } from '@/types/tu/cart.types';
 import type { WishlistItemResponse } from '@/types/tu/wishlist.types';
+
+/**
+ * 가격 포맷팅 (₩180,000 형식)
+ */
+function formatPrice(price: string | null | undefined): string {
+  if (!price) return '';
+  const numPrice = parseFloat(price);
+  if (isNaN(numPrice)) return price;
+  return `₩${numPrice.toLocaleString()}`;
+}
 
 export function CartPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
 
   // Cart React Query 훅
   const { data: cartItems = [], isLoading: isCartLoading, error: cartError } = useCart();
   const removeFromCartMutation = useRemoveFromCart();
   const removeFromCartBulkMutation = useRemoveFromCartBulk();
   const addToCartMutation = useAddToCart();
+  const enrollBulkMutation = useEnrollBulk();
 
   // Wishlist React Query 훅
   const { data: wishlistData, isLoading: isWishlistLoading } = useMyWishlist();
@@ -34,12 +47,16 @@ export function CartPage() {
     [wishlistItems, cartCourseTimeIds]
   );
 
-  // 장바구니 아이템이 로드되면 전체 선택
+  // 초기 로드 여부 추적
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // 장바구니 아이템이 처음 로드되면 전체 선택 (초기 로드 시에만)
   useEffect(() => {
-    if (cartItems.length > 0 && selectedCourseTimeIds.length === 0) {
+    if (cartItems.length > 0 && isInitialLoad) {
       setSelectedCourseTimeIds(cartItems.map(item => item.courseTimeId));
+      setIsInitialLoad(false);
     }
-  }, [cartItems, selectedCourseTimeIds.length]);
+  }, [cartItems, isInitialLoad]);
 
   const toggleSelectAll = () => {
     if (selectedCourseTimeIds.length === cartItems.length) {
@@ -84,11 +101,88 @@ export function CartPage() {
     });
   };
 
+  // 수강 신청 처리
+  const handleEnroll = () => {
+    if (selectedCourseTimeIds.length === 0) {
+      toast.error('수강신청할 강의를 선택해주세요.');
+      return;
+    }
+
+    console.log('수강신청 시작:', selectedCourseTimeIds);
+
+    enrollBulkMutation.mutate(selectedCourseTimeIds, {
+      onSuccess: (result) => {
+        console.log('수강신청 응답:', result);
+
+        // 응답 구조 확인 및 기본값 처리
+        const successCount = result?.successCount ?? 0;
+        const failureCount = result?.failureCount ?? 0;
+        const results = result?.results ?? [];
+
+        if (successCount > 0) {
+          toast.success(`${successCount}개 강의 수강신청이 완료되었습니다.`);
+
+          // 성공한 강의들을 장바구니에서 제거
+          const successIds = results
+            .filter(r => r.success)
+            .map(r => r.courseTimeId);
+
+          if (successIds.length > 0) {
+            removeFromCartBulkMutation.mutate({ courseTimeIds: successIds });
+          }
+
+          // 선택 상태 초기화
+          setSelectedCourseTimeIds(prev =>
+            prev.filter(id => !successIds.includes(id))
+          );
+
+          // 내 학습 페이지로 이동
+          navigate('/tu/b2c/mypage/learning');
+        }
+
+        if (failureCount > 0) {
+          const failedItems = results.filter(r => !r.success);
+          console.log('실패 항목:', failedItems);
+          if (failedItems.length > 0) {
+            // 첫 번째 실패 메시지만 표시 (너무 많은 토스트 방지)
+            const firstError = failedItems[0];
+            toast.error(firstError.errorMessage || `${failureCount}개 강의 수강신청에 실패했습니다.`);
+          } else {
+            toast.error(`${failureCount}개 강의 수강신청에 실패했습니다.`);
+          }
+        }
+
+        // 성공/실패 둘 다 0인 경우 (빈 응답)
+        if (successCount === 0 && failureCount === 0) {
+          toast.info('수강신청 결과가 없습니다.');
+        }
+      },
+      onError: (error) => {
+        toast.error('수강신청 중 오류가 발생했습니다.');
+        console.error('Enrollment error:', error);
+      }
+    });
+  };
+
   // 선택된 아이템들
   const selectedCartItems = useMemo(() =>
     cartItems.filter(item => selectedCourseTimeIds.includes(item.courseTimeId)),
     [cartItems, selectedCourseTimeIds]
   );
+
+  // 선택된 아이템들의 총 가격 계산
+  const totalPrice = useMemo(() => {
+    return selectedCartItems.reduce((sum, item) => {
+      if (item.isFree) return sum;
+      const price = item.price ? parseFloat(item.price) : 0;
+      return sum + (isNaN(price) ? 0 : price);
+    }, 0);
+  }, [selectedCartItems]);
+
+  // 무료 강의 개수
+  const freeCoursesCount = useMemo(() => {
+    return selectedCartItems.filter(item => item.isFree).length;
+  }, [selectedCartItems]);
 
   // 로딩 상태
   if (isCartLoading) {
@@ -133,6 +227,7 @@ export function CartPage() {
 
   const isRemoving = removeFromCartMutation.isPending || removeFromCartBulkMutation.isPending;
   const isAdding = addToCartMutation.isPending;
+  const isEnrolling = enrollBulkMutation.isPending;
 
   return (
     <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
@@ -243,7 +338,7 @@ export function CartPage() {
                                 </span>
                               ) : item.price && (
                                 <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                  {item.price}
+                                  {formatPrice(item.price)}
                                 </span>
                               )}
                             </div>
@@ -341,7 +436,7 @@ export function CartPage() {
                                 </span>
                               ) : item.price && (
                                 <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                  {item.price}
+                                  {formatPrice(item.price)}
                                 </span>
                               )}
                             </div>
@@ -408,12 +503,38 @@ export function CartPage() {
                   )}
                 </div>
 
+                {/* Total Price */}
+                <div className={`space-y-3 mb-6 pb-6 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                  {freeCoursesCount > 0 && (
+                    <div className={`flex justify-between ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <span>무료 강의</span>
+                      <span>{freeCoursesCount}개</span>
+                    </div>
+                  )}
+                  <div className={`flex justify-between items-center`}>
+                    <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>총 결제금액</span>
+                    <span className={`text-2xl font-bold ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`}>
+                      {totalPrice === 0 ? '무료' : `₩${totalPrice.toLocaleString()}`}
+                    </span>
+                  </div>
+                </div>
+
                 {/* Checkout Button */}
                 <button
-                  disabled={selectedCourseTimeIds.length === 0}
-                  className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleEnroll}
+                  disabled={selectedCourseTimeIds.length === 0 || isEnrolling}
+                  className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {selectedCourseTimeIds.length > 0 ? `${selectedCourseTimeIds.length}개 강의 수강신청` : '강의를 선택해주세요'}
+                  {isEnrolling ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      수강신청 중...
+                    </>
+                  ) : selectedCourseTimeIds.length > 0 ? (
+                    `${selectedCourseTimeIds.length}개 강의 수강신청`
+                  ) : (
+                    '강의를 선택해주세요'
+                  )}
                 </button>
 
                 <p className={`text-center text-xs mt-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>

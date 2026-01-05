@@ -21,7 +21,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCourseTimeDetail, useEnroll, useMyEnrollments } from '@/hooks/tu';
+import { useCourseTimeDetail, useEnroll, useMyEnrollments, useCheckWishlistStatus, useToggleWishlist, useCheckCartStatus, useToggleCart } from '@/hooks/tu';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
 import {
   DELIVERY_TYPE_LABELS,
@@ -176,8 +176,21 @@ export function CourseDetailPage() {
   );
   const isAlreadyEnrolled = !!existingEnrollment;
 
+  // 찜 상태 확인 및 토글
+  const { data: isWishlisted = false, isLoading: isWishlistChecking } = useCheckWishlistStatus(
+    courseTimeId,
+    isAuthenticated
+  );
+  const { toggle: toggleWishlist, isLoading: isWishlistToggling } = useToggleWishlist();
+
+  // 장바구니 상태 확인 및 토글
+  const { data: isInCart = false, isLoading: isCartChecking } = useCheckCartStatus(
+    courseTimeId,
+    isAuthenticated
+  );
+  const toggleCartMutation = useToggleCart();
+
   const [expandedSections, setExpandedSections] = useState<number[]>([0]);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -190,9 +203,19 @@ export function CourseDetailPage() {
     }
   };
 
-  const handleWishlistToggle = () => {
-    setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? '찜 목록에서 제거되었습니다.' : '찜 목록에 추가되었습니다.');
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error('로그인이 필요합니다.');
+      navigate('/auth/login', { state: { from: `/tu/b2c/times/${courseTimeId}` } });
+      return;
+    }
+
+    try {
+      await toggleWishlist(courseTimeId, isWishlisted);
+      toast.success(isWishlisted ? '찜 목록에서 제거되었습니다.' : '찜 목록에 추가되었습니다.');
+    } catch {
+      toast.error('찜 목록 변경에 실패했습니다.');
+    }
   };
 
   const handleShare = async () => {
@@ -237,8 +260,19 @@ export function CourseDetailPage() {
     }
   };
 
-  const handleAddToCart = () => {
-    toast.success('장바구니에 추가되었습니다.');
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast.error('로그인이 필요합니다.');
+      navigate('/auth/login', { state: { from: `/tu/b2c/times/${courseTimeId}` } });
+      return;
+    }
+
+    try {
+      await toggleCartMutation.mutateAsync({ courseTimeId, isInCart });
+      toast.success(isInCart ? '장바구니에서 제거되었습니다.' : '장바구니에 추가되었습니다.');
+    } catch {
+      toast.error('장바구니 변경에 실패했습니다.');
+    }
   };
 
   const handleEnroll = () => {
@@ -625,14 +659,21 @@ export function CourseDetailPage() {
                         {!courseTime.isFree && (
                           <button
                             onClick={handleAddToCart}
-                            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors ${
-                              isDark
-                                ? 'bg-white text-gray-900 hover:bg-gray-100'
-                                : 'bg-gray-900 text-white hover:bg-gray-800'
+                            disabled={toggleCartMutation.isPending || isCartChecking}
+                            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isInCart
+                                ? 'bg-green-500 text-white hover:bg-green-600'
+                                : isDark
+                                  ? 'bg-white text-gray-900 hover:bg-gray-100'
+                                  : 'bg-gray-900 text-white hover:bg-gray-800'
                             }`}
                           >
-                            <ShoppingCart className="w-5 h-5" />
-                            장바구니 담기
+                            {toggleCartMutation.isPending ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <ShoppingCart className="w-5 h-5" />
+                            )}
+                            {isInCart ? '장바구니에 담김' : '장바구니 담기'}
                           </button>
                         )}
                       </>
@@ -650,7 +691,8 @@ export function CourseDetailPage() {
                     <div className="flex gap-3">
                       <button
                         onClick={handleWishlistToggle}
-                        className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border ${
+                        disabled={isWishlistToggling || isWishlistChecking}
+                        className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
                           isWishlisted
                             ? 'bg-red-500/20 text-red-400 border-red-500/30'
                             : isDark
@@ -658,7 +700,11 @@ export function CourseDetailPage() {
                               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                         }`}
                       >
-                        <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                        {isWishlistToggling ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                        )}
                         {isWishlisted ? '찜함' : '찜하기'}
                       </button>
                       <button

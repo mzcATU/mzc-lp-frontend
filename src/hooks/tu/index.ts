@@ -56,6 +56,7 @@ export {
   useMyEnrollments,
   useEnrollment,
   useEnroll,
+  useEnrollBulk,
   useCancelEnrollment,
 } from './useEnrollmentQueries';
 
