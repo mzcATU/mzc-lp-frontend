@@ -6,6 +6,8 @@
  * - 콘텐츠: learningObjectId가 있는 CourseItem
  */
 
+import type { CourseItemHierarchyResponse } from '@/types/common/course.types';
+
 // ============================================
 // Curriculum Tree Types (계층구조 지원)
 // ============================================
@@ -147,4 +149,41 @@ export function findParentInTree(
     }
   }
   return null;
+}
+
+// ============================================
+// Conversion Functions (백엔드 ↔ 프론트엔드)
+// ============================================
+
+/** 백엔드 계층 응답을 프론트엔드 CurriculumItem으로 변환 */
+export function convertHierarchyToCurriculumItems(
+  items: CourseItemHierarchyResponse[],
+  depth: number = 0
+): CurriculumItem[] {
+  return items.map((item, index): CurriculumItem => {
+    if (item.isFolder) {
+      return {
+        id: `folder-${item.itemId}`,
+        name: item.itemName,
+        type: 'folder',
+        depth,
+        order: index,
+        isExpanded: true,
+        children: convertHierarchyToCurriculumItems(item.children, depth + 1),
+      };
+    } else {
+      return {
+        id: `content-${item.itemId}`,
+        name: item.itemName,
+        type: 'content',
+        depth,
+        order: index,
+        contentId: item.learningObjectId!,
+        originalFileName: item.itemName,
+        contentType: '',
+        displayName: item.displayName ?? undefined,
+        description: item.description ?? undefined,
+      };
+    }
+  });
 }
