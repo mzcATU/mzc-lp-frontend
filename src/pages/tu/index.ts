@@ -11,6 +11,8 @@ export {
   MyProgramsPage,
   TuProgramDetailPage,
   TuProgramEditPage,
+  RoadmapListPage,
+  RoadmapCreatePage,
 } from './teaching';
 export { SettingsLanguagePage } from './settings';
 export { LandingPage, CoursesExplorePage, RoadmapExplorePage, RoadmapDetailPage, CommunityPage, CommunityDetailPage, CartPage, WishlistPage, NotificationsPage, NotificationDetailPage, CourseDetailPage, InstructorProfilePage } from './main';
