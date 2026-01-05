@@ -45,6 +45,7 @@ import {
   Briefcase,
   MessageSquare,
   Package,
+  Map,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -235,6 +236,7 @@ export const tenantUserMenuData: MenuItem[] = [
       { id: 'my-programs', label: { ko: '내 프로그램', en: 'My Programs' }, icon: Package, path: '/tu/teaching/programs' },
       { id: 'my-content', label: { ko: '내 콘텐츠', en: 'My Content' }, icon: PenTool, path: '/tu/teaching/content' },
       { id: 'my-assignments', label: { ko: '내 과제', en: 'My Assignments' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
+      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'] },
     ],
   },
   {
