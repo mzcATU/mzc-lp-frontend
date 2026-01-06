@@ -253,12 +253,7 @@ export const tenantUserMenuData: MenuItem[] = [
       { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'] },
     ],
   },
-  {
-    id: 'catalog',
-    label: { ko: '과정 둘러보기', en: 'Course Catalog' },
-    icon: Library,
-    path: '/tu/b2c/courses',
-  },
+  // '과정 둘러보기' 메뉴 제거 - 모드 스위처의 '학습자 모드'로 대체
 ];
 
 /**
@@ -314,11 +309,15 @@ export const myPageMenuData: MenuItem[] = [
 
 /**
  * 역할별 라벨
+ * - SA: 시스템 관리 (전체 플랫폼)
+ * - TA: 테넌트 관리 (기업 설정)
+ * - TO: 교육 운영 (과정/차수 관리)
+ * - TU: 모드 스위처로 대체 (강사/학습자)
  */
 export const roleLabels = {
-  superAdmin: { ko: '시스템 어드민', en: 'System Admin' },
-  tenantAdmin: { ko: '테넌트 어드민', en: 'Tenant Admin' },
-  tenantOperator: { ko: '교육 운영자', en: 'Operator' },
-  tenantUser: { ko: 'Enterprise LMS', en: 'Enterprise LMS' },
+  superAdmin: { ko: '시스템 관리', en: 'System Admin' },
+  tenantAdmin: { ko: '테넌트 관리', en: 'Tenant Admin' },
+  tenantOperator: { ko: '교육 운영', en: 'Operations' },
+  tenantUser: { ko: '강사 센터', en: 'Instructor Hub' },
   myPage: { ko: '마이페이지', en: 'My Page' },
 };

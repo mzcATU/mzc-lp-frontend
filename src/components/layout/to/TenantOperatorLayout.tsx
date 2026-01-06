@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { TenantOperatorSidebar } from './TenantOperatorSidebar';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { tenantOperatorMenuData } from '@/config/sidebar-menus';
-import { useUIStore } from '@/store/common/uiStore';
+import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
 
 interface TenantOperatorLayoutProps {
   children: ReactNode;
@@ -13,7 +13,8 @@ export function TenantOperatorLayout({
   children,
 }: TenantOperatorLayoutProps) {
   const navigate = useNavigate();
-  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
+  const { isSidebarExpanded, language, toggleSidebar } = useUIStore();
+  const isDarkMode = useIsDarkMode();
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items

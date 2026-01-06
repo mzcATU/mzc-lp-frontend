@@ -18,13 +18,14 @@ import {
   Label,
   RadioOptionCard,
 } from '@/components/common';
-import { useUIStore } from '@/store/common/uiStore';
+import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
 
 export function SettingsAppearancePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { isDarkMode, setDarkMode, isSidebarExpanded, setSidebarExpanded } = useUIStore();
+  const { setDarkMode, isSidebarExpanded, setSidebarExpanded } = useUIStore();
+  const isDarkMode = useIsDarkMode();
   const themeMode = isDarkMode ? 'dark' : 'light';
   const sidebarDefault = isSidebarExpanded ? 'expanded' : 'collapsed';
 
