@@ -14,16 +14,6 @@ import type { PageResponse } from '@/services/tu/catalogService';
  * 로드맵 상세 정보 조회 및 관련 API 호출
  */
 
-// API 응답 래퍼 타입
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
 /**
  * 로드맵 상세 서비스
  */
@@ -33,10 +23,10 @@ export const roadmapDetailService = {
    * @param id 로드맵 ID
    */
   getRoadmapDetail: async (id: number): Promise<RoadmapDetail> => {
-    const response = await axiosInstance.get<ApiResponse<RoadmapDetail>>(
+    const response = await axiosInstance.get<RoadmapDetail>(
       `/roadmaps/${id}`
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -44,11 +34,11 @@ export const roadmapDetailService = {
    * @param params 필터 파라미터
    */
   getRoadmaps: async (params?: RoadmapFilterParams): Promise<PageResponse<RoadmapCard>> => {
-    const response = await axiosInstance.get<ApiResponse<PageResponse<RoadmapCard>>>(
+    const response = await axiosInstance.get<PageResponse<RoadmapCard>>(
       '/roadmaps',
       { params }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -56,11 +46,11 @@ export const roadmapDetailService = {
    * @param limit 조회 개수
    */
   getPopularRoadmaps: async (limit: number = 10): Promise<RoadmapCard[]> => {
-    const response = await axiosInstance.get<ApiResponse<RoadmapCard[]>>(
+    const response = await axiosInstance.get<RoadmapCard[]>(
       '/roadmaps/popular',
       { params: { limit } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -68,11 +58,11 @@ export const roadmapDetailService = {
    * @param limit 조회 개수
    */
   getRecommendedRoadmaps: async (limit: number = 10): Promise<RoadmapCard[]> => {
-    const response = await axiosInstance.get<ApiResponse<RoadmapCard[]>>(
+    const response = await axiosInstance.get<RoadmapCard[]>(
       '/roadmaps/recommended',
       { params: { limit } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -86,11 +76,11 @@ export const roadmapDetailService = {
     page: number = 0,
     size: number = 10
   ): Promise<ReviewPageResponse> => {
-    const response = await axiosInstance.get<ApiResponse<ReviewPageResponse>>(
+    const response = await axiosInstance.get<ReviewPageResponse>(
       `/roadmaps/${roadmapId}/reviews`,
       { params: { page, size } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -98,11 +88,11 @@ export const roadmapDetailService = {
    * @param request 수강평 작성 요청
    */
   createReview: async (request: CreateReviewRequest): Promise<RoadmapReview> => {
-    const response = await axiosInstance.post<ApiResponse<RoadmapReview>>(
+    const response = await axiosInstance.post<RoadmapReview>(
       `/roadmaps/${request.roadmapId}/reviews`,
       { rating: request.rating, content: request.content }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -119,10 +109,10 @@ export const roadmapDetailService = {
    * @param roadmapId 로드맵 ID
    */
   enrollRoadmap: async (roadmapId: number): Promise<{ enrollmentId: number }> => {
-    const response = await axiosInstance.post<ApiResponse<{ enrollmentId: number }>>(
+    const response = await axiosInstance.post<{ enrollmentId: number }>(
       `/roadmaps/${roadmapId}/enroll`
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -133,11 +123,11 @@ export const roadmapDetailService = {
     completedCourses: number;
     totalProgress: number;
   }> => {
-    const response = await axiosInstance.get<ApiResponse<{
+    const response = await axiosInstance.get<{
       completedCourses: number;
       totalProgress: number;
-    }>>(`/roadmaps/${roadmapId}/progress`);
-    return response.data.data;
+    }>(`/roadmaps/${roadmapId}/progress`);
+    return response.data;
   },
 };
 

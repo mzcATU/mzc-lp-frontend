@@ -12,13 +12,6 @@ import type {
 
 const BASE_URL = '/tu/notifications';
 
-// API 응답 래퍼 타입
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
-}
-
 export const notificationService = {
   /**
    * 알림 목록 조회
@@ -40,18 +33,18 @@ export const notificationService = {
 
     const query = params.toString();
     const url = query ? `${BASE_URL}?${query}` : BASE_URL;
-    const response = await axiosInstance.get<ApiResponse<NotificationListResponse>>(url);
-    return response.data.data;
+    const response = await axiosInstance.get<NotificationListResponse>(url);
+    return response.data;
   },
 
   /**
    * 알림 상세 조회
    */
   getNotification: async (notificationId: number): Promise<NotificationItem> => {
-    const response = await axiosInstance.get<ApiResponse<NotificationItem>>(
+    const response = await axiosInstance.get<NotificationItem>(
       `${BASE_URL}/${notificationId}`
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -86,9 +79,9 @@ export const notificationService = {
    * 읽지 않은 알림 개수 조회
    */
   getUnreadCount: async (): Promise<UnreadCountResponse> => {
-    const response = await axiosInstance.get<ApiResponse<UnreadCountResponse>>(
+    const response = await axiosInstance.get<UnreadCountResponse>(
       `${BASE_URL}/unread-count`
     );
-    return response.data.data;
+    return response.data;
   },
 };

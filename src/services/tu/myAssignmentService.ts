@@ -41,7 +41,7 @@ export const myAssignmentService = {
    */
   getMyAssignments: async (): Promise<InstructorAssignmentResponse[]> => {
     const response = await axiosInstance.get(API_ENDPOINTS.INSTRUCTOR_ASSIGNMENTS.MY);
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -62,7 +62,7 @@ export const myAssignmentService = {
       API_ENDPOINTS.INSTRUCTOR_ASSIGNMENTS.MY_STATISTICS,
       { params }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -75,11 +75,11 @@ export const myAssignmentService = {
     const enrollmentsRes = await axiosInstance.get(API_ENDPOINTS.TIMES.ENROLLMENTS(timeId), {
       params: { size: 1000 },
     });
-    const pageData: PageResponse<BackendEnrollmentResponse> = enrollmentsRes.data.data;
+    const pageData: PageResponse<BackendEnrollmentResponse> = enrollmentsRes.data;
 
     // 2. 차수 정보 조회
     const timeRes = await axiosInstance.get(API_ENDPOINTS.TIMES.BY_ID(timeId));
-    const timeData = timeRes.data.data;
+    const timeData = timeRes.data;
 
     // 3. 백엔드 상태를 프론트엔드 상태로 매핑
     const mapStatus = (status: string): StudentEnrollmentStatus => {

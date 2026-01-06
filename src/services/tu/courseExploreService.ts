@@ -9,7 +9,7 @@ import type {
   CourseExploreFilter,
   CourseExploreItem,
 } from '@/types/tu/courseExplore.types';
-import type { ApiResponse, PageResponse } from '@/types/common';
+import type { PageResponse } from '@/types/common';
 
 const BASE_URL = '/courses';
 
@@ -70,9 +70,9 @@ export const courseExploreService = {
 
     const query = params.toString();
     const url = query ? `${BASE_URL}?${query}` : BASE_URL;
-    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(url);
+    const response = await axiosInstance.get<PageResponse<BackendCourseResponse>>(url);
 
-    const pageData = response.data.data;
+    const pageData = response.data;
     return {
       courses: pageData.content.map(transformCourse),
       totalCount: pageData.totalElements,
@@ -103,8 +103,8 @@ export const courseExploreService = {
    */
   getPopularCourses: async (limit?: number): Promise<CourseExploreResponse> => {
     const size = limit || 10;
-    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(`${BASE_URL}?size=${size}`);
-    const pageData = response.data.data;
+    const response = await axiosInstance.get<PageResponse<BackendCourseResponse>>(`${BASE_URL}?size=${size}`);
+    const pageData = response.data;
     return {
       courses: pageData.content.map(transformCourse),
       totalCount: pageData.totalElements,
@@ -119,8 +119,8 @@ export const courseExploreService = {
    */
   getNewCourses: async (limit?: number): Promise<CourseExploreResponse> => {
     const size = limit || 10;
-    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(`${BASE_URL}?size=${size}`);
-    const pageData = response.data.data;
+    const response = await axiosInstance.get<PageResponse<BackendCourseResponse>>(`${BASE_URL}?size=${size}`);
+    const pageData = response.data;
     return {
       courses: pageData.content.map(transformCourse),
       totalCount: pageData.totalElements,
@@ -135,8 +135,8 @@ export const courseExploreService = {
    */
   getRecommendedCourses: async (limit?: number): Promise<CourseExploreResponse> => {
     const size = limit || 10;
-    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendCourseResponse>>>(`${BASE_URL}?size=${size}`);
-    const pageData = response.data.data;
+    const response = await axiosInstance.get<PageResponse<BackendCourseResponse>>(`${BASE_URL}?size=${size}`);
+    const pageData = response.data;
     return {
       courses: pageData.content.map(transformCourse),
       totalCount: pageData.totalElements,

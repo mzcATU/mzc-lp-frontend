@@ -32,19 +32,19 @@ export const userService = {
 
   /** 사용자 목록 조회 */
   async getUsers(params?: UserFilterParams): Promise<PageResponse<UserListResponse>> {
-    const response = await axiosInstance.get<{ data: PageResponse<UserListResponse> }>(
+    const response = await axiosInstance.get<PageResponse<UserListResponse>>(
       API_ENDPOINTS.USERS.BASE,
       { params }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /** 사용자 상세 조회 */
   async getUser(id: number): Promise<TOUserDetailResponse> {
-    const { data } = await axiosInstance.get<{ data: TOUserDetailResponse }>(
+    const { data } = await axiosInstance.get<TOUserDetailResponse>(
       API_ENDPOINTS.USERS.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -53,11 +53,11 @@ export const userService = {
 
   /** 사용자 상태 변경 */
   async changeStatus(id: number, request: ChangeStatusRequest): Promise<TOUserDetailResponse> {
-    const { data } = await axiosInstance.put<{ data: TOUserDetailResponse }>(
+    const { data } = await axiosInstance.put<TOUserDetailResponse>(
       API_ENDPOINTS.USERS.STATUS(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -69,26 +69,26 @@ export const userService = {
     userId: number,
     params?: EnrollmentFilterParams
   ): Promise<PageResponse<EnrollmentResponse>> {
-    const response = await axiosInstance.get<{ data: PageResponse<EnrollmentResponse> }>(
+    const response = await axiosInstance.get<PageResponse<EnrollmentResponse>>(
       API_ENDPOINTS.USERS.ENROLLMENTS(userId),
       { params }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /** 사용자별 수강 통계 조회 */
   async getUserEnrollmentStats(userId: number): Promise<UserEnrollmentStatsResponse> {
-    const { data } = await axiosInstance.get<{ data: UserEnrollmentStatsResponse }>(
+    const { data } = await axiosInstance.get<UserEnrollmentStatsResponse>(
       API_ENDPOINTS.USERS.ENROLLMENT_STATS(userId)
     );
-    return data.data;
+    return data;
   },
 
   /** 사용자별 강사 통계 조회 (DESIGNER 역할용) */
   async getUserInstructorStats(userId: number): Promise<InstructorDetailStatResponse> {
-    const { data } = await axiosInstance.get<{ data: InstructorDetailStatResponse }>(
+    const { data } = await axiosInstance.get<InstructorDetailStatResponse>(
       API_ENDPOINTS.USERS.INSTRUCTOR_STATS(userId)
     );
-    return data.data;
+    return data;
   },
 };

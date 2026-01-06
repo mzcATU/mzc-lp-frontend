@@ -38,8 +38,8 @@ export const ownerStatsService = {
    * @returns 강사 통계 (overview, enrollmentStats, programStats)
    */
   getMyOwnerStats: async (): Promise<OwnerStatsResponse> => {
-    const response = await axiosInstance.get<{ data: OwnerStatsApiResponse }>(API_ENDPOINTS.OWNERS.ME_STATS);
-    const data = response.data.data;
+    const response = await axiosInstance.get<OwnerStatsApiResponse>(API_ENDPOINTS.OWNERS.ME_STATS);
+    const data = response.data;
 
     // 백엔드 응답 구조를 프론트엔드 타입에 맞게 변환
     return {
