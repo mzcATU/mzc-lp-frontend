@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { MessageSquare, Loader2, ChevronRight, ChevronLeft, Users, BookOpen, Hash, Sparkles, Heart } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCommunityPosts, useCommunityCategories, useCreatePost } from '@/hooks/tu';
+import { useCommunityPosts, useCommunityCategories, useCreatePost, useMyPosts, useCommentedPosts } from '@/hooks/tu';
 import { WritePostModal } from '@/components/domain/community';
+import { useAuth } from '@/hooks/common/auth';
 import type { CommunityPost, CommunityCategory, CreatePostRequest } from '@/types/tu';
 
 // 환경 설정: true면 API 사용, false면 더미 데이터 사용
@@ -171,6 +172,7 @@ export function CommunityPage() {
   const isDark = theme === 'dark';
   const navigate = useNavigate();
   const createPostMutation = useCreatePost();
+  const { isAuthenticated } = useAuth();
 
   // React Query 훅 (API 모드일 때만 활성화)
   const filter = {
@@ -180,6 +182,53 @@ export function CommunityPage() {
   };
   const { data: apiPostData, isLoading, error } = useCommunityPosts(filter, USE_API);
   const { data: apiCategoryData } = useCommunityCategories(USE_API);
+
+  // 내 게시글 및 참여한 게시글 (로그인 시에만)
+  const { data: myPostsData } = useMyPosts(0, 5, USE_API && isAuthenticated);
+  const { data: commentedPostsData } = useCommentedPosts(0, 5, USE_API && isAuthenticated);
+
+  // 사용자의 관심 태그 추출 (내가 쓴 글 + 참여한 글에서 태그 수집)
+  const userInterestTags = (() => {
+    const tagCount: Record<string, number> = {};
+
+    // 내가 쓴 글의 태그
+    myPostsData?.posts?.forEach(post => {
+      post.tags?.forEach(tag => {
+        tagCount[tag] = (tagCount[tag] || 0) + 2; // 내가 쓴 글은 가중치 2
+      });
+    });
+
+    // 참여한 글의 태그
+    commentedPostsData?.posts?.forEach(post => {
+      post.tags?.forEach(tag => {
+        tagCount[tag] = (tagCount[tag] || 0) + 1; // 참여한 글은 가중치 1
+      });
+    });
+
+    // 가중치 높은 순으로 정렬하여 상위 5개 반환
+    return Object.entries(tagCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([tag]) => tag);
+  })();
+
+  // 관심 태그 기반 추천 게시글 필터링
+  const recommendedPosts = (() => {
+    if (!userInterestTags.length || !apiPostData?.posts) return [];
+
+    // 내가 쓴 글과 참여한 글 ID 제외
+    const myPostIds = new Set(myPostsData?.posts?.map(p => p.id) || []);
+    const commentedPostIds = new Set(commentedPostsData?.posts?.map(p => p.id) || []);
+
+    return apiPostData.posts
+      .filter(post => {
+        // 이미 참여한 글 제외
+        if (myPostIds.has(post.id) || commentedPostIds.has(post.id)) return false;
+        // 관심 태그와 매칭
+        return post.tags?.some(tag => userInterestTags.includes(tag));
+      })
+      .slice(0, 4);
+  })();
 
   // 실제 사용할 데이터 결정
   const categories = USE_API ? (apiCategoryData?.categories || []) : MOCK_CATEGORIES;
@@ -387,6 +436,256 @@ export function CommunityPage() {
             </div>
           </div>
         </section>
+
+        {/* 나의 커뮤니티 섹션 */}
+        {isAuthenticated && (
+          <section className="w-full px-4 md:px-8 lg:px-16 py-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl md:text-2xl font-bold landing-text-primary">
+                나의 커뮤니티
+              </h2>
+              <Link
+                to="/tu/b2c/mypage/posts"
+                className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
+              >
+                더 보기 <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* 내가 쓴 글 */}
+              <div className={`rounded-2xl p-6 border ${
+                isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isDark ? 'bg-[#6778ff]/20' : 'bg-[#6778ff]/10'
+                    }`}>
+                      <BookOpen className="w-5 h-5 text-[#6778ff]" />
+                    </div>
+                    <h3 className="font-semibold landing-text-primary">내가 쓴 글</h3>
+                  </div>
+                  <Link
+                    to="/tu/b2c/mypage/posts"
+                    className="text-xs landing-text-muted hover:text-[#6778ff] transition-colors flex items-center gap-1"
+                  >
+                    전체보기 <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
+                {myPostsData?.posts && myPostsData.posts.length > 0 ? (
+                  <div className="space-y-2">
+                    {myPostsData.posts.slice(0, 3).map((post) => (
+                      <Link
+                        key={post.id}
+                        to={`/tu/b2c/community/${post.id}`}
+                        className={`block p-3 rounded-xl transition-colors ${
+                          isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm landing-text-primary truncate flex-1 mr-2">
+                            {post.title}
+                          </span>
+                          <span className="text-xs landing-text-muted whitespace-nowrap">
+                            {formatRelativeTime(post.createdAt)}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-sm landing-text-muted mb-3">아직 작성한 글이 없어요</p>
+                    <button
+                      onClick={() => setIsWriteModalOpen(true)}
+                      className="text-sm text-[#6778ff] hover:underline"
+                    >
+                      첫 글 작성하기
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 참여한 글 (댓글 단 게시글) */}
+              <div className={`rounded-2xl p-6 border ${
+                isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isDark ? 'bg-[#10b981]/20' : 'bg-[#10b981]/10'
+                    }`}>
+                      <Users className="w-5 h-5 text-[#10b981]" />
+                    </div>
+                    <h3 className="font-semibold landing-text-primary">참여한 글</h3>
+                  </div>
+                  <Link
+                    to="/tu/b2c/mypage/comments"
+                    className="text-xs landing-text-muted hover:text-[#10b981] transition-colors flex items-center gap-1"
+                  >
+                    전체보기 <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
+                {commentedPostsData?.posts && commentedPostsData.posts.length > 0 ? (
+                  <div className="space-y-2">
+                    {commentedPostsData.posts.slice(0, 3).map((post) => (
+                      <Link
+                        key={post.id}
+                        to={`/tu/b2c/community/${post.id}`}
+                        className={`block p-3 rounded-xl transition-colors ${
+                          isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm landing-text-primary truncate flex-1 mr-2">
+                            {post.title}
+                          </span>
+                          {post.commentCount > 0 && (
+                            <span className="text-xs text-[#10b981] font-medium mr-2">
+                              +{post.commentCount}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-sm landing-text-muted mb-3">아직 참여한 글이 없어요</p>
+                    <Link
+                      to="/tu/b2c/community"
+                      className="text-sm text-[#10b981] hover:underline"
+                    >
+                      커뮤니티 둘러보기
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* 나의 관심 글 (좋아요한 글) */}
+              <div className={`rounded-2xl p-6 border ${
+                isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      isDark ? 'bg-[#f43f5e]/20' : 'bg-[#f43f5e]/10'
+                    }`}>
+                      <Heart className="w-5 h-5 text-[#f43f5e]" />
+                    </div>
+                    <h3 className="font-semibold landing-text-primary">관심 글</h3>
+                  </div>
+                  <Link
+                    to="/tu/b2c/mypage/posts?tab=liked"
+                    className="text-xs landing-text-muted hover:text-[#f43f5e] transition-colors flex items-center gap-1"
+                  >
+                    전체보기 <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
+                {/* 좋아요한 글 목록 - API 연동 시 데이터 표시 */}
+                <div className="text-center py-6">
+                  <p className="text-sm landing-text-muted mb-3">좋아요한 글을 모아보세요</p>
+                  <Link
+                    to="/tu/b2c/community"
+                    className="text-sm text-[#f43f5e] hover:underline"
+                  >
+                    글 둘러보기
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* 관심 태그 기반 추천 */}
+            {(userInterestTags.length > 0 || recommendedPosts.length > 0) && (
+              <div className={`mt-6 rounded-2xl p-6 border ${
+                isDark ? 'glass border-white/10' : 'bg-gradient-to-r from-[#6778ff]/5 to-[#10b981]/5 border-gray-200'
+              }`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isDark ? 'bg-[#f59e0b]/20' : 'bg-[#f59e0b]/10'
+                  }`}>
+                    <Sparkles className="w-5 h-5 text-[#f59e0b]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold landing-text-primary">관심 커뮤니티 추천</h3>
+                    <p className="text-xs landing-text-muted">나의 활동 기반 맞춤 추천</p>
+                  </div>
+                </div>
+
+                {/* 관심 태그 */}
+                {userInterestTags.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs landing-text-muted mb-2 flex items-center gap-1">
+                      <Hash className="w-3 h-3" /> 나의 관심 태그
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {userInterestTags.map((tag) => (
+                        <Link
+                          key={tag}
+                          to={`/tu/b2c/community?search=${encodeURIComponent(tag)}`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            isDark
+                              ? 'bg-[#6778ff]/20 text-[#6778ff] hover:bg-[#6778ff]/30'
+                              : 'bg-[#6778ff]/10 text-[#6778ff] hover:bg-[#6778ff]/20'
+                          }`}
+                        >
+                          #{tag}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 추천 게시글 */}
+                {recommendedPosts.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-xs landing-text-muted mb-2">이런 글은 어떠세요?</p>
+                    {recommendedPosts.map((post) => (
+                      <Link
+                        key={post.id}
+                        to={`/tu/b2c/community/${post.id}`}
+                        className={`block p-3 rounded-xl transition-colors ${
+                          isDark ? 'hover:bg-white/5' : 'hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm landing-text-primary line-clamp-1">
+                              {post.title}
+                            </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              {post.tags?.slice(0, 2).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                    userInterestTags.includes(tag)
+                                      ? isDark ? 'bg-[#6778ff]/20 text-[#6778ff]' : 'bg-[#6778ff]/10 text-[#6778ff]'
+                                      : isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
+                                  }`}
+                                >
+                                  #{tag}
+                                </span>
+                              ))}
+                              <span className="text-[10px] landing-text-muted">
+                                댓글 {post.commentCount}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : userInterestTags.length > 0 ? (
+                  <p className="text-sm landing-text-muted text-center py-4">
+                    관심 태그에 맞는 새 글이 없어요. 첫 글을 작성해보세요!
+                  </p>
+                ) : null}
+              </div>
+            )}
+
+          </section>
+        )}
 
         {/* 테크 지식 / 뉴스 섹션 */}
         <section className="landing-section-alt py-16">

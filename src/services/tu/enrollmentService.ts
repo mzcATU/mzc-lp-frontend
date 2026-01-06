@@ -127,6 +127,22 @@ const transformEnrollment = (
 });
 
 /**
+ * 일괄 수강 신청 응답 타입
+ */
+export interface BulkEnrollmentResult {
+  courseTimeId: number;
+  success: boolean;
+  enrollmentId?: number;
+  errorMessage?: string;
+}
+
+export interface BulkEnrollmentResponse {
+  results: BulkEnrollmentResult[];
+  successCount: number;
+  failureCount: number;
+}
+
+/**
  * 수강 신청 서비스
  */
 export const enrollmentService = {
@@ -136,6 +152,17 @@ export const enrollmentService = {
   enroll: async (courseTimeId: number): Promise<Enrollment> => {
     const response = await axiosInstance.post<ApiResponse<Enrollment>>(
       API_ENDPOINTS.TIMES.ENROLLMENTS(courseTimeId)
+    );
+    return response.data.data;
+  },
+
+  /**
+   * 일괄 수강 신청
+   */
+  enrollBulk: async (courseTimeIds: number[]): Promise<BulkEnrollmentResponse> => {
+    const response = await axiosInstance.post<ApiResponse<BulkEnrollmentResponse>>(
+      API_ENDPOINTS.ENROLLMENTS.BULK,
+      { courseTimeIds }
     );
     return response.data.data;
   },

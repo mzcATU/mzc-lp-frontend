@@ -1,5 +1,6 @@
 /**
- * 장바구니(Cart) React Query 훅 - 백엔드 API 스펙 기반
+ * 장바구니(Cart) React Query 훅
+ * CourseTime 기반으로 변경 (#207)
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +12,7 @@ export const cartKeys = {
   all: ['cart'] as const,
   cart: () => [...cartKeys.all, 'items'] as const,
   count: () => [...cartKeys.all, 'count'] as const,
-  check: (courseId: number) => [...cartKeys.all, 'check', courseId] as const,
+  check: (courseTimeId: number) => [...cartKeys.all, 'check', courseTimeId] as const,
 };
 
 /**
@@ -39,13 +40,13 @@ export function useCartCount(enabled = true) {
 }
 
 /**
- * 특정 강의 장바구니 여부 확인 훅
+ * 특정 CourseTime 장바구니 여부 확인 훅
  */
-export function useCheckCartStatus(courseId: number, enabled = true) {
+export function useCheckCartStatus(courseTimeId: number, enabled = true) {
   return useQuery({
-    queryKey: cartKeys.check(courseId),
-    queryFn: () => cartService.checkCartStatus(courseId),
-    enabled: enabled && courseId > 0,
+    queryKey: cartKeys.check(courseTimeId),
+    queryFn: () => cartService.checkCartStatus(courseTimeId),
+    enabled: enabled && courseTimeId > 0,
     staleTime: 1000 * 60 * 5, // 5분
   });
 }
@@ -58,8 +59,9 @@ export function useAddToCart() {
 
   return useMutation({
     mutationFn: (request: CartAddRequest) => cartService.addToCart(request),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
+      queryClient.setQueryData(cartKeys.check(variables.courseTimeId), true);
     },
   });
 }
@@ -71,9 +73,10 @@ export function useRemoveFromCart() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (courseId: number) => cartService.removeFromCart(courseId),
-    onSuccess: () => {
+    mutationFn: (courseTimeId: number) => cartService.removeFromCart(courseTimeId),
+    onSuccess: (_, courseTimeId) => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
+      queryClient.setQueryData(cartKeys.check(courseTimeId), false);
     },
   });
 }
@@ -99,17 +102,18 @@ export function useToggleCart() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ courseId, isInCart }: { courseId: number; isInCart: boolean }) => {
+    mutationFn: async ({ courseTimeId, isInCart }: { courseTimeId: number; isInCart: boolean }) => {
       if (isInCart) {
-        await cartService.removeFromCart(courseId);
+        await cartService.removeFromCart(courseTimeId);
         return { added: false };
       } else {
-        await cartService.addToCart({ courseId });
+        await cartService.addToCart({ courseTimeId });
         return { added: true };
       }
     },
-    onSuccess: () => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
+      queryClient.setQueryData(cartKeys.check(variables.courseTimeId), result.added);
     },
   });
 }

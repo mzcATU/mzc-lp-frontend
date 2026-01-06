@@ -135,7 +135,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   // API 파라미터 구성
   const params: ContentFilterParams = {
     page,
-    size: 12,
+    size: 10,
     ...(typeFilter !== 'all' && { contentType: typeFilter }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
     ...(searchQuery && { keyword: searchQuery }),

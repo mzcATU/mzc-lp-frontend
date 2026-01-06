@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Star, Heart } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Star, Heart, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/store/common/languageStore';
+import { useAuthStore } from '@/store/common/authStore';
+import { useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
+import { toast } from 'sonner';
 
 interface LandingCourseCardProps {
   id: number;
@@ -26,14 +28,35 @@ export function LandingCourseCard({
   tags,
 }: LandingCourseCardProps) {
   const { t, language } = useTranslation();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
+  // 찜 상태 확인 및 토글
+  const { data: isWishlisted = false, isLoading: isWishlistChecking } = useCheckWishlistStatus(
+    id,
+    isAuthenticated
+  );
+  const { toggle: toggleWishlist, isLoading: isWishlistToggling } = useToggleWishlist();
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-    // TODO: API 연동 시 실제 찜 추가/삭제 로직 구현
+
+    if (!isAuthenticated) {
+      toast.error('로그인이 필요합니다.');
+      navigate('/auth/login', { state: { from: `/tu/b2c/times/${id}` } });
+      return;
+    }
+
+    try {
+      await toggleWishlist(id, isWishlisted);
+      toast.success(isWishlisted ? '찜 목록에서 제거되었습니다.' : '찜 목록에 추가되었습니다.');
+    } catch {
+      toast.error('찜 목록 변경에 실패했습니다.');
+    }
   };
+
+  const isWishlistLoading = isWishlistChecking || isWishlistToggling;
 
   // 태그 번역 매핑
   const getTagLabel = (tag: string) => {
@@ -90,14 +113,19 @@ export function LandingCourseCard({
           {/* 찜 버튼 */}
           <button
             onClick={handleWishlistToggle}
-            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-300 ${
+            disabled={isWishlistLoading}
+            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-300 disabled:opacity-50 ${
               isWishlisted
                 ? 'bg-red-500 text-white'
                 : 'bg-black/50 text-white hover:bg-red-500'
             }`}
             aria-label={isWishlisted ? '찜 해제' : '찜하기'}
           >
-            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+            {isWishlistLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+            )}
           </button>
         </div>
 
