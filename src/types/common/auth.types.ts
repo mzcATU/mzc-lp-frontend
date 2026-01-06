@@ -78,6 +78,7 @@ export interface AuthUser {
   name: string;
   role: TenantRole;
   tenantId?: number;
+  tenantSubdomain?: string;
 }
 
 // --- 역할 라벨 맵 ---

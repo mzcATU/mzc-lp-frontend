@@ -7,7 +7,7 @@ export type TenantType = 'B2C' | 'B2B';
 export type PlanType = 'BASIC' | 'PRO' | 'ENTERPRISE';
 
 export interface Tenant {
-  id: number;
+  tenantId: number;
   code: string;
   name: string;
   type: TenantType;
