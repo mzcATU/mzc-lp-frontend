@@ -9,9 +9,9 @@ import type { SaDashboardResponse } from '@/types/admin';
 export const saDashboardService = {
   /** SA 대시보드 통계 조회 */
   async getDashboard(): Promise<SaDashboardResponse> {
-    const { data } = await axiosInstance.get<{ data: SaDashboardResponse }>(
+    const { data } = await axiosInstance.get<SaDashboardResponse>(
       API_ENDPOINTS.SA_DASHBOARD.BASE
     );
-    return data.data;
+    return data;
   },
 };

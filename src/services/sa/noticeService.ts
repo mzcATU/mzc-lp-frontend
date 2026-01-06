@@ -15,37 +15,37 @@ import type {
 export const noticeService = {
   /** 공지사항 목록 조회 */
   async getNotices(params?: NoticeListParams): Promise<NoticeListResponse> {
-    const { data } = await axiosInstance.get<{ data: NoticeListResponse }>(
+    const { data } = await axiosInstance.get<NoticeListResponse>(
       API_ENDPOINTS.NOTICES.BASE,
       { params }
     );
-    return data.data;
+    return data;
   },
 
   /** 공지사항 상세 조회 */
   async getNotice(id: number): Promise<Notice> {
-    const { data } = await axiosInstance.get<{ data: Notice }>(
+    const { data } = await axiosInstance.get<Notice>(
       API_ENDPOINTS.NOTICES.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 공지사항 생성 */
   async create(request: CreateNoticeRequest): Promise<Notice> {
-    const { data } = await axiosInstance.post<{ data: Notice }>(
+    const { data } = await axiosInstance.post<Notice>(
       API_ENDPOINTS.NOTICES.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 공지사항 수정 */
   async update(id: number, request: UpdateNoticeRequest): Promise<Notice> {
-    const { data } = await axiosInstance.put<{ data: Notice }>(
+    const { data } = await axiosInstance.put<Notice>(
       API_ENDPOINTS.NOTICES.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 공지사항 삭제 */
@@ -55,18 +55,18 @@ export const noticeService = {
 
   /** 공지사항 발행 */
   async publish(id: number): Promise<Notice> {
-    const { data } = await axiosInstance.post<{ data: Notice }>(
+    const { data } = await axiosInstance.post<Notice>(
       API_ENDPOINTS.NOTICES.PUBLISH(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 공지사항 보관 */
   async archive(id: number): Promise<Notice> {
-    const { data } = await axiosInstance.post<{ data: Notice }>(
+    const { data } = await axiosInstance.post<Notice>(
       API_ENDPOINTS.NOTICES.ARCHIVE(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 특정 테넌트에 배포 */
@@ -81,9 +81,9 @@ export const noticeService = {
 
   /** 배포된 테넌트 ID 목록 조회 */
   async getDistributedTenants(id: number): Promise<number[]> {
-    const { data } = await axiosInstance.get<{ data: number[] }>(
+    const { data } = await axiosInstance.get<number[]>(
       API_ENDPOINTS.NOTICES.TENANTS(id)
     );
-    return data.data;
+    return data;
   },
 };
