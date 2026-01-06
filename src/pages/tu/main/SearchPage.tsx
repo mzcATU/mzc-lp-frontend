@@ -33,6 +33,7 @@ interface MockCourseCard {
   price: string;
   rating: number;
   reviewCount: number;
+  studentCount: number;
   image: string;
   tags: string[];
   category: string;
@@ -47,6 +48,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩99,000',
     rating: 4.8,
     reviewCount: 45,
+    studentCount: 1234,
     image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=250&fit=crop',
     tags: ['상시모집', '인기'],
     category: '개발',
@@ -59,6 +61,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩79,000',
     rating: 4.7,
     reviewCount: 32,
+    studentCount: 856,
     image: 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=400&h=250&fit=crop',
     tags: ['상시모집'],
     category: '개발',
@@ -71,6 +74,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩129,000',
     rating: 4.9,
     reviewCount: 28,
+    studentCount: 2341,
     image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop',
     tags: ['모집중', '신규'],
     category: 'AI',
@@ -83,6 +87,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '무료',
     rating: 4.6,
     reviewCount: 156,
+    studentCount: 3456,
     image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=250&fit=crop',
     tags: ['상시모집', '무료'],
     category: '클라우드',
@@ -95,6 +100,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩89,000',
     rating: 4.8,
     reviewCount: 41,
+    studentCount: 1567,
     image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=250&fit=crop',
     tags: ['상시모집', '인기'],
     category: '개발',
@@ -107,6 +113,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩75,000',
     rating: 4.5,
     reviewCount: 22,
+    studentCount: 432,
     image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=250&fit=crop',
     tags: ['모집중'],
     category: '개발',
@@ -119,6 +126,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩149,000',
     rating: 4.9,
     reviewCount: 89,
+    studentCount: 2789,
     image: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=400&h=250&fit=crop',
     tags: ['상시모집', '인기'],
     category: '클라우드',
@@ -131,6 +139,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩110,000',
     rating: 4.7,
     reviewCount: 67,
+    studentCount: 1890,
     image: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=250&fit=crop',
     tags: ['상시모집'],
     category: '개발',
@@ -143,6 +152,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩139,000',
     rating: 4.8,
     reviewCount: 112,
+    studentCount: 3210,
     image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&h=250&fit=crop',
     tags: ['상시모집', '인기'],
     category: '개발',
@@ -155,6 +165,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩95,000',
     rating: 4.6,
     reviewCount: 54,
+    studentCount: 987,
     image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop',
     tags: ['모집중', '신규'],
     category: '개발',
@@ -167,6 +178,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩69,000',
     rating: 4.5,
     reviewCount: 203,
+    studentCount: 4567,
     image: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=400&h=250&fit=crop',
     tags: ['상시모집', '무료'],
     category: '데이터',
@@ -179,6 +191,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '무료',
     rating: 4.8,
     reviewCount: 321,
+    studentCount: 5678,
     image: 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=400&h=250&fit=crop',
     tags: ['상시모집', '무료', '인기'],
     category: '개발',
@@ -191,6 +204,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩89,000',
     rating: 4.9,
     reviewCount: 78,
+    studentCount: 1876,
     image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop',
     tags: ['신규', '인기'],
     category: 'AI',
@@ -203,6 +217,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩85,000',
     rating: 4.7,
     reviewCount: 95,
+    studentCount: 1345,
     image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop',
     tags: ['상시모집'],
     category: '디자인',
@@ -215,6 +230,7 @@ const MOCK_COURSES: MockCourseCard[] = [
     price: '₩119,000',
     rating: 4.8,
     reviewCount: 134,
+    studentCount: 2987,
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop',
     tags: ['상시모집', '인기'],
     category: '데이터',
@@ -1346,6 +1362,7 @@ export function SearchPage() {
                           price={course.price}
                           rating={course.rating}
                           reviewCount={course.reviewCount}
+                          studentCount={course.studentCount}
                           image={course.image}
                           tags={course.tags}
                           category={course.category}
