@@ -301,8 +301,8 @@ export const myPageMenuData: MenuItem[] = [
     icon: Settings,
     subItems: [
       { id: 'profile-security', label: { ko: '프로필 및 보안', en: 'Profile & Security' }, icon: Shield, path: '/tu/b2c/mypage/settings/security' },
-      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Megaphone, path: '/tu/b2c/mypage/settings/notifications' },
       { id: 'language-region', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/tu/b2c/mypage/settings/language' },
+      { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Megaphone, path: '/tu/b2c/mypage/settings/notifications' },
     ],
   },
 ];
