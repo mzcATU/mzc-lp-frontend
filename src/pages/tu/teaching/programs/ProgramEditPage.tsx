@@ -4,11 +4,14 @@ import { ArrowLeft, Send, Loader2, AlertCircle, Save } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/common';
 import {
   useMyProgram,
+  useMyProgramSnapshot,
   useUpdateMyProgram,
+  useUpdateSnapshot,
   useSubmitMyProgram,
 } from '@/hooks/tu';
 import type { ProgramStatus } from '@/types/common';
 import { ProgramBasicInfoForm, type ProgramFormData } from './components/ProgramBasicInfoForm';
+import { SnapshotEditForm, type SnapshotFormData } from './components/SnapshotEditForm';
 
 interface ProgramEditPageProps {
   language?: 'ko' | 'en';
@@ -55,7 +58,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  // Form state
+  // Form state - Program
   const [formData, setFormData] = useState<ProgramFormData>({
     title: '',
     description: '',
@@ -66,9 +69,19 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
   });
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Form state - Snapshot
+  const [snapshotFormData, setSnapshotFormData] = useState<SnapshotFormData>({
+    snapshotName: '',
+    description: '',
+    hashtags: '',
+  });
+  const [hasSnapshotChanges, setHasSnapshotChanges] = useState(false);
+
   // API hooks
   const { data: program, isLoading, error } = useMyProgram(id);
+  const { data: snapshot } = useMyProgramSnapshot(program?.snapshotId || 0);
   const updateProgramMutation = useUpdateMyProgram();
+  const updateSnapshotMutation = useUpdateSnapshot();
   const submitProgramMutation = useSubmitMyProgram();
 
   // 프로그램 데이터로 폼 초기화
@@ -86,10 +99,28 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
     }
   }, [program]);
 
+  // 스냅샷 데이터로 폼 초기화
+  useEffect(() => {
+    if (snapshot) {
+      setSnapshotFormData({
+        snapshotName: snapshot.snapshotName || '',
+        description: snapshot.description || '',
+        hashtags: snapshot.hashtags || '',
+      });
+      setHasSnapshotChanges(false);
+    }
+  }, [snapshot]);
+
   // 폼 데이터 변경 핸들러
   const handleFormDataChange = (data: Partial<ProgramFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
     setHasChanges(true);
+  };
+
+  // 스냅샷 폼 데이터 변경 핸들러
+  const handleSnapshotFormDataChange = (data: Partial<SnapshotFormData>) => {
+    setSnapshotFormData((prev) => ({ ...prev, ...data }));
+    setHasSnapshotChanges(true);
   };
 
   // 저장 핸들러
@@ -100,18 +131,35 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
     }
 
     try {
-      await updateProgramMutation.mutateAsync({
-        id,
-        request: {
-          title: formData.title.trim(),
-          description: formData.description.trim() || undefined,
-          thumbnailUrl: formData.thumbnailUrl.trim() || undefined,
-          level: formData.level || undefined,
-          type: formData.type || undefined,
-          estimatedHours: formData.estimatedHours || undefined,
-        },
-      });
-      setHasChanges(false);
+      // 프로그램 저장
+      if (hasChanges) {
+        await updateProgramMutation.mutateAsync({
+          id,
+          request: {
+            title: formData.title.trim(),
+            description: formData.description.trim() || undefined,
+            thumbnailUrl: formData.thumbnailUrl.trim() || undefined,
+            level: formData.level || undefined,
+            type: formData.type || undefined,
+            estimatedHours: formData.estimatedHours || undefined,
+          },
+        });
+        setHasChanges(false);
+      }
+
+      // 스냅샷 저장 (수정 가능한 상태이고 변경사항이 있을 때만)
+      if (hasSnapshotChanges && snapshot && isSnapshotModifiable) {
+        await updateSnapshotMutation.mutateAsync({
+          id: snapshot.snapshotId,
+          request: {
+            snapshotName: snapshotFormData.snapshotName.trim() || undefined,
+            description: snapshotFormData.description.trim() || undefined,
+            hashtags: snapshotFormData.hashtags.trim() || undefined,
+          },
+        });
+        setHasSnapshotChanges(false);
+      }
+
       return true;
     } catch (err) {
       console.error('Save failed:', err);
@@ -143,7 +191,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
 
     try {
       // 변경사항이 있으면 먼저 저장
-      if (hasChanges) {
+      if (hasAnyChanges) {
         const saveSuccess = await handleSave();
         if (!saveSuccess) return;
       }
@@ -158,9 +206,11 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
     }
   };
 
-  const isSaving = updateProgramMutation.isPending;
+  const isSaving = updateProgramMutation.isPending || updateSnapshotMutation.isPending;
   const isSubmitting = submitProgramMutation.isPending;
   const isProcessing = isSaving || isSubmitting;
+  const isSnapshotModifiable = snapshot?.status === 'DRAFT' || snapshot?.status === 'ACTIVE';
+  const hasAnyChanges = hasChanges || hasSnapshotChanges;
 
   // 로딩 상태
   if (isLoading) {
@@ -237,7 +287,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
                 <div className="flex items-center gap-2">
                   <h1 className="text-text-primary text-xl mb-0">{getText('pageTitle')}</h1>
                   <Badge variant={statusVariant}>{statusLabel}</Badge>
-                  {hasChanges && (
+                  {hasAnyChanges && (
                     <span className="text-xs text-status-warning">({getText('hasChanges')})</span>
                   )}
                 </div>
@@ -247,7 +297,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              {hasChanges && (
+              {hasAnyChanges && (
                 <Button
                   variant="outline"
                   onClick={handleSaveOnly}
@@ -267,7 +317,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
                 ) : (
                   <Send size={16} />
                 )}
-                {isSubmitting ? getText('submitting') : hasChanges ? getText('saveAndSubmit') : getText('submit')}
+                {isSubmitting ? getText('submitting') : hasAnyChanges ? getText('saveAndSubmit') : getText('submit')}
               </Button>
             </div>
           </div>
@@ -295,6 +345,16 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
             language={language}
           />
 
+          {/* 스냅샷(커리큘럼) 정보 폼 */}
+          {snapshot && (
+            <SnapshotEditForm
+              formData={snapshotFormData}
+              onFormDataChange={handleSnapshotFormDataChange}
+              status={snapshot.status}
+              language={language}
+            />
+          )}
+
           {/* 하단 신청 버튼 (모바일 대응) */}
           <div className="pt-4 pb-8">
             <Button
@@ -308,7 +368,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
               ) : (
                 <Send size={16} />
               )}
-              {isSubmitting ? getText('submitting') : hasChanges ? getText('saveAndSubmit') : getText('submit')}
+              {isSubmitting ? getText('submitting') : hasAnyChanges ? getText('saveAndSubmit') : getText('submit')}
             </Button>
           </div>
         </div>
