@@ -106,8 +106,8 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
       });
 
       alert(getText('createSuccess'));
-      // 프로그램 수정 페이지로 이동 (검토 신청은 여기서)
-      navigate(`/tu/teaching/programs/${program.id}/edit`);
+      // 프로그램 상세 페이지로 이동
+      navigate(`/tu/teaching/programs/${program.id}`);
     } catch (err) {
       console.error('Create failed:', err);
       alert(getText('createFailed'));
