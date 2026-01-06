@@ -208,6 +208,19 @@ export const LoginPage = () => {
             </Link>
           </p>
         </div>
+
+        {/* 관리자 로그인 링크 */}
+        <div className={`mt-4 pt-4 text-center border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+          <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            관리자이신가요?{' '}
+            <Link
+              to="/admin/login"
+              className={`font-medium hover:underline ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+            >
+              관리자 로그인
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
