@@ -47,13 +47,16 @@ export const useLogin = () => {
 
       // 토큰으로 사용자 정보 조회
       const userDetail = await userService.getMe();
+      console.log('userDetail from API:', userDetail);
       const user = {
         id: userDetail.userId,
         email: userDetail.email,
         name: userDetail.name,
         role: userDetail.role,
         tenantId: userDetail.tenantId,
+        tenantSubdomain: userDetail.tenantSubdomain,
       };
+      console.log('user object for redirect:', user);
       setAuth(user, tokenData.accessToken, tokenData.refreshToken);
       queryClient.invalidateQueries({ queryKey: authKeys.me() });
 

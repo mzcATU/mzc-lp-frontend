@@ -36,7 +36,7 @@ import type { TenantStatus, PlanType, TenantDetail } from '@/types/admin';
 
 // Mock 데이터
 const MOCK_TENANT: TenantDetail = {
-  id: 1,
+  tenantId: 1,
   code: 'mzc',
   name: '메가존클라우드',
   type: 'B2B',
