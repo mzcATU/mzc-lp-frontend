@@ -14,6 +14,7 @@ import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
 import type { InstructorSummary } from '@/types/tu';
 import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
+import { DELIVERY_TYPE_LABELS, PROGRAM_LEVEL_LABELS } from '@/types/tu/courseTimeCatalog.types';
 
 // API 사용 여부 플래그
 const USE_INSTRUCTOR_API = false; // 강사 API 연동 시 true로 변경
@@ -118,10 +119,17 @@ function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
     instructor: instructorName,
     price: priceDisplay,
     rating: 4.5, // CourseTime API에 rating이 없으므로 기본값
-    reviewCount: courseTime.currentEnrollment, // 수강생 수로 대체
+    reviewCount: courseTime.currentEnrollment, // 리뷰 수 (수강생 수로 대체)
+    studentCount: courseTime.currentEnrollment, // 참여자 수
     image: thumbnailUrl,
     tags,
     category: courseTime.program?.categoryName || 'all',
+    // 추가 정보
+    deliveryType: DELIVERY_TYPE_LABELS[courseTime.deliveryType] || courseTime.deliveryType,
+    level: courseTime.program?.level ? PROGRAM_LEVEL_LABELS[courseTime.program.level] : undefined,
+    classStartDate: courseTime.classStartDate,
+    availableSeats: courseTime.availableSeats,
+    isOnDemand: courseTime.isOnDemand,
   };
 }
 

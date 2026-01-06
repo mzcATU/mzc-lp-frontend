@@ -1,6 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Star, Heart, Loader2 } from 'lucide-react';
-import { useTranslation } from '@/store/common/languageStore';
+import { Star, Heart, Loader2, Calendar, Users } from 'lucide-react';
 import { useAuthStore } from '@/store/common/authStore';
 import { useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
 import { toast } from 'sonner';
@@ -9,12 +8,27 @@ interface LandingCourseCardProps {
   id: number;
   title: string;
   instructor: string;
-  price: string | null; // B2B: null이면 표시 안함
+  price: string | null; // null이면 표시 안함 (무료)
   rating: number;
-  reviewCount: number;
+  reviewCount: number; // 리뷰 수
+  studentCount: number; // 참여자 수
   image: string;
   tags: string[];
   category: string;
+  // 추가 정보
+  deliveryType?: string; // 운영 방식 (온라인, 오프라인 등)
+  level?: string; // 레벨 (입문, 초급 등)
+  classStartDate?: string; // 개강일
+  availableSeats?: number | null; // 잔여석
+  isOnDemand?: boolean; // 상시모집 여부
+}
+
+/**
+ * 날짜 포맷팅 (M/D)
+ */
+function formatShortDate(dateString: string): string {
+  const date = new Date(dateString);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 export function LandingCourseCard({
@@ -24,10 +38,15 @@ export function LandingCourseCard({
   price,
   rating,
   reviewCount,
+  studentCount,
   image,
   tags,
+  deliveryType,
+  level,
+  classStartDate,
+  availableSeats,
+  isOnDemand,
 }: LandingCourseCardProps) {
-  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
 
@@ -58,56 +77,51 @@ export function LandingCourseCard({
 
   const isWishlistLoading = isWishlistChecking || isWishlistToggling;
 
-  // 태그 번역 매핑
-  const getTagLabel = (tag: string) => {
-    if (tag === 'NEW') return t.landing.tagNew;
-    if (tag === '베스트') return t.landing.tagBest;
-    if (tag === '할인중') return t.landing.tagSale;
-    if (tag === '상시모집') return '상시모집';
-    if (tag === '모집중') return '모집중';
-    return tag;
-  };
-
-  // 수강생 수 포맷
-  const formatStudentCount = (count: number) => {
-    const displayCount = count > 100 ? '100+' : count.toString();
-    return language === 'ko' ? `+${displayCount}명` : `${displayCount}+ students`;
+  // 태그 스타일 매핑
+  const getTagStyle = (tag: string) => {
+    switch (tag) {
+      case '상시모집':
+        return 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]';
+      case '모집중':
+        return 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]';
+      case '진행중':
+        return 'bg-gray-500';
+      case 'NEW':
+        return 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]';
+      case '베스트':
+        return 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]';
+      default:
+        return 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]';
+    }
   };
 
   return (
     <Link to={`/tu/b2c/courses/${id}`} className="group block h-full">
       <div className="h-full card-hover rounded-xl overflow-hidden landing-card-bg border landing-card-border">
-        {/* Image Container */}
+        {/* 썸네일 영역 */}
         <div className="relative aspect-[16/10] overflow-hidden">
           <img
             src={image}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* 좌측 상단: 상태 뱃지 */}
           {tags.length > 0 && (
             <div className="absolute top-3 left-3 flex gap-1.5">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg ${
-                    tag === 'NEW'
-                      ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
-                      : tag === '베스트'
-                        ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                        : tag === '상시모집'
-                          ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
-                          : tag === '모집중'
-                            ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                            : 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
-                  }`}
+                  className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg ${getTagStyle(tag)}`}
                 >
-                  {getTagLabel(tag)}
+                  {tag}
                 </span>
               ))}
             </div>
           )}
-          {/* 찜 버튼 */}
+
+          {/* 우측 상단: 찜 버튼 */}
           <button
             onClick={handleWishlistToggle}
             disabled={isWishlistLoading}
@@ -126,14 +140,17 @@ export function LandingCourseCard({
           </button>
         </div>
 
-        {/* Content */}
+        {/* 정보 영역 */}
         <div className="p-4 space-y-2">
+          {/* 제목 (2줄 말줄임) */}
           <h3 className="font-bold landing-text-primary line-clamp-2 text-[15px] group-hover:text-[#6778ff] transition-colors h-11">
             {title}
           </h3>
 
+          {/* 강사명 */}
           <div className="text-xs landing-text-muted">{instructor}</div>
 
+          {/* 별점 + 리뷰 수 (항상 표시) */}
           <div className="flex items-center gap-1.5 text-xs">
             <div className="flex">
               {[...Array(5)].map((_, i) => (
@@ -147,15 +164,42 @@ export function LandingCourseCard({
             <span className="landing-text-muted">({reviewCount.toLocaleString()})</span>
           </div>
 
-          <div className="pt-2 flex items-center justify-between">
-            {price && (
-              <span className="font-bold text-[#6778ff] text-lg">{price}</span>
-            )}
-            <div className={`flex gap-1.5 ${!price ? 'ml-auto' : ''}`}>
-              <span className="landing-badge-bg landing-text-muted text-[10px] px-2 py-1 rounded-full">
-                {formatStudentCount(reviewCount)}
+          {/* 메타 정보 (운영방식 · 레벨) */}
+          <div className="flex items-center gap-2 text-xs">
+            {deliveryType && (
+              <span className="landing-badge-bg landing-text-muted px-2 py-0.5 rounded">
+                {deliveryType}
               </span>
+            )}
+            {level && (
+              <span className="landing-text-muted">{level}</span>
+            )}
+          </div>
+
+          {/* 개강일 및 잔여석 (상시모집이 아닌 경우만) */}
+          {!isOnDemand && classStartDate && (
+            <div className="flex items-center gap-1 text-xs landing-text-muted">
+              <Calendar className="w-3 h-3" />
+              <span>{formatShortDate(classStartDate)} 개강</span>
+              {availableSeats !== null && availableSeats !== undefined && (
+                <span className="ml-2 text-orange-500 font-medium">
+                  잔여 {availableSeats}석
+                </span>
+              )}
             </div>
+          )}
+        </div>
+
+        {/* 하단 푸터 (가격 + 참여자 수) */}
+        <div className="px-4 pb-4 flex items-center justify-between">
+          {price ? (
+            <span className="font-bold text-[#6778ff] text-lg">{price}</span>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-1 text-xs landing-text-muted">
+            <Users className="w-3.5 h-3.5" />
+            <span>{studentCount.toLocaleString()}명</span>
           </div>
         </div>
       </div>
