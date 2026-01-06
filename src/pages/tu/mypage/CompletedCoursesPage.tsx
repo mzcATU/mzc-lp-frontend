@@ -6,10 +6,11 @@ import {
   Loader2,
   Award,
   Calendar,
+  FileText,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
-import { useMyEnrollments } from '@/hooks/tu';
+import { useMyEnrollments, useCertificateByEnrollment, useDownloadCertificate, useIssueCertificate } from '@/hooks/tu';
 import {
   Card,
   CardContent,
@@ -22,16 +23,18 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/common';
+import { CertificatePreviewModal } from '@/components/domain/tu/certificate';
 import type { Enrollment } from '@/services/tu/enrollmentService';
 
 interface CompletedCourseCardProps {
   enrollment: Enrollment;
   onClick: () => void;
+  onViewCertificate: () => void;
   isDark: boolean;
   language: string;
 }
 
-function CompletedCourseCard({ enrollment, onClick, isDark, language }: CompletedCourseCardProps) {
+function CompletedCourseCard({ enrollment, onClick, onViewCertificate, isDark, language }: CompletedCourseCardProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
@@ -101,19 +104,33 @@ function CompletedCourseCard({ enrollment, onClick, isDark, language }: Complete
           )}
         </div>
 
-        {/* View Details Button */}
-        <Button
-          variant="outline"
-          className={`w-full mt-4 ${isDark ? '!bg-transparent !border-white/20 !text-white hover:!bg-white/10' : ''}`}
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-        >
-          <BookOpen className="w-4 h-4 mr-2" />
-          {language === 'ko' ? '학습 내용 보기' : 'View Course'}
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 mt-4">
+          <Button
+            variant="outline"
+            className={`flex-1 ${isDark ? '!bg-transparent !border-white/20 !text-white hover:!bg-white/10' : ''}`}
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            {language === 'ko' ? '학습 내용' : 'Course'}
+          </Button>
+          <Button
+            variant="brand"
+            size="sm"
+            className="flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewCertificate();
+            }}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            {language === 'ko' ? '수료증' : 'Certificate'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -129,6 +146,11 @@ export function CompletedCoursesPage() {
   const [page, setPage] = useState(0);
   const pageSize = 12;
 
+  // 수료증 모달 상태
+  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
   // COMPLETED 상태의 수강 목록만 조회
   const { data, isLoading, isError } = useMyEnrollments({
     page,
@@ -136,8 +158,72 @@ export function CompletedCoursesPage() {
     status: 'COMPLETED',
   });
 
+  // 선택된 수강의 수료증 조회
+  const { data: certificate, isLoading: isCertificateLoading, isError: isCertificateError, refetch: refetchCertificate } = useCertificateByEnrollment(
+    selectedEnrollmentId ?? 0,
+    { enabled: !!selectedEnrollmentId && isModalOpen }
+  );
+
+  // PDF 다운로드 mutation
+  const downloadMutation = useDownloadCertificate();
+
+  // 수료증 발급 mutation
+  const issueMutation = useIssueCertificate();
+
   const handleCourseClick = (enrollmentId: number) => {
     navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
+  };
+
+  const handleViewCertificate = (enrollmentId: number) => {
+    setSelectedEnrollmentId(enrollmentId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEnrollmentId(null);
+  };
+
+  const handleDownload = async () => {
+    if (!certificate || isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+      const fileName = `certificate_${certificate.certificateNumber}.pdf`;
+      await downloadMutation.mutateAsync({ id: certificate.id, fileName });
+    } catch (error) {
+      console.error('Failed to download certificate:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleIssueCertificate = async () => {
+    if (!selectedEnrollmentId || issueMutation.isPending) return;
+
+    try {
+      await issueMutation.mutateAsync(selectedEnrollmentId);
+      // 발급 성공 후 수료증 다시 조회
+      refetchCertificate();
+    } catch (error) {
+      console.error('Failed to issue certificate:', error);
+    }
+  };
+
+  // 수료증 모달 라벨
+  const modalLabels = {
+    title: language === 'ko' ? '수료증 미리보기' : 'Certificate Preview',
+    certificateOf: language === 'ko' ? '수료증' : 'Certificate of',
+    completion: language === 'ko' ? '수료' : 'Completion',
+    certifyThat: language === 'ko' ? '다음의 사용자가' : 'This is to certify that',
+    hasCompleted: language === 'ko' ? '아래 과정을 성공적으로 수료하였음을 인증합니다.' : 'has successfully completed the following course.',
+    issuedOn: language === 'ko' ? '발급일' : 'Issued on',
+    completedOn: language === 'ko' ? '수료일' : 'Completed on',
+    certificateNumber: language === 'ko' ? '수료증 번호' : 'Certificate No.',
+    download: language === 'ko' ? 'PDF 다운로드' : 'Download PDF',
+    downloading: language === 'ko' ? '다운로드 중...' : 'Downloading...',
+    close: language === 'ko' ? '닫기' : 'Close',
+    organization: language === 'ko' ? '발급 기관' : 'Organization',
   };
 
   return (
@@ -218,6 +304,7 @@ export function CompletedCoursesPage() {
                   key={enrollment.id}
                   enrollment={enrollment}
                   onClick={() => handleCourseClick(enrollment.id)}
+                  onViewCertificate={() => handleViewCertificate(enrollment.id)}
                   isDark={isDark}
                   language={language}
                 />
@@ -261,6 +348,61 @@ export function CompletedCoursesPage() {
               </Pagination>
             )}
           </>
+        )}
+
+        {/* Certificate Modal - 발급 또는 미리보기 */}
+        {isModalOpen && (
+          isCertificateLoading || issueMutation.isPending ? (
+            // 로딩 상태
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className={`p-8 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+                <Loader2 className={`w-8 h-8 animate-spin mx-auto ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                <p className={`mt-4 text-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {issueMutation.isPending
+                    ? (language === 'ko' ? '수료증 발급 중...' : 'Issuing certificate...')
+                    : (language === 'ko' ? '수료증 조회 중...' : 'Loading certificate...')}
+                </p>
+              </div>
+            </div>
+          ) : isCertificateError && !certificate ? (
+            // 수료증 없음 - 발급 필요
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseModal}>
+              <div
+                className={`p-8 rounded-xl max-w-md mx-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Award className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-yellow-400' : 'text-amber-500'}`} />
+                <h3 className={`text-lg font-semibold text-center mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {language === 'ko' ? '수료증 발급' : 'Issue Certificate'}
+                </h3>
+                <p className={`text-center mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {language === 'ko'
+                    ? '아직 수료증이 발급되지 않았습니다. 수료증을 발급하시겠습니까?'
+                    : 'Certificate has not been issued yet. Would you like to issue it?'}
+                </p>
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1" onClick={handleCloseModal}>
+                    {language === 'ko' ? '취소' : 'Cancel'}
+                  </Button>
+                  <Button variant="brand" className="flex-1" onClick={handleIssueCertificate}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    {language === 'ko' ? '발급하기' : 'Issue'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : certificate ? (
+            // 수료증 미리보기
+            <CertificatePreviewModal
+              isOpen={isModalOpen}
+              onClose={handleCloseModal}
+              certificate={certificate}
+              labels={modalLabels}
+              onDownload={handleDownload}
+              isDownloading={isDownloading}
+              isDark={isDark}
+            />
+          ) : null
         )}
       </div>
     </div>

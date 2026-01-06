@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, Loader2, Heart, Clock, Users, Calendar, X } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, Heart, Calendar, X, Star, Users } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -103,7 +103,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
     }
   };
 
-  // 태그 생성
+  // 태그 생성 (무료 태그 제거, 유료는 금액 표시)
   const tags: string[] = [];
   if (courseTime.isOnDemand) {
     tags.push('상시모집');
@@ -112,17 +112,14 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
   } else if (courseTime.status === 'ONGOING') {
     tags.push('진행중');
   }
-  if (courseTime.isFree) {
-    tags.push('무료');
-  }
 
   // 주강사 찾기
   const mainInstructor = courseTime.instructors.find((i) => i.role === 'MAIN');
   const instructorName = mainInstructor?.name || courseTime.instructors[0]?.name || '';
 
-  // 가격 포맷팅
-  const price = courseTime.isFree ? 0 : parseFloat(courseTime.price);
-  const priceDisplay = courseTime.isFree ? '무료' : `₩${price.toLocaleString()}`;
+  // 가격 표시: 유료 → 금액, 무료 → 표시 안함
+  const price = parseFloat(courseTime.price);
+  const priceDisplay = (!courseTime.isFree && price > 0) ? `₩${price.toLocaleString()}` : null;
 
   // 썸네일
   const thumbnailUrl =
@@ -161,9 +158,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
                       ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
                       : tag === '모집중'
                         ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                        : tag === '무료'
-                          ? 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
-                          : 'bg-gray-500'
+                        : 'bg-gray-500'
                   }`}
                 >
                   {tag}
@@ -191,9 +186,9 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
           </button>
         </div>
 
-        {/* Content */}
+        {/* 정보 영역 */}
         <div className="p-4 space-y-2">
-          {/* 제목 */}
+          {/* 제목 (2줄 말줄임) */}
           <h3
             className={`font-bold line-clamp-2 text-[15px] transition-colors h-11 ${
               isDark
@@ -211,8 +206,22 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
             </div>
           )}
 
-          {/* 메타 정보 */}
-          <div className="flex items-center gap-3 text-xs">
+          {/* 별점 + 리뷰 수 (항상 표시) */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-3 h-3 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : isDark ? 'text-gray-600' : 'text-gray-300'}`}
+                />
+              ))}
+            </div>
+            <span className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>4.5</span>
+            <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>({courseTime.currentEnrollment.toLocaleString()})</span>
+          </div>
+
+          {/* 메타 정보 (운영방식 · 레벨) */}
+          <div className="flex items-center gap-2 text-xs">
             {/* 운영 방식 */}
             <span
               className={`px-2 py-0.5 rounded ${
@@ -226,44 +235,36 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
             {levelLabel && (
               <span className={isDark ? 'text-gray-500' : 'text-gray-500'}>{levelLabel}</span>
             )}
-
-            {/* 예상 시간 */}
-            {courseTime.program?.estimatedHours && (
-              <span className={`flex items-center gap-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                <Clock className="w-3 h-3" />
-                {courseTime.program.estimatedHours}시간
-              </span>
-            )}
           </div>
 
-          {/* 모집/수강 기간 (상시모집이 아닌 경우만) */}
+          {/* 개강일 및 잔여석 (상시모집이 아닌 경우만) */}
           {!courseTime.isOnDemand && (
             <div className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
               <Calendar className="w-3 h-3" />
               <span>
                 {formatShortDate(courseTime.classStartDate)} 개강
               </span>
-              {courseTime.availableSeats !== null && courseTime.capacity !== null && (
-                <span className="ml-2 text-orange-500">
+              {courseTime.availableSeats !== null && courseTime.availableSeats !== undefined && (
+                <span className="ml-2 text-orange-500 font-medium">
                   잔여 {courseTime.availableSeats}석
                 </span>
               )}
             </div>
           )}
+        </div>
 
-          {/* 수강생 수 (상시모집인 경우) */}
-          {courseTime.isOnDemand && courseTime.currentEnrollment > 0 && (
-            <div className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              <Users className="w-3 h-3" />
-              <span>{courseTime.currentEnrollment.toLocaleString()}명 수강중</span>
-            </div>
-          )}
-
-          {/* 가격 */}
-          <div className="pt-2 flex items-center justify-between">
-            <span className={`font-bold text-lg ${isDark ? 'text-[#6bc2f0]' : 'text-[#4C2D9A]'}`}>
+        {/* 하단 푸터 (가격 + 참여자 수) */}
+        <div className="px-4 pb-4 flex items-center justify-between">
+          {priceDisplay ? (
+            <span className={`font-bold text-lg ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`}>
               {priceDisplay}
             </span>
+          ) : (
+            <span />
+          )}
+          <div className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Users className="w-3.5 h-3.5" />
+            <span>{courseTime.currentEnrollment.toLocaleString()}명</span>
           </div>
         </div>
       </div>

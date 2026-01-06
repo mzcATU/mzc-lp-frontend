@@ -324,9 +324,9 @@ export function MyPage() {
             />
             <QuickMenuItem
               icon={<Award className="w-5 h-5" />}
-              title="인증서"
-              description="취득한 인증서를 확인하세요"
-              onClick={() => navigate('/tu/b2c/mypage/certifications')}
+              title="수료증"
+              description="취득한 수료증을 확인하세요"
+              onClick={() => navigate('/tu/b2c/mypage/certificates')}
               isDark={isDark}
             />
             <QuickMenuItem

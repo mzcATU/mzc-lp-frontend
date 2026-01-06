@@ -149,84 +149,82 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
   }
 
   return (
-    <div className="h-full flex flex-col bg-bg-app">
-      {/* Header */}
-      <div className="border-b border-border bg-bg-default sticky top-0 z-10">
-        <div className="p-6 px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="h-full overflow-auto bg-bg-app">
+      <div className="p-8">
+        {/* 뒤로가기 버튼 */}
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="border border-border"
+            onClick={() => navigate('/tu/teaching/programs')}
+          >
+            <ArrowLeft size={16} />
+            {getText('back')}
+          </Button>
+        </div>
+
+        {/* Header Section - 목록 페이지와 동일한 스타일 */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-text-primary mb-0">{program.title}</h1>
+              <Badge
+                variant={statusBadgeVariant[program.status]}
+                className="flex items-center gap-1"
+              >
+                {statusIcons[program.status]}
+                {PROGRAM_STATUS_LABELS[program.status]}
+              </Badge>
+            </div>
+            <p className="text-text-secondary m-0">ID: {program.id}</p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {canSubmit(program.status) && (
+              <Button size="sm" onClick={handleSubmit} disabled={isActionPending}>
+                {submitMutation.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Send size={16} />
+                )}
+                {getText('submit')}
+              </Button>
+            )}
+
+            {canEdit(program.status) && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="border border-border"
-                onClick={() => navigate('/tu/teaching/programs')}
+                onClick={() => navigate(`/tu/teaching/programs/${id}/edit`)}
               >
-                <ArrowLeft size={16} />
-                {getText('back')}
+                <Edit2 size={16} />
+                {getText('edit')}
               </Button>
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-text-primary text-xl mb-0">{program.title}</h1>
-                  <Badge
-                    variant={statusBadgeVariant[program.status]}
-                    className="flex items-center gap-1"
-                  >
-                    {statusIcons[program.status]}
-                    {PROGRAM_STATUS_LABELS[program.status]}
-                  </Badge>
-                </div>
-                <p className="text-text-secondary text-sm mt-1">ID: {program.id}</p>
-              </div>
-            </div>
+            )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {canSubmit(program.status) && (
-                <Button size="sm" onClick={handleSubmit} disabled={isActionPending}>
-                  {submitMutation.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Send size={16} />
-                  )}
-                  {getText('submit')}
-                </Button>
-              )}
-
-              {canEdit(program.status) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="border border-border"
-                  onClick={() => navigate(`/tu/teaching/programs/${id}/edit`)}
-                >
-                  <Edit2 size={16} />
-                  {getText('edit')}
-                </Button>
-              )}
-
-              {canDelete(program.status) && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={isActionPending}
-                >
-                  {deleteMutation.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Trash2 size={16} />
-                  )}
-                  {getText('delete')}
-                </Button>
-              )}
-            </div>
+            {canDelete(program.status) && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={isActionPending}
+              >
+                {deleteMutation.isPending ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Trash2 size={16} />
+                )}
+                {getText('delete')}
+              </Button>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8 max-w-5xl space-y-6">
+        {/* Content */}
+        <div className="space-y-6">
           {/* 기본 정보 섹션 */}
           <ProgramInfoSection program={program} language={language} />
 

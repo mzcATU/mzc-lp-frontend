@@ -14,6 +14,7 @@ import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
 import type { InstructorSummary } from '@/types/tu';
 import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
+import { DELIVERY_TYPE_LABELS, PROGRAM_LEVEL_LABELS } from '@/types/tu/courseTimeCatalog.types';
 
 // API 사용 여부 플래그
 const USE_INSTRUCTOR_API = false; // 강사 API 연동 시 true로 변경
@@ -93,11 +94,11 @@ function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
   const mainInstructor = courseTime.instructors.find((i) => i.role === 'MAIN');
   const instructorName = mainInstructor?.name || courseTime.instructors[0]?.name || '';
 
-  // 가격 포맷팅
+  // 가격 포맷팅 (유료 → 금액, 무료 → 표시 안함)
   const price = courseTime.isFree ? 0 : parseFloat(courseTime.price);
-  const priceDisplay = courseTime.isFree ? '무료' : `₩${price.toLocaleString()}`;
+  const priceDisplay = (!courseTime.isFree && price > 0) ? `₩${price.toLocaleString()}` : null;
 
-  // 태그 생성
+  // 태그 생성 (무료 태그 제거)
   const tags: string[] = [];
   if (courseTime.isOnDemand) {
     tags.push('상시모집');
@@ -105,9 +106,6 @@ function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
     tags.push('모집중');
   } else if (courseTime.status === 'ONGOING') {
     tags.push('진행중');
-  }
-  if (courseTime.isFree) {
-    tags.push('무료');
   }
 
   // 썸네일
@@ -121,10 +119,17 @@ function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
     instructor: instructorName,
     price: priceDisplay,
     rating: 4.5, // CourseTime API에 rating이 없으므로 기본값
-    reviewCount: courseTime.currentEnrollment, // 수강생 수로 대체
+    reviewCount: courseTime.currentEnrollment, // 리뷰 수 (수강생 수로 대체)
+    studentCount: courseTime.currentEnrollment, // 참여자 수
     image: thumbnailUrl,
     tags,
     category: courseTime.program?.categoryName || 'all',
+    // 추가 정보
+    deliveryType: DELIVERY_TYPE_LABELS[courseTime.deliveryType] || courseTime.deliveryType,
+    level: courseTime.program?.level ? PROGRAM_LEVEL_LABELS[courseTime.program.level] : undefined,
+    classStartDate: courseTime.classStartDate,
+    availableSeats: courseTime.availableSeats,
+    isOnDemand: courseTime.isOnDemand,
   };
 }
 
@@ -166,9 +171,9 @@ export function LandingPage() {
   // 최신 강의 (createdAt 기준 정렬이므로 처음 5개)
   const newCourses = courses.slice(0, 5);
 
-  // 추천 강의 (무료 강의 우선)
+  // 추천 강의 (상시모집 우선)
   const featuredCourses = courses
-    .filter((c) => c.tags.includes('무료') || c.tags.includes('상시모집'))
+    .filter((c) => c.tags.includes('상시모집'))
     .slice(0, 5);
   const recommendedCourses = featuredCourses.length > 0 ? featuredCourses : courses.slice(0, 5);
 

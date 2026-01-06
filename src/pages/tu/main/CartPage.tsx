@@ -10,12 +10,13 @@ import type { CartItemResponse } from '@/types/tu/cart.types';
 import type { WishlistItemResponse } from '@/types/tu/wishlist.types';
 
 /**
- * 가격 포맷팅 (₩180,000 형식)
+ * 가격 표시 (유료 → 금액, 무료 → 표시 안함)
  */
-function formatPrice(price: string | null | undefined): string {
-  if (!price) return '';
+function formatPrice(price: string | null | undefined, isFree: boolean): string | null {
+  if (isFree) return null; // 무료는 표시 안함
+  if (!price) return null;
   const numPrice = parseFloat(price);
-  if (isNaN(numPrice)) return price;
+  if (isNaN(numPrice) || numPrice === 0) return null;
   return `₩${numPrice.toLocaleString()}`;
 }
 
@@ -175,11 +176,6 @@ export function CartPage() {
     }, 0);
   }, [selectedCartItems]);
 
-  // 무료 강의 개수
-  const freeCoursesCount = useMemo(() => {
-    return selectedCartItems.filter(item => item.isFree).length;
-  }, [selectedCartItems]);
-
   // 로딩 상태
   if (isCartLoading) {
     return (
@@ -326,15 +322,11 @@ export function CartPage() {
                                   {item.estimatedHours}시간
                                 </span>
                               )}
-                              {item.isFree ? (
+                              {formatPrice(item.price, item.isFree) && (
                                 <span className={`text-xs px-2 py-0.5 rounded ${
-                                  isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
+                                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                                 }`}>
-                                  무료
-                                </span>
-                              ) : item.price && (
-                                <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                  {formatPrice(item.price)}
+                                  {formatPrice(item.price, item.isFree)}
                                 </span>
                               )}
                             </div>
@@ -424,15 +416,11 @@ export function CartPage() {
                                   {item.estimatedHours}시간
                                 </span>
                               )}
-                              {item.isFree ? (
+                              {formatPrice(item.price, item.isFree) && (
                                 <span className={`text-xs px-2 py-0.5 rounded ${
-                                  isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
+                                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                                 }`}>
-                                  무료
-                                </span>
-                              ) : item.price && (
-                                <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                  {formatPrice(item.price)}
+                                  {formatPrice(item.price, item.isFree)}
                                 </span>
                               )}
                             </div>
@@ -499,20 +487,20 @@ export function CartPage() {
                   )}
                 </div>
 
-                {/* Total Price */}
+                {/* 유료 강의 수 및 총 금액 */}
                 <div className={`space-y-3 mb-6 pb-6 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-                  {freeCoursesCount > 0 && (
-                    <div className={`flex justify-between ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                      <span>무료 강의</span>
-                      <span>{freeCoursesCount}개</span>
-                    </div>
+                  {totalPrice > 0 && (
+                    <>
+                      <div className={`flex justify-between ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <span>유료 강의</span>
+                        <span>{selectedCartItems.filter(item => !item.isFree && item.price && parseFloat(item.price) > 0).length}개</span>
+                      </div>
+                      <div className={`flex justify-between font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        <span>총 금액</span>
+                        <span className="text-[#6778ff]">₩{totalPrice.toLocaleString()}</span>
+                      </div>
+                    </>
                   )}
-                  <div className={`flex justify-between items-center`}>
-                    <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>총 결제금액</span>
-                    <span className={`text-2xl font-bold ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`}>
-                      {totalPrice === 0 ? '무료' : `₩${totalPrice.toLocaleString()}`}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Checkout Button */}
