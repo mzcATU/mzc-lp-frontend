@@ -247,8 +247,8 @@ export const tenantUserMenuData: MenuItem[] = [
     icon: Briefcase,
     subItems: [
       { id: 'my-courses', label: { ko: '강의 디자인', en: 'Course Design' }, icon: BookOpen, path: '/tu/teaching/courses' },
-      { id: 'my-programs', label: { ko: '강의 개설', en: 'Course Creation' }, icon: Package, path: '/tu/teaching/programs' },
-      { id: 'my-assignments', label: { ko: '강의 관리', en: 'Course Management' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
+      { id: 'my-programs', label: { ko: '개설 신청 현황', en: 'Submission Status' }, icon: Package, path: '/tu/teaching/programs' },
+      { id: 'my-assignments', label: { ko: '강의 운영', en: 'Course Operations' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
       { id: 'my-content', label: { ko: '내 콘텐츠', en: 'My Content' }, icon: PenTool, path: '/tu/teaching/content' },
       { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'] },
     ],
@@ -282,7 +282,7 @@ export const myPageMenuData: MenuItem[] = [
     icon: Briefcase,
     subItems: [
       { id: 'my-courses', label: { ko: '내 강의', en: 'My Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/teaching' },
-      { id: 'create-course', label: { ko: '강의 개설하기', en: 'Create Course' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
+      { id: 'create-course', label: { ko: '강의 디자인 시작하기', en: 'Start Course Design' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
       { id: 'teaching-stats', label: { ko: '내 강의 통계', en: 'Teaching Stats' }, icon: TrendingUp, path: '/tu/b2c/mypage/teaching/stats' },
     ],
   },

@@ -5,7 +5,6 @@ import {
   Filter,
   Loader2,
   AlertCircle,
-  Eye,
   Edit2,
   Send,
   Trash2,
@@ -34,10 +33,10 @@ const DEFAULT_THUMBNAIL =
   'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
 const t = {
-  title: { ko: '강의 개설', en: 'Course Creation' },
+  title: { ko: '개설 신청 현황', en: 'Submission Status' },
   subtitle: {
-    ko: '신청한 강의의 상태를 확인하고 관리하세요',
-    en: 'Check the status and manage your submitted courses',
+    ko: '디자인한 강의의 프로그램 개설 신청 및 승인 상태를 확인하세요',
+    en: 'Check the submission and approval status of your designed courses',
   },
   all: { ko: '전체', en: 'All' },
   draft: { ko: '임시저장', en: 'Draft' },
@@ -50,10 +49,10 @@ const t = {
   titleSort: { ko: '제목순', en: 'Title' },
   noPrograms: { ko: '신청한 프로그램이 없습니다', en: 'No programs found' },
   noProgramsDesc: {
-    ko: '강의계획에서 프로그램을 신청하면 여기에 표시됩니다',
-    en: 'Programs submitted from course plans will appear here',
+    ko: "'강의 디자인'에서 강의를 완성한 후 프로그램 개설을 신청하면 여기에 표시됩니다",
+    en: 'Complete your course in Course Design and submit for program creation to see it here',
   },
-  goToCourses: { ko: '강의계획으로 이동', en: 'Go to Course Plans' },
+  goToCourses: { ko: '강의 디자인으로 이동', en: 'Go to Course Design' },
   loading: { ko: '프로그램 목록을 불러오는 중...', en: 'Loading programs...' },
   error: { ko: '프로그램 목록을 불러오는데 실패했습니다', en: 'Failed to load programs' },
   retry: { ko: '다시 시도', en: 'Retry' },
@@ -76,6 +75,10 @@ const t = {
     en: 'Program submitted for review.',
   },
   deleteSuccess: { ko: '프로그램이 삭제되었습니다.', en: 'Program deleted.' },
+  flowGuideTitle: { ko: '강의 개설 절차', en: 'Course Creation Process' },
+  flowStep1: { ko: "'강의 디자인'에서 강의 콘텐츠를 구성하세요", en: 'Design your course content in Course Design' },
+  flowStep2: { ko: '완성된 강의로 프로그램 개설을 신청하세요', en: 'Submit your completed course for program creation' },
+  flowStep3: { ko: "관리자 승인 후 '강의 운영'에서 수강생을 관리할 수 있습니다", en: 'After approval, manage students in Course Operations' },
 };
 
 const statusBadgeVariant: Record<
@@ -106,7 +109,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
   const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState<'all' | ProgramStatus>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'title'>('recent');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -215,17 +218,6 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
           {/* View Toggle */}
           <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg ml-2">
             <button
-              onClick={() => setViewMode('list')}
-              className={cn(
-                'p-2 rounded-md transition-colors',
-                viewMode === 'list'
-                  ? 'bg-btn-neutral text-white'
-                  : 'bg-transparent text-text-secondary hover:bg-bg-secondary'
-              )}
-            >
-              <List size={16} />
-            </button>
-            <button
               onClick={() => setViewMode('grid')}
               className={cn(
                 'p-2 rounded-md transition-colors',
@@ -235,6 +227,17 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
               )}
             >
               <LayoutGrid size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn(
+                'p-2 rounded-md transition-colors',
+                viewMode === 'list'
+                  ? 'bg-btn-neutral text-white'
+                  : 'bg-transparent text-text-secondary hover:bg-bg-secondary'
+              )}
+            >
+              <List size={16} />
             </button>
           </div>
         </div>
@@ -246,7 +249,11 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
           /* List View */
           <div className="flex flex-col gap-3">
             {sortedPrograms.map((program) => (
-              <Card key={program.id} className="p-4">
+              <Card
+                key={program.id}
+                className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
+              >
                 <div className="flex items-center gap-4">
                   {/* Thumbnail */}
                   <div className="w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-bg-secondary">
@@ -271,11 +278,9 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                         {PROGRAM_STATUS_LABELS[program.status]}
                       </Badge>
                     </div>
-                    {program.description && (
-                      <p className="text-text-secondary text-sm truncate">
-                        {program.description}
-                      </p>
-                    )}
+                    <p className="text-text-secondary text-sm truncate h-5">
+                      {program.description || '\u00A0'}
+                    </p>
                     <div className="flex gap-2 mt-1 text-xs text-text-secondary">
                       {program.level && (
                         <span>{PROGRAM_LEVEL_LABELS[program.level]}</span>
@@ -290,17 +295,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="border border-border"
-                      onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
-                    >
-                      <Eye size={14} />
-                      {getText('view')}
-                    </Button>
-
+                  <div className="flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     {canEdit(program.status) && (
                       <Button
                         size="sm"
@@ -342,7 +337,11 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedPrograms.map((program) => (
-              <Card key={program.id} className="overflow-hidden">
+              <Card
+                key={program.id}
+                className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow flex flex-col"
+                onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
+              >
                 {/* Thumbnail */}
                 <div className="aspect-video relative overflow-hidden bg-bg-secondary">
                   <img
@@ -362,19 +361,17 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                 </div>
 
                 {/* Content */}
-                <div className="p-4">
-                  <h3 className="text-text-primary font-medium mb-2 line-clamp-2">
+                <div className="p-4 flex flex-col flex-1">
+                  <h3 className="text-text-primary font-medium mb-2 line-clamp-2 min-h-[3rem]">
                     {program.title}
                   </h3>
 
-                  {program.description && (
-                    <p className="text-text-secondary text-sm mb-3 line-clamp-2">
-                      {program.description}
-                    </p>
-                  )}
+                  <p className="text-text-secondary text-sm mb-3 line-clamp-2 min-h-[2.5rem]">
+                    {program.description || '\u00A0'}
+                  </p>
 
                   {/* Meta Info */}
-                  <div className="flex flex-wrap gap-2 text-xs text-text-secondary mb-4">
+                  <div className="flex flex-wrap gap-2 text-xs text-text-secondary mb-4 min-h-[1.75rem]">
                     {program.level && (
                       <span className="px-2 py-1 bg-bg-secondary rounded">
                         {PROGRAM_LEVEL_LABELS[program.level]}
@@ -393,17 +390,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="flex-1 border border-border"
-                      onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
-                    >
-                      <Eye size={14} />
-                      {getText('view')}
-                    </Button>
-
+                  <div className="flex gap-2 mt-auto" onClick={(e) => e.stopPropagation()}>
                     {canEdit(program.status) && (
                       <Button
                         size="sm"
@@ -445,10 +432,30 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
         )
       ) : (
         /* Empty State */
-        <div className="text-center py-20 px-5 bg-bg-secondary rounded-xl border border-border">
+        <div className="text-center py-16 px-5 bg-bg-secondary rounded-xl border border-border">
           <Package size={64} className="text-text-secondary mb-4 opacity-30 mx-auto" />
           <h3 className="text-text-primary mb-2">{getText('noPrograms')}</h3>
-          <p className="text-text-secondary mb-6">{getText('noProgramsDesc')}</p>
+          <p className="text-text-secondary mb-8">{getText('noProgramsDesc')}</p>
+
+          {/* 플로우 안내 */}
+          <div className="max-w-md mx-auto mb-8 text-left bg-bg-primary rounded-lg p-5 border border-border">
+            <p className="text-sm font-medium text-text-primary mb-3">{getText('flowGuideTitle')}</p>
+            <ol className="text-sm text-text-secondary space-y-2">
+              <li className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-btn-brand text-white text-xs flex items-center justify-center">1</span>
+                <span>{getText('flowStep1')}</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-btn-brand text-white text-xs flex items-center justify-center">2</span>
+                <span>{getText('flowStep2')}</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-btn-brand text-white text-xs flex items-center justify-center">3</span>
+                <span>{getText('flowStep3')}</span>
+              </li>
+            </ol>
+          </div>
+
           <Button onClick={() => navigate('/tu/teaching/courses')}>
             {getText('goToCourses')}
           </Button>
