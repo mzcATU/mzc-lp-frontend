@@ -12,7 +12,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Button, IconStatCard, Card } from '@/components/common';
-import { useMyCourses, useMyPrograms, useMyAssignments } from '@/hooks/tu';
+import { useMyCourses, useMyPrograms, useMyInstructorStatistics } from '@/hooks/tu';
 
 interface TUDashboardPageProps {
   language?: 'ko' | 'en';
@@ -74,11 +74,11 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
   // API 훅
   const { data: coursesData, isLoading: isLoadingCourses } = useMyCourses();
   const { data: programsData, isLoading: isLoadingPrograms } = useMyPrograms();
-  const { data: assignmentsData, isLoading: isLoadingAssignments } = useMyAssignments();
+  const { data: statistics, isLoading: isLoadingStats } = useMyInstructorStatistics();
 
   const getText = (key: keyof typeof t) => t[key][language];
 
-  const isLoading = isLoadingCourses || isLoadingPrograms || isLoadingAssignments;
+  const isLoading = isLoadingCourses || isLoadingPrograms || isLoadingStats;
 
   if (isLoading) {
     return (
@@ -94,13 +94,13 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
   // 데이터 가공
   const courses = coursesData?.content || [];
   const programs = programsData?.content || [];
-  const assignments = assignmentsData?.content || [];
+  const courseTimeStats = statistics?.courseTimeStats || [];
 
   // 통계 계산
   const draftCourses = courses.filter((c) => !c.isComplete);
   const pendingPrograms = programs.filter((p) => p.status === 'PENDING');
   const approvedPrograms = programs.filter((p) => p.status === 'APPROVED');
-  const totalStudents = assignments.reduce((sum, a) => sum + (a.enrollmentCount || 0), 0);
+  const totalStudents = courseTimeStats.reduce((sum: number, stat) => sum + (stat.totalStudents || 0), 0);
 
   return (
     <div className="p-8 bg-bg-app_default min-h-screen">
@@ -130,7 +130,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
         <IconStatCard
           icon={<Users size={20} className="text-btn-brand" />}
           label={getText('statActive')}
-          value={`${assignments.length}개 / ${totalStudents}명`}
+          value={`${courseTimeStats.length}개 / ${totalStudents}명`}
         />
       </div>
 
@@ -257,7 +257,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
             </h3>
             <p className="text-sm text-text-secondary m-0">{getText('activeSectionSubtitle')}</p>
           </div>
-          {assignments.length > 0 && (
+          {courseTimeStats.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -270,45 +270,42 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
           )}
         </div>
 
-        {assignments.length === 0 ? (
+        {courseTimeStats.length === 0 ? (
           <div className="py-8 text-center text-text-secondary text-sm">
             {getText('emptyActive')}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {assignments.slice(0, 5).map((assignment) => (
+            {courseTimeStats.slice(0, 5).map((stat) => (
               <div
-                key={assignment.courseTimeId}
+                key={stat.timeKey}
                 className="p-4 bg-bg-app_default rounded-lg flex justify-between items-center gap-4 cursor-pointer hover:bg-bg-secondary transition-colors"
-                onClick={() => navigate(`/tu/teaching/assignments/${assignment.courseTimeId}`)}
+                onClick={() => navigate(`/tu/teaching/assignments/${stat.timeKey}`)}
               >
                 <div className="flex-1 min-w-0">
                   <div className="text-text-primary font-medium truncate mb-1">
-                    {assignment.courseTimeTitle || assignment.programTitle}
-                  </div>
-                  <div className="text-sm text-text-secondary">
-                    {assignment.startDate} ~ {assignment.endDate}
+                    {stat.courseName} - {stat.timeName}
                   </div>
                 </div>
                 <div className="flex gap-6 items-center text-sm">
                   <div className="text-center">
                     <div className="text-text-secondary text-xs mb-1">{getText('students')}</div>
                     <div className="text-text-primary font-semibold">
-                      {assignment.enrollmentCount || 0}명
+                      {stat.totalStudents || 0}명
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="text-text-secondary text-xs mb-1">{getText('completion')}</div>
                     <div
                       className={`font-semibold ${
-                        (assignment.completionRate || 0) >= 80
+                        (stat.completionRate || 0) >= 80
                           ? 'text-status-success_text'
-                          : (assignment.completionRate || 0) >= 50
+                          : (stat.completionRate || 0) >= 50
                           ? 'text-status-warning_text'
                           : 'text-text-primary'
                       }`}
                     >
-                      {assignment.completionRate || 0}%
+                      {stat.completionRate || 0}%
                     </div>
                   </div>
                 </div>
