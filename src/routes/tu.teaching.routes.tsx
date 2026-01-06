@@ -40,8 +40,8 @@ function TenantUserWrapper() {
 export const tuTeachingRoutes = (
   <>
   <Route path="/:subdomain/tu" element={<TenantUserWrapper />}>
-    <Route index element={<DashboardPage />} />
-    <Route path="dashboard" element={<DashboardPage />} />
+    <Route index element={<TUDashboardPage />} />
+    <Route path="dashboard" element={<TUDashboardPage />} />
     <Route path="teaching/courses" element={<MyCoursesPage />} />
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
