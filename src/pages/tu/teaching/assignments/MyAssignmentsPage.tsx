@@ -18,13 +18,13 @@ interface MyAssignmentsPageProps {
 }
 
 const t = {
-  title: { ko: '강의 관리', en: 'Course Management' },
-  subtitle: { ko: '배정된 강의와 통계를 확인하세요.', en: 'View your assigned courses and statistics.' },
+  title: { ko: '강의 운영', en: 'Course Operations' },
+  subtitle: { ko: '주강사·보조강사로 진행 중인 강의와 수강생 현황을 확인하세요', en: 'View courses you are teaching and student progress' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
-  noAssignments: { ko: '배정된 강의가 없습니다.', en: 'No assignments found.' },
-  noAssignmentsDesc: { ko: '아직 배정된 강의가 없습니다.', en: 'You have no assigned courses yet.' },
-  myAssignments: { ko: '강의 관리 목록', en: 'Course Management List' },
+  noAssignments: { ko: '진행 중인 강의가 없습니다', en: 'No active courses found' },
+  noAssignmentsDesc: { ko: '승인된 프로그램에 강사로 배정되면 여기에 표시됩니다', en: 'Courses will appear here when you are assigned as an instructor' },
+  myAssignments: { ko: '진행 중인 강의', en: 'Active Courses' },
   courseStats: { ko: '차수별 통계', en: 'Course Statistics' },
   filterAll: { ko: '전체', en: 'All' },
   filterActive: { ko: '활동 중', en: 'Active' },

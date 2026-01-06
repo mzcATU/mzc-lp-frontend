@@ -17,8 +17,9 @@ import {
   TuProgramEditPage,
   RoadmapListPage,
   RoadmapCreatePage,
+  TUDashboardPage,
 } from '@/pages/tu';
-import { DashboardPage, PlaceholderPage } from './pages';
+import { PlaceholderPage } from './pages';
 
 function TenantUserWrapper() {
   return (
@@ -38,8 +39,8 @@ function TenantUserWrapper() {
  */
 export const tuTeachingRoutes = (
   <Route path="/tu" element={<TenantUserWrapper />}>
-    <Route index element={<DashboardPage />} />
-    <Route path="dashboard" element={<DashboardPage />} />
+    <Route index element={<TUDashboardPage />} />
+    <Route path="dashboard" element={<TUDashboardPage />} />
 
     {/* 내 강의계획 */}
     <Route path="teaching/courses" element={<MyCoursesPage />} />

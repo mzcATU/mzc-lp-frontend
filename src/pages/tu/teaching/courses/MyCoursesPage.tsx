@@ -299,9 +299,9 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
           return (
             <div key={course.id} className="relative">
-              {/* Status Badge */}
+              {/* Status Badge - 썸네일 우측 하단 */}
               {!course.isComplete && (
-                <div className="absolute top-3 left-3 z-10 px-2 py-1 rounded-md bg-status-warning/20 text-status-warning text-xs font-medium flex items-center gap-1">
+                <div className="absolute top-[10rem] left-3 z-10 px-2 py-1 rounded-md bg-status-warning text-white text-xs font-medium flex items-center gap-1 shadow-sm">
                   <AlertTriangle size={12} />
                   {getText('incomplete')}
                 </div>
@@ -323,8 +323,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
               {/* Course Card */}
               <div className={cn(
                 'transition-all',
-                isSelected && 'ring-2 ring-btn-primary rounded-xl',
-                !course.isComplete && 'opacity-80'
+                isSelected && 'ring-2 ring-btn-primary rounded-xl'
               )}>
                 <CourseCard
                   course={course}
@@ -333,7 +332,6 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                     courseCompletion: getText('courseCompletion'),
                     lessons: getText('lessons'),
                     manageCourse: getText('manageCourse'),
-                    editCourse: getText('editCourse'),
                   }}
                 />
               </div>
