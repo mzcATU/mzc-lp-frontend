@@ -75,7 +75,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
   };
 
   return (
-    <div className="p-8 bg-bg-default min-h-screen">
+    <div className="p-8 bg-bg-app min-h-screen">
       {/* Header */}
       <div className="mb-8">
         <Button variant="ghost" onClick={() => navigate('/tu/teaching/roadmaps')} className="mb-4">

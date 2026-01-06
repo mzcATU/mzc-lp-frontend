@@ -99,7 +99,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
   const avgCourses = Math.round(MOCK_ROADMAPS.reduce((acc, r) => acc + r.courseCount, 0) / MOCK_ROADMAPS.length);
 
   return (
-    <div className="p-8 bg-bg-default min-h-screen">
+    <div className="p-8 bg-bg-app min-h-screen">
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>

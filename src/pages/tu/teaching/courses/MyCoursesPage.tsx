@@ -36,7 +36,7 @@ function mapCourseResponseToCourse(response: CourseResponse): Course & { isCompl
 }
 
 const t = {
-  title: { ko: '내 강의 계획', en: 'My Course Plans' },
+  title: { ko: '강의 디자인', en: 'Course Design' },
   subtitle: { ko: '개설한 강의를 관리하고 수강생을 확인하세요', en: 'Manage your courses and track student progress' },
   createCourse: { ko: '강의 생성', en: 'Create Course' },
   all: { ko: '전체', en: 'All' },
