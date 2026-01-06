@@ -223,7 +223,7 @@ export function Step2CurriculumTree({
     [items, updateTree, updateItemInTree]
   );
 
-  // 폴더 추가 (회차 추가)
+  // 폴더 추가 (차시 추가)
   const handleAddFolder = useCallback(
     (parentId: string | null) => {
       const parentItem = parentId ? findItemById(items, parentId) : null;
