@@ -26,7 +26,7 @@ interface PageResponse<T> {
 // 프로그램 필터 파라미터
 export interface ProgramFilterParams {
   status?: ProgramStatus;
-  creatorId?: number;
+  createdBy?: number;
   page?: number;
   size?: number;
   sort?: string;
