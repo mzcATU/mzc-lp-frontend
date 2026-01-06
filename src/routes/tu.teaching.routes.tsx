@@ -7,6 +7,7 @@ import {
   CourseCreatePage,
   CourseEditPage,
   TeachingCourseDetailPage,
+  CourseApplyPage,
   TuContentCreatePage,
   ContentDetailPage,
   MyAssignmentsPage,
@@ -45,6 +46,7 @@ export const tuTeachingRoutes = (
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
     <Route path="teaching/courses/:courseId/edit" element={<CourseEditPage />} />
+    <Route path="teaching/courses/:courseId/apply" element={<CourseApplyPage />} />
 
     {/* 내 프로그램 */}
     <Route path="teaching/programs" element={<MyProgramsPage />} />
