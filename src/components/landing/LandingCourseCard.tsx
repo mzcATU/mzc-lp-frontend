@@ -9,7 +9,7 @@ interface LandingCourseCardProps {
   id: number;
   title: string;
   instructor: string;
-  price: string;
+  price: string | null; // B2B: null이면 표시 안함
   rating: number;
   reviewCount: number;
   image: string;
@@ -65,7 +65,7 @@ export function LandingCourseCard({
     if (tag === '할인중') return t.landing.tagSale;
     if (tag === '상시모집') return '상시모집';
     if (tag === '모집중') return '모집중';
-    if (tag === '무료') return '무료';
+    if (tag === '자기부담') return '자기부담';
     return tag;
   };
 
@@ -100,8 +100,8 @@ export function LandingCourseCard({
                           ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
                           : tag === '모집중'
                             ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                            : tag === '무료'
-                              ? 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
+                            : tag === '자기부담'
+                              ? 'bg-gradient-to-r from-[#f59e0b] to-[#f97316]'
                               : 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
                   }`}
                 >
@@ -151,8 +151,10 @@ export function LandingCourseCard({
           </div>
 
           <div className="pt-2 flex items-center justify-between">
-            <span className="font-bold text-[#6778ff] text-lg">{price}</span>
-            <div className="flex gap-1.5">
+            {price && (
+              <span className="font-bold text-[#f59e0b] text-lg">{price}</span>
+            )}
+            <div className={`flex gap-1.5 ${!price ? 'ml-auto' : ''}`}>
               <span className="landing-badge-bg landing-text-muted text-[10px] px-2 py-1 rounded-full">
                 {formatStudentCount(reviewCount)}
               </span>
