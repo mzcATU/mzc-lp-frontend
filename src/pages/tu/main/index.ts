@@ -10,3 +10,4 @@ export { NotificationsPage } from './NotificationsPage';
 export { NotificationDetailPage } from './NotificationDetailPage';
 export { CourseDetailPage } from './CourseDetailPage';
 export { InstructorProfilePage } from './InstructorProfilePage';
+export { SearchPage } from './SearchPage';

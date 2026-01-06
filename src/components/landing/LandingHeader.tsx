@@ -51,7 +51,7 @@ export function LandingHeader() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/tu/b2c/courses?search=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/tu/b2c/search?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
