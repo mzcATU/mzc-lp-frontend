@@ -27,11 +27,11 @@ const DEFAULT_BRANDING: PublicBrandingResponse = {
 export const tenantSettingsService = {
   /** 현재 테넌트 브랜딩 조회 (로그인 사용자용) */
   async getBranding(): Promise<PublicBrandingResponse> {
-    const { data } = await axiosInstance.get<{ data: PublicBrandingResponse }>(
+    const { data } = await axiosInstance.get<PublicBrandingResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.BRANDING
     );
-    // data.data가 null/undefined인 경우 기본 브랜딩 반환
-    return data.data ?? DEFAULT_BRANDING;
+// data가 null/undefined인 경우 기본 브랜딩 반환
+    return data ?? DEFAULT_BRANDING;
   },
 
   /** 테넌트 설정 조회 */

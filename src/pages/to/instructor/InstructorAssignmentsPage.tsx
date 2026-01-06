@@ -279,10 +279,10 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
         );
       })
       .map((user) => ({
-        value: String(user.userId),
+        value: String(user.id),
         label: user.name,
         email: user.email,
-        isAssigned: assignedInstructorIds.has(user.userId),
+        isAssigned: assignedInstructorIds.has(user.id),
       }));
   }, [allUsers, instructorSearch, assignedInstructorIds]);
 
