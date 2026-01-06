@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, CalendarDays, FileText } from 'lucide-react';
+import { Loader2, CalendarDays, FileText, BookOpen } from 'lucide-react';
 import { Button } from '@/components/common';
 import { useMyAssignments, useMyInstructorStatistics } from '@/hooks/tu';
 import {
@@ -24,6 +24,7 @@ const t = {
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   noAssignments: { ko: '진행 중인 강의가 없습니다', en: 'No active courses found' },
   noAssignmentsDesc: { ko: '승인된 프로그램에 강사로 배정되면 여기에 표시됩니다', en: 'Courses will appear here when you are assigned as an instructor' },
+  goToCourseDesign: { ko: '강의 디자인으로 이동', en: 'Go to Course Design' },
   myAssignments: { ko: '진행 중인 강의', en: 'Active Courses' },
   courseStats: { ko: '차수별 통계', en: 'Course Statistics' },
   filterAll: { ko: '전체', en: 'All' },
@@ -131,7 +132,14 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                 <div className="text-center py-12">
                   <CalendarDays size={48} className="mx-auto mb-3 text-text-placeholder" />
                   <p className="text-text-secondary mb-1">{getText('noAssignments')}</p>
-                  <p className="text-sm text-text-placeholder">{getText('noAssignmentsDesc')}</p>
+                  <p className="text-sm text-text-placeholder mb-4">{getText('noAssignmentsDesc')}</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/tu/teaching/courses')}
+                  >
+                    <BookOpen size={16} />
+                    {getText('goToCourseDesign')}
+                  </Button>
                 </div>
               )}
 

@@ -345,6 +345,10 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button onClick={() => navigate('/tu/teaching/content/create')}>
+                <Plus size={20} />
+                <span>{getText('createContent')}</span>
+              </Button>
               <Button
                 variant="ghost"
                 className="border border-border"
@@ -352,10 +356,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               >
                 <FolderTree size={20} />
                 <span>{getText('organizeManage')}</span>
-              </Button>
-              <Button onClick={() => navigate('/tu/teaching/content/create')}>
-                <Plus size={20} />
-                <span>{getText('createContent')}</span>
               </Button>
             </div>
           </div>
