@@ -121,28 +121,28 @@ export const brandingService = {
 
   /** 테넌트 설정 전체 조회 */
   async getSettings(): Promise<TenantSettingsResponse> {
-    const { data } = await axiosInstance.get<{ data: TenantSettingsResponse }>(
+    const { data } = await axiosInstance.get<TenantSettingsResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.BASE
     );
-    return data.data;
+    return data;
   },
 
   /** 디자인 설정 업데이트 */
   async updateDesignSettings(request: UpdateDesignSettingsRequest): Promise<TenantSettingsResponse> {
-    const { data } = await axiosInstance.put<{ data: TenantSettingsResponse }>(
+    const { data } = await axiosInstance.put<TenantSettingsResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.DESIGN,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 레이아웃 설정 업데이트 */
   async updateLayoutSettings(request: UpdateLayoutSettingsRequest): Promise<TenantSettingsResponse> {
-    const { data } = await axiosInstance.put<{ data: TenantSettingsResponse }>(
+    const { data } = await axiosInstance.put<TenantSettingsResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.LAYOUT,
       request
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -151,28 +151,28 @@ export const brandingService = {
 
   /** 네비게이션 항목 목록 조회 */
   async getNavigationItems(): Promise<NavigationItemResponse[]> {
-    const { data } = await axiosInstance.get<{ data: NavigationItemResponse[] }>(
+    const { data } = await axiosInstance.get<NavigationItemResponse[]>(
       API_ENDPOINTS.TENANT_SETTINGS.NAVIGATION
     );
-    return data.data;
+    return data;
   },
 
   /** 네비게이션 항목 생성 */
   async createNavigationItem(request: NavigationItemRequest): Promise<NavigationItemResponse> {
-    const { data } = await axiosInstance.post<{ data: NavigationItemResponse }>(
+    const { data } = await axiosInstance.post<NavigationItemResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.NAVIGATION,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 네비게이션 항목 수정 */
   async updateNavigationItem(id: number, request: NavigationItemRequest): Promise<NavigationItemResponse> {
-    const { data } = await axiosInstance.put<{ data: NavigationItemResponse }>(
+    const { data } = await axiosInstance.put<NavigationItemResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.NAVIGATION_ITEM(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 네비게이션 항목 삭제 */
@@ -182,18 +182,18 @@ export const brandingService = {
 
   /** 네비게이션 항목 순서 변경 */
   async reorderNavigationItems(itemIds: number[]): Promise<NavigationItemResponse[]> {
-    const { data } = await axiosInstance.put<{ data: NavigationItemResponse[] }>(
+    const { data } = await axiosInstance.put<NavigationItemResponse[]>(
       API_ENDPOINTS.TENANT_SETTINGS.NAVIGATION_REORDER,
       itemIds
     );
-    return data.data;
+    return data;
   },
 
   /** 네비게이션 초기화 */
   async resetNavigationItems(): Promise<NavigationItemResponse[]> {
-    const { data } = await axiosInstance.post<{ data: NavigationItemResponse[] }>(
+    const { data } = await axiosInstance.post<NavigationItemResponse[]>(
       API_ENDPOINTS.TENANT_SETTINGS.NAVIGATION_RESET
     );
-    return data.data;
+    return data;
   },
 };

@@ -156,19 +156,19 @@ export const systemSettingsService = {
 
   /** 시스템 설정 조회 */
   async getSystemSettings(): Promise<SystemSettingsResponse> {
-    const { data } = await axiosInstance.get<{ data: SystemSettingsResponse }>(
+    const { data } = await axiosInstance.get<SystemSettingsResponse>(
       API_ENDPOINTS.SYSTEM_SETTINGS.BASE
     );
-    return data.data;
+    return data;
   },
 
   /** 시스템 설정 업데이트 */
   async updateSystemSettings(request: UpdateSystemSettingsRequest): Promise<SystemSettingsResponse> {
-    const { data } = await axiosInstance.put<{ data: SystemSettingsResponse }>(
+    const { data } = await axiosInstance.put<SystemSettingsResponse>(
       API_ENDPOINTS.SYSTEM_SETTINGS.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -177,18 +177,18 @@ export const systemSettingsService = {
 
   /** 테넌트 기본값 조회 */
   async getTenantDefaults(): Promise<TenantDefaultsResponse> {
-    const { data } = await axiosInstance.get<{ data: TenantDefaultsResponse }>(
+    const { data } = await axiosInstance.get<TenantDefaultsResponse>(
       API_ENDPOINTS.SYSTEM_SETTINGS.TENANT_DEFAULTS
     );
-    return data.data;
+    return data;
   },
 
   /** 테넌트 기본값 업데이트 */
   async updateTenantDefaults(request: UpdateTenantDefaultsRequest): Promise<TenantDefaultsResponse> {
-    const { data } = await axiosInstance.put<{ data: TenantDefaultsResponse }>(
+    const { data } = await axiosInstance.put<TenantDefaultsResponse>(
       API_ENDPOINTS.SYSTEM_SETTINGS.TENANT_DEFAULTS,
       request
     );
-    return data.data;
+    return data;
   },
 };

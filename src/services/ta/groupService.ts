@@ -14,45 +14,45 @@ import type {
 export const groupService = {
   /** 그룹 목록 조회 */
   async getGroups(params?: UserGroupListParams): Promise<UserGroupListResponse> {
-    const { data } = await axiosInstance.get<{ data: UserGroupListResponse }>(
+    const { data } = await axiosInstance.get<UserGroupListResponse>(
       API_ENDPOINTS.GROUPS.BASE,
       { params }
     );
-    return data.data;
+    return data;
   },
 
   /** 활성 그룹 목록 조회 */
   async getActiveGroups(): Promise<UserGroup[]> {
-    const { data } = await axiosInstance.get<{ data: UserGroup[] }>(
+    const { data } = await axiosInstance.get<UserGroup[]>(
       API_ENDPOINTS.GROUPS.ACTIVE
     );
-    return data.data;
+    return data;
   },
 
   /** 그룹 상세 조회 */
   async getGroup(id: number): Promise<UserGroup> {
-    const { data } = await axiosInstance.get<{ data: UserGroup }>(
+    const { data } = await axiosInstance.get<UserGroup>(
       API_ENDPOINTS.GROUPS.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 그룹 생성 */
   async create(request: CreateUserGroupRequest): Promise<UserGroup> {
-    const { data } = await axiosInstance.post<{ data: UserGroup }>(
+    const { data } = await axiosInstance.post<UserGroup>(
       API_ENDPOINTS.GROUPS.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 그룹 수정 */
   async update(id: number, request: UpdateUserGroupRequest): Promise<UserGroup> {
-    const { data } = await axiosInstance.put<{ data: UserGroup }>(
+    const { data } = await axiosInstance.put<UserGroup>(
       API_ENDPOINTS.GROUPS.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 그룹 삭제 */

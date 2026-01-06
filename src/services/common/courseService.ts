@@ -43,41 +43,41 @@ export const courseService = {
 
   /** 강의 생성 */
   async create(request: CreateCourseRequest): Promise<CourseResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseResponse }>(
+    const { data } = await axiosInstance.post<CourseResponse>(
       API_ENDPOINTS.COURSES.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 강의 목록 조회 */
   async getCourses(
     params?: CourseFilterParams
   ): Promise<PageResponse<CourseResponse>> {
-    const { data } = await axiosInstance.get<{ data: PageResponse<CourseResponse> }>(
+    const { data } = await axiosInstance.get<PageResponse<CourseResponse>>(
       API_ENDPOINTS.COURSES.BASE,
       { params }
     );
-    return data.data;
+    return data;
   },
 
   /** 내 강의 목록 조회 */
   async getMyCourses(
     params?: CourseFilterParams
   ): Promise<PageResponse<CourseResponse>> {
-    const { data } = await axiosInstance.get<{ data: PageResponse<CourseResponse> }>(
+    const { data } = await axiosInstance.get<PageResponse<CourseResponse>>(
       API_ENDPOINTS.COURSES.MY,
       { params }
     );
-    return data.data;
+    return data;
   },
 
   /** 강의 상세 조회 */
   async getCourse(id: number): Promise<CourseDetailResponse> {
-    const { data } = await axiosInstance.get<{ data: CourseDetailResponse }>(
+    const { data } = await axiosInstance.get<CourseDetailResponse>(
       API_ENDPOINTS.COURSES.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 강의 수정 */
@@ -85,11 +85,11 @@ export const courseService = {
     id: number,
     request: UpdateCourseRequest
   ): Promise<CourseResponse> {
-    const { data } = await axiosInstance.put<{ data: CourseResponse }>(
+    const { data } = await axiosInstance.put<CourseResponse>(
       API_ENDPOINTS.COURSES.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 강의 삭제 */
@@ -118,21 +118,21 @@ export const courseService = {
     courseId: number,
     request: CreateFolderRequest
   ): Promise<CourseItemResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseItemResponse }>(
+    const { data } = await axiosInstance.post<CourseItemResponse>(
       API_ENDPOINTS.COURSES.FOLDERS(courseId),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 계층 구조 조회 */
   async getItemsHierarchy(
     courseId: number
   ): Promise<CourseItemHierarchyResponse[]> {
-    const { data } = await axiosInstance.get<{ data: CourseItemHierarchyResponse[] }>(
+    const { data } = await axiosInstance.get<CourseItemHierarchyResponse[]>(
       API_ENDPOINTS.COURSES.ITEMS_HIERARCHY(courseId)
     );
-    return data.data;
+    return data;
   },
 
   /** 순서대로 차시 조회 */
@@ -194,10 +194,10 @@ export const courseService = {
     itemId: number,
     request: UpdateDisplayInfoRequest
   ): Promise<CourseItemResponse> {
-    const { data } = await axiosInstance.patch<{ data: CourseItemResponse }>(
+    const { data } = await axiosInstance.patch<CourseItemResponse>(
       API_ENDPOINTS.COURSES.ITEM_DISPLAY_INFO(courseId, itemId),
       request
     );
-    return data.data;
+    return data;
   },
 };
