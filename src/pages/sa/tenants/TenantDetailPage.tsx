@@ -212,6 +212,7 @@ export function TenantDetailPage() {
     if (!formState) return;
 
     try {
+      // 백엔드 UpdateTenantRequest DTO에 맞는 필드만 전송
       await updateMutation.mutateAsync({
         id: tenantId,
         request: {
@@ -219,24 +220,6 @@ export function TenantDetailPage() {
           status: formState.status,
           plan: formState.plan,
           customDomain: formState.customDomain || undefined,
-          adminName: formState.adminName,
-          adminEmail: formState.adminEmail,
-          branding: {
-            tenantId: tenantId,
-            logoUrl: formState.branding.logoUrl || undefined,
-            faviconUrl: formState.branding.faviconUrl || undefined,
-            primaryColor: formState.branding.primaryColor,
-            secondaryColor: formState.branding.secondaryColor || undefined,
-          },
-          settings: {
-            tenantId: tenantId,
-            allowSelfRegistration: false,
-            requireEmailVerification: false,
-            defaultLanguage: 'ko',
-            timezone: 'Asia/Seoul',
-            maxStorageGB: formState.settings.maxStorageGB,
-            maxUsersCount: formState.settings.maxUsersCount,
-          },
         },
       });
     } catch (err) {

@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useSubdomainPath } from '@/hooks/common';
 import {
   Clock,
   Users,
@@ -157,6 +158,7 @@ export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const courseTimeId = id ? parseInt(id, 10) : 0;
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   // CourseTime 상세 조회
   const { data: courseTime, isLoading, error } = useCourseTimeDetail(courseTimeId);
@@ -206,7 +208,7 @@ export function CourseDetailPage() {
   const handleWishlistToggle = async () => {
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/auth/login', { state: { from: `/tu/b2c/times/${courseTimeId}` } });
+      navigate('/auth/login', { state: { from: prefixPath(`/tu/b2c/times/${courseTimeId}`) } });
       return;
     }
 
@@ -263,7 +265,7 @@ export function CourseDetailPage() {
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/auth/login', { state: { from: `/tu/b2c/times/${courseTimeId}` } });
+      navigate('/auth/login', { state: { from: prefixPath(`/tu/b2c/times/${courseTimeId}`) } });
       return;
     }
 
@@ -279,7 +281,7 @@ export function CourseDetailPage() {
     // 로그인 체크
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/auth/login', { state: { from: `/tu/b2c/courses/${courseTimeId}` } });
+      navigate('/auth/login', { state: { from: prefixPath(`/tu/b2c/courses/${courseTimeId}`) } });
       return;
     }
 
@@ -294,7 +296,7 @@ export function CourseDetailPage() {
       onSuccess: () => {
         toast.success('수강 신청이 완료되었습니다.');
         // 내 학습 페이지로 이동
-        navigate('/tu/b2c/mypage/learning');
+        navigate(prefixPath('/tu/b2c/mypage/learning'));
       },
       onError: (error: Error & { response?: { data?: { error?: { message?: string } } } }) => {
         const message = error.response?.data?.error?.message || '수강 신청에 실패했습니다.';
@@ -328,7 +330,7 @@ export function CourseDetailPage() {
           <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>
             강의를 불러올 수 없습니다.
           </p>
-          <Link to="/tu/b2c/courses" className="text-[#6778ff] hover:underline mt-4 inline-block">
+          <Link to={prefixPath('/tu/b2c/courses')} className="text-[#6778ff] hover:underline mt-4 inline-block">
             강의 목록으로 돌아가기
           </Link>
         </div>
@@ -630,7 +632,7 @@ export function CourseDetailPage() {
                     {isAlreadyEnrolled ? (
                       <>
                         <button
-                          onClick={() => navigate(`/tu/b2c/mypage/learning/${existingEnrollment?.id}`)}
+                          onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${existingEnrollment?.id}`))}
                           className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2"
                         >
                           <PlayCircle className="w-5 h-5" />
