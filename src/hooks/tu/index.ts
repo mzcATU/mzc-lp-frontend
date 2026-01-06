@@ -174,6 +174,8 @@ export {
   useCommunityPost,
   useCommunityCategories,
   usePopularPosts,
+  useMyPosts,
+  useCommentedPosts,
   useCreatePost,
   useUpdatePost,
   useDeletePost,
