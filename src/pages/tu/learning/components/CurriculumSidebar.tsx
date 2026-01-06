@@ -49,21 +49,15 @@ const contentTypeIcons: Record<string, React.ReactNode> = {
   EXTERNAL_LINK: <LinkIcon className="w-4 h-4" />,
 };
 
-// API 응답 타입
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
-
 // 스냅샷 아이템 조회 훅
 function useSnapshotItems(snapshotId: number, enabled: boolean = true) {
   return useQuery({
     queryKey: ['snapshot', 'items', snapshotId],
     queryFn: async () => {
-      const response = await axiosInstance.get<ApiResponse<SnapshotItemResponse[]>>(
+      const response = await axiosInstance.get<SnapshotItemResponse[]>(
         API_ENDPOINTS.SNAPSHOTS.ITEMS(snapshotId)
       );
-      return response.data.data;
+      return response.data;
     },
     enabled: enabled && !!snapshotId && snapshotId !== 999, // 999는 데모 모드
   });
@@ -74,10 +68,10 @@ function useSnapshotRelationsOrdered(snapshotId: number, enabled: boolean = true
   return useQuery({
     queryKey: ['snapshot', 'relations', 'ordered', snapshotId],
     queryFn: async () => {
-      const response = await axiosInstance.get<ApiResponse<SnapshotRelationsResponse>>(
+      const response = await axiosInstance.get<SnapshotRelationsResponse>(
         API_ENDPOINTS.SNAPSHOTS.RELATIONS_ORDERED(snapshotId)
       );
-      return response.data.data;
+      return response.data;
     },
     enabled: enabled && !!snapshotId && snapshotId !== 999, // 999는 데모 모드
   });

@@ -5,8 +5,6 @@ import type {
   ChangePasswordRequest,
   UpdateProfileRequest,
 } from '@/types/common/auth.types';
-import type { ApiResponse } from '@/types/common/api.types';
-
 /**
  * 사용자 관련 API 서비스
  */
@@ -15,21 +13,21 @@ export const userService = {
    * 내 정보 조회
    */
   getMe: async (): Promise<UserDetailResponse> => {
-    const response = await axiosInstance.get<ApiResponse<UserDetailResponse>>(
+    const response = await axiosInstance.get<UserDetailResponse>(
       API_ENDPOINTS.USERS.ME
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 프로필 수정
    */
   updateProfile: async (request: UpdateProfileRequest): Promise<UserDetailResponse> => {
-    const response = await axiosInstance.put<ApiResponse<UserDetailResponse>>(
+    const response = await axiosInstance.put<UserDetailResponse>(
       API_ENDPOINTS.USERS.ME,
       request
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -47,11 +45,11 @@ export const userService = {
     formData.append('file', file);
 
     // FormData 전송 시 headers를 생략하여 브라우저가 boundary 포함한 Content-Type 자동 설정
-    const response = await axiosInstance.postForm<ApiResponse<{ profileImageUrl: string }>>(
+    const response = await axiosInstance.postForm<{ profileImageUrl: string }>(
       API_ENDPOINTS.USERS.ME_PROFILE_IMAGE,
       formData
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -75,7 +73,7 @@ export const userService = {
    */
   getMyCourseRoles: async () => {
     const response = await axiosInstance.get(API_ENDPOINTS.USERS.ME_COURSE_ROLES);
-    return response.data.data;
+    return response.data;
   },
 };
 

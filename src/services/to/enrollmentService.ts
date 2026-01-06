@@ -33,27 +33,27 @@ export const adminEnrollmentService = {
     courseTimeId: number,
     params?: EnrollmentFilterParams
   ): Promise<PageResponse<EnrollmentResponse>> {
-    const response = await axiosInstance.get<{ data: PageResponse<EnrollmentResponse> }>(
+    const response = await axiosInstance.get<PageResponse<EnrollmentResponse>>(
       API_ENDPOINTS.TIMES.ENROLLMENTS(courseTimeId),
       { params }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /** 수강 상세 조회 */
   async getEnrollment(id: number): Promise<EnrollmentDetailResponse> {
-    const { data } = await axiosInstance.get<{ data: EnrollmentDetailResponse }>(
+    const { data } = await axiosInstance.get<EnrollmentDetailResponse>(
       API_ENDPOINTS.ENROLLMENTS.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 차수별 수강 통계 조회 */
   async getCourseTimeStats(courseTimeId: number): Promise<CourseTimeEnrollmentStatsResponse> {
-    const { data } = await axiosInstance.get<{ data: CourseTimeEnrollmentStatsResponse }>(
+    const { data } = await axiosInstance.get<CourseTimeEnrollmentStatsResponse>(
       `${API_ENDPOINTS.TIMES.ENROLLMENTS(courseTimeId)}/stats`
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -65,11 +65,11 @@ export const adminEnrollmentService = {
     courseTimeId: number,
     request: ForceEnrollRequest
   ): Promise<ForceEnrollResultResponse> {
-    const { data } = await axiosInstance.post<{ data: ForceEnrollResultResponse }>(
+    const { data } = await axiosInstance.post<ForceEnrollResultResponse>(
       `${API_ENDPOINTS.TIMES.ENROLLMENTS(courseTimeId)}/force`,
       request
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -81,11 +81,11 @@ export const adminEnrollmentService = {
     id: number,
     request: CompleteEnrollmentRequest
   ): Promise<EnrollmentDetailResponse> {
-    const { data } = await axiosInstance.patch<{ data: EnrollmentDetailResponse }>(
+    const { data } = await axiosInstance.patch<EnrollmentDetailResponse>(
       `${API_ENDPOINTS.ENROLLMENTS.BY_ID(id)}/complete`,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 상태 변경 */
@@ -93,11 +93,11 @@ export const adminEnrollmentService = {
     id: number,
     request: UpdateEnrollmentStatusRequest
   ): Promise<EnrollmentDetailResponse> {
-    const { data } = await axiosInstance.patch<{ data: EnrollmentDetailResponse }>(
+    const { data } = await axiosInstance.patch<EnrollmentDetailResponse>(
       `${API_ENDPOINTS.ENROLLMENTS.BY_ID(id)}/status`,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 수강 취소 */

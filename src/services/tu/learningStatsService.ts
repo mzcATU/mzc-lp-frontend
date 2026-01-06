@@ -13,6 +13,6 @@ export const learningStatsService = {
    */
   getMyLearningStats: async (): Promise<LearningStatsResponse> => {
     const response = await axiosInstance.get(API_ENDPOINTS.USERS.ME_LEARNING_STATS);
-    return response.data.data;
+    return response.data;
   },
 };
