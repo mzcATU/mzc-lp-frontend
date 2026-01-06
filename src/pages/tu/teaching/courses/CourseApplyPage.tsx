@@ -13,20 +13,20 @@ interface CourseApplyPageProps {
 }
 
 const t = {
-  pageTitle: { ko: '프로그램 신청', en: 'Apply for Program' },
-  pageSubtitle: { ko: '강의를 프로그램으로 신청합니다. 정보를 확인하고 수정할 수 있습니다.', en: 'Apply this course as a program. Review and edit information.' },
+  pageTitle: { ko: '프로그램 생성', en: 'Create Program' },
+  pageSubtitle: { ko: '강의를 프로그램으로 생성합니다. 정보를 확인하고 수정할 수 있습니다.', en: 'Create this course as a program. Review and edit information.' },
   back: { ko: '취소', en: 'Cancel' },
   loading: { ko: '강의 정보를 불러오는 중...', en: 'Loading course information...' },
   error: { ko: '강의를 불러오는데 실패했습니다.', en: 'Failed to load course.' },
   notFound: { ko: '강의를 찾을 수 없습니다.', en: 'Course not found.' },
-  apply: { ko: '프로그램 신청', en: 'Apply for Program' },
-  applying: { ko: '신청 중...', en: 'Applying...' },
-  applySuccess: { ko: '프로그램 신청이 완료되었습니다. 관리자 검토 후 승인됩니다.', en: 'Program submitted for review. It will be approved after admin review.' },
-  applyFailed: { ko: '프로그램 신청에 실패했습니다.', en: 'Failed to apply for program.' },
+  create: { ko: '프로그램 생성', en: 'Create Program' },
+  creating: { ko: '생성 중...', en: 'Creating...' },
+  createSuccess: { ko: '프로그램이 생성되었습니다. 내용을 확인하고 검토 신청해주세요.', en: 'Program created. Please review and submit for approval.' },
+  createFailed: { ko: '프로그램 생성에 실패했습니다.', en: 'Failed to create program.' },
   titleRequired: { ko: '프로그램명을 입력해주세요.', en: 'Please enter a program title.' },
-  confirmApply: {
-    ko: '이 강의를 프로그램으로 신청하시겠습니까?\n신청 후 관리자 검토를 거쳐 승인됩니다.',
-    en: 'Apply this course as a program?\nIt will be reviewed and approved by an administrator.'
+  confirmCreate: {
+    ko: '이 강의를 프로그램으로 생성하시겠습니까?\n생성 후 수정 페이지에서 검토 신청할 수 있습니다.',
+    en: 'Create this course as a program?\nYou can submit for review from the edit page after creation.'
   },
   courseInfo: { ko: '원본 강의 정보', en: 'Original Course Information' },
   courseName: { ko: '강의명', en: 'Course Name' },
@@ -48,7 +48,7 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
     type: '',
     estimatedHours: null,
   });
-  const [isApplying, setIsApplying] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // API hooks
   const { data: course, isLoading, error } = useCourse(id);
@@ -72,8 +72,8 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
     setFormData((prev) => ({ ...prev, ...data }));
   };
 
-  // 프로그램 신청 핸들러 (생성 후 바로 PENDING 상태로 제출)
-  const handleApply = async () => {
+  // 프로그램 생성 핸들러 (DRAFT 상태로 생성, 제출은 수정 페이지에서)
+  const handleCreate = async () => {
     // 유효성 검사
     if (!formData.title.trim()) {
       alert(getText('titleRequired'));
@@ -81,11 +81,11 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
     }
 
     // 확인
-    if (!window.confirm(getText('confirmApply'))) {
+    if (!window.confirm(getText('confirmCreate'))) {
       return;
     }
 
-    setIsApplying(true);
+    setIsCreating(true);
 
     try {
       // 1. Snapshot 생성
@@ -94,7 +94,7 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
         description: formData.description.trim() || undefined,
       });
 
-      // 2. Program 생성
+      // 2. Program 생성 (DRAFT 상태로 유지)
       const program = await programService.createProgram({
         title: formData.title.trim(),
         description: formData.description.trim() || undefined,
@@ -105,17 +105,14 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
         snapshotId: snapshot.snapshotId,
       });
 
-      // 3. Program 제출 (PENDING 상태로)
-      await programService.submitProgram(program.id);
-
-      alert(getText('applySuccess'));
-      // 프로그램 목록 페이지로 이동
-      navigate('/tu/teaching/programs');
+      alert(getText('createSuccess'));
+      // 프로그램 수정 페이지로 이동 (검토 신청은 여기서)
+      navigate(`/tu/teaching/programs/${program.id}/edit`);
     } catch (err) {
-      console.error('Apply failed:', err);
-      alert(getText('applyFailed'));
+      console.error('Create failed:', err);
+      alert(getText('createFailed'));
     } finally {
-      setIsApplying(false);
+      setIsCreating(false);
     }
   };
 
@@ -174,13 +171,13 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
             </div>
 
             {/* Action Button */}
-            <Button onClick={handleApply} disabled={isApplying}>
-              {isApplying ? (
+            <Button onClick={handleCreate} disabled={isCreating}>
+              {isCreating ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (
                 <Send size={16} />
               )}
-              {isApplying ? getText('applying') : getText('apply')}
+              {isCreating ? getText('creating') : getText('create')}
             </Button>
           </div>
         </div>
@@ -213,20 +210,20 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
             language={language}
           />
 
-          {/* 하단 신청 버튼 (모바일 대응) */}
+          {/* 하단 생성 버튼 (모바일 대응) */}
           <div className="pt-4 pb-8">
             <Button
-              onClick={handleApply}
-              disabled={isApplying}
+              onClick={handleCreate}
+              disabled={isCreating}
               className="w-full"
               size="lg"
             >
-              {isApplying ? (
+              {isCreating ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (
                 <Send size={16} />
               )}
-              {isApplying ? getText('applying') : getText('apply')}
+              {isCreating ? getText('creating') : getText('create')}
             </Button>
           </div>
         </div>
