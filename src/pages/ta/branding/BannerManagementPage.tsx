@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
+import { toast } from 'sonner';
 import {
   ImageIcon,
   Trash2,
@@ -14,6 +15,7 @@ import {
   Pencil,
   Save,
   X,
+  Loader2,
 } from 'lucide-react';
 import {
   DndContext,
@@ -25,7 +27,6 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -47,6 +48,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   TagInput,
   EmptyState,
   Tooltip,
@@ -64,8 +66,20 @@ import {
   TargetingSelector,
   BannerPreview,
 } from '@/components/domain/ta';
+import {
+  useBanners,
+  useCreateBanner,
+  useUpdateBanner,
+  useDeleteBanner,
+  useActivateBanner,
+  useDeactivateBanner,
+} from '@/hooks/ta';
+import type {
+  BannerResponse,
+  CreateBannerRequest,
+} from '@/types/ta/banner.types';
 
-// 타겟팅 데이터 타입
+// 타겟팅 데이터 타입 (UI용)
 interface TargetingData {
   departments: string[];
   jobRoles: string[];
@@ -73,79 +87,28 @@ interface TargetingData {
   ranks: string[];
 }
 
-// 배너 타입 정의
-interface Banner {
-  id: string;
+// 확장된 배너 타입 (UI용 필드 포함)
+interface BannerFormData {
   title: string;
   pcImageUrl: string;
   mobileImageUrl?: string;
   linkUrl?: string;
   hiddenTags: string[];
   isActive: boolean;
-  order: number;
   startDate?: Date;
   endDate?: Date;
   isAllTarget: boolean;
   targeting: TargetingData;
 }
 
-// 샘플 배너 데이터
-const sampleBanners: Banner[] = [
-  {
-    id: '1',
-    title: '2025 신입사원 필수교육',
-    pcImageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=400&fit=crop',
-    mobileImageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop',
-    linkUrl: 'https://learning.company.com/courses/new-employee-2025',
-    hiddenTags: ['신입사원', '필수교육'],
-    isActive: true,
-    order: 1,
-    isAllTarget: true,
-    targeting: { departments: [], jobRoles: [], positions: [], ranks: [] },
-  },
-  {
-    id: '2',
-    title: '리더십 캠프 2025',
-    pcImageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop',
-    linkUrl: 'https://learning.company.com/events/leadership-camp',
-    hiddenTags: ['리더십', '캠프'],
-    isActive: true,
-    order: 2,
-    startDate: new Date('2025-01-01'),
-    endDate: new Date('2025-03-31'),
-    isAllTarget: false,
-    targeting: {
-      departments: [],
-      jobRoles: [],
-      positions: ['team_leader', 'dept_leader'],
-      ranks: ['manager', 'deputy', 'general'],
-    },
-  },
-  {
-    id: '3',
-    title: 'AI 활용 업무 효율화',
-    pcImageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=400&fit=crop',
-    mobileImageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop',
-    linkUrl: 'https://learning.company.com/courses/ai-productivity',
-    hiddenTags: ['AI', '업무효율'],
-    isActive: false,
-    order: 3,
-    isAllTarget: false,
-    targeting: {
-      departments: ['dev', 'marketing'],
-      jobRoles: [],
-      positions: [],
-      ranks: [],
-    },
-  },
-];
-
 // 드래그 가능한 배너 아이템 컴포넌트
 interface SortableBannerItemProps {
-  banner: Banner;
+  banner: BannerResponse;
   onEdit: () => void;
   onToggleActive: () => void;
   onDelete: () => void;
+  isToggling: boolean;
+  isDeleting: boolean;
 }
 
 function SortableBannerItem({
@@ -153,6 +116,8 @@ function SortableBannerItem({
   onEdit,
   onToggleActive,
   onDelete,
+  isToggling,
+  isDeleting,
 }: SortableBannerItemProps) {
   const {
     attributes,
@@ -161,23 +126,12 @@ function SortableBannerItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: banner.id });
+  } = useSortable({ id: banner.id.toString() });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
-
-  const getTargetLabel = () => {
-    if (banner.isAllTarget) return '전체';
-    const { targeting } = banner;
-    const totalSelected =
-      targeting.departments.length +
-      targeting.jobRoles.length +
-      targeting.positions.length +
-      targeting.ranks.length;
-    return totalSelected > 0 ? `${totalSelected}개 조건` : '미설정';
   };
 
   return (
@@ -218,7 +172,7 @@ function SortableBannerItem({
       <div
         className="w-32 h-20 rounded-lg bg-cover bg-center flex-shrink-0 border"
         style={{
-          backgroundImage: `url(${banner.pcImageUrl})`,
+          backgroundImage: `url(${banner.imageUrl})`,
           borderColor: designTokens.bg.border,
         }}
       />
@@ -240,26 +194,10 @@ function SortableBannerItem({
           </Badge>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {/* 태그 */}
-          {banner.hiddenTags.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="gray" className="text-xs">
-              #{tag}
-            </Badge>
-          ))}
-          {banner.hiddenTags.length > 3 && (
-            <Badge variant="gray" className="text-xs">
-              +{banner.hiddenTags.length - 3}
-            </Badge>
-          )}
-          {/* 구분선 */}
-          <span style={{ color: designTokens.bg.border }}>|</span>
           {/* 대상 */}
-          <Badge
-            variant={banner.isAllTarget ? 'indigo' : 'blue'}
-            className="text-xs"
-          >
+          <Badge variant="indigo" className="text-xs">
             <Users className="w-3 h-3 mr-1" />
-            {getTargetLabel()}
+            전체
           </Badge>
           {/* 기간 */}
           {banner.startDate && banner.endDate && (
@@ -313,6 +251,7 @@ function SortableBannerItem({
             <TooltipTrigger asChild>
               <button
                 onClick={onToggleActive}
+                disabled={isToggling}
                 className="p-2.5 rounded-lg transition-colors"
                 style={{
                   backgroundColor: banner.isActive
@@ -320,7 +259,12 @@ function SortableBannerItem({
                     : designTokens.bg.secondary,
                 }}
               >
-                {banner.isActive ? (
+                {isToggling ? (
+                  <Loader2
+                    className="w-4 h-4 animate-spin"
+                    style={{ color: designTokens.text.secondary }}
+                  />
+                ) : banner.isActive ? (
                   <Eye
                     className="w-4 h-4"
                     style={{ color: designTokens.status.success_text }}
@@ -345,13 +289,21 @@ function SortableBannerItem({
             <TooltipTrigger asChild>
               <button
                 onClick={onDelete}
+                disabled={isDeleting}
                 className="p-2.5 rounded-lg transition-colors"
                 style={{ backgroundColor: designTokens.status.error_background }}
               >
-                <Trash2
-                  className="w-4 h-4"
-                  style={{ color: designTokens.status.error_text }}
-                />
+                {isDeleting ? (
+                  <Loader2
+                    className="w-4 h-4 animate-spin"
+                    style={{ color: designTokens.status.error_text }}
+                  />
+                ) : (
+                  <Trash2
+                    className="w-4 h-4"
+                    style={{ color: designTokens.status.error_text }}
+                  />
+                )}
               </button>
             </TooltipTrigger>
             <TooltipContent>삭제</TooltipContent>
@@ -431,16 +383,38 @@ function SlidePanel({ isOpen, onClose, title, children }: SlidePanelProps) {
  * - PC/Mobile 미리보기
  */
 export const BannerManagementPage = () => {
-  const [banners, setBanners] = useState<Banner[]>(sampleBanners);
-  const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
+  // API Hooks
+  const { data: banners = [], isLoading, refetch } = useBanners();
+  const createBannerMutation = useCreateBanner();
+  const updateBannerMutation = useUpdateBanner();
+  const deleteBannerMutation = useDeleteBanner();
+  const activateBannerMutation = useActivateBanner();
+  const deactivateBannerMutation = useDeactivateBanner();
+
+  // Local State
+  const [selectedBanner, setSelectedBanner] = useState<BannerResponse | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTags, setEditingTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>('basic');
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // 편집 폼 상태
+  const [editForm, setEditForm] = useState<BannerFormData>({
+    title: '',
+    pcImageUrl: '',
+    mobileImageUrl: '',
+    linkUrl: '',
+    hiddenTags: [],
+    isActive: true,
+    isAllTarget: true,
+    targeting: { departments: [], jobRoles: [], positions: [], ranks: [] },
+  });
 
   // 새 배너 상태
-  const [newBanner, setNewBanner] = useState<Partial<Banner>>({
+  const [newBanner, setNewBanner] = useState<Partial<BannerFormData>>({
     title: '',
     pcImageUrl: '',
     mobileImageUrl: '',
@@ -465,42 +439,73 @@ export const BannerManagementPage = () => {
     })
   );
 
-  // 드래그 종료 핸들러
+  // 드래그 종료 핸들러 (순서 변경은 현재 지원하지 않음)
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setBanners((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        return newItems.map((item: Banner, idx: number) => ({ ...item, order: idx + 1 }));
-      });
+      // 순서 변경 API가 없어 로컬에서만 순서 변경 UI를 보여줌
+      toast.info('배너 순서 변경 기능은 준비 중입니다.');
     }
   };
 
-  const toggleBannerActive = (id: string) => {
-    setBanners(
-      banners.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b))
-    );
-    if (selectedBanner?.id === id) {
-      setSelectedBanner((prev) =>
-        prev ? { ...prev, isActive: !prev.isActive } : null
-      );
-    }
+  const toggleBannerActive = (banner: BannerResponse) => {
+    setTogglingId(banner.id);
+
+    const mutation = banner.isActive ? deactivateBannerMutation : activateBannerMutation;
+    const successMessage = banner.isActive ? '배너가 비활성화되었습니다.' : '배너가 활성화되었습니다.';
+
+    mutation.mutate(banner.id, {
+      onSuccess: () => {
+        toast.success(successMessage);
+        refetch();
+      },
+      onError: () => {
+        toast.error('배너 상태 변경에 실패했습니다.');
+      },
+      onSettled: () => {
+        setTogglingId(null);
+      },
+    });
   };
 
-  const deleteBanner = (id: string) => {
-    setBanners(banners.filter((b) => b.id !== id));
-    if (selectedBanner?.id === id) {
-      setSelectedBanner(null);
-      setIsPanelOpen(false);
-    }
+  const deleteBanner = (id: number) => {
+    if (!confirm('정말로 이 배너를 삭제하시겠습니까?')) return;
+
+    setDeletingId(id);
+    deleteBannerMutation.mutate(id, {
+      onSuccess: () => {
+        toast.success('배너가 삭제되었습니다.');
+        if (selectedBanner?.id === id) {
+          setSelectedBanner(null);
+          setIsPanelOpen(false);
+        }
+        refetch();
+      },
+      onError: () => {
+        toast.error('배너 삭제에 실패했습니다.');
+      },
+      onSettled: () => {
+        setDeletingId(null);
+      },
+    });
   };
 
-  const openEditPanel = (banner: Banner) => {
+  const openEditPanel = (banner: BannerResponse) => {
     setSelectedBanner(banner);
-    setEditingTags(banner.hiddenTags);
+    setEditForm({
+      title: banner.title,
+      pcImageUrl: banner.imageUrl,
+      mobileImageUrl: banner.mobileImageUrl || '',
+      linkUrl: banner.linkUrl || '',
+      hiddenTags: [],
+      isActive: banner.isActive,
+      startDate: banner.startDate ? new Date(banner.startDate) : undefined,
+      endDate: banner.endDate ? new Date(banner.endDate) : undefined,
+      isAllTarget: true,
+      targeting: { departments: [], jobRoles: [], positions: [], ranks: [] },
+    });
+    setEditingTags([]);
     setActiveTab('basic');
     setIsPanelOpen(true);
   };
@@ -512,50 +517,92 @@ export const BannerManagementPage = () => {
     }, 300);
   };
 
-  const updateSelectedBanner = <K extends keyof Banner>(
+  const updateEditForm = <K extends keyof BannerFormData>(
     key: K,
-    value: Banner[K]
+    value: BannerFormData[K]
   ) => {
-    if (!selectedBanner) return;
-
-    const updated = { ...selectedBanner, [key]: value };
-    setSelectedBanner(updated);
-    setBanners(banners.map((b) => (b.id === selectedBanner.id ? updated : b)));
+    setEditForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const updateSelectedBannerTags = (tags: string[]) => {
+  const updateEditFormTags = (tags: string[]) => {
     setEditingTags(tags);
-    if (selectedBanner) {
-      updateSelectedBanner('hiddenTags', tags);
-    }
+    updateEditForm('hiddenTags', tags);
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedBanner) return;
+
+    // LocalDate 형식 (YYYY-MM-DD)으로 변환
+    const formatDate = (date: Date | undefined) => {
+      if (!date) return undefined;
+      return date.toISOString().split('T')[0];
+    };
+
+    updateBannerMutation.mutate(
+      {
+        id: selectedBanner.id,
+        request: {
+          title: editForm.title,
+          imageUrl: editForm.pcImageUrl,
+          linkUrl: editForm.linkUrl || undefined,
+          isActive: editForm.isActive,
+          startDate: formatDate(editForm.startDate),
+          endDate: formatDate(editForm.endDate),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('배너가 수정되었습니다.');
+          closePanel();
+          refetch();
+        },
+        onError: () => {
+          toast.error('배너 수정에 실패했습니다.');
+        },
+      }
+    );
   };
 
   const handleAddBanner = () => {
-    if (!newBanner.title || !newBanner.pcImageUrl) return;
+    if (!newBanner.title || !newBanner.pcImageUrl) {
+      toast.error('필수 항목을 입력해주세요.');
+      return;
+    }
 
-    const banner: Banner = {
-      id: Date.now().toString(),
-      title: newBanner.title,
-      pcImageUrl: newBanner.pcImageUrl,
-      mobileImageUrl: newBanner.mobileImageUrl,
-      linkUrl: newBanner.linkUrl,
-      hiddenTags: newBannerTags,
-      isActive: newBanner.isActive ?? true,
-      order: banners.length + 1,
-      startDate: newBannerDateRange?.from,
-      endDate: newBannerDateRange?.to,
-      isAllTarget: newBanner.isAllTarget ?? true,
-      targeting: newBanner.targeting ?? {
-        departments: [],
-        jobRoles: [],
-        positions: [],
-        ranks: [],
-      },
+    // LocalDate 형식 (YYYY-MM-DD)으로 변환
+    const formatDate = (date: Date | undefined): string | null => {
+      if (!date) return null;
+      return date.toISOString().split('T')[0];
     };
 
-    setBanners([...banners, banner]);
-    setShowAddModal(false);
-    resetNewBannerForm();
+    const request: CreateBannerRequest = {
+      title: newBanner.title,
+      imageUrl: newBanner.pcImageUrl,
+      position: 'MAIN_TOP',
+      linkUrl: newBanner.linkUrl || null,
+      linkTarget: newBanner.linkUrl ? '_self' : null,
+      sortOrder: null,
+      startDate: formatDate(newBannerDateRange?.from),
+      endDate: formatDate(newBannerDateRange?.to),
+      description: null,
+    };
+
+    console.log('Creating banner with request:', request);
+
+    createBannerMutation.mutate(request, {
+      onSuccess: () => {
+        toast.success('배너가 추가되었습니다.');
+        setShowAddModal(false);
+        resetNewBannerForm();
+        refetch();
+      },
+      onError: (error: unknown) => {
+        console.error('Banner creation error:', error);
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        const message = axiosError?.response?.data?.message || '배너 추가에 실패했습니다.';
+        toast.error(message);
+      },
+    });
   };
 
   const resetNewBannerForm = () => {
@@ -572,6 +619,14 @@ export const BannerManagementPage = () => {
     setNewBannerTags([]);
     setNewBannerDateRange(undefined);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.secondary }} />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -644,7 +699,7 @@ export const BannerManagementPage = () => {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={banners.map((b) => b.id)}
+                  items={banners.map((b) => b.id.toString())}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-3">
@@ -653,8 +708,10 @@ export const BannerManagementPage = () => {
                         key={banner.id}
                         banner={banner}
                         onEdit={() => openEditPanel(banner)}
-                        onToggleActive={() => toggleBannerActive(banner.id)}
+                        onToggleActive={() => toggleBannerActive(banner)}
                         onDelete={() => deleteBanner(banner.id)}
+                        isToggling={togglingId === banner.id}
+                        isDeleting={deletingId === banner.id}
                       />
                     ))}
                   </div>
@@ -694,8 +751,8 @@ export const BannerManagementPage = () => {
               <div>
                 <Label className="mb-2 block text-sm">배너 제목 (관리용)</Label>
                 <Input
-                  value={selectedBanner.title}
-                  onChange={(e) => updateSelectedBanner('title', e.target.value)}
+                  value={editForm.title}
+                  onChange={(e) => updateEditForm('title', e.target.value)}
                   placeholder="배너를 식별할 수 있는 제목을 입력하세요"
                 />
               </div>
@@ -703,15 +760,15 @@ export const BannerManagementPage = () => {
               {/* 이미지 업로드 */}
               <div className="space-y-4">
                 <BannerImageDropzone
-                  value={selectedBanner.pcImageUrl}
-                  onChange={(url) => updateSelectedBanner('pcImageUrl', url)}
+                  value={editForm.pcImageUrl}
+                  onChange={(url) => updateEditForm('pcImageUrl', url)}
                   label="PC 배너 이미지"
                   recommendedSize="1200x400px"
                   deviceType="pc"
                 />
                 <BannerImageDropzone
-                  value={selectedBanner.mobileImageUrl}
-                  onChange={(url) => updateSelectedBanner('mobileImageUrl', url)}
+                  value={editForm.mobileImageUrl}
+                  onChange={(url) => updateEditForm('mobileImageUrl', url)}
                   label="Mobile 배너 이미지 (선택)"
                   recommendedSize="600x400px"
                   aspectRatio="aspect-[3/2]"
@@ -726,8 +783,8 @@ export const BannerManagementPage = () => {
                   연결 URL
                 </Label>
                 <Input
-                  value={selectedBanner.linkUrl || ''}
-                  onChange={(e) => updateSelectedBanner('linkUrl', e.target.value)}
+                  value={editForm.linkUrl || ''}
+                  onChange={(e) => updateEditForm('linkUrl', e.target.value)}
                   placeholder="https://example.com/course/123"
                 />
                 <p
@@ -749,7 +806,7 @@ export const BannerManagementPage = () => {
                 </p>
                 <TagInput
                   value={editingTags}
-                  onChange={updateSelectedBannerTags}
+                  onChange={updateEditFormTags}
                   placeholder="태그 입력 후 Enter"
                 />
               </div>
@@ -762,16 +819,16 @@ export const BannerManagementPage = () => {
                 </Label>
                 <DateRangePicker
                   date={
-                    selectedBanner.startDate && selectedBanner.endDate
+                    editForm.startDate && editForm.endDate
                       ? {
-                          from: selectedBanner.startDate,
-                          to: selectedBanner.endDate,
+                          from: editForm.startDate,
+                          to: editForm.endDate,
                         }
                       : undefined
                   }
                   onDateChange={(range) => {
-                    updateSelectedBanner('startDate', range?.from);
-                    updateSelectedBanner('endDate', range?.to);
+                    updateEditForm('startDate', range?.from);
+                    updateEditForm('endDate', range?.to);
                   }}
                   placeholder="기간을 선택하세요"
                   className="w-full"
@@ -799,19 +856,37 @@ export const BannerManagementPage = () => {
                   </p>
                 </div>
                 <Switch
-                  checked={selectedBanner.isActive}
-                  onCheckedChange={() => toggleBannerActive(selectedBanner.id)}
+                  checked={editForm.isActive}
+                  onCheckedChange={(checked) => updateEditForm('isActive', checked)}
                 />
               </div>
+
+              {/* 저장 버튼 */}
+              <Button
+                onClick={handleSaveEdit}
+                disabled={updateBannerMutation.isPending}
+                className="w-full gap-2"
+                style={{
+                  backgroundColor: designTokens.button.brand_default,
+                  color: designTokens.button.brand_text,
+                }}
+              >
+                {updateBannerMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                저장
+              </Button>
             </TabsContent>
 
             {/* 노출 대상 탭 */}
             <TabsContent value="targeting">
               <TargetingSelector
-                value={selectedBanner.targeting}
-                onChange={(targeting) => updateSelectedBanner('targeting', targeting)}
-                isAllTarget={selectedBanner.isAllTarget}
-                onAllTargetChange={(isAll) => updateSelectedBanner('isAllTarget', isAll)}
+                value={editForm.targeting}
+                onChange={(targeting) => updateEditForm('targeting', targeting)}
+                isAllTarget={editForm.isAllTarget}
+                onAllTargetChange={(isAll) => updateEditForm('isAllTarget', isAll)}
               />
             </TabsContent>
 
@@ -820,11 +895,11 @@ export const BannerManagementPage = () => {
               <BannerPreview
                 banners={[
                   {
-                    id: selectedBanner.id,
-                    title: selectedBanner.title,
-                    pcImageUrl: selectedBanner.pcImageUrl,
-                    mobileImageUrl: selectedBanner.mobileImageUrl,
-                    linkUrl: selectedBanner.linkUrl,
+                    id: selectedBanner.id.toString(),
+                    title: editForm.title,
+                    pcImageUrl: editForm.pcImageUrl,
+                    mobileImageUrl: editForm.mobileImageUrl,
+                    linkUrl: editForm.linkUrl,
                     isActive: true,
                   },
                 ]}
@@ -842,16 +917,19 @@ export const BannerManagementPage = () => {
               <Monitor className="w-5 h-5" />
               배너 미리보기
             </DialogTitle>
+            <DialogDescription>
+              활성화된 배너가 홈 화면에 어떻게 표시되는지 미리 확인합니다.
+            </DialogDescription>
           </DialogHeader>
           <BannerPreview
             banners={banners
               .filter((b) => b.isActive)
               .map((b) => ({
-                id: b.id,
+                id: b.id.toString(),
                 title: b.title,
-                pcImageUrl: b.pcImageUrl,
-                mobileImageUrl: b.mobileImageUrl,
-                linkUrl: b.linkUrl,
+                pcImageUrl: b.imageUrl,
+                mobileImageUrl: b.mobileImageUrl ?? undefined,
+                linkUrl: b.linkUrl ?? undefined,
                 isActive: b.isActive,
               }))}
           />
@@ -866,6 +944,9 @@ export const BannerManagementPage = () => {
               <Plus className="w-5 h-5" />
               새 배너 추가
             </DialogTitle>
+            <DialogDescription>
+              홈 화면에 표시할 새 배너를 등록합니다.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -986,14 +1067,18 @@ export const BannerManagementPage = () => {
             </Button>
             <Button
               onClick={handleAddBanner}
-              disabled={!newBanner.title || !newBanner.pcImageUrl}
+              disabled={!newBanner.title || !newBanner.pcImageUrl || createBannerMutation.isPending}
               className="gap-1"
               style={{
                 backgroundColor: designTokens.button.brand_default,
                 color: designTokens.button.brand_text,
               }}
             >
-              <Save className="w-4 h-4" />
+              {createBannerMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
               저장
             </Button>
           </div>
@@ -1001,4 +1086,4 @@ export const BannerManagementPage = () => {
       </Dialog>
     </div>
   );
-}
+};

@@ -182,7 +182,7 @@ export function LandingPage() {
       <LandingHeader />
 
       <main>
-        {/* Hero Section */}
+        {/* Hero Section (TA 배너 + 기본 슬라이드 통합) */}
         <HeroSection />
 
         {/* Search/Category Bar */}

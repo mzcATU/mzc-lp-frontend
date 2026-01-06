@@ -3,3 +3,4 @@ export { groupService } from './groupService';
 export { tenantSettingsService } from './tenantSettingsService';
 export { taDashboardService } from './dashboardService';
 export { analyticsService } from './analyticsService';
+export { bannerService } from './bannerService';
