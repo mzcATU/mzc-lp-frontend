@@ -17,12 +17,13 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 /**
- * 가격 포맷팅 (₩180,000 형식)
+ * 가격 표시 (유료 → 금액, 무료 → 표시 안함)
  */
-function formatPrice(price: string | null | undefined): string {
-  if (!price) return '';
+function formatPrice(price: string | null | undefined, isFree: boolean): string | null {
+  if (isFree) return null; // 무료는 표시 안함
+  if (!price) return null;
   const numPrice = parseFloat(price);
-  if (isNaN(numPrice)) return price;
+  if (isNaN(numPrice) || numPrice === 0) return null;
   return `₩${numPrice.toLocaleString()}`;
 }
 
@@ -199,13 +200,9 @@ export function WishlistPage() {
                           {item.estimatedHours}시간
                         </span>
                       )}
-                      {item.isFree ? (
-                        <span className={`px-2 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
-                          무료
-                        </span>
-                      ) : item.price && (
-                        <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {formatPrice(item.price)}
+                      {formatPrice(item.price, item.isFree) && (
+                        <span className={`px-2 py-0.5 rounded text-xs ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                          {formatPrice(item.price, item.isFree)}
                         </span>
                       )}
                     </div>
