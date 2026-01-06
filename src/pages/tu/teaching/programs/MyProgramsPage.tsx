@@ -58,7 +58,7 @@ const t = {
   retry: { ko: '다시 시도', en: 'Retry' },
   view: { ko: '상세보기', en: 'View' },
   edit: { ko: '수정', en: 'Edit' },
-  submit: { ko: '신청', en: 'Submit' },
+  submit: { ko: '신청 준비', en: 'Prepare Submit' },
   delete: { ko: '삭제', en: 'Delete' },
   notSet: { ko: '미설정', en: 'Not set' },
   hours: { ko: '시간', en: 'hours' },
