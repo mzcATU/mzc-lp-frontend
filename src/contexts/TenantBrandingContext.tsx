@@ -1,5 +1,6 @@
 import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { usePublicBranding } from '@/hooks/tu/usePublicBranding';
 import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
 import { extractTenantIdentifier } from '@/utils/tenantUtils';
@@ -44,7 +45,13 @@ function useAuthenticatedBranding(enabled: boolean) {
 
 export function TenantBrandingProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
-  const tenantIdentifier = extractTenantIdentifier();
+  const location = useLocation();
+
+  // 경로 변경 시 tenant identifier 재추출 (useMemo로 경로 기반 재계산)
+  const tenantIdentifier = useMemo(() => {
+    return extractTenantIdentifier();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // SA 사용자인지 확인 (tenantId가 없는 인증된 사용자)
   const isSystemAdmin = isAuthenticated && !user?.tenantId;

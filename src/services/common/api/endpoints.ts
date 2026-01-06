@@ -68,6 +68,9 @@ export const API_ENDPOINTS = {
     NAVIGATION_ITEM: (id: number) => `/tenant/settings/navigation/${id}`,
     NAVIGATION_REORDER: '/tenant/settings/navigation/reorder',
     NAVIGATION_RESET: '/tenant/settings/navigation/reset',
+    // TU용 공개 API
+    LAYOUT_PUBLIC: '/tenant/settings/layout/public',
+    NAVIGATION_PUBLIC: '/tenant/settings/navigation/public',
   },
 
   // User Groups (TA)
@@ -282,6 +285,15 @@ export const API_ENDPOINTS = {
   SYSTEM_SETTINGS: {
     BASE: '/admin/system/settings',
     TENANT_DEFAULTS: '/admin/system/tenant-defaults',
+  },
+
+  // Banners (TA)
+  BANNERS: {
+    BASE: '/banners',
+    BY_ID: (id: number) => `/banners/${id}`,
+    ACTIVATE: (id: number) => `/banners/${id}/activate`,
+    DEACTIVATE: (id: number) => `/banners/${id}/deactivate`,
+    PUBLIC: '/banners/public/displayable',
   },
 
   // Certificates (수료증) - TU

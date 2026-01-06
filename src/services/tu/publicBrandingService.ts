@@ -16,7 +16,7 @@ export const publicBrandingService = {
     type: 'subdomain' | 'customDomain' = 'subdomain'
   ): Promise<PublicBrandingResponse> {
     const { data } = await axiosInstance.get<PublicBrandingResponse>(
-      '/api/public/tenants/branding',
+      '/public/tenants/branding',
       {
         params: { identifier, type },
       }
