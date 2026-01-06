@@ -1,4 +1,4 @@
-import { Award, Calendar, User, Download, X, Building2, BookOpen, Hash, Loader2 } from 'lucide-react';
+import { Award, Calendar, User, Download, Building2, BookOpen, Hash, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
   Dialog,
@@ -73,14 +73,9 @@ export const CertificatePreviewModal = ({
       >
         {/* 헤더 */}
         <DialogHeader className={cn('p-4 border-b', isDark ? 'border-gray-700' : 'border-gray-200')}>
-          <div className="flex items-center justify-between">
-            <DialogTitle className={isDark ? 'text-white' : 'text-gray-900'}>
-              {labels.title}
-            </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <DialogTitle className={isDark ? 'text-white' : 'text-gray-900'}>
+            {labels.title}
+          </DialogTitle>
         </DialogHeader>
 
         {/* 수료증 본문 */}
