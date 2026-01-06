@@ -31,10 +31,11 @@ export const useMe = () => {
 
 /**
  * 로그인 뮤테이션 훅
- * 성공 시 사용자 정보를 반환하여 role 기반 리다이렉트가 가능하도록 함
+ * 성공 시 role 기반 리다이렉트 수행
  */
 export const useLogin = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const setTokens = useAuthStore((state) => state.setTokens);
 
@@ -47,7 +48,6 @@ export const useLogin = () => {
 
       // 토큰으로 사용자 정보 조회
       const userDetail = await userService.getMe();
-      console.log('userDetail from API:', userDetail);
       const user = {
         id: userDetail.userId,
         email: userDetail.email,
@@ -56,12 +56,32 @@ export const useLogin = () => {
         tenantId: userDetail.tenantId,
         tenantSubdomain: userDetail.tenantSubdomain,
       };
-      console.log('user object for redirect:', user);
       setAuth(user, tokenData.accessToken, tokenData.refreshToken);
       queryClient.invalidateQueries({ queryKey: authKeys.me() });
 
-      // 사용자 정보 반환 (role 기반 리다이렉트를 위해)
-      return user;
+      return { user, userDetail };
+    },
+    onSuccess: ({ user, userDetail }) => {
+      // 역할별 리다이렉트 경로
+      const roleBasePath: Record<string, string> = {
+        SYSTEM_ADMIN: '/sa',
+        TENANT_ADMIN: '/ta',
+        OPERATOR: '/to',
+        DESIGNER: '/tu/teaching',
+        USER: '/tu/b2c',
+      };
+      const basePath = roleBasePath[user.role] || '/tu/b2c';
+
+      // 테넌트 subdomain이 있으면 경로에 포함 (SA 제외, default는 생략)
+      let targetPath = basePath;
+      const subdomain = userDetail.tenantSubdomain;
+      const isDefaultSubdomain = !subdomain || subdomain === 'default' || subdomain === 'www';
+
+      if (!isDefaultSubdomain && user.role !== 'SYSTEM_ADMIN') {
+        targetPath = `/${subdomain}${basePath}`;
+      }
+
+      navigate(targetPath);
     },
   });
 };
