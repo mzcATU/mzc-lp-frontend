@@ -251,3 +251,15 @@ export {
   ownerStatsKeys,
   useMyOwnerStats,
 } from './useOwnerStatsQueries';
+
+// Certificate Hooks (수료증)
+export {
+  certificateKeys,
+  useMyCertificates,
+  useCertificate,
+  useCertificateByEnrollment,
+  useVerifyCertificate,
+  useDownloadCertificate,
+  useIssueCertificate,
+  useReissueCertificate,
+} from './useCertificateQueries';

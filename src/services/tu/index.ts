@@ -15,3 +15,4 @@ export { courseTimeCatalogService } from './courseTimeCatalogService';
 export { publicBrandingService } from './publicBrandingService';
 export { learningStatsService } from './learningStatsService';
 export { ownerStatsService } from './ownerStatsService';
+export { certificateService } from './certificateService';

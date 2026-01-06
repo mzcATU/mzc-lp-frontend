@@ -437,7 +437,7 @@ export function MyPageHome() {
               icon={<Award className="w-5 h-5" />}
               title={t.mypage.certificates}
               description={t.mypage.certificatesDesc}
-              onClick={() => navigate('/tu/b2c/mypage/certifications')}
+              onClick={() => navigate('/tu/b2c/mypage/certificates')}
               isDark={isDark}
             />
             <QuickMenuItem

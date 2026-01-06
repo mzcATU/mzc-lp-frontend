@@ -1,7 +1,7 @@
-import { Award, Calendar, User, Eye, Download, CheckCircle } from 'lucide-react';
+import { Award, Calendar, User, Eye, Download, CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge } from '@/components/common';
-import type { Enrollment } from '@/services/tu/enrollmentService';
+import type { CertificateResponse } from '@/types/tu';
 
 // 날짜 포맷팅
 function formatDate(dateString: string | undefined): string {
@@ -20,15 +20,15 @@ export interface CertificateCardLabels {
   preparing: string;
   certificateOf: string;
   completion: string;
+  downloading?: string;
 }
 
 interface CertificateCardProps {
-  enrollment: Enrollment;
-  userName: string;
+  certificate: CertificateResponse;
   labels: CertificateCardLabels;
   onPreview: () => void;
   onDownload?: () => void;
-  isDownloadEnabled?: boolean;
+  isDownloading?: boolean;
   isDark?: boolean;
 }
 
@@ -37,14 +37,15 @@ interface CertificateCardProps {
  * 수료 완료된 강의의 수료증을 인증서 스타일로 표시
  */
 export const CertificateCard = ({
-  enrollment,
-  userName,
+  certificate,
   labels,
   onPreview,
   onDownload,
-  isDownloadEnabled = false,
+  isDownloading = false,
   isDark = false,
 }: Readonly<CertificateCardProps>) => {
+  const isDownloadEnabled = certificate.status === 'ISSUED' || certificate.status === 'VALID';
+
   return (
     <div
       className={cn(
@@ -115,12 +116,12 @@ export const CertificateCard = ({
             isDark ? 'text-white' : 'text-gray-900'
           )}
         >
-          {enrollment.programTitle}
+          {certificate.programTitle}
         </h3>
 
         {/* 차수명 */}
         <p className={cn('text-sm mb-4', isDark ? 'text-gray-400' : 'text-gray-500')}>
-          {enrollment.courseTimeName}
+          {certificate.courseTimeTitle}
         </p>
 
         {/* 구분선 */}
@@ -130,11 +131,11 @@ export const CertificateCard = ({
         <div className="space-y-2 mb-4">
           <div className={cn('flex items-center justify-center gap-2 text-sm', isDark ? 'text-gray-300' : 'text-gray-700')}>
             <User className="w-4 h-4" />
-            <span className="font-medium">{userName}</span>
+            <span className="font-medium">{certificate.userName}</span>
           </div>
           <div className={cn('flex items-center justify-center gap-2 text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>
             <Calendar className="w-3.5 h-3.5" />
-            <span>{labels.completedOn}: {formatDate(enrollment.completedAt)}</span>
+            <span>{labels.completedOn}: {formatDate(certificate.completedAt)}</span>
           </div>
         </div>
 
@@ -160,10 +161,18 @@ export const CertificateCard = ({
               !isDownloadEnabled && (isDark ? '!text-gray-500' : '!text-gray-400')
             )}
             onClick={isDownloadEnabled ? onDownload : undefined}
-            disabled={!isDownloadEnabled}
+            disabled={!isDownloadEnabled || isDownloading}
           >
-            <Download className="w-4 h-4 mr-1" />
-            {isDownloadEnabled ? labels.download : labels.preparing}
+            {isDownloading ? (
+              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-1" />
+            )}
+            {isDownloading
+              ? (labels.downloading || 'Downloading...')
+              : isDownloadEnabled
+                ? labels.download
+                : labels.preparing}
           </Button>
         </div>
       </div>
