@@ -391,8 +391,8 @@ export function DashboardPage() {
                 className="h-64"
               />
             ) : (
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full" style={{ minHeight: 256 }}>
+                <ResponsiveContainer width="100%" height={256}>
                   <AreaChart
                     data={filteredMonthlyTrend}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
