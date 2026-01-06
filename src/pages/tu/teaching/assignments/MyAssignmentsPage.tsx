@@ -1,7 +1,6 @@
 /**
  * 강의 관리 페이지 (TU - 강사 본인용)
  */
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, CalendarDays, FileText, BookOpen } from 'lucide-react';
 import { Button } from '@/components/common';
@@ -11,7 +10,6 @@ import {
   AssignmentCard,
   CourseTimeStatCard,
 } from '@/components/domain/tu/assignment';
-import type { AssignmentStatus } from '@/types/tu';
 
 interface MyAssignmentsPageProps {
   language?: 'ko' | 'en';
@@ -27,18 +25,11 @@ const t = {
   goToCourseDesign: { ko: '강의 디자인으로 이동', en: 'Go to Course Design' },
   myAssignments: { ko: '진행 중인 강의', en: 'Active Courses' },
   courseStats: { ko: '차수별 통계', en: 'Course Statistics' },
-  filterAll: { ko: '전체', en: 'All' },
-  filterActive: { ko: '활동 중', en: 'Active' },
-  filterReplaced: { ko: '교체됨', en: 'Replaced' },
-  filterCancelled: { ko: '취소됨', en: 'Cancelled' },
   assignmentCount: { ko: '건', en: ' items' },
 };
 
-type StatusFilter = AssignmentStatus | 'all';
-
 export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPageProps>) {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const getText = (key: keyof typeof t) => t[key][language];
 
@@ -49,11 +40,8 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
   const isLoading = assignmentsLoading || statsLoading;
   const error = assignmentsError;
 
-  // 필터링된 배정 목록
-  const filteredAssignments = assignments?.filter((assignment) => {
-    if (statusFilter === 'all') return true;
-    return assignment.status === statusFilter;
-  }) ?? [];
+  // 활성 상태의 배정만 표시 (ACTIVE만)
+  const activeAssignments = assignments?.filter((assignment) => assignment.status === 'ACTIVE') ?? [];
 
   // 에러 상태
   if (error) {
@@ -103,32 +91,18 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
           {/* 배정 목록 섹션 */}
           {!isLoading && (
             <>
-              {/* 필터 */}
+              {/* 섹션 헤더 */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium text-text-primary">
                   {getText('myAssignments')}
                 </h2>
-                <div className="flex gap-2">
-                  {(['all', 'ACTIVE', 'REPLACED', 'CANCELLED'] as const).map((status) => (
-                    <Button
-                      key={status}
-                      variant={statusFilter === status ? 'neutral' : 'ghost'}
-                      size="sm"
-                      onClick={() => setStatusFilter(status)}
-                    >
-                      {status === 'all' ? getText('filterAll') : getText(`filter${status.charAt(0) + status.slice(1).toLowerCase()}` as keyof typeof t)}
-                    </Button>
-                  ))}
-                </div>
+                <p className="text-sm text-text-secondary">
+                  {activeAssignments.length}{getText('assignmentCount')}
+                </p>
               </div>
 
-              {/* 배정 개수 */}
-              <p className="text-sm text-text-secondary mb-4">
-                {filteredAssignments.length}{getText('assignmentCount')}
-              </p>
-
               {/* 빈 상태 */}
-              {filteredAssignments.length === 0 && (
+              {activeAssignments.length === 0 && (
                 <div className="text-center py-12">
                   <CalendarDays size={48} className="mx-auto mb-3 text-text-placeholder" />
                   <p className="text-text-secondary mb-1">{getText('noAssignments')}</p>
@@ -144,9 +118,9 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
               )}
 
               {/* 배정 카드 그리드 */}
-              {filteredAssignments.length > 0 && (
+              {activeAssignments.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                  {filteredAssignments.map((assignment) => (
+                  {activeAssignments.map((assignment) => (
                     <AssignmentCard
                       key={assignment.id}
                       assignment={assignment}
