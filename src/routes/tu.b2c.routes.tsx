@@ -12,6 +12,7 @@ import {
   NotificationsPage,
   NotificationDetailPage,
   InstructorProfilePage,
+  SearchPage,
 } from '@/pages/tu';
 
 /**
@@ -24,6 +25,9 @@ export const tuB2cRoutes = (
   <>
     {/* 랜딩 페이지 */}
     <Route path="/tu/b2c" element={<LandingPage />} />
+
+    {/* 통합 검색 */}
+    <Route path="/tu/b2c/search" element={<SearchPage />} />
 
     {/* 강의 탐색 */}
     <Route path="/tu/b2c/courses" element={<CoursesExplorePage />} />

@@ -358,14 +358,17 @@ export function InstructorProfilePage() {
                     <Heart className={`w-4 h-4 ${isFollowing ? 'fill-current text-red-500' : ''}`} />
                     {isFollowing ? '팔로잉' : '팔로우'}
                   </Button>
-                  <Button
-                    variant="outline"
+                  <button
                     onClick={handleShare}
-                    className={`gap-2 ${isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+                      isDark
+                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                    }`}
                   >
                     <Share2 className="w-4 h-4" />
                     공유
-                  </Button>
+                  </button>
                 </div>
               </div>
 
