@@ -14,8 +14,6 @@ import {
   useCourse,
   useCourseItemsHierarchy,
   useDeleteCourse,
-  useApplyProgram,
-  toCourseForApplication,
 } from '@/hooks/tu';
 import { categoryService } from '@/services/common';
 import { CourseInfoSection } from './components/CourseInfoSection';
@@ -61,7 +59,6 @@ export function CourseDetailPage() {
   const { data: course, isLoading, error } = useCourse(id);
   const { data: curriculum } = useCourseItemsHierarchy(id);
   const deleteCourseMutation = useDeleteCourse();
-  const applyProgramMutation = useApplyProgram();
 
   // 카테고리 목록 조회
   useEffect(() => {
@@ -87,27 +84,6 @@ export function CourseDetailPage() {
     } catch (err) {
       console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
-    }
-  };
-
-  // 프로그램 신청 핸들러
-  const handleApplyProgram = async () => {
-    if (!course) return;
-    if (!confirm('이 강의를 프로그램으로 신청하시겠습니까?')) return;
-
-    try {
-      const result = await applyProgramMutation.mutateAsync(
-        toCourseForApplication(course)
-      );
-
-      if (result.success) {
-        alert('프로그램 신청이 완료되었습니다. 관리자 검토 후 승인됩니다.');
-      } else {
-        alert(`신청 실패: ${result.error}`);
-      }
-    } catch (err) {
-      console.error('Apply program failed:', err);
-      alert('프로그램 신청에 실패했습니다.');
     }
   };
 
@@ -183,14 +159,9 @@ export function CourseDetailPage() {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                onClick={handleApplyProgram}
-                disabled={applyProgramMutation.isPending}
+                onClick={() => navigate(`/tu/teaching/courses/${id}/apply`)}
               >
-                {applyProgramMutation.isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Send size={16} />
-                )}
+                <Send size={16} />
                 프로그램 신청
               </Button>
               <Button

@@ -4,6 +4,7 @@ export {
   CourseCreatePage,
   CourseEditPage,
   CourseDetailPage as TeachingCourseDetailPage,
+  CourseApplyPage,
   TuContentCreatePage,
   ContentDetailPage,
   MyAssignmentsPage,
