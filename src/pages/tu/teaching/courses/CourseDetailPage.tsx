@@ -120,76 +120,74 @@ export function CourseDetailPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-bg-app">
-      {/* Header */}
-      <div className="border-b border-border bg-bg-default sticky top-0 z-10">
-        <div className="p-6 px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="border border-border"
-                onClick={() => navigate('/tu/teaching/courses')}
-              >
-                <ArrowLeft size={16} />
-                목록으로
-              </Button>
-              <div>
-                <h1 className="text-text-primary text-xl mb-1">{course.title}</h1>
-                <div className="flex items-center gap-2">
-                  {course.level && (
-                    <Badge variant={levelBadgeColor[course.level]}>
-                      {LEVEL_LABELS[course.level]}
-                    </Badge>
-                  )}
-                  {course.type && (
-                    <Badge variant={typeBadgeColor[course.type]}>
-                      {TYPE_LABELS[course.type]}
-                    </Badge>
-                  )}
-                  <span className="text-text-secondary text-sm">
-                    {course.itemCount}차시
-                  </span>
-                </div>
-              </div>
-            </div>
+    <div className="h-full overflow-auto bg-bg-app">
+      <div className="p-8">
+        {/* 뒤로가기 버튼 */}
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="border border-border"
+            onClick={() => navigate('/tu/teaching/courses')}
+          >
+            <ArrowLeft size={16} />
+            목록으로
+          </Button>
+        </div>
 
-            {/* Action Buttons */}
+        {/* Header Section - 목록 페이지와 동일한 스타일 */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-text-primary mb-2">{course.title}</h1>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => navigate(`/tu/teaching/courses/${id}/apply`)}
-              >
-                <Send size={16} />
-                프로그램 신청
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="border border-border"
-                onClick={() => navigate(`/tu/teaching/courses/${id}/edit`)}
-              >
-                <Edit2 size={16} />
-                수정
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteCourseMutation.isPending}
-              >
-                <Trash2 size={16} />
-                삭제
-              </Button>
+              {course.level && (
+                <Badge variant={levelBadgeColor[course.level]}>
+                  {LEVEL_LABELS[course.level]}
+                </Badge>
+              )}
+              {course.type && (
+                <Badge variant={typeBadgeColor[course.type]}>
+                  {TYPE_LABELS[course.type]}
+                </Badge>
+              )}
+              <span className="text-text-secondary text-sm">
+                {course.itemCount}차시
+              </span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8 max-w-5xl space-y-6">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => navigate(`/tu/teaching/courses/${id}/apply`)}
+            >
+              <Send size={16} />
+              프로그램 신청
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="border border-border"
+              onClick={() => navigate(`/tu/teaching/courses/${id}/edit`)}
+            >
+              <Edit2 size={16} />
+              수정
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleteCourseMutation.isPending}
+            >
+              <Trash2 size={16} />
+              삭제
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-6">
           {/* 기본 정보 섹션 */}
           <CourseInfoSection course={course} categories={categories} />
 
