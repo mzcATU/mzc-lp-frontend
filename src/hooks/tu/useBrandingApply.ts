@@ -5,11 +5,21 @@ import type { PublicBrandingResponse } from '@/types/tu/branding.types';
  * 색상을 어둡게 만드는 유틸리티 (hover 상태용)
  */
 function darkenColor(hex: string, percent: number = 15): string {
-  // hex를 RGB로 변환
   const num = parseInt(hex.replace('#', ''), 16);
   const r = Math.max(0, ((num >> 16) & 0xff) - Math.round(255 * percent / 100));
   const g = Math.max(0, ((num >> 8) & 0xff) - Math.round(255 * percent / 100));
   const b = Math.max(0, (num & 0xff) - Math.round(255 * percent / 100));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+/**
+ * 색상을 밝게 만드는 유틸리티 (hover 상태용)
+ */
+function lightenColor(hex: string, percent: number = 15): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, ((num >> 16) & 0xff) + Math.round(255 * percent / 100));
+  const g = Math.min(255, ((num >> 8) & 0xff) + Math.round(255 * percent / 100));
+  const b = Math.min(255, (num & 0xff) + Math.round(255 * percent / 100));
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
@@ -26,7 +36,10 @@ export function useBrandingApply(branding: PublicBrandingResponse | null | undef
 
     // ===== Landing 페이지용 CSS 변수 =====
     if (branding.primaryColor) {
+      const primaryHover = lightenColor(branding.primaryColor, 12);
       root.style.setProperty('--landing-primary-color', branding.primaryColor);
+      root.style.setProperty('--landing-primary-hover', primaryHover);
+
       // gradient-text 업데이트
       const gradientFrom = branding.primaryColor;
       const gradientTo = branding.secondaryColor || branding.primaryColor;
@@ -35,7 +48,9 @@ export function useBrandingApply(branding: PublicBrandingResponse | null | undef
     }
 
     if (branding.secondaryColor) {
+      const secondaryHover = lightenColor(branding.secondaryColor, 12);
       root.style.setProperty('--landing-secondary-color', branding.secondaryColor);
+      root.style.setProperty('--landing-secondary-hover', secondaryHover);
     }
 
     if (branding.accentColor) {

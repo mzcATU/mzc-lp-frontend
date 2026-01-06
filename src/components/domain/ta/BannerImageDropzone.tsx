@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, ImageIcon, Smartphone, Monitor } from 'lucide-react';
+import { Upload, X, ImageIcon, Smartphone, Monitor, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
+import axiosInstance from '@/services/common/api/axiosInstance';
 
 interface BannerImageDropzoneProps {
   value?: string;
@@ -26,18 +28,40 @@ export const BannerImageDropzone = ({
   className,
 }: BannerImageDropzoneProps) => {
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosInstance.post<{ url: string }>(
+      '/community/images/upload',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    return response.data.url;
+  };
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
+    async (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          onChange(result);
-        };
-        reader.readAsDataURL(file);
-        onFileSelect?.(file);
+        setIsUploading(true);
+        try {
+          const imageUrl = await uploadImage(file);
+          onChange(imageUrl);
+          onFileSelect?.(file);
+        } catch (error) {
+          console.error('Image upload failed:', error);
+          toast.error('이미지 업로드에 실패했습니다.');
+        } finally {
+          setIsUploading(false);
+        }
       }
     },
     [onChange, onFileSelect]
@@ -49,7 +73,8 @@ export const BannerImageDropzone = ({
       'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 5 * 1024 * 1024, // 5MB (서버 제한)
+    disabled: isUploading,
     onDragEnter: () => setIsDragActive(true),
     onDragLeave: () => setIsDragActive(false),
   });
@@ -133,6 +158,19 @@ export const BannerImageDropzone = ({
               </div>
             </div>
           </>
+        ) : isUploading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+            <Loader2
+              className="w-8 h-8 animate-spin mb-3"
+              style={{ color: designTokens.button.brand_default }}
+            />
+            <p
+              className="text-sm font-medium"
+              style={{ color: designTokens.text.primary }}
+            >
+              업로드 중...
+            </p>
+          </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
             <div

@@ -5,8 +5,16 @@ import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
-import { useUnreadNotificationCount } from '@/hooks/tu';
+import { useUnreadNotificationCount, usePublicNavigation } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
+import type { NavigationItemResponse } from '@/types/tu/branding.types';
+
+// 기본 네비게이션 메뉴 (fallback)
+const DEFAULT_NAV_ITEMS: NavigationItemResponse[] = [
+  { id: 1, label: '강의 탐색', icon: 'BookOpen', path: '/tu/b2c/courses', enabled: true, displayOrder: 1, target: null, createdAt: '', updatedAt: '' },
+  { id: 2, label: '로드맵', icon: 'Map', path: '/tu/b2c/roadmaps', enabled: true, displayOrder: 2, target: null, createdAt: '', updatedAt: '' },
+  { id: 3, label: '커뮤니티', icon: 'Users', path: '/tu/b2c/community', enabled: true, displayOrder: 3, target: null, createdAt: '', updatedAt: '' },
+];
 
 export function LandingHeader() {
   const [showBanner, setShowBanner] = useState(true);
@@ -22,6 +30,10 @@ export function LandingHeader() {
   const { data: unreadCountData } = useUnreadNotificationCount(isAuthenticated);
   const unreadCount = unreadCountData?.count || 0;
   const { branding } = useTenantBranding();
+  const { data: navigationItems } = usePublicNavigation(isAuthenticated);
+
+  // 네비게이션 메뉴 (TA 설정 또는 기본값)
+  const navItems = navigationItems && navigationItems.length > 0 ? navigationItems : DEFAULT_NAV_ITEMS;
 
   // API Base URL
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -91,15 +103,30 @@ export function LandingHeader() {
 
             {/* Desktop Nav Links */}
             <nav className={`hidden md:flex items-center gap-8 font-medium text-[15px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              <Link to={prefixPath('/tu/b2c/courses')} className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                강의 탐색
-              </Link>
-              <Link to={prefixPath('/tu/b2c/roadmaps')} className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                로드맵
-              </Link>
-              <Link to={prefixPath('/tu/b2c/community')} className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                커뮤니티
-              </Link>
+              {navItems.map((item) => {
+                const isExternal = item.path.startsWith('http');
+                const linkPath = isExternal ? item.path : prefixPath(item.path);
+
+                return isExternal ? (
+                  <a
+                    key={item.id}
+                    href={linkPath}
+                    target={item.target || '_blank'}
+                    rel="noopener noreferrer"
+                    className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.id}
+                    to={linkPath}
+                    className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 

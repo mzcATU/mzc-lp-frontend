@@ -9,7 +9,11 @@ import type {
   UpdateBrandingRequest,
   UpdateUserManagementRequest,
 } from '@/types/admin';
-import type { PublicBrandingResponse } from '@/types/tu/branding.types';
+import type {
+  PublicBrandingResponse,
+  PublicLayoutResponse,
+  NavigationItemResponse,
+} from '@/types/tu/branding.types';
 
 /** 기본 브랜딩 (fallback) */
 const DEFAULT_BRANDING: PublicBrandingResponse = {
@@ -65,6 +69,26 @@ export const tenantSettingsService = {
     const { data } = await axiosInstance.patch<TenantSettingsDetail>(
       API_ENDPOINTS.TENANT_SETTINGS.USER_MANAGEMENT,
       request
+    );
+    return data;
+  },
+
+  // ============================================
+  // TU용 공개 API
+  // ============================================
+
+  /** 공개 레이아웃 조회 (TU용, 인증된 사용자) */
+  async getPublicLayout(): Promise<PublicLayoutResponse> {
+    const { data } = await axiosInstance.get<PublicLayoutResponse>(
+      API_ENDPOINTS.TENANT_SETTINGS.LAYOUT_PUBLIC
+    );
+    return data;
+  },
+
+  /** 활성화된 네비게이션 항목 조회 (TU용) */
+  async getPublicNavigation(): Promise<NavigationItemResponse[]> {
+    const { data } = await axiosInstance.get<NavigationItemResponse[]>(
+      API_ENDPOINTS.TENANT_SETTINGS.NAVIGATION_PUBLIC
     );
     return data;
   },
