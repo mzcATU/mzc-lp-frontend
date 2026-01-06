@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, Card } from '@/components/common';
-import { useMyPrograms, useSubmitMyProgram, useDeleteMyProgram } from '@/hooks/tu';
+import { useMyPrograms, useDeleteMyProgram } from '@/hooks/tu';
 import type { ProgramStatus, ProgramResponse } from '@/types/common';
 import {
   PROGRAM_STATUS_LABELS,
@@ -118,21 +118,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
     refetch,
   } = useMyPrograms(filterStatus === 'all' ? undefined : { status: filterStatus });
 
-  const submitMutation = useSubmitMyProgram();
   const deleteMutation = useDeleteMyProgram();
-
-  // 신청 핸들러
-  const handleSubmit = async (program: ProgramResponse) => {
-    if (!confirm(getText('confirmSubmit'))) return;
-
-    try {
-      await submitMutation.mutateAsync(program.id);
-      alert(getText('submitSuccess'));
-    } catch (err) {
-      console.error('Submit failed:', err);
-      alert('신청에 실패했습니다.');
-    }
-  };
 
   // 삭제 핸들러
   const handleDelete = async (program: ProgramResponse) => {
@@ -180,8 +166,6 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
     // recent: updatedAt 기준 내림차순
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
-
-  const isActionPending = submitMutation.isPending || deleteMutation.isPending;
 
   return (
     <div className="p-8 bg-bg-app_default min-h-screen">
@@ -332,14 +316,9 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                     {canSubmit(program.status) && (
                       <Button
                         size="sm"
-                        onClick={() => handleSubmit(program)}
-                        disabled={isActionPending}
+                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
                       >
-                        {submitMutation.isPending ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <Send size={14} />
-                        )}
+                        <Send size={14} />
                         {getText('submit')}
                       </Button>
                     )}
@@ -349,7 +328,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDelete(program)}
-                        disabled={isActionPending}
+                        disabled={deleteMutation.isPending}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -441,14 +420,9 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                       <Button
                         size="sm"
                         className="flex-1"
-                        onClick={() => handleSubmit(program)}
-                        disabled={isActionPending}
+                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
                       >
-                        {submitMutation.isPending ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <Send size={14} />
-                        )}
+                        <Send size={14} />
                         {getText('submit')}
                       </Button>
                     )}
@@ -458,7 +432,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDelete(program)}
-                        disabled={isActionPending}
+                        disabled={deleteMutation.isPending}
                       >
                         <Trash2 size={14} />
                       </Button>

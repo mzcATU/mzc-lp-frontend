@@ -4,7 +4,7 @@ import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle,
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
-import { useMyCourses, useApplyProgram, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
+import { useMyCourses, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
 import type { Course, CourseStatus } from '@/types';
 import type { CourseResponse } from '@/types/common/course.types';
 
@@ -77,7 +77,6 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
   // API 연동
   const { data: coursesData, isLoading, error, refetch } = useMyCourses();
-  const applyProgramMutation = useApplyProgram();
   const applyProgramsBulkMutation = useApplyProgramsBulk();
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
@@ -101,26 +100,6 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       setSelectedCourseIds(new Set());
     } else {
       setSelectedCourseIds(new Set(courses.map((c) => c.id)));
-    }
-  };
-
-  // 개별 신청
-  const handleApplySingle = async (courseResponse: CourseResponse) => {
-    if (!confirm(`"${courseResponse.title}" 강의를 프로그램으로 신청하시겠습니까?`)) return;
-
-    try {
-      const result = await applyProgramMutation.mutateAsync(
-        toCourseForApplication(courseResponse)
-      );
-
-      if (result.success) {
-        alert('프로그램 신청이 완료되었습니다. 관리자 검토 후 승인됩니다.');
-      } else {
-        alert(`신청 실패: ${result.error}`);
-      }
-    } catch (err) {
-      console.error('Apply program failed:', err);
-      alert('프로그램 신청에 실패했습니다.');
     }
   };
 
@@ -213,7 +192,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     ? Math.round(courses.reduce((acc, c) => acc + c.progress, 0) / courses.length)
     : 0;
 
-  const isApplying = applyProgramMutation.isPending || applyProgramsBulkMutation.isPending;
+  const isApplying = applyProgramsBulkMutation.isPending;
 
   return (
     <div className="p-8 bg-bg-app_default min-h-screen">
@@ -367,14 +346,9 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                       size="sm"
                       variant="ghost"
                       className="flex-1 border border-border"
-                      onClick={() => handleApplySingle(courseResponse)}
-                      disabled={isApplying}
+                      onClick={() => navigate(`/tu/teaching/courses/${course.id}/apply`)}
                     >
-                      {applyProgramMutation.isPending ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Send size={14} />
-                      )}
+                      <Send size={14} />
                       {getText('applyProgram')}
                     </Button>
                   ) : (
