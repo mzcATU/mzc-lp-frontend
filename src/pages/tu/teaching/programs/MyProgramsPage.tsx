@@ -34,7 +34,7 @@ const DEFAULT_THUMBNAIL =
   'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
 const t = {
-  title: { ko: '강의 개설', en: 'Create Course' },
+  title: { ko: '강의 개설', en: 'Course Creation' },
   subtitle: {
     ko: '신청한 강의의 상태를 확인하고 관리하세요',
     en: 'Check the status and manage your submitted courses',

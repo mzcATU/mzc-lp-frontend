@@ -1,5 +1,5 @@
 /**
- * 내 배정 페이지 (TU - 강사 본인용)
+ * 강의 관리 페이지 (TU - 강사 본인용)
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -18,13 +18,13 @@ interface MyAssignmentsPageProps {
 }
 
 const t = {
-  title: { ko: '내 배정', en: 'My Assignments' },
+  title: { ko: '강의 관리', en: 'Course Management' },
   subtitle: { ko: '배정된 강의와 통계를 확인하세요.', en: 'View your assigned courses and statistics.' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   noAssignments: { ko: '배정된 강의가 없습니다.', en: 'No assignments found.' },
   noAssignmentsDesc: { ko: '아직 배정된 강의가 없습니다.', en: 'You have no assigned courses yet.' },
-  myAssignments: { ko: '내 배정 목록', en: 'My Assignments' },
+  myAssignments: { ko: '강의 관리 목록', en: 'Course Management List' },
   courseStats: { ko: '차수별 통계', en: 'Course Statistics' },
   filterAll: { ko: '전체', en: 'All' },
   filterActive: { ko: '활동 중', en: 'Active' },
