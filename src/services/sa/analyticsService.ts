@@ -93,27 +93,27 @@ export interface ActivityLogsParams {
 export const saAnalyticsService = {
   /** 전체 시스템 활동 로그 목록 조회 */
   async getLogs(params?: ActivityLogsParams): Promise<Page<ActivityLogResponse>> {
-    const { data } = await axiosInstance.get<{ data: Page<ActivityLogResponse> }>(
+    const { data } = await axiosInstance.get<Page<ActivityLogResponse>>(
       API_ENDPOINTS.ANALYTICS.SA_LOGS,
       { params }
     );
-    return data.data;
+    return data;
   },
 
   /** 전체 시스템 활동 통계 조회 */
   async getStats(days: number = 30): Promise<ActivityStatsResponse> {
-    const { data } = await axiosInstance.get<{ data: ActivityStatsResponse }>(
+    const { data } = await axiosInstance.get<ActivityStatsResponse>(
       API_ENDPOINTS.ANALYTICS.SA_STATS,
       { params: { days } }
     );
-    return data.data;
+    return data;
   },
 
   /** 전체 시스템 최근 활동 목록 조회 */
   async getRecentActivities(): Promise<ActivityLogResponse[]> {
-    const { data } = await axiosInstance.get<{ data: ActivityLogResponse[] }>(
+    const { data } = await axiosInstance.get<ActivityLogResponse[]>(
       API_ENDPOINTS.ANALYTICS.SA_RECENT
     );
-    return data.data;
+    return data;
   },
 };

@@ -9,9 +9,9 @@ import type { TaKpiDashboardResponse } from '@/types/admin';
 export const taDashboardService = {
   /** TA KPI 대시보드 통계 조회 */
   async getKpiDashboard(): Promise<TaKpiDashboardResponse> {
-    const { data } = await axiosInstance.get<{ data: TaKpiDashboardResponse }>(
+    const { data } = await axiosInstance.get<TaKpiDashboardResponse>(
       API_ENDPOINTS.TA_DASHBOARD.KPI
     );
-    return data.data;
+    return data;
   },
 };
