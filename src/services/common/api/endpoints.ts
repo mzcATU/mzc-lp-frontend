@@ -283,4 +283,16 @@ export const API_ENDPOINTS = {
     BASE: '/admin/system/settings',
     TENANT_DEFAULTS: '/admin/system/tenant-defaults',
   },
+
+  // Certificates (수료증) - TU
+  CERTIFICATES: {
+    BASE: '/certificates',
+    MY: '/users/me/certificates',
+    BY_ID: (id: number) => `/certificates/${id}`,
+    DOWNLOAD: (id: number) => `/certificates/${id}/download`,
+    VERIFY: (certificateNumber: string) => `/certificates/verify/${certificateNumber}`,
+    ISSUE: (enrollmentId: number) => `/enrollments/${enrollmentId}/certificate`,
+    BY_ENROLLMENT: (enrollmentId: number) => `/enrollments/${enrollmentId}/certificate`,
+    REISSUE: (id: number) => `/certificates/${id}/reissue`,
+  },
 } as const;

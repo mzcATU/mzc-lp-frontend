@@ -278,7 +278,7 @@ export const myPageMenuData: MenuItem[] = [
     subItems: [
       { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
       { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2c/mypage/completed' },
-      { id: 'certifications', label: { ko: '인증서', en: 'Certifications' }, icon: Award, path: '/tu/b2c/mypage/certifications' },
+      { id: 'certificates', label: { ko: '수료증', en: 'Certificates' }, icon: Award, path: '/tu/b2c/mypage/certificates' },
     ],
   },
   {

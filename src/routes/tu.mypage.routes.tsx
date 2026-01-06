@@ -49,7 +49,7 @@ export const tuMyPageRoutes = (
     <Route path="learning/:enrollmentId/player" element={<LearningPlayerPage />} />
     <Route path="learning/:enrollmentId/player/:itemId" element={<LearningPlayerPage />} />
     <Route path="completed" element={<CompletedCoursesPage />} />
-    <Route path="certifications" element={<CertificationsPage />} />
+    <Route path="certificates" element={<CertificationsPage />} />
 
     {/* 내 강의 관리 */}
     <Route path="teaching" element={<MyTeachingPage />} />

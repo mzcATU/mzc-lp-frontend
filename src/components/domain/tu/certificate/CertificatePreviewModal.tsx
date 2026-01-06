@@ -1,4 +1,4 @@
-import { Award, Calendar, User, Download, X, Building2, BookOpen } from 'lucide-react';
+import { Award, Calendar, User, Download, X, Building2, BookOpen, Hash, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
   Dialog,
@@ -7,10 +7,10 @@ import {
   DialogTitle,
   Button,
 } from '@/components/common';
-import type { Enrollment } from '@/services/tu/enrollmentService';
+import type { CertificateResponse, CertificateDetailResponse } from '@/types/tu';
 
 // 날짜 포맷팅
-function formatDate(dateString: string | undefined): string {
+function formatDate(dateString: string | undefined | null): string {
   if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('ko-KR', {
     year: 'numeric',
@@ -26,9 +26,10 @@ export interface CertificatePreviewLabels {
   certifyThat: string;
   hasCompleted: string;
   issuedOn: string;
-  learningPeriod: string;
+  completedOn: string;
+  certificateNumber: string;
   download: string;
-  preparing: string;
+  downloading?: string;
   close: string;
   organization: string;
 }
@@ -36,11 +37,10 @@ export interface CertificatePreviewLabels {
 interface CertificatePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  enrollment: Enrollment | null;
-  userName: string;
+  certificate: CertificateResponse | CertificateDetailResponse | null;
   labels: CertificatePreviewLabels;
   onDownload?: () => void;
-  isDownloadEnabled?: boolean;
+  isDownloading?: boolean;
   isDark?: boolean;
   organizationName?: string;
 }
@@ -52,15 +52,16 @@ interface CertificatePreviewModalProps {
 export const CertificatePreviewModal = ({
   isOpen,
   onClose,
-  enrollment,
-  userName,
+  certificate,
   labels,
   onDownload,
-  isDownloadEnabled = false,
+  isDownloading = false,
   isDark = false,
   organizationName = 'MZC Learn Platform',
 }: Readonly<CertificatePreviewModalProps>) => {
-  if (!enrollment) return null;
+  if (!certificate) return null;
+
+  const isDownloadEnabled = certificate.status === 'ISSUED' || certificate.status === 'VALID';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -131,7 +132,7 @@ export const CertificatePreviewModal = ({
               </p>
               <div className={cn('flex items-center justify-center gap-2 text-xl font-bold mb-2', isDark ? 'text-white' : 'text-gray-900')}>
                 <User className="w-5 h-5" />
-                <span>{userName}</span>
+                <span>{certificate.userName}</span>
               </div>
               <p className={cn('text-sm', isDark ? 'text-gray-400' : 'text-gray-500')}>
                 {labels.hasCompleted}
@@ -142,10 +143,10 @@ export const CertificatePreviewModal = ({
             <div className={cn('mb-6 p-4 rounded-lg', isDark ? 'bg-white/5' : 'bg-amber-100/50')}>
               <div className={cn('flex items-center justify-center gap-2 mb-2', isDark ? 'text-gray-300' : 'text-gray-700')}>
                 <BookOpen className="w-4 h-4" />
-                <span className="text-sm font-medium">{enrollment.programTitle}</span>
+                <span className="text-sm font-medium">{certificate.programTitle}</span>
               </div>
               <p className={cn('text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>
-                {enrollment.courseTimeName}
+                {certificate.courseTimeTitle}
               </p>
             </div>
 
@@ -153,11 +154,19 @@ export const CertificatePreviewModal = ({
             <div className="space-y-2 mb-6">
               <div className={cn('flex items-center justify-center gap-2 text-sm', isDark ? 'text-gray-300' : 'text-gray-600')}>
                 <Calendar className="w-4 h-4" />
-                <span>{labels.learningPeriod}: {formatDate(enrollment.startDate)} ~ {formatDate(enrollment.endDate)}</span>
+                <span>{labels.completedOn}: {formatDate(certificate.completedAt)}</span>
               </div>
               <div className={cn('flex items-center justify-center gap-2 text-sm font-medium', isDark ? 'text-yellow-400' : 'text-amber-700')}>
                 <Award className="w-4 h-4" />
-                <span>{labels.issuedOn}: {formatDate(enrollment.completedAt)}</span>
+                <span>{labels.issuedOn}: {formatDate(certificate.issuedAt)}</span>
+              </div>
+            </div>
+
+            {/* 수료증 번호 */}
+            <div className={cn('mb-4 p-2 rounded', isDark ? 'bg-white/5' : 'bg-amber-50')}>
+              <div className={cn('flex items-center justify-center gap-2 text-xs', isDark ? 'text-gray-400' : 'text-gray-500')}>
+                <Hash className="w-3 h-3" />
+                <span>{labels.certificateNumber}: {certificate.certificateNumber}</span>
               </div>
             </div>
 
@@ -178,10 +187,18 @@ export const CertificatePreviewModal = ({
           <Button
             variant={isDownloadEnabled ? 'brand' : 'ghost'}
             onClick={isDownloadEnabled ? onDownload : undefined}
-            disabled={!isDownloadEnabled}
+            disabled={!isDownloadEnabled || isDownloading}
           >
-            <Download className="w-4 h-4 mr-2" />
-            {isDownloadEnabled ? labels.download : labels.preparing}
+            {isDownloading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            {isDownloading
+              ? (labels.downloading || 'Downloading...')
+              : isDownloadEnabled
+                ? labels.download
+                : labels.close}
           </Button>
         </div>
       </DialogContent>

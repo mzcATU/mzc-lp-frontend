@@ -3,7 +3,7 @@ import { Award, Loader2 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
-import { useMyEnrollments } from '@/hooks/tu';
+import { useMyCertificates, useDownloadCertificate } from '@/hooks/tu';
 import {
   Button,
   Pagination,
@@ -14,34 +14,41 @@ import {
   PaginationPrevious,
 } from '@/components/common';
 import { CertificateCard, CertificatePreviewModal } from '@/components/domain/tu/certificate';
-import type { Enrollment } from '@/services/tu/enrollmentService';
+import type { CertificateResponse } from '@/types/tu';
 
 export function CertificationsPage() {
   const { theme } = useThemeStore();
   const { language } = useLanguageStore();
   const { t } = useTranslation();
-  const { user } = useAuthStore();
   const isDark = theme === 'dark';
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const [page, setPage] = useState(0);
   const pageSize = 12;
 
   // 수료증 미리보기 모달 상태
-  const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
+  const [selectedCertificate, setSelectedCertificate] = useState<CertificateResponse | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
-  // COMPLETED 상태의 수강 목록만 조회
-  const { data, isLoading, isError } = useMyEnrollments({
+  // Certificate API로 수료증 목록 조회
+  const { data, isLoading, isFetching, isError } = useMyCertificates({
     page,
     size: pageSize,
-    status: 'COMPLETED',
   });
+
+  // 실제 로딩 상태 (초기 로딩 또는 페칭 중)
+  const showLoading = isLoading || (isFetching && !data);
+
+  // PDF 다운로드 mutation
+  const downloadMutation = useDownloadCertificate();
 
   // 수료증 카드 라벨
   const cardLabels = {
     completedOn: language === 'ko' ? '수료일' : 'Completed on',
     view: language === 'ko' ? '보기' : 'View',
     download: language === 'ko' ? '다운로드' : 'Download',
+    downloading: language === 'ko' ? '다운로드 중...' : 'Downloading...',
     preparing: language === 'ko' ? '준비 중' : 'Preparing',
     certificateOf: language === 'ko' ? '수료증' : 'Certificate of',
     completion: language === 'ko' ? '수료' : 'Completion',
@@ -54,31 +61,38 @@ export function CertificationsPage() {
     completion: language === 'ko' ? '수료' : 'Completion',
     certifyThat: language === 'ko' ? '다음의 사용자가' : 'This is to certify that',
     hasCompleted: language === 'ko' ? '아래 과정을 성공적으로 수료하였음을 인증합니다.' : 'has successfully completed the following course.',
-    issuedOn: language === 'ko' ? '수료일' : 'Issued on',
-    learningPeriod: language === 'ko' ? '학습 기간' : 'Learning Period',
+    issuedOn: language === 'ko' ? '발급일' : 'Issued on',
+    completedOn: language === 'ko' ? '수료일' : 'Completed on',
+    certificateNumber: language === 'ko' ? '수료증 번호' : 'Certificate No.',
     download: language === 'ko' ? 'PDF 다운로드' : 'Download PDF',
-    preparing: language === 'ko' ? '준비 중' : 'Preparing',
+    downloading: language === 'ko' ? '다운로드 중...' : 'Downloading...',
     close: language === 'ko' ? '닫기' : 'Close',
     organization: language === 'ko' ? '발급 기관' : 'Organization',
   };
 
-  const handlePreview = (enrollment: Enrollment) => {
-    setSelectedEnrollment(enrollment);
+  const handlePreview = (certificate: CertificateResponse) => {
+    setSelectedCertificate(certificate);
     setIsPreviewOpen(true);
   };
 
   const handleClosePreview = () => {
     setIsPreviewOpen(false);
-    setSelectedEnrollment(null);
+    setSelectedCertificate(null);
   };
 
-  // TODO: Phase 2에서 실제 Certificate API 연동 시 구현
-  const handleDownload = () => {
-    // Certificate API: GET /api/certificates/{id}/download
-    console.log('PDF download - Phase 2');
-  };
+  const handleDownload = async (certificate: CertificateResponse) => {
+    if (downloadMutation.isPending) return;
 
-  const userName = user?.name || (language === 'ko' ? '학습자' : 'Learner');
+    setDownloadingId(certificate.id);
+    try {
+      const fileName = `certificate_${certificate.certificateNumber}.pdf`;
+      await downloadMutation.mutateAsync({ id: certificate.id, fileName });
+    } catch (error) {
+      console.error('Failed to download certificate:', error);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   return (
     <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
@@ -101,7 +115,7 @@ export function CertificationsPage() {
         </div>
 
         {/* Results Count */}
-        {data && (
+        {isAuthenticated && data && (
           <p className={`mb-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {language === 'ko' ? '총 ' : 'Total '}
             <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -112,9 +126,18 @@ export function CertificationsPage() {
         )}
 
         {/* Loading State */}
-        {isLoading && (
+        {showLoading && (
           <div className="flex items-center justify-center py-20">
             <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+        )}
+
+        {/* Not Authenticated State */}
+        {!isAuthenticated && !showLoading && (
+          <div className="text-center py-20">
+            <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+              {language === 'ko' ? '로그인이 필요합니다.' : 'Please log in to view certificates.'}
+            </p>
           </div>
         )}
 
@@ -128,7 +151,7 @@ export function CertificationsPage() {
         )}
 
         {/* Empty State */}
-        {data && data.content.length === 0 && (
+        {isAuthenticated && data && data.content.length === 0 && (
           <div
             className={`text-center py-20 rounded-xl ${
               isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-200'
@@ -150,18 +173,17 @@ export function CertificationsPage() {
         )}
 
         {/* Certificates Grid */}
-        {data && data.content.length > 0 && (
+        {isAuthenticated && data && data.content.length > 0 && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-              {data.content.map((enrollment) => (
+              {data.content.map((certificate) => (
                 <CertificateCard
-                  key={enrollment.id}
-                  enrollment={enrollment}
-                  userName={userName}
+                  key={certificate.id}
+                  certificate={certificate}
                   labels={cardLabels}
-                  onPreview={() => handlePreview(enrollment)}
-                  onDownload={handleDownload}
-                  isDownloadEnabled={false} // Phase 2에서 활성화
+                  onPreview={() => handlePreview(certificate)}
+                  onDownload={() => handleDownload(certificate)}
+                  isDownloading={downloadingId === certificate.id}
                   isDark={isDark}
                 />
               ))}
@@ -210,11 +232,10 @@ export function CertificationsPage() {
         <CertificatePreviewModal
           isOpen={isPreviewOpen}
           onClose={handleClosePreview}
-          enrollment={selectedEnrollment}
-          userName={userName}
+          certificate={selectedCertificate}
           labels={modalLabels}
-          onDownload={handleDownload}
-          isDownloadEnabled={false} // Phase 2에서 활성화
+          onDownload={() => selectedCertificate && handleDownload(selectedCertificate)}
+          isDownloading={selectedCertificate ? downloadingId === selectedCertificate.id : false}
           isDark={isDark}
         />
       </div>
