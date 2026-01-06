@@ -47,19 +47,19 @@ export const tenantService = {
 
   /** 테넌트 상세 조회 */
   async getTenant(id: number): Promise<TenantDetail> {
-    const { data } = await axiosInstance.get<{ data: TenantDetail }>(
+    const { data } = await axiosInstance.get<TenantDetail>(
       API_ENDPOINTS.TENANTS.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 테넌트 수정 */
   async update(id: number, request: UpdateTenantDetailRequest): Promise<TenantDetail> {
-    const { data } = await axiosInstance.put<{ data: TenantDetail }>(
+    const { data } = await axiosInstance.put<TenantDetail>(
       API_ENDPOINTS.TENANTS.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 테넌트 삭제 */
@@ -73,9 +73,9 @@ export const tenantService = {
 
   /** 테넌트 통계 조회 */
   async getStats(): Promise<TenantStats> {
-    const { data } = await axiosInstance.get<{ data: TenantStats }>(
+    const { data } = await axiosInstance.get<TenantStats>(
       `${API_ENDPOINTS.TENANTS.BASE}/stats`
     );
-    return data.data;
+    return data;
   },
 };

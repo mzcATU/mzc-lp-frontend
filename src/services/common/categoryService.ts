@@ -21,10 +21,10 @@ export const categoryService = {
 
   /** 카테고리 목록 조회 */
   async getCategories(): Promise<CategoryResponse[]> {
-    const { data } = await axiosInstance.get<{ data: CategoryResponse[] }>(
+    const { data } = await axiosInstance.get<CategoryResponse[]>(
       API_ENDPOINTS.CATEGORIES.BASE
     );
-    return data.data;
+    return data;
   },
 
   /** 카테고리 상세 조회 */

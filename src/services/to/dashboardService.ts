@@ -9,9 +9,9 @@ import type { ToOperatorDashboardResponse } from '@/types/to';
 export const toDashboardService = {
   /** TO 운영 대시보드 통계 조회 */
   async getDashboard(): Promise<ToOperatorDashboardResponse> {
-    const { data } = await axiosInstance.get<{ data: ToOperatorDashboardResponse }>(
+    const { data } = await axiosInstance.get<ToOperatorDashboardResponse>(
       API_ENDPOINTS.TO_DASHBOARD.TASKS
     );
-    return data.data;
+    return data;
   },
 };
