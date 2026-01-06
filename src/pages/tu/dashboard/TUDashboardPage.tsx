@@ -19,7 +19,7 @@ interface TUDashboardPageProps {
 }
 
 const t = {
-  title: { ko: '강사 센터', en: 'Instructor Hub' },
+  title: { ko: '대시보드', en: 'Dashboard' },
   subtitle: { ko: '강의 관리와 운영 현황을 확인하세요', en: 'Manage and monitor your courses' },
 
   // 통계
