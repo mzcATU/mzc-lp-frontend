@@ -4,11 +4,11 @@
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import type {
-  Tenant,
   TenantDetail,
   TenantListResponse,
   TenantStats,
   CreateTenantRequest,
+  CreateTenantResponse,
   UpdateTenantDetailRequest,
 } from '@/types/admin';
 
@@ -27,9 +27,9 @@ export const tenantService = {
   // Tenant CRUD
   // ============================================
 
-  /** 테넌트 생성 */
-  async create(request: CreateTenantRequest): Promise<Tenant> {
-    const { data } = await axiosInstance.post<{ data: Tenant }>(
+  /** 테넌트 생성 (관리자 계정도 함께 생성됨) */
+  async create(request: CreateTenantRequest): Promise<CreateTenantResponse> {
+    const { data } = await axiosInstance.post<{ data: CreateTenantResponse }>(
       API_ENDPOINTS.TENANTS.BASE,
       request
     );

@@ -65,6 +65,13 @@ interface TenantFormData {
   status?: TenantStatus;
 }
 
+interface CreatedTenantInfo {
+  tenantName: string;
+  adminEmail: string;
+  adminName: string;
+  tempPassword: string;
+}
+
 export function TenantsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,6 +81,7 @@ export function TenantsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
+  const [createdTenantInfo, setCreatedTenantInfo] = useState<CreatedTenantInfo | null>(null);
 
   // API Hooks
   const { data: tenantsData, isLoading, isError } = useTenants({
@@ -239,6 +247,7 @@ export function TenantsPage() {
         };
         await updateMutation.mutateAsync({ id: selectedTenant.id, request: updateData });
         toast.success('테넌트가 수정되었습니다.');
+        setIsCreateDialogOpen(false);
       } else {
         // 생성
         const createData: CreateTenantRequest = {
@@ -250,10 +259,16 @@ export function TenantsPage() {
           adminEmail: data.adminEmail,
           adminName: data.adminName,
         };
-        await createMutation.mutateAsync(createData);
-        toast.success('테넌트가 생성되었습니다.');
+        const result = await createMutation.mutateAsync(createData);
+        setIsCreateDialogOpen(false);
+        // 생성 성공 시 관리자 정보 다이얼로그 표시
+        setCreatedTenantInfo({
+          tenantName: result.name,
+          adminEmail: result.admin.email,
+          adminName: result.admin.name,
+          tempPassword: result.admin.tempPassword,
+        });
       }
-      setIsCreateDialogOpen(false);
       reset();
     } catch {
       toast.error(selectedTenant ? '테넌트 수정에 실패했습니다.' : '테넌트 생성에 실패했습니다.');
@@ -533,6 +548,59 @@ export function TenantsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 테넌트 생성 완료 다이얼로그 (관리자 계정 정보 표시) */}
+      <Dialog open={!!createdTenantInfo} onOpenChange={() => setCreatedTenantInfo(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>테넌트 생성 완료</DialogTitle>
+            <DialogDescription>
+              '{createdTenantInfo?.tenantName}' 테넌트가 생성되었습니다.
+              <br />
+              아래 관리자 계정 정보를 안전하게 보관하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm font-medium text-yellow-800 mb-3">
+                ⚠️ 임시 비밀번호는 이 창을 닫으면 다시 볼 수 없습니다.
+              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">관리자명:</span>
+                  <span className="font-medium">{createdTenantInfo?.adminName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">이메일:</span>
+                  <span className="font-medium">{createdTenantInfo?.adminEmail}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-text-secondary">임시 비밀번호:</span>
+                  <code className="px-2 py-1 bg-white border rounded font-mono text-sm">
+                    {createdTenantInfo?.tempPassword}
+                  </code>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (createdTenantInfo?.tempPassword) {
+                  navigator.clipboard.writeText(createdTenantInfo.tempPassword);
+                  toast.success('임시 비밀번호가 클립보드에 복사되었습니다.');
+                }
+              }}
+            >
+              비밀번호 복사
+            </Button>
+            <Button onClick={() => setCreatedTenantInfo(null)}>
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -64,6 +64,8 @@ export interface UserDetailResponse {
   profileImageUrl?: string;
   tenantId?: number;
   tenantName?: string;
+  tenantSubdomain?: string;
+  tenantCustomDomain?: string;
   createdAt: string;
   updatedAt: string;
 }
