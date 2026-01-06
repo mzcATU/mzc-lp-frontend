@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/common/authStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/common';
 
 interface WishlistButtonProps {
-  courseId: number;
+  courseTimeId: number;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
   showTooltip?: boolean;
@@ -29,7 +29,7 @@ const iconSizeClasses = {
 };
 
 export function WishlistButton({
-  courseId,
+  courseTimeId,
   className,
   size = 'md',
   showTooltip = true,
@@ -37,7 +37,7 @@ export function WishlistButton({
 }: WishlistButtonProps) {
   const { isAuthenticated } = useAuthStore();
   const { data: isWishlisted = false, isLoading: isChecking } = useCheckWishlistStatus(
-    courseId,
+    courseTimeId,
     isAuthenticated
   );
   const { toggle, isLoading: isToggling } = useToggleWishlist();
@@ -51,7 +51,7 @@ export function WishlistButton({
     }
 
     try {
-      await toggle(courseId, isWishlisted);
+      await toggle(courseTimeId, isWishlisted);
       onToggle?.(!isWishlisted);
     } catch (error) {
       console.error('Failed to toggle wishlist:', error);

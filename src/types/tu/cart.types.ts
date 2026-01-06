@@ -1,28 +1,29 @@
 /**
- * 장바구니(Cart) 관련 타입 정의 - 백엔드 API 스펙 기반
+ * 장바구니(Cart) 관련 타입 정의
+ * CourseTime 기반으로 변경 (#207)
  */
 
 // 장바구니 항목 응답 (백엔드 API)
 export interface CartItemResponse {
   cartItemId: number;
-  courseId: number;
-  courseTitle: string;
-  courseDescription: string | null;
+  courseTimeId: number;
+  courseTimeTitle: string;
   thumbnailUrl: string | null;
   level: string | null;
-  type: string | null;
   estimatedHours: number | null;
+  isFree: boolean;
+  price: string | null;
   addedAt: string;
 }
 
 // 장바구니 추가 요청
 export interface CartAddRequest {
-  courseId: number;
+  courseTimeId: number;
 }
 
 // 장바구니 삭제 요청 (일괄)
 export interface CartRemoveRequest {
-  courseIds: number[];
+  courseTimeIds: number[];
 }
 
 // 장바구니 개수 응답

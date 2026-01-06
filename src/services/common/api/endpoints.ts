@@ -233,6 +233,7 @@ export const API_ENDPOINTS = {
   // Enrollments (수강 신청) - TU
   ENROLLMENTS: {
     BASE: '/enrollments',
+    BULK: '/enrollments/bulk',
     MY: '/users/me/enrollments',
     BY_ID: (id: number) => `/enrollments/${id}`,
     CANCEL: (id: number) => `/enrollments/${id}/cancel`,
@@ -241,23 +242,22 @@ export const API_ENDPOINTS = {
     CURRICULUM: (id: number) => `/enrollments/${id}/curriculum`,
   },
 
-  // Wishlist (찜) - TU
+  // Wishlist (찜) - TU (CourseTime 기반)
   WISHLIST: {
     BASE: '/wishlist',
     COUNT: '/wishlist/count',
     CHECK_BULK: '/wishlist/check',
-    COURSE: (courseId: number) => `/wishlist/courses/${courseId}`,
-    COURSE_CHECK: (courseId: number) => `/wishlist/courses/${courseId}/check`,
-    COURSE_COUNT: (courseId: number) => `/wishlist/courses/${courseId}/count`,
+    COURSE_TIME: (courseTimeId: number) => `/wishlist/course-times/${courseTimeId}`,
+    COURSE_TIME_CHECK: (courseTimeId: number) => `/wishlist/course-times/${courseTimeId}/check`,
   },
 
-  // Cart (장바구니) - TU
+  // Cart (장바구니) - TU (CourseTime 기반)
   CART: {
     BASE: '/cart',
     ITEMS: '/cart/items',
     COUNT: '/cart/count',
-    ITEM: (courseId: number) => `/cart/items/${courseId}`,
-    ITEM_CHECK: (courseId: number) => `/cart/items/${courseId}/check`,
+    ITEM: (courseTimeId: number) => `/cart/items/${courseTimeId}`,
+    ITEM_CHECK: (courseTimeId: number) => `/cart/items/${courseTimeId}/check`,
   },
 
   // Dashboard (TA, SA)

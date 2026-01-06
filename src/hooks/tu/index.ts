@@ -56,6 +56,7 @@ export {
   useMyEnrollments,
   useEnrollment,
   useEnroll,
+  useEnrollBulk,
   useCancelEnrollment,
 } from './useEnrollmentQueries';
 
@@ -129,7 +130,6 @@ export {
   useMyWishlistCount,
   useCheckWishlistStatus,
   useCheckWishlistStatusBulk,
-  useCourseWishlistCount,
   useAddToWishlist,
   useRemoveFromWishlist,
   useToggleWishlist,

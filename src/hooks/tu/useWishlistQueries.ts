@@ -1,5 +1,6 @@
 /**
- * 찜 목록(Wishlist) React Query 훅 - 백엔드 API 스펙 기반
+ * 찜 목록(Wishlist) React Query 훅
+ * CourseTime 기반으로 변경 (#207)
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,9 +12,8 @@ export const wishlistKeys = {
   all: ['wishlist'] as const,
   list: (page?: number, size?: number) => [...wishlistKeys.all, 'list', { page, size }] as const,
   count: () => [...wishlistKeys.all, 'count'] as const,
-  check: (courseId: number) => [...wishlistKeys.all, 'check', courseId] as const,
-  checkBulk: (courseIds: number[]) => [...wishlistKeys.all, 'checkBulk', courseIds] as const,
-  courseCount: (courseId: number) => [...wishlistKeys.all, 'courseCount', courseId] as const,
+  check: (courseTimeId: number) => [...wishlistKeys.all, 'check', courseTimeId] as const,
+  checkBulk: (courseTimeIds: number[]) => [...wishlistKeys.all, 'checkBulk', courseTimeIds] as const,
 };
 
 /**
@@ -41,37 +41,25 @@ export function useMyWishlistCount(enabled = true) {
 }
 
 /**
- * 특정 강의 찜 여부 확인 훅
+ * 특정 CourseTime 찜 여부 확인 훅
  */
-export function useCheckWishlistStatus(courseId: number, enabled = true) {
+export function useCheckWishlistStatus(courseTimeId: number, enabled = true) {
   return useQuery({
-    queryKey: wishlistKeys.check(courseId),
-    queryFn: () => wishlistService.checkWishlistStatus(courseId),
-    enabled: enabled && courseId > 0,
+    queryKey: wishlistKeys.check(courseTimeId),
+    queryFn: () => wishlistService.checkWishlistStatus(courseTimeId),
+    enabled: enabled && courseTimeId > 0,
     staleTime: 1000 * 60 * 5,
   });
 }
 
 /**
- * 여러 강의 찜 여부 일괄 확인 훅
+ * 여러 CourseTime 찜 여부 일괄 확인 훅
  */
-export function useCheckWishlistStatusBulk(courseIds: number[], enabled = true) {
+export function useCheckWishlistStatusBulk(courseTimeIds: number[], enabled = true) {
   return useQuery({
-    queryKey: wishlistKeys.checkBulk(courseIds),
-    queryFn: () => wishlistService.checkWishlistStatusBulk({ courseIds }),
-    enabled: enabled && courseIds.length > 0,
-    staleTime: 1000 * 60 * 5,
-  });
-}
-
-/**
- * 특정 강의의 찜 개수 조회 훅
- */
-export function useCourseWishlistCount(courseId: number, enabled = true) {
-  return useQuery({
-    queryKey: wishlistKeys.courseCount(courseId),
-    queryFn: () => wishlistService.getCourseWishlistCount(courseId),
-    enabled: enabled && courseId > 0,
+    queryKey: wishlistKeys.checkBulk(courseTimeIds),
+    queryFn: () => wishlistService.checkWishlistStatusBulk({ courseTimeIds }),
+    enabled: enabled && courseTimeIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -87,8 +75,8 @@ export function useAddToWishlist() {
     onSuccess: (_, variables) => {
       // 관련 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: wishlistKeys.all });
-      // 특정 강의 찜 여부 캐시 업데이트
-      queryClient.setQueryData(wishlistKeys.check(variables.courseId), true);
+      // 특정 CourseTime 찜 여부 캐시 업데이트
+      queryClient.setQueryData(wishlistKeys.check(variables.courseTimeId), true);
     },
   });
 }
@@ -100,12 +88,12 @@ export function useRemoveFromWishlist() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (courseId: number) => wishlistService.removeFromWishlist(courseId),
-    onSuccess: (_, courseId) => {
+    mutationFn: (courseTimeId: number) => wishlistService.removeFromWishlist(courseTimeId),
+    onSuccess: (_, courseTimeId) => {
       // 관련 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: wishlistKeys.all });
-      // 특정 강의 찜 여부 캐시 업데이트
-      queryClient.setQueryData(wishlistKeys.check(courseId), false);
+      // 특정 CourseTime 찜 여부 캐시 업데이트
+      queryClient.setQueryData(wishlistKeys.check(courseTimeId), false);
     },
   });
 }
@@ -117,11 +105,11 @@ export function useToggleWishlist() {
   const addMutation = useAddToWishlist();
   const removeMutation = useRemoveFromWishlist();
 
-  const toggle = async (courseId: number, isCurrentlyWishlisted: boolean) => {
+  const toggle = async (courseTimeId: number, isCurrentlyWishlisted: boolean) => {
     if (isCurrentlyWishlisted) {
-      await removeMutation.mutateAsync(courseId);
+      await removeMutation.mutateAsync(courseTimeId);
     } else {
-      await addMutation.mutateAsync({ courseId });
+      await addMutation.mutateAsync({ courseTimeId });
     }
   };
 

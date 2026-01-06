@@ -20,6 +20,13 @@ export interface AdminUser {
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
+  // 임직원 연동 정보
+  employeeId?: string;          // 임직원 ID (연동된 경우)
+  department?: string;           // 부서
+  position?: string;             // 직책
+  rank?: string;                 // 직급
+  jobRole?: string;              // 직무
+  employeeSyncedAt?: string;     // 임직원 정보 동기화 시간
 }
 
 export interface CourseRoleAssignment {
@@ -135,15 +142,61 @@ export interface BulkCreateUsersResponse {
   failedCount: number;
   createdUsers: CreatedUserInfo[];
   failedUsers: FailedUserInfo[];
+  autoLinkedCount: number;           // 자동 연동된 임직원 수
+  autoLinkedUsers: AutoLinkedUserInfo[];
 }
 
 export interface CreatedUserInfo {
   id: number;
   email: string;
   name: string;
+  employeeLinked?: boolean;         // 임직원 자동 연동 여부
+  employeeId?: string;              // 연동된 임직원 ID
 }
 
 export interface FailedUserInfo {
   email: string;
   reason: string;
+}
+
+export interface AutoLinkedUserInfo {
+  userId: number;
+  email: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  position: string;
+  rank: string;
+}
+
+// CSV/Excel 파일 업로드 기반 단체 계정 생성
+export interface FileBasedBulkCreateRequest {
+  users: FileBasedUserData[];
+  autoLinkEmployees: boolean;       // 임직원 자동 연동 활성화 여부
+  sendWelcomeEmail: boolean;        // 환영 이메일 발송 여부
+}
+
+export interface FileBasedUserData {
+  email: string;
+  name: string;
+  department?: string;
+  role?: SystemRole;
+  password?: string;                // 미제공 시 자동 생성
+}
+
+// 임직원 자동 매칭 결과
+export interface EmployeeMatchResult {
+  email: string;
+  name: string;
+  matched: boolean;
+  employeeInfo?: {
+    employeeId: string;
+    name: string;
+    department: string;
+    position: string;
+    rank: string;
+    jobRole: string;
+  };
+  matchType?: 'email' | 'name_and_department';  // 매칭 방식
+  confidence?: number;              // 매칭 신뢰도 (0-100)
 }

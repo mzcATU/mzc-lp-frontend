@@ -1,5 +1,6 @@
 /**
- * 찜 목록(Wishlist) API 서비스 - 백엔드 API 스펙 기반
+ * 찜 목록(Wishlist) API 서비스
+ * CourseTime 기반으로 변경 (#207)
  */
 
 import axiosInstance from '@/services/common/api/axiosInstance';
@@ -28,8 +29,8 @@ export const wishlistService = {
   /**
    * 찜 삭제
    */
-  removeFromWishlist: async (courseId: number): Promise<void> => {
-    await axiosInstance.delete(API_ENDPOINTS.WISHLIST.COURSE(courseId));
+  removeFromWishlist: async (courseTimeId: number): Promise<void> => {
+    await axiosInstance.delete(API_ENDPOINTS.WISHLIST.COURSE_TIME(courseTimeId));
   },
 
   /**
@@ -47,17 +48,17 @@ export const wishlistService = {
   },
 
   /**
-   * 특정 강의 찜 여부 확인
+   * 특정 CourseTime 찜 여부 확인
    */
-  checkWishlistStatus: async (courseId: number): Promise<boolean> => {
+  checkWishlistStatus: async (courseTimeId: number): Promise<boolean> => {
     const response = await axiosInstance.get<ApiResponse<boolean>>(
-      API_ENDPOINTS.WISHLIST.COURSE_CHECK(courseId)
+      API_ENDPOINTS.WISHLIST.COURSE_TIME_CHECK(courseTimeId)
     );
     return response.data.data;
   },
 
   /**
-   * 여러 강의 찜 여부 일괄 확인
+   * 여러 CourseTime 찜 여부 일괄 확인
    */
   checkWishlistStatusBulk: async (request: WishlistCheckRequest): Promise<WishlistCheckResponse> => {
     const response = await axiosInstance.post<ApiResponse<WishlistCheckResponse>>(
@@ -73,16 +74,6 @@ export const wishlistService = {
   getMyWishlistCount: async (): Promise<WishlistCountResponse> => {
     const response = await axiosInstance.get<ApiResponse<WishlistCountResponse>>(
       API_ENDPOINTS.WISHLIST.COUNT
-    );
-    return response.data.data;
-  },
-
-  /**
-   * 특정 강의의 찜 개수 조회
-   */
-  getCourseWishlistCount: async (courseId: number): Promise<WishlistCountResponse> => {
-    const response = await axiosInstance.get<ApiResponse<WishlistCountResponse>>(
-      API_ENDPOINTS.WISHLIST.COURSE_COUNT(courseId)
     );
     return response.data.data;
   },

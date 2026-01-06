@@ -117,12 +117,6 @@ export type {
   WishlistCheckRequest,
   WishlistCheckResponse,
   WishlistCountResponse,
-  // Legacy (하위 호환)
-  WishlistItem,
-  WishlistResponse,
-  AddToWishlistRequest,
-  RemoveFromWishlistRequest,
-  AddAllToCartRequest,
 } from './wishlist.types';
 
 // Notification (알림)

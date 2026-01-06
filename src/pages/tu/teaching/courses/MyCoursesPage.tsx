@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square } from 'lucide-react';
+import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
 import { useMyCourses, useApplyProgram, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
 import type { Course, CourseStatus } from '@/types';
 import type { CourseResponse } from '@/types/common/course.types';
+
+/** 완성 상태 필터 타입 */
+type CompletionFilter = 'all' | 'complete' | 'incomplete';
 
 interface MyCoursesPageProps {
   language?: 'ko' | 'en';
@@ -15,19 +18,20 @@ interface MyCoursesPageProps {
 const DEFAULT_THUMBNAIL = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
 /** CourseResponse를 UI용 Course 타입으로 변환 */
-function mapCourseResponseToCourse(response: CourseResponse): Course {
+function mapCourseResponseToCourse(response: CourseResponse): Course & { isComplete: boolean } {
   return {
     id: String(response.courseId),
     title: response.title,
     instructor: '나',
-    progress: 100,
-    totalLessons: 0,
-    completedLessons: 0,
+    progress: response.isComplete ? 100 : 0,
+    totalLessons: response.itemCount,
+    completedLessons: response.itemCount,
     thumbnail: response.thumbnailUrl || DEFAULT_THUMBNAIL,
     category: response.tags?.[0] || '미분류',
     students: 0,
     lastAccessed: new Date(response.updatedAt).toLocaleDateString('ko-KR'),
-    status: 'active' as CourseStatus,
+    status: response.isComplete ? 'active' as CourseStatus : 'draft' as CourseStatus,
+    isComplete: response.isComplete,
   };
 }
 
@@ -36,9 +40,8 @@ const t = {
   subtitle: { ko: '개설한 강의를 관리하고 수강생을 확인하세요', en: 'Manage your courses and track student progress' },
   createCourse: { ko: '강의 생성', en: 'Create Course' },
   all: { ko: '전체', en: 'All' },
-  active: { ko: '진행 중', en: 'Active' },
-  completed: { ko: '완료', en: 'Completed' },
-  draft: { ko: '임시 저장', en: 'Draft' },
+  complete: { ko: '작성완료', en: 'Complete' },
+  incomplete: { ko: '작성중', en: 'In Progress' },
   sortBy: { ko: '정렬', en: 'Sort By' },
   recent: { ko: '최신순', en: 'Recent' },
   studentCount: { ko: '수강생 순', en: 'Students' },
@@ -62,11 +65,13 @@ const t = {
   selected: { ko: '개 선택됨', en: ' selected' },
   selectAll: { ko: '전체 선택', en: 'Select All' },
   deselectAll: { ko: '선택 해제', en: 'Deselect All' },
+  incompleteWarning: { ko: '작성을 완료해야 신청할 수 있습니다', en: 'Complete the course to apply' },
+  continueEditing: { ko: '이어서 작성', en: 'Continue Editing' },
 };
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
   const navigate = useNavigate();
-  const [filterStatus, setFilterStatus] = useState<'all' | CourseStatus>('all');
+  const [filterStatus, setFilterStatus] = useState<CompletionFilter>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
 
@@ -188,11 +193,13 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   const courseResponses = coursesData?.content || [];
 
   // API 응답을 UI용 Course 타입으로 변환
-  const courses: Course[] = courseResponses.map(mapCourseResponseToCourse);
+  const courses = courseResponses.map(mapCourseResponseToCourse);
 
   const filteredCourses = courses.filter((course) => {
     if (filterStatus === 'all') return true;
-    return course.status === filterStatus;
+    if (filterStatus === 'complete') return course.isComplete;
+    if (filterStatus === 'incomplete') return !course.isComplete;
+    return true;
   });
 
   const sortedCourses = [...filteredCourses].sort((a, b) => {
@@ -234,7 +241,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
         <div className="flex gap-2 items-center">
           <Filter size={18} className="text-text-secondary" />
           <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg">
-            {(['all', 'draft'] as const).map((status) => (
+            {(['all', 'complete', 'incomplete'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
@@ -313,6 +320,14 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
           return (
             <div key={course.id} className="relative">
+              {/* Status Badge */}
+              {!course.isComplete && (
+                <div className="absolute top-3 left-3 z-10 px-2 py-1 rounded-md bg-status-warning/20 text-status-warning text-xs font-medium flex items-center gap-1">
+                  <AlertTriangle size={12} />
+                  {getText('incomplete')}
+                </div>
+              )}
+
               {/* Checkbox */}
               <button
                 onClick={() => toggleSelect(course.id)}
@@ -329,7 +344,8 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
               {/* Course Card */}
               <div className={cn(
                 'transition-all',
-                isSelected && 'ring-2 ring-btn-primary rounded-xl'
+                isSelected && 'ring-2 ring-btn-primary rounded-xl',
+                !course.isComplete && 'opacity-80'
               )}>
                 <CourseCard
                   course={course}
@@ -343,23 +359,46 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                 />
               </div>
 
-              {/* Apply Button */}
+              {/* Action Buttons */}
               {courseResponse && (
-                <div className="mt-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="w-full border border-border"
-                    onClick={() => handleApplySingle(courseResponse)}
-                    disabled={isApplying}
-                  >
-                    {applyProgramMutation.isPending ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Send size={14} />
-                    )}
-                    {getText('applyProgram')}
-                  </Button>
+                <div className="mt-2 flex gap-2">
+                  {course.isComplete ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="flex-1 border border-border"
+                      onClick={() => handleApplySingle(courseResponse)}
+                      disabled={isApplying}
+                    >
+                      {applyProgramMutation.isPending ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Send size={14} />
+                      )}
+                      {getText('applyProgram')}
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="flex-1 border border-border"
+                        onClick={() => navigate(`/tu/teaching/courses/create?courseId=${course.id}`)}
+                      >
+                        <Edit size={14} />
+                        {getText('continueEditing')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="border border-border opacity-50 cursor-not-allowed"
+                        disabled
+                        title={getText('incompleteWarning')}
+                      >
+                        <Send size={14} />
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
