@@ -63,6 +63,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
   const [description, setDescription] = useState('');
   const [selectedPrograms, setSelectedPrograms] = useState<SelectedProgram[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [originalStatus, setOriginalStatus] = useState<'PUBLISHED' | 'DRAFT' | null>(null);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -71,7 +72,6 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     isEditMode ? parseInt(id) : 0
   );
   const { data: programsData, isLoading: isLoadingPrograms } = useMyPrograms({
-    keyword: searchQuery,
     status: 'APPROVED'
   });
   const createMutation = useCreateRoadmap();
@@ -83,6 +83,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     if (roadmapData && isEditMode) {
       setTitle(roadmapData.title);
       setDescription(roadmapData.description || '');
+      setOriginalStatus(roadmapData.status);
       setSelectedPrograms(
         roadmapData.programs.map((p) => ({
           id: p.id,
@@ -94,8 +95,17 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     }
   }, [roadmapData, isEditMode]);
 
+  // 클라이언트 사이드 검색 필터링
   const availablePrograms = (programsData?.content || [])
     .filter((program) => !selectedPrograms.find((p) => p.id === program.id))
+    .filter((program) => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        program.title.toLowerCase().includes(query) ||
+        (program.type && program.type.toLowerCase().includes(query))
+      );
+    })
     .map((program) => ({
       id: program.id,
       title: program.title,
@@ -124,40 +134,40 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     }
 
     const programIds = selectedPrograms.map((p) => p.id);
-    const status = isDraft ? 'draft' : 'published';
+    const status = isDraft ? 'DRAFT' : 'PUBLISHED';
 
     try {
       if (isEditMode) {
-        if (isDraft) {
-          await draftMutation.mutateAsync({
-            id: parseInt(id),
-            title,
-            description,
-            programIds,
-          });
-          toast.success(getText('draftSuccess'));
-        } else {
-          await updateMutation.mutateAsync({
-            id: parseInt(id),
-            title,
-            description,
-            programIds,
-            status,
-          });
-          toast.success(getText('updateSuccess'));
-        }
+        // 수정 모드에서는 항상 updateMutation 사용
+        // 현재 상태와 관계없이 status를 포함한 전체 업데이트
+        await updateMutation.mutateAsync({
+          id: parseInt(id),
+          title,
+          description,
+          programIds: programIds.length > 0 ? programIds : undefined,
+          status,
+        });
+        toast.success(isDraft ? getText('draftSuccess') : getText('updateSuccess'));
       } else {
+        // 생성 모드: 임시저장이든 공개든 모두 createRoadmap 사용
+        // 백엔드 CreateRoadmapRequest는 @NotEmpty 검증이 있으므로 최소 1개 필요
+        if (programIds.length === 0) {
+          toast.error(getText('coursesRequired'));
+          return;
+        }
+
         await createMutation.mutateAsync({
           title,
           description,
           programIds,
           status,
         });
-        toast.success(getText('createSuccess'));
+        toast.success(isDraft ? getText('draftSuccess') : getText('createSuccess'));
       }
 
+      // mutation의 onSuccess가 완료된 후 페이지 이동
       navigate('/tu/teaching/roadmaps');
-    } catch (error) {
+    } catch (error: any) {
       if (isDraft) {
         toast.error(getText('draftError'));
       } else if (isEditMode) {
@@ -165,7 +175,6 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
       } else {
         toast.error(getText('createError'));
       }
-      console.error('Failed to save roadmap:', error);
     }
   };
 
@@ -320,7 +329,16 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
         <Button variant="outline" onClick={() => navigate('/tu/teaching/roadmaps')} disabled={isSaving}>
           {getText('cancel')}
         </Button>
-        <Button variant="secondary" onClick={() => handleSave(true)} disabled={isSaving}>
+        <Button
+          variant="secondary"
+          onClick={() => handleSave(true)}
+          disabled={
+            !title ||
+            isSaving ||
+            (!isEditMode && selectedPrograms.length === 0) ||
+            (isEditMode && originalStatus === 'PUBLISHED')
+          }
+        >
           {isSaving && draftMutation.isPending && <Loader2 size={16} className="animate-spin mr-2" />}
           {getText('saveDraft')}
         </Button>

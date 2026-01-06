@@ -13,7 +13,6 @@ import type {
   SaveDraftRequest,
   RoadmapQueryParams,
 } from '@/types/tu/roadmap.types';
-import type { ApiResponse } from '@/types/common';
 
 export const roadmapService = {
   /**
@@ -21,11 +20,11 @@ export const roadmapService = {
    * GET /api/roadmaps
    */
   async getMyRoadmaps(params?: RoadmapQueryParams): Promise<RoadmapPageResponse> {
-    const { data } = await axiosInstance.get<ApiResponse<RoadmapPageResponse>>(
+    const { data } = await axiosInstance.get<RoadmapPageResponse>(
       API_ENDPOINTS.ROADMAPS.BASE,
       { params }
     );
-    return data.data;
+    return data;
   },
 
   /**
@@ -33,10 +32,10 @@ export const roadmapService = {
    * GET /api/roadmaps/statistics
    */
   async getStatistics(): Promise<RoadmapStatisticsResponse> {
-    const { data } = await axiosInstance.get<ApiResponse<RoadmapStatisticsResponse>>(
+    const { data } = await axiosInstance.get<RoadmapStatisticsResponse>(
       API_ENDPOINTS.ROADMAPS.STATISTICS
     );
-    return data.data;
+    return data;
   },
 
   /**
@@ -44,11 +43,11 @@ export const roadmapService = {
    * POST /api/roadmaps
    */
   async createRoadmap(request: CreateRoadmapRequest): Promise<RoadmapResponse> {
-    const { data } = await axiosInstance.post<ApiResponse<RoadmapResponse>>(
+    const { data } = await axiosInstance.post<RoadmapResponse>(
       API_ENDPOINTS.ROADMAPS.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   /**
@@ -56,10 +55,10 @@ export const roadmapService = {
    * GET /api/roadmaps/{id}
    */
   async getRoadmap(id: number): Promise<RoadmapDetailResponse> {
-    const { data } = await axiosInstance.get<ApiResponse<RoadmapDetailResponse>>(
+    const { data } = await axiosInstance.get<RoadmapDetailResponse>(
       API_ENDPOINTS.ROADMAPS.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /**
@@ -67,11 +66,11 @@ export const roadmapService = {
    * PATCH /api/roadmaps/{id}
    */
   async updateRoadmap(id: number, request: UpdateRoadmapRequest): Promise<RoadmapResponse> {
-    const { data } = await axiosInstance.patch<ApiResponse<RoadmapResponse>>(
+    const { data } = await axiosInstance.patch<RoadmapResponse>(
       API_ENDPOINTS.ROADMAPS.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /**
@@ -79,11 +78,11 @@ export const roadmapService = {
    * PATCH /api/roadmaps/{id}/draft
    */
   async saveDraft(id: number, request: SaveDraftRequest): Promise<RoadmapResponse> {
-    const { data } = await axiosInstance.patch<ApiResponse<RoadmapResponse>>(
+    const { data } = await axiosInstance.patch<RoadmapResponse>(
       API_ENDPOINTS.ROADMAPS.DRAFT(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /**
@@ -99,9 +98,9 @@ export const roadmapService = {
    * POST /api/roadmaps/{id}/duplicate
    */
   async duplicateRoadmap(id: number): Promise<RoadmapResponse> {
-    const { data } = await axiosInstance.post<ApiResponse<RoadmapResponse>>(
+    const { data } = await axiosInstance.post<RoadmapResponse>(
       API_ENDPOINTS.ROADMAPS.DUPLICATE(id)
     );
-    return data.data;
+    return data;
   },
 };

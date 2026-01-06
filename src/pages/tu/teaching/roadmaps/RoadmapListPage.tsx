@@ -76,9 +76,10 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
     try {
       await deleteMutation.mutateAsync(id);
       toast.success(getText('deleteSuccess'));
-    } catch (error) {
+    } catch (error: any) {
       toast.error(getText('deleteError'));
       console.error('Failed to delete roadmap:', error);
+      console.error('Error response:', error.response?.data);
     }
   };
 
@@ -133,7 +134,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
         <div className="flex gap-2 items-center">
           <Filter size={18} className="text-text-secondary" />
           <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg">
-            {(['all', 'published', 'draft'] as const).map((status) => (
+            {(['all', 'PUBLISHED', 'DRAFT'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
@@ -144,7 +145,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
                     : 'bg-transparent text-text-secondary hover:bg-bg-secondary'
                 )}
               >
-                {getText(status)}
+                {status === 'all' ? getText('all') : status === 'PUBLISHED' ? getText('published') : getText('draft')}
               </button>
             ))}
           </div>
@@ -186,8 +187,8 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-text-primary m-0">{roadmap.title}</h3>
-                      <Badge variant={roadmap.status === 'published' ? 'default' : 'secondary'}>
-                        {getText(roadmap.status)}
+                      <Badge variant={roadmap.status === 'PUBLISHED' ? 'default' : 'secondary'}>
+                        {roadmap.status === 'PUBLISHED' ? getText('published') : getText('draft')}
                       </Badge>
                     </div>
                     <p className="text-text-secondary text-sm mb-3 m-0">{roadmap.description}</p>

@@ -8,7 +8,7 @@
 // ============================================
 
 /** 로드맵 상태 */
-export type RoadmapStatus = 'published' | 'draft';
+export type RoadmapStatus = 'PUBLISHED' | 'DRAFT';
 
 // ============================================
 // Response Types
