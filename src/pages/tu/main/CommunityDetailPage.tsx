@@ -726,9 +726,9 @@ export function CommunityDetailPage() {
           <span>목록으로</span>
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
           {/* 메인 콘텐츠 */}
-          <article className="flex-1 max-w-3xl">
+          <article className="flex-1 min-w-0">
             {/* 프로필 섹션 */}
             <div className="flex items-center gap-4 mb-6">
               {getImageUrl(post.author.avatar) ? (
