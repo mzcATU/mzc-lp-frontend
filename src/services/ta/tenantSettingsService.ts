@@ -11,13 +11,27 @@ import type {
 } from '@/types/admin';
 import type { PublicBrandingResponse } from '@/types/tu/branding.types';
 
+/** 기본 브랜딩 (fallback) */
+const DEFAULT_BRANDING: PublicBrandingResponse = {
+  tenantName: 'MZC Learning Platform',
+  primaryColor: '#3B82F6',
+  secondaryColor: '#10B981',
+  logoUrl: null,
+  darkLogoUrl: null,
+  faviconUrl: null,
+  accentColor: null,
+  headingFont: null,
+  bodyFont: null,
+};
+
 export const tenantSettingsService = {
   /** 현재 테넌트 브랜딩 조회 (로그인 사용자용) */
   async getBranding(): Promise<PublicBrandingResponse> {
     const { data } = await axiosInstance.get<PublicBrandingResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.BRANDING
     );
-    return data;
+// data가 null/undefined인 경우 기본 브랜딩 반환
+    return data ?? DEFAULT_BRANDING;
   },
 
   /** 테넌트 설정 조회 */

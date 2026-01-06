@@ -29,11 +29,11 @@ export const tenantService = {
 
   /** 테넌트 생성 (관리자 계정도 함께 생성됨) */
   async create(request: CreateTenantRequest): Promise<CreateTenantResponse> {
-    const { data } = await axiosInstance.post<{ data: CreateTenantResponse }>(
+    const { data } = await axiosInstance.post<CreateTenantResponse>(
       API_ENDPOINTS.TENANTS.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 테넌트 목록 조회 */
@@ -55,10 +55,12 @@ export const tenantService = {
 
   /** 테넌트 수정 */
   async update(id: number, request: UpdateTenantDetailRequest): Promise<TenantDetail> {
+    console.log('[tenantService.update] request:', request);
     const { data } = await axiosInstance.put<TenantDetail>(
       API_ENDPOINTS.TENANTS.BY_ID(id),
       request
     );
+    console.log('[tenantService.update] response:', data);
     return data;
   },
 

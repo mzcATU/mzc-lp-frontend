@@ -41,7 +41,7 @@ function TenantAdminWrapper() {
 }
 
 export const taRoutes = (
-  <Route path="/ta" element={<TenantAdminWrapper />}>
+  <Route path="/:subdomain/ta" element={<TenantAdminWrapper />}>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
