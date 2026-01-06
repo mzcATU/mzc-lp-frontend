@@ -3,6 +3,34 @@
  */
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
+import type {
+  HeaderSettings,
+  SidebarSettings,
+  FooterSettings,
+  ContentSettings,
+  TypographySettings,
+  ColorModeSettings,
+  ComponentStyleSettings,
+  AccessibilitySettings,
+  ResponsiveSettings,
+  UpdateDesignSettingsRequest,
+  UpdateLayoutSettingsRequest,
+} from '@/types/admin';
+
+// Re-export types for consumers
+export type {
+  HeaderSettings,
+  SidebarSettings,
+  FooterSettings,
+  ContentSettings,
+  TypographySettings,
+  ColorModeSettings,
+  ComponentStyleSettings,
+  AccessibilitySettings,
+  ResponsiveSettings,
+  UpdateDesignSettingsRequest,
+  UpdateLayoutSettingsRequest,
+};
 
 // ============================================
 // 타입 정의
@@ -26,6 +54,12 @@ export interface TenantSettingsResponse {
   sidebarSettings: SidebarSettings;
   footerSettings: FooterSettings;
   contentSettings: ContentSettings;
+  // 확장 UI 설정
+  typographySettings: TypographySettings | null;
+  colorModeSettings: ColorModeSettings | null;
+  componentStyleSettings: ComponentStyleSettings | null;
+  accessibilitySettings: AccessibilitySettings | null;
+  responsiveSettings: ResponsiveSettings | null;
   // 일반 설정
   defaultLanguage: string;
   timezone: string;
@@ -45,48 +79,6 @@ export interface TenantSettingsResponse {
   apiAccessEnabled: boolean;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface HeaderSettings {
-  style: 'fixed' | 'sticky' | 'static';
-  showLogo: boolean;
-  showSearch: boolean;
-  showNotifications: boolean;
-}
-
-export interface SidebarSettings {
-  style: 'collapsible' | 'fixed' | 'overlay' | 'hidden';
-  defaultCollapsed: boolean;
-  showIcons: boolean;
-}
-
-export interface FooterSettings {
-  enabled: boolean;
-  showLinks: boolean;
-  showCopyright: boolean;
-}
-
-export interface ContentSettings {
-  maxWidth: 'full' | 'xl' | 'lg' | 'md';
-  padding: 'none' | 'compact' | 'normal' | 'relaxed';
-}
-
-export interface UpdateDesignSettingsRequest {
-  logoUrl?: string | null;
-  darkLogoUrl?: string | null;
-  faviconUrl?: string | null;
-  primaryColor?: string;
-  secondaryColor?: string;
-  accentColor?: string;
-  headingFont?: string;
-  bodyFont?: string;
-}
-
-export interface UpdateLayoutSettingsRequest {
-  headerSettings?: HeaderSettings;
-  sidebarSettings?: SidebarSettings;
-  footerSettings?: FooterSettings;
-  contentSettings?: ContentSettings;
 }
 
 export interface NavigationItemResponse {
