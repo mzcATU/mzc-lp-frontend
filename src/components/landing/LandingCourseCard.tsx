@@ -65,7 +65,6 @@ export function LandingCourseCard({
     if (tag === '할인중') return t.landing.tagSale;
     if (tag === '상시모집') return '상시모집';
     if (tag === '모집중') return '모집중';
-    if (tag === '자기부담') return '자기부담';
     return tag;
   };
 
@@ -100,9 +99,7 @@ export function LandingCourseCard({
                           ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
                           : tag === '모집중'
                             ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                            : tag === '자기부담'
-                              ? 'bg-gradient-to-r from-[#f59e0b] to-[#f97316]'
-                              : 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
+                            : 'bg-gradient-to-r from-[#ff7867] to-[#ff9a5a]'
                   }`}
                 >
                   {getTagLabel(tag)}
@@ -152,7 +149,7 @@ export function LandingCourseCard({
 
           <div className="pt-2 flex items-center justify-between">
             {price && (
-              <span className="font-bold text-[#f59e0b] text-lg">{price}</span>
+              <span className="font-bold text-[#6778ff] text-lg">{price}</span>
             )}
             <div className={`flex gap-1.5 ${!price ? 'ml-auto' : ''}`}>
               <span className="landing-badge-bg landing-text-muted text-[10px] px-2 py-1 rounded-full">

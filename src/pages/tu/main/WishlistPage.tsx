@@ -17,14 +17,14 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 /**
- * B2B 가격 표시 (유료 → 자기부담, 무료 → 표시 안함)
+ * 가격 표시 (유료 → 금액, 무료 → 표시 안함)
  */
-function formatB2BPrice(price: string | null | undefined, isFree: boolean): string | null {
+function formatPrice(price: string | null | undefined, isFree: boolean): string | null {
   if (isFree) return null; // 무료는 표시 안함
   if (!price) return null;
   const numPrice = parseFloat(price);
   if (isNaN(numPrice) || numPrice === 0) return null;
-  return '자기부담';
+  return `₩${numPrice.toLocaleString()}`;
 }
 
 export function WishlistPage() {
@@ -200,9 +200,9 @@ export function WishlistPage() {
                           {item.estimatedHours}시간
                         </span>
                       )}
-                      {formatB2BPrice(item.price, item.isFree) && (
-                        <span className={`px-2 py-0.5 rounded text-xs ${isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
-                          {formatB2BPrice(item.price, item.isFree)}
+                      {formatPrice(item.price, item.isFree) && (
+                        <span className={`px-2 py-0.5 rounded text-xs ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                          {formatPrice(item.price, item.isFree)}
                         </span>
                       )}
                     </div>

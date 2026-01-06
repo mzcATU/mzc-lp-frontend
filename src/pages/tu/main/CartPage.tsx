@@ -10,14 +10,14 @@ import type { CartItemResponse } from '@/types/tu/cart.types';
 import type { WishlistItemResponse } from '@/types/tu/wishlist.types';
 
 /**
- * B2B 가격 표시 (유료 → 자기부담, 무료 → 표시 안함)
+ * 가격 표시 (유료 → 금액, 무료 → 표시 안함)
  */
-function formatB2BPrice(price: string | null | undefined, isFree: boolean): string | null {
+function formatPrice(price: string | null | undefined, isFree: boolean): string | null {
   if (isFree) return null; // 무료는 표시 안함
   if (!price) return null;
   const numPrice = parseFloat(price);
   if (isNaN(numPrice) || numPrice === 0) return null;
-  return '자기부담';
+  return `₩${numPrice.toLocaleString()}`;
 }
 
 export function CartPage() {
@@ -322,11 +322,11 @@ export function CartPage() {
                                   {item.estimatedHours}시간
                                 </span>
                               )}
-                              {formatB2BPrice(item.price, item.isFree) && (
+                              {formatPrice(item.price, item.isFree) && (
                                 <span className={`text-xs px-2 py-0.5 rounded ${
-                                  isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
+                                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                                 }`}>
-                                  {formatB2BPrice(item.price, item.isFree)}
+                                  {formatPrice(item.price, item.isFree)}
                                 </span>
                               )}
                             </div>
@@ -416,11 +416,11 @@ export function CartPage() {
                                   {item.estimatedHours}시간
                                 </span>
                               )}
-                              {formatB2BPrice(item.price, item.isFree) && (
+                              {formatPrice(item.price, item.isFree) && (
                                 <span className={`text-xs px-2 py-0.5 rounded ${
-                                  isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
+                                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                                 }`}>
-                                  {formatB2BPrice(item.price, item.isFree)}
+                                  {formatPrice(item.price, item.isFree)}
                                 </span>
                               )}
                             </div>
@@ -487,13 +487,19 @@ export function CartPage() {
                   )}
                 </div>
 
-                {/* 자기부담 강의 수 */}
+                {/* 유료 강의 수 및 총 금액 */}
                 <div className={`space-y-3 mb-6 pb-6 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                   {totalPrice > 0 && (
-                    <div className={`flex justify-between ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                      <span>자기부담 강의</span>
-                      <span>{selectedCartItems.filter(item => !item.isFree && item.price && parseFloat(item.price) > 0).length}개</span>
-                    </div>
+                    <>
+                      <div className={`flex justify-between ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <span>유료 강의</span>
+                        <span>{selectedCartItems.filter(item => !item.isFree && item.price && parseFloat(item.price) > 0).length}개</span>
+                      </div>
+                      <div className={`flex justify-between font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        <span>총 금액</span>
+                        <span className="text-[#6778ff]">₩{totalPrice.toLocaleString()}</span>
+                      </div>
+                    </>
                   )}
                 </div>
 

@@ -93,11 +93,11 @@ function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
   const mainInstructor = courseTime.instructors.find((i) => i.role === 'MAIN');
   const instructorName = mainInstructor?.name || courseTime.instructors[0]?.name || '';
 
-  // B2B 가격 포맷팅 (유료 → 자기부담, 무료 → 표시 안함)
+  // 가격 포맷팅 (유료 → 금액, 무료 → 표시 안함)
   const price = courseTime.isFree ? 0 : parseFloat(courseTime.price);
-  const priceDisplay = (!courseTime.isFree && price > 0) ? '자기부담' : null;
+  const priceDisplay = (!courseTime.isFree && price > 0) ? `₩${price.toLocaleString()}` : null;
 
-  // 태그 생성 (B2B: 무료 태그 제거)
+  // 태그 생성 (무료 태그 제거)
   const tags: string[] = [];
   if (courseTime.isOnDemand) {
     tags.push('상시모집');
@@ -105,10 +105,6 @@ function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
     tags.push('모집중');
   } else if (courseTime.status === 'ONGOING') {
     tags.push('진행중');
-  }
-  // B2B 환경: 유료 강의만 '자기부담' 표시
-  if (!courseTime.isFree && price > 0) {
-    tags.push('자기부담');
   }
 
   // 썸네일
@@ -167,9 +163,9 @@ export function LandingPage() {
   // 최신 강의 (createdAt 기준 정렬이므로 처음 5개)
   const newCourses = courses.slice(0, 5);
 
-  // 추천 강의 (상시모집 우선, B2B에서는 무료 태그 없음)
+  // 추천 강의 (상시모집 우선)
   const featuredCourses = courses
-    .filter((c) => c.tags.includes('상시모집') || !c.tags.includes('자기부담'))
+    .filter((c) => c.tags.includes('상시모집'))
     .slice(0, 5);
   const recommendedCourses = featuredCourses.length > 0 ? featuredCourses : courses.slice(0, 5);
 

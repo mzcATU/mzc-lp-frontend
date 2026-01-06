@@ -103,7 +103,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
     }
   };
 
-  // 태그 생성 (B2B: 무료 태그 제거)
+  // 태그 생성 (무료 태그 제거, 유료는 금액 표시)
   const tags: string[] = [];
   if (courseTime.isOnDemand) {
     tags.push('상시모집');
@@ -112,17 +112,14 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
   } else if (courseTime.status === 'ONGOING') {
     tags.push('진행중');
   }
-  // B2B 환경: 유료 강의만 '자기부담' 표시
-  if (!courseTime.isFree && parseFloat(courseTime.price) > 0) {
-    tags.push('자기부담');
-  }
 
   // 주강사 찾기
   const mainInstructor = courseTime.instructors.find((i) => i.role === 'MAIN');
   const instructorName = mainInstructor?.name || courseTime.instructors[0]?.name || '';
 
-  // B2B 가격 표시: 유료 → 자기부담, 무료 → 표시 안함
-  const priceDisplay = (!courseTime.isFree && parseFloat(courseTime.price) > 0) ? '자기부담' : null;
+  // 가격 표시: 유료 → 금액, 무료 → 표시 안함
+  const price = parseFloat(courseTime.price);
+  const priceDisplay = (!courseTime.isFree && price > 0) ? `₩${price.toLocaleString()}` : null;
 
   // 썸네일
   const thumbnailUrl =
@@ -161,9 +158,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
                       ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
                       : tag === '모집중'
                         ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                        : tag === '자기부담'
-                          ? 'bg-gradient-to-r from-[#f59e0b] to-[#f97316]'
-                          : 'bg-gray-500'
+                        : 'bg-gray-500'
                   }`}
                 >
                   {tag}
@@ -260,11 +255,13 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
           )}
 
           {/* 가격 */}
-          <div className="pt-2 flex items-center justify-between">
-            <span className={`font-bold text-lg ${isDark ? 'text-[#6bc2f0]' : 'text-[#4C2D9A]'}`}>
-              {priceDisplay}
-            </span>
-          </div>
+          {priceDisplay && (
+            <div className="pt-2 flex items-center justify-between">
+              <span className={`font-bold text-lg ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`}>
+                {priceDisplay}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Link>
