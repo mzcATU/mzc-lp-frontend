@@ -167,16 +167,28 @@ export const contentService = {
     return data.data;
   },
 
-  // 스트리밍 URL 반환
+  // 스트리밍 URL 반환 (관리자용 - DESIGNER, OPERATOR, TENANT_ADMIN)
   getStreamUrl(id: number): string {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     return `${baseUrl}${API_ENDPOINTS.CONTENTS.STREAM(id)}`;
   },
 
-  // 다운로드 URL 반환
+  // 학습자용 스트리밍 URL 반환 (수강 신청한 강의의 콘텐츠)
+  getLearnerStreamUrl(contentId: number): string {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+    return `${baseUrl}${API_ENDPOINTS.LEARNING.CONTENT_STREAM(contentId)}`;
+  },
+
+  // 다운로드 URL 반환 (관리자용)
   getDownloadUrl(id: number): string {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     return `${baseUrl}${API_ENDPOINTS.CONTENTS.DOWNLOAD(id)}`;
+  },
+
+  // 학습자용 다운로드 URL 반환
+  getLearnerDownloadUrl(contentId: number): string {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+    return `${baseUrl}${API_ENDPOINTS.LEARNING.CONTENT_DOWNLOAD(contentId)}`;
   },
 
   // 파일 다운로드 (Blob 방식 - 인증 토큰 포함)

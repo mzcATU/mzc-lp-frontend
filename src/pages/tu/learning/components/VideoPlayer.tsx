@@ -9,6 +9,7 @@ import { contentService } from '@/services/tu/contentService';
 import { Button } from '@/components/common';
 import { useTranslation } from '@/store/common/languageStore';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useAuthStore } from '@/store/common/authStore';
 import type { VideoPlayerProps } from '@/types/tu';
 
 // react-player 진도 상태 타입
@@ -29,10 +30,12 @@ export function VideoPlayer({
   onReady,
   onError,
   autoPlay = false,
+  isLearnerMode = false,
 }: VideoPlayerProps) {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const { accessToken } = useAuthStore();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +45,7 @@ export function VideoPlayer({
 
   // HTML5 video ref (MP4용)
   const videoRef = useRef<HTMLVideoElement>(null);
+  const lastProgressUpdateRef = useRef<number>(0);
 
   const [isReady, setIsReady] = useState(isExternalUrl); // 외부 URL은 바로 ready
   const [isPlaying, setIsPlaying] = useState(autoPlay);
@@ -51,9 +55,70 @@ export function VideoPlayer({
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [seeking, setSeeking] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string | undefined>(undefined);
+  const [isLoadingBlob, setIsLoadingBlob] = useState(false);
 
-  // 비디오 URL 결정
-  const videoUrl = externalUrl || contentService.getStreamUrl(contentId);
+  // 외부 URL이 있으면 그대로 사용, 없으면 Blob URL 사용 (인증 필요)
+  const videoUrl: string | undefined = externalUrl || blobUrl || undefined;
+
+  // 내부 스트리밍 URL을 Blob으로 가져오기 (인증 토큰 포함)
+  useEffect(() => {
+    // 외부 URL이 있거나, contentId가 없으면 skip
+    if (externalUrl || !contentId) return;
+
+    let currentBlobUrl: string | undefined;
+    let isCancelled = false;
+
+    const fetchVideoBlob = async () => {
+      setIsLoadingBlob(true);
+      setHasError(false);
+
+      try {
+        const url = isLearnerMode
+          ? contentService.getLearnerStreamUrl(contentId)
+          : contentService.getStreamUrl(contentId);
+
+        console.log('[VideoPlayer] Fetching video from:', url);
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+
+        if (isCancelled) return;
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        if (isCancelled) return;
+
+        const blobObjectUrl = URL.createObjectURL(blob);
+        console.log('[VideoPlayer] Blob URL created:', blobObjectUrl);
+        currentBlobUrl = blobObjectUrl;
+        setBlobUrl(blobObjectUrl);
+      } catch (error) {
+        if (isCancelled) return;
+        console.error('[VideoPlayer] Failed to fetch video:', error);
+        setHasError(true);
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingBlob(false);
+        }
+      }
+    };
+
+    fetchVideoBlob();
+
+    // Cleanup: Blob URL 해제
+    return () => {
+      isCancelled = true;
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+      }
+    };
+  }, [contentId, externalUrl, isLearnerMode, accessToken]);
 
   const handleReady = useCallback(() => {
     setIsReady(true);
@@ -137,7 +202,7 @@ export function VideoPlayer({
   // HTML5 video 이벤트 핸들러 설정 (MP4용)
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !isExternalUrl || !videoUrl.endsWith('.mp4')) return;
+    if (!video || !isExternalUrl || !videoUrl?.endsWith('.mp4')) return;
 
     const handleLoadedMetadata = () => {
       setDuration(video.duration);
@@ -173,8 +238,11 @@ export function VideoPlayer({
     };
   }, [videoUrl, isExternalUrl, onDuration, onProgress, onEnded, onError, onReady]);
 
-  // 로딩 상태
-  if (!isReady && !hasError) {
+  // 로딩 상태 (Blob 로딩 중이거나, videoUrl이 없는 경우)
+  // Blob URL이 있으면 바로 플레이어 표시 (ReactPlayer의 onReady는 별도로 처리)
+  const isLoading = isLoadingBlob || (!videoUrl && !externalUrl);
+
+  if (isLoading && !hasError) {
     return (
       <div
         ref={containerRef}
@@ -182,16 +250,6 @@ export function VideoPlayer({
           isDark ? 'bg-white/5' : 'bg-gray-100'
         }`}
       >
-        <ReactPlayer
-          ref={playerRef}
-          url={videoUrl}
-          width="100%"
-          height="100%"
-          playing={false}
-          onReady={handleReady}
-          onError={handleError}
-          style={{ position: 'absolute', top: 0, left: 0, opacity: 0 }}
-        />
         <div className="flex flex-col items-center gap-3">
           <Loader2 className={`w-10 h-10 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
           <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{t.player.loading}</span>
@@ -220,7 +278,7 @@ export function VideoPlayer({
   }
 
   // 외부 URL (MP4 파일)인 경우 HTML5 video 사용
-  if (isExternalUrl && videoUrl.endsWith('.mp4')) {
+  if (isExternalUrl && videoUrl?.endsWith('.mp4')) {
     return (
       <div
         ref={containerRef}
@@ -267,121 +325,52 @@ export function VideoPlayer({
     );
   }
 
-  // 내부 비디오 (스트리밍 서버)인 경우 커스텀 컨트롤 사용
+  // 내부 비디오 (Blob URL 사용)인 경우 HTML5 video 직접 사용
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video overflow-hidden group"
+      className="relative w-full aspect-video overflow-hidden"
       style={{ backgroundColor: '#000' }}
     >
-      <ReactPlayer
-        ref={playerRef}
-        url={videoUrl}
-        width="100%"
-        height="100%"
-        playing={isPlaying}
-        volume={volume}
-        muted={muted}
-        onProgress={handleProgress}
-        onDuration={(dur) => {
-          setDuration(dur);
-          onDuration?.(dur);
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        controls
+        className="w-full h-full"
+        style={{ display: 'block' }}
+        onLoadedMetadata={(e) => {
+          const video = e.currentTarget;
+          console.log('[VideoPlayer] Video loaded, duration:', video.duration);
+          setDuration(video.duration);
+          onDuration?.(video.duration);
+          setIsReady(true);
+          onReady?.();
         }}
-        onEnded={handleEnded}
-        onError={handleError}
-        onReady={handleReady}
-        progressInterval={1000}
-        config={{
-          file: {
-            attributes: {
-              crossOrigin: 'anonymous',
-            },
-          },
+        onTimeUpdate={(e) => {
+          const video = e.currentTarget;
+          if (video.duration > 0) {
+            const now = Date.now();
+            // 1초에 한 번만 progress 업데이트 (무한 루프 방지)
+            if (now - lastProgressUpdateRef.current >= 1000) {
+              lastProgressUpdateRef.current = now;
+              const progress = video.currentTime / video.duration;
+              setPlayed(progress);
+              onProgress?.({ played: progress, playedSeconds: video.currentTime, loaded: 0, loadedSeconds: 0 });
+            }
+          }
         }}
+        onEnded={() => {
+          setIsPlaying(false);
+          onEnded?.();
+        }}
+        onError={(e) => {
+          console.error('[VideoPlayer] Video error:', e);
+          setHasError(true);
+          onError?.(new Error('Video playback error'));
+        }}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       />
-
-      {/* 커스텀 컨트롤 오버레이 */}
-      <div
-        className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        {/* 진행 바 */}
-        <div className="mb-3">
-          <input
-            type="range"
-            min={0}
-            max={0.999999}
-            step="any"
-            value={played}
-            onMouseDown={handleSeekMouseDown}
-            onChange={handleSeekChange}
-            onMouseUp={handleSeekMouseUp}
-            className="w-full h-1 rounded-full appearance-none cursor-pointer"
-            style={{
-              background: `linear-gradient(to right, #3b82f6 ${played * 100}%, rgba(255,255,255,0.3) ${played * 100}%)`,
-            }}
-          />
-        </div>
-
-        {/* 컨트롤 버튼 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* 재생/일시정지 */}
-            <button
-              onClick={handlePlayPause}
-              className="text-white hover:text-gray-300 transition-colors"
-            >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-            </button>
-
-            {/* 음소거/볼륨 */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleMuteToggle}
-                className="text-white hover:text-gray-300 transition-colors"
-              >
-                {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.1}
-                value={muted ? 0 : volume}
-                onChange={handleVolumeChange}
-                className="w-20 h-1 rounded-full appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, white ${(muted ? 0 : volume) * 100}%, rgba(255,255,255,0.3) ${(muted ? 0 : volume) * 100}%)`,
-                }}
-              />
-            </div>
-
-            {/* 시간 표시 */}
-            <span className="text-white text-sm">
-              {formatTime(played * duration)} / {formatTime(duration)}
-            </span>
-          </div>
-
-          {/* 전체 화면 */}
-          <button
-            onClick={handleFullscreen}
-            className="text-white hover:text-gray-300 transition-colors"
-          >
-            <Maximize className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* 중앙 재생 버튼 (일시정지 상태) */}
-      {!isPlaying && (
-        <button
-          onClick={handlePlayPause}
-          className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-            <Play className="w-8 h-8 ml-1 text-gray-900" />
-          </div>
-        </button>
-      )}
     </div>
   );
 }

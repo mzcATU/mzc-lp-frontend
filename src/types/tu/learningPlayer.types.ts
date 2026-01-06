@@ -95,6 +95,8 @@ export interface VideoPlayerProps {
   onReady?: () => void;
   onError?: (error: Error) => void;
   autoPlay?: boolean;
+  /** 학습자 모드 - true일 경우 학습자용 스트리밍 API 사용 */
+  isLearnerMode?: boolean;
 }
 
 /**

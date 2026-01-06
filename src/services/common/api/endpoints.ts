@@ -242,6 +242,12 @@ export const API_ENDPOINTS = {
     CURRICULUM: (id: number) => `/enrollments/${id}/curriculum`,
   },
 
+  // Learning (학습자용 콘텐츠 접근) - TU
+  LEARNING: {
+    CONTENT_STREAM: (contentId: number) => `/learning/contents/${contentId}/stream`,
+    CONTENT_DOWNLOAD: (contentId: number) => `/learning/contents/${contentId}/download`,
+  },
+
   // Wishlist (찜) - TU (CourseTime 기반)
   WISHLIST: {
     BASE: '/wishlist',

@@ -185,13 +185,26 @@ export function LearningPlayerPage() {
     }
 
     // 실제 모드 - API 데이터
-    if (!snapshotItems || !relationsData) return [];
+    if (!snapshotItems) return [];
 
-    // 아이템을 Map으로 변환 (평탄화)
-    const itemsMap = new Map<number, SnapshotItemResponse>();
+    // 아이템을 평탄화하면서 콘텐츠만 추출
+    const flatItems: OrderedCurriculumItem[] = [];
+    let seq = 1;
+
     const flattenItems = (items: SnapshotItemResponse[]) => {
       items.forEach((item) => {
-        itemsMap.set(item.itemId, item);
+        // 폴더가 아니고 contentId가 있는 경우만 추가
+        if (!item.isFolder && item.snapshotLearningObject?.contentId) {
+          // displayName이 있으면 우선 사용, 없으면 itemName(파일명) 사용
+          const displayName = item.snapshotLearningObject.displayName || item.itemName;
+          flatItems.push({
+            itemId: item.itemId,
+            itemName: displayName,
+            contentId: item.snapshotLearningObject.contentId,
+            contentType: mapItemTypeToContentType(item.itemType),
+            seq: seq++,
+          });
+        }
         if (item.children && item.children.length > 0) {
           flattenItems(item.children);
         }
@@ -199,20 +212,21 @@ export function LearningPlayerPage() {
     };
     flattenItems(snapshotItems);
 
-    // 순서대로 아이템 반환
-    return relationsData.orderedItems
-      .map((orderedItem) => {
-        const item = itemsMap.get(orderedItem.itemId);
-        if (!item || item.isFolder) return null;
-        return {
-          itemId: item.itemId,
-          itemName: item.itemName,
-          contentId: item.snapshotLearningObject?.contentId ?? 0,
-          contentType: mapItemTypeToContentType(item.itemType),
-          seq: orderedItem.seq,
-        };
-      })
-      .filter((item): item is OrderedCurriculumItem => item !== null && item.contentId > 0);
+    // relationsData가 있으면 순서대로, 없으면 평탄화된 순서대로 반환
+    if (relationsData?.orderedItems && relationsData.orderedItems.length > 0) {
+      const itemsMap = new Map<number, OrderedCurriculumItem>();
+      flatItems.forEach(item => itemsMap.set(item.itemId, item));
+
+      return relationsData.orderedItems
+        .map((orderedItem) => {
+          const item = itemsMap.get(orderedItem.itemId);
+          if (!item) return null;
+          return { ...item, seq: orderedItem.seq };
+        })
+        .filter((item): item is OrderedCurriculumItem => item !== null);
+    }
+
+    return flatItems;
   }, [isDemoMode, demoCurriculumItems, snapshotItems, relationsData]);
 
   // 현재 아이템 인덱스 및 이전/다음 아이템 계산
@@ -240,89 +254,87 @@ export function LearningPlayerPage() {
     }
   }, [currentContentId, orderedCurriculumItems, itemId]);
 
-  // 진도 저장
+  // 진도 저장 (임시 비활성화)
   const saveProgress = useCallback(async () => {
-    if (!currentItemId || playedPercent <= 0) return;
+    // TODO: 테스트 후 다시 활성화
+    console.log('[LearningPlayer] saveProgress disabled for testing');
+    return;
 
-    // 데모 모드에서는 로컬만 업데이트
-    if (isDemoMode) {
-      setLastSaveTime(Date.now());
-      return;
-    }
+    // if (!currentItemId || playedPercent <= 0) return;
 
-    if (!enrollmentId) return;
+    // // 데모 모드에서는 로컬만 업데이트
+    // if (isDemoMode) {
+    //   setLastSaveTime(Date.now());
+    //   return;
+    // }
 
-    try {
-      await updateProgress.mutateAsync({
-        enrollmentId: Number(enrollmentId),
-        request: {
-          itemId: currentItemId,
-          progressPercent: Math.round(playedPercent * 100),
-        },
-      });
-      setLastSaveTime(Date.now());
-    } catch (error) {
-      console.error('Failed to save progress:', error);
-    }
-  }, [currentItemId, enrollmentId, playedPercent, updateProgress, isDemoMode]);
+    // if (!enrollmentId) return;
 
-  // 차시 완료 처리
-  const handleComplete = useCallback(async () => {
+    // try {
+    //   await updateProgress.mutateAsync({
+    //     enrollmentId: Number(enrollmentId),
+    //     request: {
+    //       itemId: currentItemId,
+    //       progressPercent: Math.round(playedPercent * 100),
+    //     },
+    //   });
+    //   setLastSaveTime(Date.now());
+    // } catch (error) {
+    //   console.error('Failed to save progress:', error);
+    // }
+  }, []);
+
+  // 차시 완료 처리 (현재 로컬에서만 처리 - 백엔드 API 추가 후 연동 필요)
+  const handleComplete = useCallback(() => {
     if (!currentItemId || isCompleted) return;
 
-    // 진도 기록 업데이트 (공통)
-    const updateLocalProgress = () => {
-      setIsCompleted(true);
-      setProgressRecords((prev) => {
-        const existing = prev.find((r) => r.itemId === currentItemId);
-        if (existing) {
-          return prev.map((r) =>
-            r.itemId === currentItemId
-              ? { ...r, completed: true, progressPercent: 100, completedAt: new Date().toISOString() }
-              : r
-          );
-        }
-        return [
-          ...prev,
-          {
-            itemId: currentItemId,
-            progressPercent: 100,
-            watchedSeconds: 0,
-            completed: true,
-            completedAt: new Date().toISOString(),
-          },
-        ];
-      });
-    };
+    // 로컬 진도 기록 업데이트
+    setIsCompleted(true);
+    setProgressRecords((prev) => {
+      const existing = prev.find((r) => r.itemId === currentItemId);
+      if (existing) {
+        return prev.map((r) =>
+          r.itemId === currentItemId
+            ? { ...r, completed: true, progressPercent: 100, completedAt: new Date().toISOString() }
+            : r
+        );
+      }
+      return [
+        ...prev,
+        {
+          itemId: currentItemId,
+          progressPercent: 100,
+          watchedSeconds: 0,
+          completed: true,
+          completedAt: new Date().toISOString(),
+        },
+      ];
+    });
 
-    // 데모 모드에서는 로컬만 업데이트
-    if (isDemoMode) {
-      updateLocalProgress();
-      return;
-    }
+    console.log('[LearningPlayer] Item marked as complete (local only):', currentItemId);
 
-    if (!enrollmentId) return;
+    // TODO: 백엔드에 markItemComplete API 추가 후 아래 코드 활성화
+    // if (!isDemoMode && enrollmentId) {
+    //   markItemComplete.mutateAsync({
+    //     enrollmentId: Number(enrollmentId),
+    //     itemId: currentItemId,
+    //   });
+    // }
+  }, [currentItemId, isCompleted]);
 
-    try {
-      await markItemComplete.mutateAsync({
-        enrollmentId: Number(enrollmentId),
-        itemId: currentItemId,
-      });
-      updateLocalProgress();
-    } catch (error) {
-      console.error('Failed to mark item complete:', error);
-    }
-  }, [currentItemId, enrollmentId, isCompleted, markItemComplete, isDemoMode]);
-
-  // 비디오 진도 핸들러
+  // 비디오 진도 핸들러 (임시 비활성화)
   const handleVideoProgress = useCallback((state: { played: number }) => {
-    setPlayedPercent(state.played);
+    // TODO: 테스트 후 다시 활성화
+    // setPlayedPercent(state.played);
 
-    // 80% 완료 감지
-    if (state.played >= COMPLETION_THRESHOLD && !isCompleted) {
-      handleComplete();
-    }
-  }, [isCompleted, handleComplete]);
+    // // 80% 완료 감지 - 단, markItemComplete API가 없으므로 로컬만 업데이트
+    // if (state.played >= COMPLETION_THRESHOLD && !isCompleted) {
+    //   // TODO: 백엔드에 차시 완료 API 추가 후 활성화
+    //   // handleComplete();
+    //   setIsCompleted(true);
+    //   console.log('[LearningPlayer] Item completed (local only)');
+    // }
+  }, []);
 
   // 자동 저장 설정
   useEffect(() => {
@@ -475,6 +487,7 @@ export function LearningPlayerPage() {
                       : 0
                   }
                   onProgress={handleVideoProgress}
+                  isLearnerMode={!isDemoMode}
                 />
               )}
 

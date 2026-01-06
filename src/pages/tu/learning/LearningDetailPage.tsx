@@ -69,7 +69,7 @@ const statusIcons: Record<EnrollmentStatus, React.ReactNode> = {
 // 커리큘럼 아이템 타입
 interface CurriculumDisplayItem {
   itemId: number;
-  itemName: string;
+  itemName: string; // 표시용 이름 (displayName 또는 itemName)
   itemType: string | null;
   duration: number | null;
   isFolder: boolean;
@@ -200,13 +200,24 @@ export function LearningDetailPage() {
 
   // 순서가 있는 커리큘럼 아이템 목록 생성
   const curriculumItems = useMemo((): CurriculumDisplayItem[] => {
-    if (!snapshotItems || !relationsData?.orderedItems) return [];
+    if (!snapshotItems) return [];
 
-    // 아이템을 Map으로 변환 (평탄화)
-    const itemsMap = new Map<number, SnapshotItemResponse>();
+    // 아이템을 평탄화
+    const flatItems: CurriculumDisplayItem[] = [];
+    let seq = 1;
+
     const flattenItems = (items: SnapshotItemResponse[]) => {
       items.forEach((item) => {
-        itemsMap.set(item.itemId, item);
+        // displayName이 있으면 우선 사용, 없으면 itemName(파일명) 사용
+        const displayName = item.snapshotLearningObject?.displayName || item.itemName;
+        flatItems.push({
+          itemId: item.itemId,
+          itemName: displayName,
+          itemType: item.itemType,
+          duration: item.snapshotLearningObject?.duration ?? null,
+          isFolder: item.isFolder,
+          seq: seq++,
+        });
         if (item.children && item.children.length > 0) {
           flattenItems(item.children);
         }
@@ -214,21 +225,21 @@ export function LearningDetailPage() {
     };
     flattenItems(snapshotItems);
 
-    // 순서대로 아이템 반환
-    return relationsData.orderedItems
-      .map((orderedItem) => {
-        const item = itemsMap.get(orderedItem.itemId);
-        if (!item) return null;
-        return {
-          itemId: item.itemId,
-          itemName: item.itemName,
-          itemType: item.itemType,
-          duration: item.snapshotLearningObject?.duration ?? null,
-          isFolder: item.isFolder,
-          seq: orderedItem.seq,
-        };
-      })
-      .filter((item): item is CurriculumDisplayItem => item !== null);
+    // relationsData가 있으면 순서대로, 없으면 평탄화된 순서대로 반환
+    if (relationsData?.orderedItems && relationsData.orderedItems.length > 0) {
+      const itemsMap = new Map<number, CurriculumDisplayItem>();
+      flatItems.forEach(item => itemsMap.set(item.itemId, item));
+
+      return relationsData.orderedItems
+        .map((orderedItem) => {
+          const item = itemsMap.get(orderedItem.itemId);
+          if (!item) return null;
+          return { ...item, seq: orderedItem.seq };
+        })
+        .filter((item): item is CurriculumDisplayItem => item !== null);
+    }
+
+    return flatItems;
   }, [snapshotItems, relationsData]);
 
   // enrollment 형태로 변환 (기존 코드 호환용)

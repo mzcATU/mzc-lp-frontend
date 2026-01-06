@@ -110,6 +110,8 @@ function CurriculumItem({ item, seq, isActive, isCompleted, progress, onSelect, 
   const contentType = item.snapshotLearningObject?.contentId ? 'VIDEO' : null; // 기본값, 실제로는 LO에서 가져와야 함
   const duration = item.snapshotLearningObject?.duration;
   const isFolder = item.isFolder;
+  // displayName이 있으면 우선 사용, 없으면 itemName(파일명) 사용
+  const displayName = item.snapshotLearningObject?.displayName || item.itemName;
 
   if (isFolder) {
     return (
@@ -164,7 +166,7 @@ function CurriculumItem({ item, seq, isActive, isCompleted, progress, onSelect, 
               : isDark ? 'text-gray-300' : 'text-gray-600'
           }`}
         >
-          {item.itemName}
+          {displayName}
         </div>
         {duration && (
           <div className={`flex items-center gap-2 mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -240,14 +242,24 @@ export function CurriculumSidebar({
     }
 
     // API 모드
-    if (!items || !relationsData) return [];
+    if (!items) return [];
 
     const itemsMap = new Map<number, SnapshotItemResponse>();
+    const flatItems: { seq: number; itemId: number; item: SnapshotItemResponse }[] = [];
+    let seq = 1;
 
     // 재귀적으로 아이템 평탄화
     const flattenItems = (itemList: SnapshotItemResponse[]) => {
       itemList.forEach((item) => {
         itemsMap.set(item.itemId, item);
+        // 폴더가 아니고 콘텐츠가 있는 아이템만 추가
+        if (!item.isFolder && item.snapshotLearningObject?.contentId) {
+          flatItems.push({
+            seq: seq++,
+            itemId: item.itemId,
+            item: item,
+          });
+        }
         if (item.children && item.children.length > 0) {
           flattenItems(item.children);
         }
@@ -255,13 +267,22 @@ export function CurriculumSidebar({
     };
     flattenItems(items);
 
-    // 순서대로 아이템 반환
-    return relationsData.orderedItems.map((orderedItem) => ({
-      ...orderedItem,
-      item: itemsMap.get(orderedItem.itemId),
+    // relationsData가 있으면 순서대로, 없으면 평탄화된 순서대로 반환
+    if (relationsData?.orderedItems && relationsData.orderedItems.length > 0) {
+      return relationsData.orderedItems.map((orderedItem) => ({
+        ...orderedItem,
+        item: itemsMap.get(orderedItem.itemId),
+        contentId: undefined as number | undefined,
+        contentType: undefined as PlayerContentType | undefined,
+      })).filter((item) => item.item);
+    }
+
+    // relations가 없으면 평탄화된 아이템 반환
+    return flatItems.map((flatItem) => ({
+      ...flatItem,
       contentId: undefined as number | undefined,
       contentType: undefined as PlayerContentType | undefined,
-    })).filter((item) => item.item);
+    }));
   }, [items, relationsData, isDemoMode, demoItems]);
 
   const isLoading = !isDemoMode && (itemsLoading || relationsLoading);
