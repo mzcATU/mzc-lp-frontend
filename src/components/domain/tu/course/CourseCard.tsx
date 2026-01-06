@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Clock, Pencil } from 'lucide-react';
 import { Button, CategoryBadge } from '@/components/common';
+import { useSubdomainPath } from '@/hooks/common';
 import type { Course } from '@/types';
 
 export interface CourseCardLabels {
@@ -26,12 +27,13 @@ interface CourseCardProps {
  */
 export const CourseCard = ({ course, labels, onManage, onEdit }: Readonly<CourseCardProps>) => {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   const handleManage = () => {
     if (onManage) {
       onManage();
     } else {
-      navigate(`/tu/teaching/courses/${course.id}`);
+      navigate(prefixPath(`/tu/teaching/courses/${course.id}`));
     }
   };
 
@@ -39,7 +41,7 @@ export const CourseCard = ({ course, labels, onManage, onEdit }: Readonly<Course
     if (onEdit) {
       onEdit();
     } else {
-      navigate(`/tu/teaching/courses/${course.id}/edit`);
+      navigate(prefixPath(`/tu/teaching/courses/${course.id}/edit`));
     }
   };
 

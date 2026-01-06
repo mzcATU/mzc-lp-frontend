@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MyPageSidebar } from './MyPageSidebar';
 import { LandingHeader, LandingFooter } from '@/components/landing';
 import { myPageMenuData } from '@/config/sidebar-menus';
@@ -11,14 +11,23 @@ interface MyPageLayoutProps {
 
 export function MyPageLayout({ children }: MyPageLayoutProps) {
   const navigate = useNavigate();
+  const { subdomain } = useParams<{ subdomain: string }>();
   const { isSidebarExpanded, language, toggleSidebar } = useUIStore();
   const isDarkMode = useIsDarkMode();
+
+  // 서브도메인이 있으면 경로에 프리픽스 추가
+  const prefixPath = (path: string) => {
+    if (subdomain) {
+      return `/${subdomain}${path}`;
+    }
+    return path;
+  };
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items
     const menuItem = myPageMenuData.find((item) => item.id === itemId);
     if (menuItem?.path) {
-      navigate(menuItem.path);
+      navigate(prefixPath(menuItem.path));
       return;
     }
 
@@ -26,7 +35,7 @@ export function MyPageLayout({ children }: MyPageLayoutProps) {
     for (const item of myPageMenuData) {
       const subItem = item.subItems?.find((sub) => sub.id === itemId);
       if (subItem?.path) {
-        navigate(subItem.path);
+        navigate(prefixPath(subItem.path));
         return;
       }
     }

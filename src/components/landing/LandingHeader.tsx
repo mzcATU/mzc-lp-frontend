@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, PlusCircle, Shield, Globe, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/common/auth';
-import { useMyProfile } from '@/hooks/common';
+import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { useUnreadNotificationCount } from '@/hooks/tu';
@@ -13,6 +13,7 @@ export function LandingHeader() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { user, isAuthenticated, logout } = useAuth();
   const { data: profile } = useMyProfile();
   const { theme, toggleTheme } = useThemeStore();
@@ -51,7 +52,7 @@ export function LandingHeader() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/tu/b2c/search?search=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(prefixPath(`/tu/b2c/search?search=${encodeURIComponent(searchQuery.trim())}`));
     }
   };
 
@@ -77,7 +78,7 @@ export function LandingHeader() {
           {/* Left: Logo & Menu */}
           <div className="flex items-center gap-8 ml-2 md:ml-4">
             {/* Logo */}
-            <Link to="/tu/b2c" className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
+            <Link to={prefixPath('/tu/b2c')} className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
               {fullLogoUrl ? (
                 <img src={fullLogoUrl} alt={tenantName} className="h-8 object-contain" />
               ) : (
@@ -90,13 +91,13 @@ export function LandingHeader() {
 
             {/* Desktop Nav Links */}
             <nav className={`hidden md:flex items-center gap-8 font-medium text-[15px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              <Link to="/tu/b2c/courses" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+              <Link to={prefixPath('/tu/b2c/courses')} className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 강의 탐색
               </Link>
-              <Link to="/tu/b2c/roadmaps" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+              <Link to={prefixPath('/tu/b2c/roadmaps')} className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 로드맵
               </Link>
-              <Link to="/tu/b2c/community" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
+              <Link to={prefixPath('/tu/b2c/community')} className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}>
                 커뮤니티
               </Link>
             </nav>
@@ -140,7 +141,7 @@ export function LandingHeader() {
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
               <Link
-                to="/tu/b2c/cart"
+                to={prefixPath('/tu/b2c/cart')}
                 className={`p-2 rounded-lg transition-colors relative ${
                   isDark
                     ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -150,7 +151,7 @@ export function LandingHeader() {
                 <ShoppingCart className="h-5 w-5" />
               </Link>
               <Link
-                to="/tu/b2c/wishlist"
+                to={prefixPath('/tu/b2c/wishlist')}
                 className={`p-2 rounded-lg transition-colors relative ${
                   isDark
                     ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -160,7 +161,7 @@ export function LandingHeader() {
                 <Heart className="h-5 w-5" />
               </Link>
               <Link
-                to="/tu/b2c/notifications"
+                to={prefixPath('/tu/b2c/notifications')}
                 className={`p-2 rounded-lg transition-colors relative ${
                   isDark
                     ? 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -222,7 +223,7 @@ export function LandingHeader() {
                       {/* 메뉴 항목들 */}
                       <div className="py-2 space-y-1">
                         <Link
-                          to="/tu/b2c/mypage"
+                          to={prefixPath('/tu/b2c/mypage')}
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                             isDark
@@ -234,7 +235,7 @@ export function LandingHeader() {
                           {t.landing.mypage}
                         </Link>
                         <Link
-                          to="/tu/b2c/mypage/teaching"
+                          to={prefixPath('/tu/b2c/mypage/teaching')}
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                             isDark
@@ -251,7 +252,7 @@ export function LandingHeader() {
                       <div className={`py-2 border-t space-y-1 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                         <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.landing.settings}</p>
                         <Link
-                          to="/tu/b2c/mypage/profile"
+                          to={prefixPath('/tu/b2c/mypage/profile')}
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                             isDark
@@ -263,7 +264,7 @@ export function LandingHeader() {
                           {t.landing.profileSecurity}
                         </Link>
                         <Link
-                          to="/tu/b2c/mypage/notifications"
+                          to={prefixPath('/tu/b2c/mypage/notifications')}
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                             isDark
@@ -275,7 +276,7 @@ export function LandingHeader() {
                           {t.landing.notifications}
                         </Link>
                         <Link
-                          to="/tu/b2c/mypage/language"
+                          to={prefixPath('/tu/b2c/mypage/language')}
                           onClick={() => setShowDropdown(false)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                             isDark

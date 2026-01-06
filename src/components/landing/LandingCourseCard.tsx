@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Star, Heart, Loader2, Calendar, Users } from 'lucide-react';
 import { useAuthStore } from '@/store/common/authStore';
+import { useSubdomainPath } from '@/hooks/common';
 import { useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
 import { toast } from 'sonner';
 
@@ -48,6 +49,7 @@ export function LandingCourseCard({
   isOnDemand,
 }: LandingCourseCardProps) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { isAuthenticated } = useAuthStore();
 
   // 찜 상태 확인 및 토글
@@ -63,7 +65,7 @@ export function LandingCourseCard({
 
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/auth/login', { state: { from: `/tu/b2c/times/${id}` } });
+      navigate('/login', { state: { from: prefixPath(`/tu/b2c/courses/${id}`) } });
       return;
     }
 
@@ -96,7 +98,7 @@ export function LandingCourseCard({
   };
 
   return (
-    <Link to={`/tu/b2c/courses/${id}`} className="group block h-full">
+    <Link to={prefixPath(`/tu/b2c/courses/${id}`)} className="group block h-full">
       <div className="h-full card-hover rounded-xl overflow-hidden landing-card-bg border landing-card-border">
         {/* 썸네일 영역 */}
         <div className="relative aspect-[16/10] overflow-hidden">

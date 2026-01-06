@@ -34,50 +34,29 @@ export const useLogin = () => {
         name: userDetail.name,
         role: userDetail.role,
         tenantId: userDetail.tenantId,
+        tenantSubdomain: userDetail.tenantSubdomain,
       };
 
       setAuth(user, tokenResponse.accessToken, tokenResponse.refreshToken);
       toast.success(`${user.name}님, 환영합니다!`);
 
       // 역할별 리다이렉트 경로
-      const redirectPath: Record<string, string> = {
+      const roleBasePath: Record<string, string> = {
         SYSTEM_ADMIN: '/sa',
         TENANT_ADMIN: '/ta',
         OPERATOR: '/to',
         DESIGNER: '/tu/teaching',
-        USER: '/tu',
+        USER: '/tu/b2c',
       };
-      const targetPath = redirectPath[user.role] || '/';
+      const basePath = roleBasePath[user.role] || '/tu/b2c';
 
-      // 테넌트 subdomain/customDomain이 있으면 해당 URL로 리다이렉트
-      const tenantDomain = userDetail.tenantCustomDomain || userDetail.tenantSubdomain;
-      if (tenantDomain && user.role !== 'SYSTEM_ADMIN') {
-        // 현재 호스트가 이미 테넌트 도메인인지 확인
-        const currentHost = window.location.hostname;
-        const isAlreadyOnTenantDomain =
-          currentHost === userDetail.tenantCustomDomain ||
-          currentHost.startsWith(`${userDetail.tenantSubdomain}.`);
+      // 테넌트 subdomain이 있으면 경로에 포함 (SA 제외, default는 생략)
+      let targetPath = basePath;
+      const subdomain = userDetail.tenantSubdomain;
+      const isDefaultSubdomain = !subdomain || subdomain === 'default' || subdomain === 'www';
 
-        if (!isAlreadyOnTenantDomain) {
-          // 테넌트 도메인으로 리다이렉트 (프로토콜과 포트 유지)
-          const protocol = window.location.protocol;
-          const port = window.location.port ? `:${window.location.port}` : '';
-
-          // customDomain이 있으면 그대로 사용, 없으면 subdomain.baseDomain 형태로 구성
-          let tenantUrl: string;
-          if (userDetail.tenantCustomDomain) {
-            tenantUrl = `${protocol}//${userDetail.tenantCustomDomain}${port}${targetPath}`;
-          } else {
-            // 현재 도메인에서 base domain 추출 (localhost의 경우 그대로 사용)
-            const baseDomain = currentHost === 'localhost'
-              ? 'localhost'
-              : currentHost.split('.').slice(-2).join('.');
-            tenantUrl = `${protocol}//${userDetail.tenantSubdomain}.${baseDomain}${port}${targetPath}`;
-          }
-
-          window.location.href = tenantUrl;
-          return;
-        }
+      if (!isDefaultSubdomain && user.role !== 'SYSTEM_ADMIN') {
+        targetPath = `/${subdomain}${basePath}`;
       }
 
       navigate(targetPath);

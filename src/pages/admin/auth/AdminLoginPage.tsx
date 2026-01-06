@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, Shield } from 'lucide-react';
 import { Checkbox } from '@/components/common/Checkbox';
 import { useLogin } from '@/hooks/common';
-import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
 import { designTokens } from '@/styles/admin-design-tokens';
 
 /**
@@ -11,7 +10,6 @@ import { designTokens } from '@/styles/admin-design-tokens';
  * 어드민 디자인 토큰 사용
  */
 export const AdminLoginPage = () => {
-  const navigate = useNavigate();
   const loginMutation = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,23 +44,8 @@ export const AdminLoginPage = () => {
     setErrors({});
 
     try {
-      const user = await loginMutation.mutateAsync({ email, password });
-      console.log('[AdminLoginPage] user:', user);
-      console.log('[AdminLoginPage] tenantSubdomain:', user.tenantSubdomain);
-      console.log('[AdminLoginPage] role:', user.role);
-
-      // Role에 따른 기본 경로
-      const basePath = ROLE_REDIRECT_PATH[user.role] || '/';
-      console.log('[AdminLoginPage] basePath:', basePath);
-
-      // 테넌트 서브도메인이 있으면 prefix로 추가 (SA 제외)
-      let redirectPath = basePath;
-      if (user.tenantSubdomain && user.role !== 'SYSTEM_ADMIN') {
-        redirectPath = `/${user.tenantSubdomain}${basePath}`;
-      }
-      console.log('[AdminLoginPage] redirectPath:', redirectPath);
-
-      navigate(redirectPath);
+      // useLogin hook의 onSuccess에서 서브도메인 리다이렉트 처리
+      await loginMutation.mutateAsync({ email, password });
     } catch {
       setErrors({ general: '이메일 또는 비밀번호가 올바르지 않습니다.' });
     }

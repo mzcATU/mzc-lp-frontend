@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, Sun, Moon } from 'lucide-react';
 import { Checkbox } from '@/components/common/Checkbox';
 import { useLogin } from '@/hooks/common';
-import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
 import { useThemeStore } from '@/store/common/themeStore';
 
 /**
@@ -11,7 +10,6 @@ import { useThemeStore } from '@/store/common/themeStore';
  * 다크/라이트 모드 지원
  */
 export const LoginPage = () => {
-  const navigate = useNavigate();
   const loginMutation = useLogin();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,18 +46,8 @@ export const LoginPage = () => {
     setErrors({});
 
     try {
-      const user = await loginMutation.mutateAsync({ email, password });
-
-      // Role에 따른 기본 경로
-      const basePath = ROLE_REDIRECT_PATH[user.role] || '/';
-
-      // 테넌트 서브도메인이 있으면 prefix로 추가 (SA 제외)
-      let redirectPath = basePath;
-      if (user.tenantSubdomain && user.role !== 'SYSTEM_ADMIN') {
-        redirectPath = `/${user.tenantSubdomain}${basePath}`;
-      }
-
-      navigate(redirectPath);
+      // useLogin hook의 onSuccess에서 서브도메인 리다이렉트 처리
+      await loginMutation.mutateAsync({ email, password });
     } catch {
       setErrors({ general: '이메일 또는 비밀번호가 올바르지 않습니다.' });
     }

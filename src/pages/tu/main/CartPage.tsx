@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingCart, ChevronRight, Loader2, Heart, Plus, Check } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useSubdomainPath } from '@/hooks/common';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useCart, useRemoveFromCart, useRemoveFromCartBulk, useAddToCart, useMyWishlist, useEnrollBulk } from '@/hooks/tu';
@@ -24,6 +25,7 @@ export function CartPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   // Cart React Query 훅
   const { data: cartItems = [], isLoading: isCartLoading, error: cartError } = useCart();
@@ -135,7 +137,7 @@ export function CartPage() {
           );
 
           // 내 학습 페이지로 이동
-          navigate('/tu/b2c/mypage/learning');
+          navigate(prefixPath('/tu/b2c/mypage/learning'));
         }
 
         if (failureCount > 0) {
@@ -240,7 +242,7 @@ export function CartPage() {
               관심 있는 강의를 담아보세요!
             </p>
             <Link
-              to="/tu/b2c/courses"
+              to={prefixPath('/tu/b2c/courses')}
               className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-full text-white font-medium"
             >
               강의 둘러보기 <ChevronRight className="w-4 h-4" />
@@ -304,7 +306,7 @@ export function CartPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <Link
-                              to={`/tu/b2c/times/${item.courseTimeId}`}
+                              to={prefixPath(`/tu/b2c/times/${item.courseTimeId}`)}
                               className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
                             >
                               {item.courseTimeTitle}
@@ -398,7 +400,7 @@ export function CartPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <Link
-                              to={`/tu/b2c/times/${item.courseTimeId}`}
+                              to={prefixPath(`/tu/b2c/times/${item.courseTimeId}`)}
                               className={`font-semibold mb-1 line-clamp-1 hover:text-[#6778ff] transition-colors block ${isDark ? 'text-white' : 'text-gray-900'}`}
                             >
                               {item.courseTimeTitle}
