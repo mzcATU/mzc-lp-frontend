@@ -6,130 +6,15 @@ import {
   PanelLeftClose,
   PanelLeft,
   GraduationCap,
-  Briefcase,
-  BookOpen,
-  Check,
 } from 'lucide-react';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
+import { useTenantBranding } from '@/contexts/TenantBrandingContext';
+import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
 
-// 역할 전환 모드 타입
-type ViewMode = 'instructor' | 'learner';
-
-interface ModeSwitcherProps {
-  currentMode: ViewMode;
-  isExpanded: boolean;
-  language: 'ko' | 'en';
-  colors: SidebarColors;
-  onModeChange: (mode: ViewMode) => void;
-}
-
-function ModeSwitcher({ currentMode, isExpanded, language, colors, onModeChange }: ModeSwitcherProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const modes = [
-    {
-      id: 'instructor' as ViewMode,
-      label: { ko: '강사 모드', en: 'Instructor Mode' },
-      icon: Briefcase,
-    },
-    {
-      id: 'learner' as ViewMode,
-      label: { ko: '학습자 모드', en: 'Learner Mode' },
-      icon: BookOpen,
-    },
-  ];
-
-  const currentModeData = modes.find(m => m.id === currentMode)!;
-  const CurrentIcon = currentModeData.icon;
-
-  if (!isExpanded) {
-    return (
-      <button
-        onClick={() => onModeChange(currentMode === 'instructor' ? 'learner' : 'instructor')}
-        className="w-[44px] h-[44px] rounded-xl flex items-center justify-center transition-all mx-auto"
-        style={{ backgroundColor: colors.hover }}
-        title={currentModeData.label[language]}
-      >
-        <CurrentIcon className="w-5 h-5" style={{ color: colors.textPrimary }} />
-      </button>
-    );
-  }
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
-        style={{
-          backgroundColor: colors.hover,
-          color: colors.textPrimary,
-        }}
-      >
-        <CurrentIcon className="w-5 h-5" style={{ color: colors.textSecondary }} />
-        <span className="flex-1 text-left text-sm font-medium">
-          {currentModeData.label[language]}
-        </span>
-        <ChevronDown
-          className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")}
-          style={{ color: colors.textSecondary }}
-        />
-      </button>
-
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          {/* Dropdown */}
-          <div
-            className="absolute left-0 right-0 top-full mt-1 rounded-xl border shadow-lg z-50 py-1"
-            style={{
-              backgroundColor: colors.tooltipBg,
-              borderColor: colors.border,
-            }}
-          >
-            {modes.map((mode) => {
-              const Icon = mode.icon;
-              const isActive = mode.id === currentMode;
-              return (
-                <button
-                  key={mode.id}
-                  onClick={() => {
-                    onModeChange(mode.id);
-                    setIsOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 transition-all"
-                  style={{
-                    backgroundColor: isActive ? colors.activeBg : 'transparent',
-                    color: isActive ? colors.activeText : colors.textPrimary,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = colors.hover;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }
-                  }}
-                >
-                  <Icon className="w-5 h-5" style={{ color: isActive ? colors.activeText : colors.textSecondary }} />
-                  <span className="flex-1 text-left text-sm">{mode.label[language]}</span>
-                  {isActive && <Check className="w-4 h-4" />}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+// 역할 타입
+type RoleType = 'sa' | 'ta' | 'to' | 'tu';
 
 export function BaseSidebar({
   isExpanded,
@@ -141,10 +26,19 @@ export function BaseSidebar({
   roleLabel,
   showModeSwitcher = false,
   currentMode = 'instructor',
-}: BaseSidebarProps & { showModeSwitcher?: boolean; currentMode?: ViewMode }) {
+  roleType = 'tu',
+}: BaseSidebarProps & { showModeSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType }) {
   const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
+
+  // 테넌트 브랜딩 (SA 제외)
+  const { branding } = useTenantBranding();
+
+  // SA는 플랫폼 기본 로고, 나머지는 테넌트 브랜딩
+  const isSuperAdmin = roleType === 'sa';
+  const logoUrl = isSuperAdmin ? null : (isDarkMode ? branding?.darkLogoUrl : branding?.logoUrl) || branding?.logoUrl;
+  const platformName = isSuperAdmin ? 'Learning Hub' : (branding?.tenantName || 'Learning Hub');
 
   const handleModeChange = (mode: ViewMode) => {
     if (mode === 'learner') {
@@ -210,7 +104,7 @@ export function BaseSidebar({
     <aside
       className="flex-shrink-0 transition-all duration-300"
       style={{
-        width: isExpanded ? '280px' : '84px',
+        width: isExpanded ? '300px' : '84px',
         padding: isExpanded ? '16px' : '8px',
         backgroundColor: isDarkMode ? '#1e1e1e' : designTokens.bg.app_default,
       }}
@@ -232,22 +126,32 @@ export function BaseSidebar({
             !isExpanded && 'justify-center'
           )}
         >
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
-            }}
-          >
-            <GraduationCap size={22} color="#FFFFFF" />
-          </div>
+          {/* 로고: 테넌트 로고가 있으면 사용, 없으면 기본 아이콘 */}
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={platformName}
+              className="w-10 h-10 rounded-xl object-contain flex-shrink-0"
+            />
+          ) : (
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+              }}
+            >
+              <GraduationCap size={22} color="#FFFFFF" />
+            </div>
+          )}
           {isExpanded && (
             <div className="overflow-hidden">
               <h1
                 className="text-lg font-semibold whitespace-nowrap"
                 style={{ color: colors.textPrimary }}
               >
-                Learning Hub
+                {platformName}
               </h1>
+              {/* TU는 모드 스위처로 대체, 나머지 역할은 라벨 표시 */}
               {!showModeSwitcher && (
                 <p
                   className="text-xs whitespace-nowrap"
@@ -262,18 +166,19 @@ export function BaseSidebar({
 
         {/* Mode Switcher (TU only) */}
         {showModeSwitcher && (
-          <div className={cn('mb-4', !isExpanded && 'flex justify-center')}>
+          <div className={cn('mb-3', !isExpanded && 'flex justify-center')}>
             <ModeSwitcher
               currentMode={currentMode}
               isExpanded={isExpanded}
               language={language}
               colors={colors}
               onModeChange={handleModeChange}
+              isDarkMode={isDarkMode}
             />
           </div>
         )}
 
-        {/* Divider after header */}
+        {/* Divider before menu */}
         <div
           className="mb-4"
           style={{

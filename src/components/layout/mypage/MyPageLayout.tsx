@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MyPageSidebar } from './MyPageSidebar';
 import { LandingHeader, LandingFooter } from '@/components/landing';
 import { myPageMenuData } from '@/config/sidebar-menus';
-import { useUIStore } from '@/store/common/uiStore';
-import { useThemeStore } from '@/store/common/themeStore';
+import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
 
 interface MyPageLayoutProps {
   children: ReactNode;
@@ -12,9 +11,8 @@ interface MyPageLayoutProps {
 
 export function MyPageLayout({ children }: MyPageLayoutProps) {
   const navigate = useNavigate();
-  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
-  const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  const { isSidebarExpanded, language, toggleSidebar } = useUIStore();
+  const isDarkMode = useIsDarkMode();
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items
@@ -35,7 +33,7 @@ export function MyPageLayout({ children }: MyPageLayoutProps) {
   };
 
   return (
-    <div className={`flex flex-col min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
+    <div className={`flex flex-col min-h-screen ${isDarkMode ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
       {/* 상단 헤더 */}
       <LandingHeader />
 

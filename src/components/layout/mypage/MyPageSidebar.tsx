@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -8,6 +8,7 @@ import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
+import { cn } from '@/utils/cn';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,14 +29,18 @@ interface MyPageSidebarProps {
   language?: 'ko' | 'en';
 }
 
+type ViewMode = 'instructor' | 'learner';
+
 export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
+  const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
   // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
@@ -251,6 +256,67 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
+        {/* 모드 스위처 (디자이너 권한이 있는 경우에만 표시) */}
+        {isDesigner && (
+          <>
+            <div
+              className="relative rounded-lg p-1 mb-3"
+              style={{
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              }}
+            >
+              <div className="flex gap-1">
+                <button
+                  onClick={() => {
+                    setCurrentMode('instructor');
+                    navigate('/tu/dashboard');
+                  }}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
+                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
+                  )}
+                  style={{
+                    backgroundColor: currentMode === 'instructor'
+                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
+                      : 'transparent',
+                    color: currentMode === 'instructor'
+                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
+                      : (isDark ? '#9E9E9E' : '#666666'),
+                  }}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
+                </button>
+                <button
+                  onClick={() => setCurrentMode('learner')}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
+                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
+                  )}
+                  style={{
+                    backgroundColor: currentMode === 'learner'
+                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
+                      : 'transparent',
+                    color: currentMode === 'learner'
+                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
+                      : (isDark ? '#9E9E9E' : '#666666'),
+                  }}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  <span>{language === 'ko' ? '학습자' : 'Learner'}</span>
+                </button>
+              </div>
+            </div>
+            {/* 구분선 */}
+            <div
+              className="mb-3"
+              style={{
+                borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb'}`,
+              }}
+            />
+          </>
+        )}
+
         {/* 메뉴 리스트 */}
         <nav className="space-y-1 flex-1">
           {myPageMenuData.map(renderMenuItem)}

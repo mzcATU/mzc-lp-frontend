@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  ArrowLeft,
   User,
   Mail,
   Calendar,
@@ -96,10 +95,6 @@ export function SettingsSecurityPage() {
   // Get base path from current location
   const basePath = location.pathname.split('/settings')[0];
   const isUserRole = basePath === '/tu';
-
-  const handleBack = () => {
-    navigate(`${basePath}/settings`);
-  };
 
   const handleProfileSave = async () => {
     if (!profileData.name.trim()) {
@@ -254,16 +249,6 @@ export function SettingsSecurityPage() {
   return (
     <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-3xl mx-auto">
-        {/* Header with Back Button */}
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className={`mb-6 gap-2 ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>{language === 'ko' ? '설정으로 돌아가기' : 'Back to Settings'}</span>
-        </Button>
-
         <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.profileSecurity.title}
         </h1>

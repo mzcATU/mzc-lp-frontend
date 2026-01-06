@@ -15,6 +15,7 @@ export function SuperAdminSidebar(props: SuperAdminSidebarProps) {
       {...props}
       menuData={superAdminMenuData}
       roleLabel={roleLabels.superAdmin}
+      roleType="sa"
     />
   );
 }

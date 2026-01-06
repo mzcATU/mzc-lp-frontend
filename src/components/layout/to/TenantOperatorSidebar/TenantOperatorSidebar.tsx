@@ -15,6 +15,7 @@ export function TenantOperatorSidebar(props: TenantOperatorSidebarProps) {
       {...props}
       menuData={tenantOperatorMenuData}
       roleLabel={roleLabels.tenantOperator}
+      roleType="to"
     />
   );
 }
