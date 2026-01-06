@@ -260,6 +260,15 @@ export const API_ENDPOINTS = {
     ITEM_CHECK: (courseTimeId: number) => `/cart/items/${courseTimeId}/check`,
   },
 
+  // Roadmaps (로드맵) - TU Teaching
+  ROADMAPS: {
+    BASE: '/roadmaps',
+    BY_ID: (id: number) => `/roadmaps/${id}`,
+    DRAFT: (id: number) => `/roadmaps/${id}/draft`,
+    DUPLICATE: (id: number) => `/roadmaps/${id}/duplicate`,
+    STATISTICS: '/roadmaps/statistics',
+  },
+
   // Dashboard (TA, SA)
   DASHBOARD: {
     TA_KPI: '/admin/dashboard/kpi',

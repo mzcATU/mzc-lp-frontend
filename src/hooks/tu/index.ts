@@ -238,6 +238,19 @@ export {
   usePublicBranding,
 } from './usePublicBranding';
 
+// Roadmap Hooks (TU Teaching)
+export {
+  roadmapKeys,
+  useMyRoadmaps,
+  useRoadmapStatistics,
+  useRoadmap,
+  useCreateRoadmap,
+  useUpdateRoadmap,
+  useSaveDraft,
+  useDeleteRoadmap,
+  useDuplicateRoadmap,
+} from './useRoadmapQueries';
+
 export { useBrandingApply } from './useBrandingApply';
 
 // Learning Stats Hooks (내 학습 통계)
