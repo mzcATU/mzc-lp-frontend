@@ -117,8 +117,8 @@ function LoadingSkeleton() {
       </div>
 
       {/* Stats skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {[...Array(3)].map((_, i) => (
           <Skeleton key={i} className="h-24 rounded-lg" />
         ))}
       </div>
@@ -234,8 +234,19 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
               </Badge>
             </div>
             {roadmap.description && (
-              <p className="text-text-secondary">{roadmap.description}</p>
+              <p className="text-text-secondary mb-2">{roadmap.description}</p>
             )}
+            {/* Meta info - 생성일/수정일 */}
+            <div className="flex items-center gap-4 text-sm text-text-placeholder">
+              <span className="flex items-center gap-1">
+                <Calendar size={14} />
+                {getText('createdAt')}: {formatDate(roadmap.createdAt, language)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock size={14} />
+                {getText('updatedAt')}: {formatDate(roadmap.updatedAt, language)}
+              </span>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -306,7 +317,7 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-4 mb-8">
         <IconStatCard
           icon={<Users size={20} />}
           label={getText('enrolledStudents')}
@@ -321,16 +332,6 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
           icon={<Timer size={20} />}
           label={getText('totalDuration')}
           value={`${totalDuration}${language === 'ko' ? '시간' : 'h'}`}
-        />
-        <IconStatCard
-          icon={<Calendar size={20} />}
-          label={getText('createdAt')}
-          value={formatDate(roadmap.createdAt, language)}
-        />
-        <IconStatCard
-          icon={<Clock size={20} />}
-          label={getText('updatedAt')}
-          value={formatDate(roadmap.updatedAt, language)}
         />
       </div>
 
