@@ -62,7 +62,7 @@ export function CourseReviewSection({ timeId, isDark = false, canWrite = false }
   const deleteMutation = useDeleteCourseReview();
 
   const reviews = reviewsData?.content || [];
-  const hasMyReview = !!myReview;
+  const hasMyReview = !!myReview?.id;
 
   const handleOpenModal = (review?: CourseReview) => {
     if (review) {
@@ -169,9 +169,10 @@ export function CourseReviewSection({ timeId, isDark = false, canWrite = false }
             </div>
 
             {/* 별점 분포 */}
+            {stats.ratingDistribution && (
             <div className="flex-1 space-y-2">
               {[5, 4, 3, 2, 1].map((star) => {
-                const count = stats.ratingDistribution[star as keyof typeof stats.ratingDistribution] || 0;
+                const count = stats.ratingDistribution?.[star as keyof typeof stats.ratingDistribution] || 0;
                 const percentage = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
                 return (
                   <div key={star} className="flex items-center gap-2">
@@ -191,6 +192,7 @@ export function CourseReviewSection({ timeId, isDark = false, canWrite = false }
                 );
               })}
             </div>
+            )}
           </div>
         </div>
       ) : null}
