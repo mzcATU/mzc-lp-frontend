@@ -3,6 +3,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, GripVertical, X, Search, Loader2, AlertTriangle, Info, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   Button,
   Card,
   CardContent,
@@ -165,6 +182,29 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     setSelectedPrograms(selectedPrograms.filter((p) => p.id !== programId));
   };
 
+  // 드래그 앤 드롭 센서 설정
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // 드래그 종료 핸들러
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setSelectedPrograms((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   // 파괴적 업데이트 검증
   const destructiveValidation = useMemo(() => {
     if (!isEditMode || !originalStatus) {
@@ -285,10 +325,10 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
 
       {/* 제한 상태 안내 배너 */}
       {destructiveValidation.isRestricted && (
-        <Card className="mb-6 border-status-info bg-status-info/5">
+        <Card className="mb-6 border-primary bg-primary/5">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <Info className="text-status-info shrink-0 mt-0.5" size={20} />
+              <Info className="text-primary shrink-0 mt-0.5" size={20} />
               <div>
                 <p className="font-medium text-text-primary m-0 mb-1">
                   {getText('restrictedModeInfo')}
@@ -351,66 +391,34 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
                   <p className="text-sm">{getText('noCoursesDesc')}</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {selectedPrograms.map((program, index) => {
-                    // 기존 프로그램인지 확인 (삭제/순서변경 제한 대상)
-                    const isOriginalProgram = originalProgramIds.includes(program.id);
-                    const isActionRestricted = destructiveValidation.isRestricted && isOriginalProgram;
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={selectedPrograms.map((p) => p.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="flex flex-col gap-2">
+                      {selectedPrograms.map((program, index) => {
+                        const isOriginalProgram = originalProgramIds.includes(program.id);
+                        const isActionRestricted = destructiveValidation.isRestricted && isOriginalProgram;
 
-                    return (
-                      <div
-                        key={program.id}
-                        className={`flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border ${
-                          isActionRestricted ? 'border-border bg-bg-secondary/50' : 'border-border'
-                        }`}
-                      >
-                        {/* 드래그 핸들 - 제한 상태에서 비활성화 */}
-                        {isActionRestricted ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="cursor-not-allowed">
-                                <Lock size={18} className="text-text-disabled" />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{getText('cannotReorderRestricted')}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <GripVertical size={18} className="text-text-secondary cursor-grab" />
-                        )}
-                        <Badge variant="outline" className="shrink-0">
-                          {getText('step')} {index + 1}
-                        </Badge>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-text-primary m-0 truncate">{program.title}</p>
-                          <p className="text-sm text-text-secondary m-0">
-                            {program.category} · {program.duration}
-                          </p>
-                        </div>
-                        {/* 삭제 버튼 - 제한 상태에서 비활성화 */}
-                        {isActionRestricted ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div>
-                                <Button variant="ghost" size="icon" disabled>
-                                  <X size={18} className="text-text-disabled" />
-                                </Button>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{getText('cannotDeleteRestricted')}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <Button variant="ghost" size="icon" onClick={() => removeProgram(program.id)}>
-                            <X size={18} />
-                          </Button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        return (
+                          <SortableProgramItem
+                            key={program.id}
+                            program={program}
+                            index={index}
+                            isActionRestricted={isActionRestricted}
+                            getText={getText}
+                            onRemove={removeProgram}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </CardContent>
           </Card>
@@ -521,6 +529,117 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
           {getText('publish')}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** 정렬 가능한 프로그램 아이템 컴포넌트 */
+interface SortableProgramItemProps {
+  program: SelectedProgram;
+  index: number;
+  isActionRestricted: boolean;
+  getText: (key: keyof typeof t) => string;
+  onRemove: (id: number) => void;
+}
+
+function SortableProgramItem({
+  program,
+  index,
+  isActionRestricted,
+  getText,
+  onRemove,
+}: Readonly<SortableProgramItemProps>) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: program.id,
+    disabled: isActionRestricted,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border ${
+        isActionRestricted ? 'border-border bg-bg-secondary/50' : 'border-border'
+      } ${isDragging ? 'opacity-50 shadow-lg z-50' : ''}`}
+    >
+      {/* 드래그 핸들 - 제한 상태에서 비활성화 */}
+      {isActionRestricted ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className="cursor-not-allowed"
+              aria-disabled="true"
+              aria-label={getText('cannotReorderRestricted')}
+              role="button"
+            >
+              <Lock size={18} className="text-text-disabled" aria-hidden="true" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{getText('cannotReorderRestricted')}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing touch-none"
+          aria-label="드래그하여 순서 변경"
+        >
+          <GripVertical size={18} className="text-text-secondary" />
+        </button>
+      )}
+      <Badge variant="outline" className="shrink-0">
+        {getText('step')} {index + 1}
+      </Badge>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-text-primary m-0 truncate">{program.title}</p>
+        <p className="text-sm text-text-secondary m-0">
+          {program.category} · {program.duration}
+        </p>
+      </div>
+      {/* 삭제 버튼 - 제한 상태에서 비활성화 */}
+      {isActionRestricted ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled
+                aria-disabled="true"
+                aria-label={getText('cannotDeleteRestricted')}
+              >
+                <X size={18} className="text-text-disabled" aria-hidden="true" />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{getText('cannotDeleteRestricted')}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove(program.id)}
+          aria-label={`${program.title} 삭제`}
+        >
+          <X size={18} aria-hidden="true" />
+        </Button>
+      )}
     </div>
   );
 }

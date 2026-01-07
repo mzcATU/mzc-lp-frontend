@@ -187,7 +187,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-text-primary m-0">{roadmap.title}</h3>
-                      <Badge variant={roadmap.status.toUpperCase() === 'PUBLISHED' ? 'default' : 'secondary'}>
+                      <Badge variant={roadmap.status.toUpperCase() === 'PUBLISHED' ? 'success' : 'warning'}>
                         {roadmap.status.toUpperCase() === 'PUBLISHED' ? getText('published') : getText('draft')}
                       </Badge>
                     </div>
