@@ -4,7 +4,7 @@
  */
 import { useRef, useState, useCallback, useEffect } from 'react';
 import ReactPlayer from 'react-player';
-import { Loader2, AlertCircle, RefreshCw, Volume2, VolumeX, Maximize, Pause, Play } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { contentService } from '@/services/tu/contentService';
 import { Button } from '@/components/common';
 import { useTranslation } from '@/store/common/languageStore';
@@ -47,14 +47,12 @@ export function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastProgressUpdateRef = useRef<number>(0);
 
-  const [isReady, setIsReady] = useState(isExternalUrl); // 외부 URL은 바로 ready
+  const [, setIsReady] = useState(isExternalUrl); // 외부 URL은 바로 ready
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [hasError, setHasError] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [played, setPlayed] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [muted, setMuted] = useState(false);
-  const [seeking, setSeeking] = useState(false);
+  const [, setDuration] = useState(0);
+  const [, setPlayed] = useState(0);
+  const [seeking] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | undefined>(undefined);
   const [isLoadingBlob, setIsLoadingBlob] = useState(false);
 
@@ -148,54 +146,10 @@ export function VideoPlayer({
     onEnded?.();
   }, [onEnded]);
 
-  const handlePlayPause = useCallback(() => {
-    setIsPlaying((prev) => !prev);
-  }, []);
-
-  const handleMuteToggle = useCallback(() => {
-    setMuted((prev) => !prev);
-  }, []);
-
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    setMuted(newVolume === 0);
-  }, []);
-
-  const handleSeekChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlayed(parseFloat(e.target.value));
-  }, []);
-
-  const handleSeekMouseDown = useCallback(() => {
-    setSeeking(true);
-  }, []);
-
-  const handleSeekMouseUp = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
-    setSeeking(false);
-    const target = e.target as HTMLInputElement;
-    playerRef.current?.seekTo(parseFloat(target.value), 'fraction');
-  }, []);
-
-  const handleFullscreen = useCallback(() => {
-    if (containerRef.current) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        containerRef.current.requestFullscreen();
-      }
-    }
-  }, []);
-
   const handleRetry = useCallback(() => {
     setHasError(false);
     setIsReady(false);
   }, []);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   // HTML5 video 이벤트 핸들러 설정 (MP4용)
   useEffect(() => {

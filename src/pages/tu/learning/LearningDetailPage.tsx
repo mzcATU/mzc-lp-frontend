@@ -45,12 +45,6 @@ import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import type { EnrollmentStatus } from '@/services/tu/enrollmentService';
 import type { SnapshotItemResponse, SnapshotRelationsResponse } from '@/types/common/snapshot.types';
 
-// API 응답 타입
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
-
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',

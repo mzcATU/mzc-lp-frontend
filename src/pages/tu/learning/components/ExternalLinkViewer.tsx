@@ -22,7 +22,6 @@ export function ExternalLinkViewer({
   url,
   title,
   onProgress,
-  onComplete,
   onReady,
   onError,
 }: ExternalLinkViewerProps) {

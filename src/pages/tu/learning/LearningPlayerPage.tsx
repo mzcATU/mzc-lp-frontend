@@ -11,7 +11,6 @@ import {
   CheckCircle,
   Loader2,
   BookOpen,
-  Menu,
   X,
   AlertTriangle,
   PanelRightClose,
@@ -23,25 +22,17 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useQuery } from '@tanstack/react-query';
 import {
   useEnrollmentForPlayer,
-  useUpdateProgress,
   useMarkItemComplete,
 } from '@/hooks/tu';
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import { VideoPlayer, CurriculumSidebar, DocumentViewer, ExternalLinkViewer } from './components';
 import {
-  COMPLETION_THRESHOLD,
   AUTO_SAVE_INTERVAL,
   type PlayerContentType,
   type ProgressRecordResponse,
 } from '@/types/tu';
 import type { SnapshotItemResponse, SnapshotRelationsResponse } from '@/types/common/snapshot.types';
-
-// API 응답 타입
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
 
 // itemType을 PlayerContentType으로 매핑
 const mapItemTypeToContentType = (itemType: string | null | undefined): PlayerContentType => {
@@ -108,7 +99,6 @@ export function LearningPlayerPage() {
   const [playedPercent, setPlayedPercent] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [lastSaveTime, setLastSaveTime] = useState(Date.now());
   const [showDemoBanner, setShowDemoBanner] = useState(true);
 
   // Refs
@@ -119,7 +109,6 @@ export function LearningPlayerPage() {
     isDemoMode ? 0 : Number(enrollmentId),
     { enabled: !isDemoMode }
   );
-  const updateProgress = useUpdateProgress();
   const markItemComplete = useMarkItemComplete();
 
   // 데모 모드 또는 API 데이터 사용
@@ -360,17 +349,9 @@ export function LearningPlayerPage() {
   }, [currentItemId, isCompleted, isDemoMode, enrollmentId]);
 
   // 비디오 진도 핸들러 (임시 비활성화)
-  const handleVideoProgress = useCallback((state: { played: number }) => {
+  const handleVideoProgress = useCallback((_state: { played: number }) => {
     // TODO: 테스트 후 다시 활성화
-    // setPlayedPercent(state.played);
-
-    // // 80% 완료 감지 - 단, markItemComplete API가 없으므로 로컬만 업데이트
-    // if (state.played >= COMPLETION_THRESHOLD && !isCompleted) {
-    //   // TODO: 백엔드에 차시 완료 API 추가 후 활성화
-    //   // handleComplete();
-    //   setIsCompleted(true);
-    //   console.log('[LearningPlayer] Item completed (local only)');
-    // }
+    // setPlayedPercent(_state.played);
   }, []);
 
   // 자동 저장 설정

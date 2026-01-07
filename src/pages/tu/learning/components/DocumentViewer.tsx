@@ -27,7 +27,6 @@ export function DocumentViewer({
   contentType = 'DOCUMENT',
   isLearnerMode = true,
   onProgress,
-  onComplete,
   onReady,
   onError,
 }: DocumentViewerProps) {
