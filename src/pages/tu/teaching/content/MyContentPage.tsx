@@ -6,8 +6,12 @@ import {
   Plus,
   Search,
   Filter,
+  Eye,
+  Trash2,
   FileText,
   ChevronDown,
+  Archive,
+  RotateCcw,
   Loader2,
   Video,
   FileIcon,
@@ -21,7 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, ViewToggle, DataTable, DataTableColumnHeader, IconStatCard, Checkbox } from '@/components/common';
-import { useMyContents, useDeleteContent, useContentFolderTree } from '@/hooks/tu';
+import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent, useContentFolderTree } from '@/hooks/tu';
 import { learningObjectService } from '@/services/tu';
 import {
   ContentCard,
@@ -141,6 +145,8 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   const { data, isLoading, error } = useMyContents(params);
   const { data: folderTree = [] } = useContentFolderTree();
   const deleteContent = useDeleteContent();
+  const archiveContent = useArchiveContent();
+  const restoreContent = useRestoreContent();
 
   // 선택된 폴더 정보
   const selectedFolder = selectedFolderId ? findFolderById(folderTree, selectedFolderId) : null;
@@ -171,6 +177,22 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       } else {
         alert(getText('error'));
       }
+    }
+  };
+
+  const handleArchive = async (id: number) => {
+    try {
+      await archiveContent.mutateAsync(id);
+    } catch (err) {
+      console.error('Archive failed:', err);
+    }
+  };
+
+  const handleRestore = async (id: number) => {
+    try {
+      await restoreContent.mutateAsync(id);
+    } catch (err) {
+      console.error('Restore failed:', err);
     }
   };
 
@@ -312,6 +334,45 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           </p>
         </div>
       ),
+    },
+    {
+      id: 'actions',
+      header: () => null,
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => handlePreview(item)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+            >
+              <Eye size={16} />
+            </button>
+            {item.status === 'ARCHIVED' ? (
+              <button
+                onClick={() => handleRestore(item.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+              >
+                <RotateCcw size={16} />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleArchive(item.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+              >
+                <Archive size={16} />
+              </button>
+            )}
+            <button
+              onClick={() => handleDelete(item.id)}
+              disabled={deleteContent.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-status-error/10 transition-colors"
+            >
+              <Trash2 size={16} className="text-status-error" />
+            </button>
+          </div>
+        );
+      },
     },
   ], [language, deleteContent.isPending, contents, selectedContentIds]);
 
