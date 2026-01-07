@@ -16,3 +16,6 @@ export { TenantSettingsPage, UserManagementSettingsPage } from './settings';
 
 // Features
 export { FeatureSettingsPage, TenantCategoryPage } from './features';
+
+// Notices
+export { TenantNoticesPage } from './notices';

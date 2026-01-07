@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TenantUserSidebar } from './TenantUserSidebar';
+import { TenantNoticePopup } from '@/components/tu/TenantNoticePopup';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { tenantUserMenuData } from '@/config/sidebar-menus';
 import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
@@ -55,6 +56,9 @@ export function TenantUserLayout({ children }: TenantUserLayoutProps) {
       />
 
       <main className="flex-1 overflow-auto">{children}</main>
+
+      {/* 공지사항 팝업 */}
+      <TenantNoticePopup />
     </div>
   );
 }
