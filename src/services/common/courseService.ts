@@ -97,6 +97,22 @@ export const courseService = {
     await axiosInstance.delete(API_ENDPOINTS.COURSES.BY_ID(id));
   },
 
+  /** 강의 발행 */
+  async publish(id: number): Promise<CourseResponse> {
+    const { data } = await axiosInstance.post<CourseResponse>(
+      `${API_ENDPOINTS.COURSES.BY_ID(id)}/publish`
+    );
+    return data;
+  },
+
+  /** 강의 발행 취소 */
+  async unpublish(id: number): Promise<CourseResponse> {
+    const { data } = await axiosInstance.post<CourseResponse>(
+      `${API_ENDPOINTS.COURSES.BY_ID(id)}/unpublish`
+    );
+    return data;
+  },
+
   // ============================================
   // Course Items (차시)
   // ============================================

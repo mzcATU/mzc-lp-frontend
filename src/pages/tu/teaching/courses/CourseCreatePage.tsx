@@ -9,7 +9,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, FileText, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Loader2, Send } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
 import { courseService, categoryService } from '@/services/common';
@@ -79,9 +79,9 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [courseId, setCourseId] = useState<number | null>(
     courseIdParam ? Number(courseIdParam) : null
   );
@@ -241,13 +241,15 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     }
   };
 
-  const handleSubmit = async () => {
+  const handlePublish = async () => {
     if (!formData.title) {
       alert('강의명을 입력해주세요.');
       return;
     }
 
-    setIsSubmitting(true);
+    if (!confirm(getText('publishConfirm'))) return;
+
+    setIsPublishing(true);
     try {
       const request: CreateCourseRequest = {
         title: formData.title,
@@ -266,29 +268,33 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       if (courseId) {
         // 기존 강의 수정
         await courseService.update(courseId, request);
+
+        // 커리큘럼 저장
+        if (formData.curriculumItems.length > 0) {
+          await deleteAllCurriculumItems(courseId);
+          await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
+        }
       } else {
         // 새 강의 생성
-        const courseResponse = await courseService.create(request);
-        targetCourseId = courseResponse.courseId;
+        const response = await courseService.create(request);
+        targetCourseId = response.courseId;
+
+        // 커리큘럼 생성
+        if (formData.curriculumItems.length > 0) {
+          await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
+        }
       }
 
-      // 커리큘럼 항목 생성 (트리 구조 재귀 처리)
-      // 참고: 기존 강의 수정 시에는 이미 저장된 커리큘럼이 있을 수 있음
-      if (targetCourseId && formData.curriculumItems.length > 0) {
-        await createCurriculumItemsRecursively(
-          targetCourseId,
-          formData.curriculumItems,
-          null
-        );
-      }
+      // 발행 API 호출
+      await courseService.publish(targetCourseId!);
 
-      alert('강의가 등록되었습니다!');
+      alert(getText('publishSuccess'));
       navigate('/tu/teaching/courses');
     } catch (error) {
-      console.error('강의 등록 실패:', error);
-      alert('강의 등록에 실패했습니다. 다시 시도해주세요.');
+      console.error('강의 발행 실패:', error);
+      alert(getText('publishError'));
     } finally {
-      setIsSubmitting(false);
+      setIsPublishing(false);
     }
   };
 
@@ -432,9 +438,18 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 <ArrowRight size={18} />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                <Upload size={18} />
-                {isSubmitting ? '등록 중...' : getText('submit')}
+              <Button onClick={handlePublish} disabled={isPublishing}>
+                {isPublishing ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    {getText('publishing')}
+                  </>
+                ) : (
+                  <>
+                    <Send size={18} />
+                    {getText('publish')}
+                  </>
+                )}
               </Button>
             )}
           </div>
