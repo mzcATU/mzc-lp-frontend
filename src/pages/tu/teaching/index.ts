@@ -6,4 +6,4 @@ export {
   ProgramDetailPage as TuProgramDetailPage,
   ProgramEditPage as TuProgramEditPage,
 } from './programs';
-export { RoadmapListPage, RoadmapCreatePage } from './roadmaps';
+export { RoadmapListPage, RoadmapCreatePage, TeachingRoadmapDetailPage } from './roadmaps';

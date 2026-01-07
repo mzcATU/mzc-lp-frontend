@@ -17,6 +17,7 @@ import {
   TuProgramEditPage,
   RoadmapListPage,
   RoadmapCreatePage,
+  TeachingRoadmapDetailPage,
   TUDashboardPage,
 } from '@/pages/tu';
 import { PlaceholderPage } from './pages';
@@ -57,7 +58,7 @@ export const tuTeachingRoutes = (
     <Route path="teaching/assignments/:id" element={<AssignmentDetailPage />} />
     <Route path="teaching/roadmaps" element={<RoadmapListPage />} />
     <Route path="teaching/roadmaps/create" element={<RoadmapCreatePage />} />
-    <Route path="teaching/roadmaps/:id" element={<PlaceholderPage title="로드맵 상세" />} />
+    <Route path="teaching/roadmaps/:id" element={<TeachingRoadmapDetailPage />} />
     <Route path="teaching/roadmaps/:id/edit" element={<RoadmapCreatePage />} />
     <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
   </Route>
@@ -89,7 +90,7 @@ export const tuTeachingRoutes = (
     {/* 로드맵 */}
     <Route path="teaching/roadmaps" element={<RoadmapListPage />} />
     <Route path="teaching/roadmaps/create" element={<RoadmapCreatePage />} />
-    <Route path="teaching/roadmaps/:id" element={<PlaceholderPage title="로드맵 상세" />} />
+    <Route path="teaching/roadmaps/:id" element={<TeachingRoadmapDetailPage />} />
     <Route path="teaching/roadmaps/:id/edit" element={<RoadmapCreatePage />} />
 
     {/* 교육 과정 탐색 */}
