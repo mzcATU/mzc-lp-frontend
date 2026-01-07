@@ -118,3 +118,18 @@ export {
   useActivateAutoEnrollmentRule,
   useDeactivateAutoEnrollmentRule,
 } from './useAutoEnrollmentRuleQueries';
+
+export {
+  tenantNoticeKeys,
+  useTenantNotices,
+  useSearchTenantNotices,
+  useTenantNotice,
+  useCreateTenantNotice,
+  useUpdateTenantNotice,
+  useDeleteTenantNotice,
+  usePublishTenantNotice,
+  useArchiveTenantNotice,
+  useVisibleTenantNotices,
+  useVisibleTenantNotice,
+  useVisibleTenantNoticeCount,
+} from './useTenantNoticeQueries';
