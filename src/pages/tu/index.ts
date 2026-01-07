@@ -14,6 +14,7 @@ export {
   TuProgramEditPage,
   RoadmapListPage,
   RoadmapCreatePage,
+  TeachingRoadmapDetailPage,
 } from './teaching';
 export { TUDashboardPage } from './dashboard';
 export { SettingsLanguagePage } from './settings';
