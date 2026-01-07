@@ -63,6 +63,7 @@ export {
 // Learning Player Hooks
 export {
   learningPlayerKeys,
+  useEnrollmentForPlayer,
   useEnrollmentWithCurriculum,
   useUpdateProgress,
   useMarkItemComplete,
@@ -288,3 +289,14 @@ export {
   usePublicLayout,
   usePublicNavigation,
 } from './usePublicLayout';
+
+// Course Review Hooks (코스 리뷰)
+export {
+  courseReviewKeys,
+  useCourseReviews,
+  useCourseReviewStats,
+  useMyCourseReview,
+  useCreateCourseReview,
+  useUpdateCourseReview,
+  useDeleteCourseReview,
+} from './useCourseReviewQueries';

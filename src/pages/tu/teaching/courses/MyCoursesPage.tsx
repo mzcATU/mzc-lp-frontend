@@ -54,9 +54,9 @@ const t = {
   lessons: { ko: '차시', en: 'Lessons' },
   manageCourse: { ko: '과정 관리', en: 'Manage Course' },
   editCourse: { ko: '수정', en: 'Edit' },
-  noCourses: { ko: '개설한 과정이 없습니다', en: 'No courses created yet' },
-  noCoursesDesc: { ko: '새로운 과정을 개설하여 학생들과 지식을 공유하세요', en: 'Create a new course to share knowledge with students' },
-  createNewCourse: { ko: '과정 개설하기', en: 'Create Course' },
+  noCourses: { ko: '작성한 강의 계획서가 없습니다', en: 'No course plans yet' },
+  noCoursesDesc: { ko: '새로운 강의 계획서를 설계하여 학습 여정을 구성하세요', en: 'Design a new course plan to structure the learning journey' },
+  createNewCourse: { ko: '강의 계획서 만들기', en: 'Create Course Plan' },
   loading: { ko: '강의 목록을 불러오는 중...', en: 'Loading courses...' },
   error: { ko: '강의 목록을 불러오는데 실패했습니다', en: 'Failed to load courses' },
   retry: { ko: '다시 시도', en: 'Retry' },
@@ -292,9 +292,6 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedCourses.map((course) => {
-          const courseResponse = courseResponses.find(
-            (r) => String(r.courseId) === course.id
-          );
           const isSelected = selectedCourseIds.has(course.id);
 
           return (
@@ -333,24 +330,27 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                     lessons: getText('lessons'),
                     manageCourse: getText('manageCourse'),
                   }}
-                />
-              </div>
-
-              {/* Action Buttons */}
-              {courseResponse && (
-                <div className="mt-2 flex gap-2">
-                  {course.isComplete ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="flex-1 border border-border"
-                      onClick={() => navigate(`/tu/teaching/courses/${course.id}/apply`)}
-                    >
-                      <Send size={14} />
-                      {getText('applyProgram')}
-                    </Button>
-                  ) : (
-                    <>
+                  renderActions={
+                    course.isComplete ? (
+                      <>
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => navigate(`/tu/teaching/courses/${course.id}`)}
+                        >
+                          {getText('manageCourse')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="flex-1 border border-border"
+                          onClick={() => navigate(`/tu/teaching/courses/${course.id}/apply`)}
+                        >
+                          <Send size={14} />
+                          {getText('applyProgram')}
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         size="sm"
                         variant="ghost"
@@ -360,19 +360,10 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                         <Edit size={14} />
                         {getText('continueEditing')}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="border border-border opacity-50 cursor-not-allowed"
-                        disabled
-                        title={getText('incompleteWarning')}
-                      >
-                        <Send size={14} />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
+                    )
+                  }
+                />
+              </div>
             </div>
           );
         })}

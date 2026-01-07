@@ -49,6 +49,8 @@ import {
   Zap,
   FolderTree,
   Map,
+  ToggleRight,
+  Tags,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -169,6 +171,15 @@ export const tenantAdminMenuData: MenuItem[] = [
       { id: 'realtime-data', label: { ko: '실시간 데이터 현황', en: 'Real-time Data Status' }, icon: Activity, path: '/ta/analytics/realtime' },
       { id: 'analytics-export', label: { ko: '통계 조회 및 내보내기', en: 'Analytics & Export' }, icon: Download, path: '/ta/analytics/export' },
       { id: 'log-history', label: { ko: '이력 분석 및 로그 관리', en: 'Log & History Analysis' }, icon: FileText, path: '/ta/analytics/logs' },
+    ],
+  },
+  {
+    id: 'feature-settings',
+    label: { ko: '기능 설정', en: 'Feature Settings' },
+    icon: ToggleRight,
+    subItems: [
+      { id: 'feature-onoff', label: { ko: '기능 On/Off', en: 'Feature On/Off' }, icon: ToggleRight, path: '/ta/features' },
+      { id: 'custom-categories', label: { ko: '카테고리 관리', en: 'Category Management' }, icon: Tags, path: '/ta/features/categories' },
     ],
   },
   {

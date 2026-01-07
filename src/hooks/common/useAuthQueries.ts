@@ -62,6 +62,18 @@ export const useLogin = () => {
       return { user, userDetail };
     },
     onSuccess: ({ user, userDetail }) => {
+      // 테넌트 subdomain 처리
+      const subdomain = userDetail.tenantSubdomain;
+      const isDefaultSubdomain = !subdomain || subdomain === 'default' || subdomain === 'www';
+      const subdomainPrefix = (!isDefaultSubdomain && user.role !== 'SYSTEM_ADMIN') ? `/${subdomain}` : '';
+
+      // 프로필 미완성 시 프로필 수정 페이지로 리다이렉트 (단체 계정 생성 사용자)
+      if (userDetail.profileCompleted === false) {
+        const profileEditPath = `${subdomainPrefix}/tu/b2c/mypage/profile`;
+        navigate(profileEditPath, { state: { profileIncomplete: true } });
+        return;
+      }
+
       // 역할별 리다이렉트 경로
       const roleBasePath: Record<string, string> = {
         SYSTEM_ADMIN: '/sa',
@@ -71,15 +83,7 @@ export const useLogin = () => {
         USER: '/tu/b2c',
       };
       const basePath = roleBasePath[user.role] || '/tu/b2c';
-
-      // 테넌트 subdomain이 있으면 경로에 포함 (SA 제외, default는 생략)
-      let targetPath = basePath;
-      const subdomain = userDetail.tenantSubdomain;
-      const isDefaultSubdomain = !subdomain || subdomain === 'default' || subdomain === 'www';
-
-      if (!isDefaultSubdomain && user.role !== 'SYSTEM_ADMIN') {
-        targetPath = `/${subdomain}${basePath}`;
-      }
+      const targetPath = `${subdomainPrefix}${basePath}`;
 
       navigate(targetPath);
     },

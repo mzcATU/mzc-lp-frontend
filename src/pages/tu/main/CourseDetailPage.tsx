@@ -22,6 +22,8 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { CourseCommunitySection } from '@/components/domain/course-community';
+import { CourseReviewSection } from '@/components/domain/course-review';
 import { useCourseTimeDetail, useEnroll, useMyEnrollments, useCheckWishlistStatus, useToggleWishlist, useCheckCartStatus, useToggleCart } from '@/hooks/tu';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
 import {
@@ -194,6 +196,7 @@ export function CourseDetailPage() {
 
   const [expandedSections, setExpandedSections] = useState<number[]>([0]);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [activeTab, setActiveTab] = useState<'intro' | 'curriculum' | 'review' | 'community'>('intro');
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
@@ -741,109 +744,250 @@ export function CourseDetailPage() {
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div className={`border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+        <div className="w-full px-4 md:px-8 lg:px-16">
+          <div className="flex gap-8 max-w-4xl">
+            <button
+              onClick={() => setActiveTab('intro')}
+              className={`py-4 font-medium transition-colors relative ${
+                activeTab === 'intro'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-900'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              강의 소개
+              {activeTab === 'intro' && (
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('curriculum')}
+              className={`py-4 font-medium transition-colors relative ${
+                activeTab === 'curriculum'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-900'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              커리큘럼
+              {activeTab === 'curriculum' && (
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('review')}
+              className={`py-4 font-medium transition-colors relative ${
+                activeTab === 'review'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-900'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              수강평
+              {activeTab === 'review' && (
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('community')}
+              className={`py-4 font-medium transition-colors relative ${
+                activeTab === 'community'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-900'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              커뮤니티
+              {activeTab === 'community' && (
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}
+                />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="w-full px-4 md:px-8 lg:px-16 py-12">
         <div className="max-w-4xl">
-          {/* 커리큘럼 */}
-          <section className="mb-12">
-            <h2
-              className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
-            >
-              커리큘럼
-            </h2>
-            {courseTime.curriculum && courseTime.curriculum.length > 0 ? (
-              <div className="space-y-3">
-                {courseTime.curriculum.map((item, index) => (
-                  <CurriculumSection
-                    key={item.id}
-                    item={item}
-                    isExpanded={expandedSections.includes(index)}
-                    onToggle={() => toggleSection(index)}
-                    isDark={isDark}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div
-                className={`rounded-xl p-8 text-center border ${
-                  isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
-                }`}
-              >
-                <FileText
-                  className={`w-12 h-12 mx-auto mb-4 ${
-                    isDark ? 'text-gray-600' : 'text-gray-300'
-                  }`}
-                />
-                <p className={`font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  커리큘럼 준비 중
-                </p>
-                <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                  상세 커리큘럼은 곧 업데이트될 예정입니다.
-                </p>
-              </div>
-            )}
-          </section>
-
-          {/* 강사 소개 */}
-          {courseTime.instructors.length > 0 && (
-            <section className="mb-12">
-              <h2
-                className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
-              >
-                강사 소개
-              </h2>
-              <div className="space-y-4">
-                {courseTime.instructors.map((instructor) => (
+          {/* 강의 소개 탭 */}
+          {activeTab === 'intro' && (
+            <>
+              {/* 프로그램 설명 */}
+              {courseTime.program?.description && (
+                <section className="mb-12">
+                  <h2
+                    className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    강의 소개
+                  </h2>
                   <div
-                    key={instructor.id}
                     className={`rounded-xl p-6 border ${
                       isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
                     }`}
                   >
-                    <div className="flex items-start gap-4">
-                      {instructor.profileImageUrl ? (
-                        <img
-                          src={instructor.profileImageUrl}
-                          alt={instructor.name}
-                          className="w-16 h-16 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div
-                          className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                            isDark ? 'bg-white/10' : 'bg-gray-200'
-                          }`}
-                        >
-                          <Users className="w-8 h-8" />
-                        </div>
-                      )}
-                      <div>
-                        <h3
-                          className={`text-lg font-bold ${
-                            isDark ? 'text-white' : 'text-gray-900'
-                          }`}
-                        >
-                          {instructor.name}
-                        </h3>
-                        <span
-                          className={`text-sm px-2 py-0.5 rounded ${
-                            instructor.role === 'MAIN'
-                              ? 'bg-[#6778ff]/20 text-[#6778ff]'
-                              : isDark
-                                ? 'bg-white/10 text-gray-400'
-                                : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {instructor.role === 'MAIN'
-                            ? '주강사'
-                            : instructor.role === 'SUB'
-                              ? '보조강사'
-                              : '조교'}
-                        </span>
-                      </div>
-                    </div>
+                    <p className={`leading-relaxed whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {courseTime.program.description}
+                    </p>
                   </div>
-                ))}
-              </div>
+                </section>
+              )}
+
+              {/* 강사 소개 */}
+              {courseTime.instructors.length > 0 && (
+                <section className="mb-12">
+                  <h2
+                    className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    강사 소개
+                  </h2>
+                  <div className="space-y-4">
+                    {courseTime.instructors.map((instructor) => (
+                      <div
+                        key={instructor.id}
+                        className={`rounded-xl p-6 border ${
+                          isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-4">
+                          {instructor.profileImageUrl ? (
+                            <img
+                              src={instructor.profileImageUrl}
+                              alt={instructor.name}
+                              className="w-16 h-16 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                                isDark ? 'bg-white/10' : 'bg-gray-200'
+                              }`}
+                            >
+                              <Users className="w-8 h-8" />
+                            </div>
+                          )}
+                          <div>
+                            <h3
+                              className={`text-lg font-bold ${
+                                isDark ? 'text-white' : 'text-gray-900'
+                              }`}
+                            >
+                              {instructor.name}
+                            </h3>
+                            <span
+                              className={`text-sm px-2 py-0.5 rounded ${
+                                instructor.role === 'MAIN'
+                                  ? 'bg-[#6778ff]/20 text-[#6778ff]'
+                                  : isDark
+                                    ? 'bg-white/10 text-gray-400'
+                                    : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {instructor.role === 'MAIN'
+                                ? '주강사'
+                                : instructor.role === 'SUB'
+                                  ? '보조강사'
+                                  : '조교'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+
+          {/* 커리큘럼 탭 */}
+          {activeTab === 'curriculum' && (
+            <section className="mb-12">
+              <h2
+                className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
+                커리큘럼
+              </h2>
+              {courseTime.curriculum && courseTime.curriculum.length > 0 ? (
+                <div className="space-y-3">
+                  {courseTime.curriculum.map((item, index) => (
+                    <CurriculumSection
+                      key={item.id}
+                      item={item}
+                      isExpanded={expandedSections.includes(index)}
+                      onToggle={() => toggleSection(index)}
+                      isDark={isDark}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={`rounded-xl p-8 text-center border ${
+                    isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <FileText
+                    className={`w-12 h-12 mx-auto mb-4 ${
+                      isDark ? 'text-gray-600' : 'text-gray-300'
+                    }`}
+                  />
+                  <p className={`font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    커리큘럼 준비 중
+                  </p>
+                  <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    상세 커리큘럼은 곧 업데이트될 예정입니다.
+                  </p>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* 수강평 탭 */}
+          {activeTab === 'review' && (
+            <section className="mb-12">
+              <CourseReviewSection
+                timeId={courseTimeId}
+                isDark={isDark}
+                canWrite={isAlreadyEnrolled}
+              />
+            </section>
+          )}
+
+          {/* 커뮤니티 탭 */}
+          {activeTab === 'community' && (
+            <section className="mb-12">
+              <CourseCommunitySection
+                timeId={courseTimeId}
+                isDark={isDark}
+                canWrite={isAlreadyEnrolled}
+              />
             </section>
           )}
         </div>

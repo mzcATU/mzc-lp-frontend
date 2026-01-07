@@ -60,3 +60,20 @@ export {
   useActivateBanner,
   useDeactivateBanner,
 } from './useBannerQueries';
+
+export {
+  tenantFeaturesKeys,
+  useTenantFeatures,
+  usePublicTenantFeatures,
+  useUpdateTenantFeatures,
+} from './useTenantFeaturesQueries';
+
+export {
+  tenantCategoryKeys,
+  useTenantCategories,
+  usePublicTenantCategories,
+  useCreateTenantCategory,
+  useUpdateTenantCategory,
+  useDeleteTenantCategory,
+  useReorderTenantCategories,
+} from './useTenantCategoryQueries';

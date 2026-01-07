@@ -68,6 +68,7 @@ export interface UserDetailResponse {
   tenantCustomDomain?: string;
   createdAt: string;
   updatedAt: string;
+  profileCompleted?: boolean;  // 프로필 완성 여부 (단체 계정 생성 시 false)
 }
 
 // --- Auth Store 타입 ---
