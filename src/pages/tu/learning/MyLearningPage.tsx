@@ -65,11 +65,12 @@ function ProgressBar({ progress, isDark }: { progress: number; isDark: boolean }
 interface EnrollmentCardProps {
   enrollment: Enrollment;
   onClick: () => void;
+  onContinueLearning: () => void;
   t: ReturnType<typeof useTranslation>['t'];
   isDark: boolean;
 }
 
-function EnrollmentCard({ enrollment, onClick, t, isDark }: EnrollmentCardProps) {
+function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: EnrollmentCardProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
@@ -134,7 +135,7 @@ function EnrollmentCard({ enrollment, onClick, t, isDark }: EnrollmentCardProps)
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onClick();
+              onContinueLearning();
             }}
           >
             <PlayCircle className="w-4 h-4 mr-2" />
@@ -181,6 +182,10 @@ export function MyLearningPage() {
 
   const handleEnrollmentClick = (enrollmentId: number) => {
     navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
+  };
+
+  const handleContinueLearning = (enrollmentId: number) => {
+    navigate(`/tu/b2c/mypage/learning/${enrollmentId}/player`);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -331,6 +336,7 @@ export function MyLearningPage() {
                   key={enrollment.id}
                   enrollment={enrollment}
                   onClick={() => handleEnrollmentClick(enrollment.id)}
+                  onContinueLearning={() => handleContinueLearning(enrollment.id)}
                   t={t}
                   isDark={isDark}
                 />

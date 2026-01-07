@@ -3,8 +3,10 @@
  */
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'BLOCKED';
-export type SystemRole = 'SUPER_ADMIN' | 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'USER';
-export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR' | 'TUTOR' | 'VIEWER';
+// 백엔드 TenantRole enum과 동기화: SYSTEM_ADMIN, TENANT_ADMIN, OPERATOR, DESIGNER, INSTRUCTOR, USER
+export type SystemRole = 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'DESIGNER' | 'INSTRUCTOR' | 'USER';
+// 백엔드 CourseRole enum과 동기화: DESIGNER, OWNER, INSTRUCTOR
+export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR';
 
 export interface AdminUser {
   id: number;

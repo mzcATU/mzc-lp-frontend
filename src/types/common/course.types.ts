@@ -13,6 +13,9 @@ export type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 /** 강의 유형 */
 export type CourseType = 'ONLINE' | 'OFFLINE' | 'BLENDED';
 
+/** 강의 발행 상태 (API용, UI용 CourseStatus와 구분) */
+export type CoursePublishStatus = 'DRAFT' | 'PUBLISHED';
+
 // ============================================
 // Response Types
 // ============================================
@@ -25,6 +28,8 @@ export interface CourseResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
+  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
+  status: CoursePublishStatus;
   estimatedHours: number | null;
   categoryId: number | null;
   startDate: string | null;
@@ -72,6 +77,8 @@ export interface CourseDetailResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
+  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
+  status: CoursePublishStatus;
   estimatedHours: number | null;
   categoryId: number | null;
   startDate: string | null;
@@ -115,6 +122,7 @@ export interface UpdateCourseRequest {
   startDate?: string;
   endDate?: string;
   tags?: string[];
+  status?: CoursePublishStatus;
 }
 
 // ============================================
@@ -175,4 +183,10 @@ export const COURSE_TYPE_LABELS: Record<CourseType, string> = {
   ONLINE: '온라인',
   OFFLINE: '오프라인',
   BLENDED: '블렌디드',
+};
+
+/** CoursePublishStatus 라벨 맵 */
+export const COURSE_PUBLISH_STATUS_LABELS: Record<CoursePublishStatus, string> = {
+  DRAFT: '임시저장',
+  PUBLISHED: '발행됨',
 };

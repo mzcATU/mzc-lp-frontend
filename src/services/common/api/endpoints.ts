@@ -241,8 +241,16 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/enrollments/${id}`,
     CANCEL: (id: number) => `/enrollments/${id}/cancel`,
     PROGRESS: (id: number) => `/enrollments/${id}/progress`,
+    ITEMS_PROGRESS: (id: number) => `/enrollments/${id}/items/progress`,
+    ITEM_PROGRESS: (id: number, itemId: number) => `/enrollments/${id}/items/${itemId}/progress`,
     ITEM_COMPLETE: (id: number, itemId: number) => `/enrollments/${id}/items/${itemId}/complete`,
     CURRICULUM: (id: number) => `/enrollments/${id}/curriculum`,
+  },
+
+  // Learning (학습자용 콘텐츠 접근) - TU
+  LEARNING: {
+    CONTENT_STREAM: (contentId: number) => `/learning/contents/${contentId}/stream`,
+    CONTENT_DOWNLOAD: (contentId: number) => `/learning/contents/${contentId}/download`,
   },
 
   // Wishlist (찜) - TU (CourseTime 기반)
@@ -303,6 +311,20 @@ export const API_ENDPOINTS = {
     ACTIVATE: (id: number) => `/banners/${id}/activate`,
     DEACTIVATE: (id: number) => `/banners/${id}/deactivate`,
     PUBLIC: '/banners/public/displayable',
+  },
+
+  // Tenant Features (TA)
+  TENANT_FEATURES: {
+    BASE: '/tenant/settings/features',
+    PUBLIC: '/tenant/settings/features/public',
+  },
+
+  // Tenant Categories (TA)
+  TENANT_CATEGORIES: {
+    BASE: '/tenant/categories',
+    PUBLIC: '/tenant/categories/public',
+    BY_ID: (id: number) => `/tenant/categories/${id}`,
+    REORDER: '/tenant/categories/reorder',
   },
 
   // Certificates (수료증) - TU

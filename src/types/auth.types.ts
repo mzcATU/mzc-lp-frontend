@@ -12,8 +12,8 @@ export interface ApiResponse<T> {
   };
 }
 
-// 사용자 역할
-export type TenantRole = 'USER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SUPER_ADMIN';
+// 사용자 역할 (백엔드 TenantRole enum과 동기화)
+export type TenantRole = 'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SYSTEM_ADMIN';
 
 // 사용자 상태
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
