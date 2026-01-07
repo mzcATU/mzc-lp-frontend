@@ -1,8 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, GripVertical, X, Search, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, GripVertical, X, Search, Loader2, AlertTriangle, Info, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea, Badge } from '@/components/common';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Textarea,
+  Badge,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/common';
 import {
   useCreateRoadmap,
   useUpdateRoadmap,
@@ -61,6 +73,14 @@ const t = {
   cannotReorderRestricted: {
     ko: '수강생이 있어 순서 변경이 불가능합니다',
     en: 'Cannot reorder (has enrollments)',
+  },
+  restrictedModeInfo: {
+    ko: '수강생이 있는 공개된 로드맵입니다. 기존 프로그램의 삭제 및 순서 변경이 제한됩니다.',
+    en: 'This is a published roadmap with enrollments. Deletion and reordering of existing programs is restricted.',
+  },
+  newProgramsAllowed: {
+    ko: '새로운 프로그램 추가는 가능합니다.',
+    en: 'Adding new programs is allowed.',
   },
 };
 
@@ -263,6 +283,28 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
         </h1>
       </div>
 
+      {/* 제한 상태 안내 배너 */}
+      {destructiveValidation.isRestricted && (
+        <Card className="mb-6 border-status-info bg-status-info/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Info className="text-status-info shrink-0 mt-0.5" size={20} />
+              <div>
+                <p className="font-medium text-text-primary m-0 mb-1">
+                  {getText('restrictedModeInfo')}
+                </p>
+                <p className="text-sm text-text-secondary m-0">
+                  • 현재 수강생: {enrolledStudents}명
+                </p>
+                <p className="text-sm text-text-secondary m-0">
+                  • {getText('newProgramsAllowed')}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Basic Info & Course List */}
         <div className="flex flex-col gap-6">
@@ -310,26 +352,64 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {selectedPrograms.map((program, index) => (
-                    <div
-                      key={program.id}
-                      className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-border"
-                    >
-                      <GripVertical size={18} className="text-text-secondary cursor-grab" />
-                      <Badge variant="outline" className="shrink-0">
-                        {getText('step')} {index + 1}
-                      </Badge>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-text-primary m-0 truncate">{program.title}</p>
-                        <p className="text-sm text-text-secondary m-0">
-                          {program.category} · {program.duration}
-                        </p>
+                  {selectedPrograms.map((program, index) => {
+                    // 기존 프로그램인지 확인 (삭제/순서변경 제한 대상)
+                    const isOriginalProgram = originalProgramIds.includes(program.id);
+                    const isActionRestricted = destructiveValidation.isRestricted && isOriginalProgram;
+
+                    return (
+                      <div
+                        key={program.id}
+                        className={`flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border ${
+                          isActionRestricted ? 'border-border bg-bg-secondary/50' : 'border-border'
+                        }`}
+                      >
+                        {/* 드래그 핸들 - 제한 상태에서 비활성화 */}
+                        {isActionRestricted ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="cursor-not-allowed">
+                                <Lock size={18} className="text-text-disabled" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{getText('cannotReorderRestricted')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <GripVertical size={18} className="text-text-secondary cursor-grab" />
+                        )}
+                        <Badge variant="outline" className="shrink-0">
+                          {getText('step')} {index + 1}
+                        </Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-text-primary m-0 truncate">{program.title}</p>
+                          <p className="text-sm text-text-secondary m-0">
+                            {program.category} · {program.duration}
+                          </p>
+                        </div>
+                        {/* 삭제 버튼 - 제한 상태에서 비활성화 */}
+                        {isActionRestricted ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div>
+                                <Button variant="ghost" size="icon" disabled>
+                                  <X size={18} className="text-text-disabled" />
+                                </Button>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{getText('cannotDeleteRestricted')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <Button variant="ghost" size="icon" onClick={() => removeProgram(program.id)}>
+                            <X size={18} />
+                          </Button>
+                        )}
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeProgram(program.id)}>
-                        <X size={18} />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
