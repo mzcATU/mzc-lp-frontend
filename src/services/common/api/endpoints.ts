@@ -305,6 +305,20 @@ export const API_ENDPOINTS = {
     PUBLIC: '/banners/public/displayable',
   },
 
+  // Tenant Features (TA)
+  TENANT_FEATURES: {
+    BASE: '/tenant/settings/features',
+    PUBLIC: '/tenant/settings/features/public',
+  },
+
+  // Tenant Categories (TA)
+  TENANT_CATEGORIES: {
+    BASE: '/tenant/categories',
+    PUBLIC: '/tenant/categories/public',
+    BY_ID: (id: number) => `/tenant/categories/${id}`,
+    REORDER: '/tenant/categories/reorder',
+  },
+
   // Certificates (수료증) - TU
   CERTIFICATES: {
     BASE: '/certificates',

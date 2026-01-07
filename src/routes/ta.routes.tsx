@@ -23,6 +23,8 @@ import {
   LogsPage,
   TenantSettingsPage,
   UserManagementSettingsPage,
+  FeatureSettingsPage,
+  TenantCategoryPage,
 } from '@/pages/ta';
 import { BannerManagementPage } from '@/pages/ta/branding/BannerManagementPage';
 import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
@@ -67,6 +69,9 @@ const taChildRoutes = (
     <Route path="analytics/realtime" element={<RealtimePage />} />
     <Route path="analytics/export" element={<ExportPage />} />
     <Route path="analytics/logs" element={<LogsPage />} />
+    {/* 기능 설정 */}
+    <Route path="features" element={<FeatureSettingsPage />} />
+    <Route path="features/categories" element={<TenantCategoryPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

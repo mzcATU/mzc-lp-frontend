@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
@@ -39,6 +40,10 @@ export function ProfilePage() {
   const { language } = useLanguageStore();
   const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
+
+  // 프로필 미완성 상태로 리다이렉트 된 경우 (단체 계정 생성 사용자)
+  const profileIncomplete = location.state?.profileIncomplete === true;
 
   // API Hooks
   const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
@@ -236,6 +241,20 @@ export function ProfilePage() {
   return (
     <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-3xl mx-auto">
+        {/* 프로필 미완성 안내 메시지 */}
+        {profileIncomplete && (
+          <Alert className={`mb-6 ${isDark ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
+            <Info className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+            <AlertDescription className={isDark ? 'text-blue-400' : 'text-blue-700'}>
+              <span className="font-medium">프로필 정보를 완성해주세요.</span>
+              <br />
+              <span className="text-sm">
+                단체 계정으로 생성된 계정입니다. 원활한 서비스 이용을 위해 이름 등 프로필 정보를 입력해주세요.
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>

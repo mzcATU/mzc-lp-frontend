@@ -24,18 +24,20 @@ import { useUsers } from '@/hooks/ta';
 import type { SystemRole } from '@/types/admin';
 
 const roleLabels: Record<SystemRole, string> = {
-  SUPER_ADMIN: '슈퍼 관리자',
   SYSTEM_ADMIN: '시스템 관리자',
   TENANT_ADMIN: '테넌트 관리자',
   OPERATOR: '운영자',
+  DESIGNER: '강의 개설자',
+  INSTRUCTOR: '강사',
   USER: '일반 사용자',
 };
 
 const roleColors: Record<SystemRole, string> = {
-  SUPER_ADMIN: 'bg-red-100 text-red-700',
   SYSTEM_ADMIN: 'bg-purple-100 text-purple-700',
   TENANT_ADMIN: 'bg-blue-100 text-blue-700',
   OPERATOR: 'bg-green-100 text-green-700',
+  DESIGNER: 'bg-orange-100 text-orange-700',
+  INSTRUCTOR: 'bg-emerald-100 text-emerald-700',
   USER: 'bg-gray-100 text-gray-700',
 };
 
