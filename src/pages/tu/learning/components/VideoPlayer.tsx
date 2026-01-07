@@ -246,13 +246,13 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className={`relative w-full aspect-video flex items-center justify-center ${
-          isDark ? 'bg-white/5' : 'bg-gray-100'
+        className={`relative w-full h-full flex items-center justify-center ${
+          isDark ? 'bg-black' : 'bg-gray-900'
         }`}
       >
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className={`w-10 h-10 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-          <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{t.player.loading}</span>
+          <Loader2 className="w-10 h-10 animate-spin text-gray-400" />
+          <span className="text-gray-400">{t.player.loading}</span>
         </div>
       </div>
     );
@@ -263,12 +263,12 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className={`relative w-full aspect-video flex flex-col items-center justify-center gap-4 ${
-          isDark ? 'bg-white/5' : 'bg-gray-100'
+        className={`relative w-full h-full flex flex-col items-center justify-center gap-4 ${
+          isDark ? 'bg-black' : 'bg-gray-900'
         }`}
       >
         <AlertCircle className="w-12 h-12 text-red-500" />
-        <span className={isDark ? 'text-white' : 'text-gray-900'}>{t.player.error}</span>
+        <span className="text-white">{t.player.error}</span>
         <Button onClick={handleRetry} variant="outline" className="gap-2">
           <RefreshCw className="w-4 h-4" />
           {t.player.retry}
@@ -282,15 +282,13 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className="relative w-full aspect-video overflow-hidden"
-        style={{ backgroundColor: '#000' }}
+        className="relative w-full h-full flex items-center justify-center overflow-hidden bg-black"
       >
         <video
           ref={videoRef}
           src={videoUrl}
           controls
-          className="w-full h-full"
-          style={{ display: 'block' }}
+          style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }}
         />
       </div>
     );
@@ -301,8 +299,7 @@ export function VideoPlayer({
     return (
       <div
         ref={containerRef}
-        className="relative w-full aspect-video overflow-hidden"
-        style={{ backgroundColor: '#000' }}
+        className="relative w-full h-full overflow-hidden bg-black"
       >
         <ReactPlayer
           ref={playerRef}
@@ -329,15 +326,13 @@ export function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video overflow-hidden"
-      style={{ backgroundColor: '#000' }}
+      className="relative w-full h-full flex items-center justify-center overflow-hidden bg-black"
     >
       <video
         ref={videoRef}
         src={videoUrl}
         controls
-        className="w-full h-full"
-        style={{ display: 'block' }}
+        style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }}
         onLoadedMetadata={(e) => {
           const video = e.currentTarget;
           console.log('[VideoPlayer] Video loaded, duration:', video.duration);

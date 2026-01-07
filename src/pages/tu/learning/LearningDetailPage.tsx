@@ -75,6 +75,7 @@ interface CurriculumDisplayItem {
   duration: number | null;
   isFolder: boolean;
   seq: number;
+  isCompleted: boolean;
 }
 
 // 콘텐츠 타입별 아이콘
@@ -118,18 +119,24 @@ function CurriculumListItem({ item, isDark, onClick }: CurriculumListItemProps) 
     <div
       onClick={onClick}
       className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer ${
-        isDark
-          ? 'bg-white/5 border border-white/10 hover:bg-white/10'
-          : 'bg-white border border-gray-200 hover:bg-gray-50'
+        item.isCompleted
+          ? isDark
+            ? 'bg-green-500/10 border border-green-500/20 hover:bg-green-500/20'
+            : 'bg-green-50 border border-green-200 hover:bg-green-100'
+          : isDark
+            ? 'bg-white/5 border border-white/10 hover:bg-white/10'
+            : 'bg-white border border-gray-200 hover:bg-gray-50'
       }`}
     >
-      {/* Type Icon */}
+      {/* Type Icon or Completed Check */}
       <div
         className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
+          item.isCompleted
+            ? 'bg-green-100 text-green-600'
+            : isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
         }`}
       >
-        {getTypeIcon(item.itemType, item.isFolder)}
+        {item.isCompleted ? <CheckCircle className="w-5 h-5" /> : getTypeIcon(item.itemType, item.isFolder)}
       </div>
 
       {/* Content */}
@@ -177,13 +184,14 @@ export function LearningDetailPage() {
   const snapshotId = playerData?.snapshotId ?? 0;
 
   // 스냅샷 아이템 조회
+  // axiosInstance가 ApiResponse wrapper를 자동으로 언래핑하므로 .data만 사용
   const { data: snapshotItems, isLoading: itemsLoading } = useQuery({
     queryKey: ['snapshot', 'items', snapshotId],
     queryFn: async () => {
-      const response = await axiosInstance.get<ApiResponse<SnapshotItemResponse[]>>(
+      const response = await axiosInstance.get<SnapshotItemResponse[]>(
         API_ENDPOINTS.SNAPSHOTS.ITEMS(snapshotId)
       );
-      return response.data.data;
+      return response.data;
     },
     enabled: snapshotId > 0,
   });
@@ -192,13 +200,34 @@ export function LearningDetailPage() {
   const { data: relationsData, isLoading: relationsLoading } = useQuery({
     queryKey: ['snapshot', 'relations', 'ordered', snapshotId],
     queryFn: async () => {
-      const response = await axiosInstance.get<ApiResponse<SnapshotRelationsResponse>>(
+      const response = await axiosInstance.get<SnapshotRelationsResponse>(
         API_ENDPOINTS.SNAPSHOTS.RELATIONS_ORDERED(snapshotId)
       );
-      return response.data.data;
+      return response.data;
     },
     enabled: snapshotId > 0,
   });
+
+  // 아이템별 진도 조회
+  const { data: itemsProgressData } = useQuery({
+    queryKey: ['enrollment', 'items', 'progress', enrollmentId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<{ itemId: number; progressPercent: number; completed: boolean; completedAt: string | null }[]>(
+        API_ENDPOINTS.ENROLLMENTS.ITEMS_PROGRESS(Number(enrollmentId))
+      );
+      return response.data;
+    },
+    enabled: !!enrollmentId,
+  });
+
+  // 진도 데이터를 Map으로 변환
+  const progressMap = useMemo(() => {
+    const map = new Map<number, boolean>();
+    itemsProgressData?.forEach((item) => {
+      map.set(item.itemId, item.completed);
+    });
+    return map;
+  }, [itemsProgressData]);
 
   // 순서가 있는 커리큘럼 아이템 목록 생성
   const curriculumItems = useMemo((): CurriculumDisplayItem[] => {
@@ -219,6 +248,7 @@ export function LearningDetailPage() {
           duration: item.snapshotLearningObject?.duration ?? null,
           isFolder: item.isFolder,
           seq: seq++,
+          isCompleted: progressMap.get(item.itemId) ?? false,
         });
         if (item.children && item.children.length > 0) {
           flattenItems(item.children);
@@ -236,13 +266,13 @@ export function LearningDetailPage() {
         .map((orderedItem) => {
           const item = itemsMap.get(orderedItem.itemId);
           if (!item) return null;
-          return { ...item, seq: orderedItem.seq };
+          return { ...item, seq: orderedItem.seq, isCompleted: progressMap.get(orderedItem.itemId) ?? false };
         })
         .filter((item): item is CurriculumDisplayItem => item !== null);
     }
 
     return flatItems;
-  }, [snapshotItems, relationsData]);
+  }, [snapshotItems, relationsData, progressMap]);
 
   // enrollment 형태로 변환 (기존 코드 호환용)
   const enrollment = playerData ? {

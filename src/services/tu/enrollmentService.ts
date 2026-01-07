@@ -268,16 +268,17 @@ export const enrollmentService = {
    */
   getEnrollmentForPlayer: async (enrollmentId: number): Promise<EnrollmentPlayerData> => {
     // 1. 수강 정보 조회
-    const enrollmentRes = await axiosInstance.get<ApiResponse<BackendEnrollmentResponse>>(
+    // axiosInstance가 ApiResponse wrapper를 자동으로 언래핑하므로 .data만 사용
+    const enrollmentRes = await axiosInstance.get<BackendEnrollmentResponse>(
       API_ENDPOINTS.ENROLLMENTS.BY_ID(enrollmentId)
     );
-    const enrollment = enrollmentRes.data.data;
+    const enrollment = enrollmentRes.data;
 
     // 2. 차수(CourseTime) 정보 조회 - programId 획득
-    const courseTimeRes = await axiosInstance.get<ApiResponse<BackendCourseTimeResponse>>(
+    const courseTimeRes = await axiosInstance.get<BackendCourseTimeResponse>(
       API_ENDPOINTS.TIMES.BY_ID(enrollment.courseTimeId)
     );
-    const courseTime = courseTimeRes.data.data;
+    const courseTime = courseTimeRes.data;
 
     // 3. 프로그램(Program) 정보 조회 - snapshotId 획득
     let snapshotId = 0;
@@ -285,10 +286,10 @@ export const enrollmentService = {
 
     if (courseTime.programId) {
       try {
-        const programRes = await axiosInstance.get<ApiResponse<ProgramDetailResponse>>(
+        const programRes = await axiosInstance.get<ProgramDetailResponse>(
           API_ENDPOINTS.PROGRAMS.BY_ID(courseTime.programId)
         );
-        const program = programRes.data.data;
+        const program = programRes.data;
         snapshotId = program.snapshotId ?? 0;
         programTitle = program.title ?? programTitle;
       } catch {

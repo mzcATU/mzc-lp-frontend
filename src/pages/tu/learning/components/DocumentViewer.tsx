@@ -74,13 +74,9 @@ export function DocumentViewer({
     if (totalPages > 0) {
       const viewedPercent = viewedPages.size / totalPages;
       onProgress?.({ viewed: viewedPercent });
-
-      // 80% 이상 봤으면 완료 처리
-      if (viewedPercent >= 0.8) {
-        onComplete?.();
-      }
+      // 자동 완료 처리 제거 - 사용자가 직접 "학습 완료" 버튼을 클릭해야 함
     }
-  }, [viewedPages, totalPages, onProgress, onComplete]);
+  }, [viewedPages, totalPages, onProgress]);
 
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
