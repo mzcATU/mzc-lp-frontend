@@ -12,6 +12,8 @@ import {
   Settings,
   ExternalLink,
   Loader2,
+  Map,
+  Users,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -43,6 +45,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   HelpCircle,
   Settings,
   ExternalLink,
+  Map,
+  Users,
 };
 
 // 로컬 편집용 타입
@@ -360,6 +364,8 @@ export function NavigationSettingsPage() {
                           <SelectContent>
                             <SelectItem value="Home">홈</SelectItem>
                             <SelectItem value="BookOpen">강좌</SelectItem>
+                            <SelectItem value="Map">로드맵</SelectItem>
+                            <SelectItem value="Users">커뮤니티</SelectItem>
                             <SelectItem value="Award">학습</SelectItem>
                             <SelectItem value="HelpCircle">도움말</SelectItem>
                             <SelectItem value="Settings">설정</SelectItem>

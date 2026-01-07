@@ -4,7 +4,7 @@ import { Badge } from '@/components/common/Badge';
 type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'error' | 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'indigo' | 'purple' | 'gray';
 
 // 테넌트 상태
-export type TenantStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING';
+export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING' | 'TERMINATED';
 
 // 사용자 상태
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'BLOCKED';
@@ -26,6 +26,7 @@ const statusConfig: Record<
   SUSPENDED: { label: { ko: '정지', en: 'Suspended' }, variant: 'error' },
   PENDING: { label: { ko: '대기', en: 'Pending' }, variant: 'warning' },
   BLOCKED: { label: { ko: '차단', en: 'Blocked' }, variant: 'error' },
+  TERMINATED: { label: { ko: '종료', en: 'Terminated' }, variant: 'gray' },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
