@@ -5,11 +5,11 @@ import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
 import { useMyCourses, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
-import type { Course, CourseStatus } from '@/types';
-import type { CourseResponse } from '@/types/common/course.types';
+import type { Course } from '@/types';
+import type { CourseResponse, CoursePublishStatus } from '@/types/common/course.types';
 
-/** 완성 상태 필터 타입 */
-type CompletionFilter = 'all' | 'complete' | 'incomplete';
+/** 발행 상태 필터 타입 */
+type StatusFilter = 'all' | 'draft' | 'published';
 
 interface MyCoursesPageProps {
   language?: 'ko' | 'en';
@@ -18,7 +18,7 @@ interface MyCoursesPageProps {
 const DEFAULT_THUMBNAIL = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
 /** CourseResponse를 UI용 Course 타입으로 변환 */
-function mapCourseResponseToCourse(response: CourseResponse): Course & { isComplete: boolean } {
+function mapCourseResponseToCourse(response: CourseResponse): Course & { isComplete: boolean; courseStatus: CoursePublishStatus } {
   return {
     id: String(response.courseId),
     title: response.title,
@@ -30,8 +30,9 @@ function mapCourseResponseToCourse(response: CourseResponse): Course & { isCompl
     category: response.tags?.[0] || '미분류',
     students: 0,
     lastAccessed: new Date(response.updatedAt).toLocaleDateString('ko-KR'),
-    status: response.isComplete ? 'active' as CourseStatus : 'draft' as CourseStatus,
+    status: response.status === 'PUBLISHED' ? 'active' : 'draft',
     isComplete: response.isComplete,
+    courseStatus: response.status,
   };
 }
 
@@ -40,8 +41,8 @@ const t = {
   subtitle: { ko: '개설한 강의를 관리하고 수강생을 확인하세요', en: 'Manage your courses and track student progress' },
   createCourse: { ko: '강의 생성', en: 'Create Course' },
   all: { ko: '전체', en: 'All' },
-  complete: { ko: '작성완료', en: 'Complete' },
-  incomplete: { ko: '작성중', en: 'In Progress' },
+  draft: { ko: '임시저장', en: 'Draft' },
+  published: { ko: '발행됨', en: 'Published' },
   sortBy: { ko: '정렬', en: 'Sort By' },
   recent: { ko: '최신순', en: 'Recent' },
   studentCount: { ko: '수강생 순', en: 'Students' },
@@ -71,7 +72,7 @@ const t = {
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
   const navigate = useNavigate();
-  const [filterStatus, setFilterStatus] = useState<CompletionFilter>('all');
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
 
@@ -176,8 +177,8 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
   const filteredCourses = courses.filter((course) => {
     if (filterStatus === 'all') return true;
-    if (filterStatus === 'complete') return course.isComplete;
-    if (filterStatus === 'incomplete') return !course.isComplete;
+    if (filterStatus === 'draft') return course.courseStatus === 'DRAFT';
+    if (filterStatus === 'published') return course.courseStatus === 'PUBLISHED';
     return true;
   });
 
@@ -220,7 +221,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
         <div className="flex gap-2 items-center">
           <Filter size={18} className="text-text-secondary" />
           <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg">
-            {(['all', 'complete', 'incomplete'] as const).map((status) => (
+            {(['all', 'draft', 'published'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
@@ -297,10 +298,10 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
           return (
             <div key={course.id} className="relative">
               {/* Status Badge - 썸네일 우측 하단 */}
-              {!course.isComplete && (
+              {course.courseStatus === 'DRAFT' && (
                 <div className="absolute top-[10rem] left-3 z-10 px-2 py-1 rounded-md bg-status-warning text-white text-xs font-medium flex items-center gap-1 shadow-sm">
                   <AlertTriangle size={12} />
-                  {getText('incomplete')}
+                  {getText('draft')}
                 </div>
               )}
 
@@ -331,7 +332,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                     manageCourse: getText('manageCourse'),
                   }}
                   renderActions={
-                    course.isComplete ? (
+                    course.courseStatus === 'PUBLISHED' ? (
                       <>
                         <Button
                           size="sm"

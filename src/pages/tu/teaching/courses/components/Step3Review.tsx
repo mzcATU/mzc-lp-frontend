@@ -189,8 +189,8 @@ export function Step3Review({
         <Alert variant="info">
           <CheckCircle2 size={16} />
           <AlertDescription>
-            <strong>{getText('readyToSubmit')}</strong>
-            <p className="mt-1 mb-0">{getText('readyToSubmitDesc')}</p>
+            <strong>{getText('readyToPublish')}</strong>
+            <p className="mt-1 mb-0">{getText('readyToPublishDesc')}</p>
           </AlertDescription>
         </Alert>
       )}

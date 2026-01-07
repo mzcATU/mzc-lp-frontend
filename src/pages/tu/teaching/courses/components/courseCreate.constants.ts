@@ -113,6 +113,14 @@ export const translations = {
   // 공통
   cancel: { ko: '취소', en: 'Cancel' },
   processing: { ko: '처리 중...', en: 'Processing...' },
+  // 발행
+  publish: { ko: '발행하기', en: 'Publish' },
+  publishing: { ko: '발행 중...', en: 'Publishing...' },
+  publishSuccess: { ko: '강의가 발행되었습니다.', en: 'Course has been published.' },
+  publishError: { ko: '발행에 실패했습니다. 다시 시도해주세요.', en: 'Failed to publish. Please try again.' },
+  publishConfirm: { ko: '강의를 발행하시겠습니까? 발행 후에는 프로그램에 신청할 수 있습니다.', en: 'Do you want to publish this course? After publishing, you can apply for programs.' },
+  readyToPublish: { ko: '발행 준비 완료', en: 'Ready to Publish' },
+  readyToPublishDesc: { ko: '모든 필수 정보가 입력되었습니다. 발행하기 버튼을 눌러 강의를 발행하세요.', en: 'All required information has been entered. Click Publish to publish your course.' },
   // 페이지네이션
   prev: { ko: '이전', en: 'Prev' },
   pageInfo: { ko: '{current} / {total} 페이지', en: 'Page {current} of {total}' },
