@@ -13,3 +13,6 @@ export { RealtimePage, ExportPage, LogsPage } from './analytics';
 
 // Settings
 export { TenantSettingsPage, UserManagementSettingsPage } from './settings';
+
+// Features
+export { FeatureSettingsPage, TenantCategoryPage } from './features';

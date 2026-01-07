@@ -488,6 +488,8 @@ export function UserDetailPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="USER">일반 사용자</SelectItem>
+                        <SelectItem value="INSTRUCTOR">강사</SelectItem>
+                        <SelectItem value="DESIGNER">강의 개설자</SelectItem>
                         <SelectItem value="OPERATOR">운영자</SelectItem>
                         <SelectItem value="TENANT_ADMIN">테넌트 관리자</SelectItem>
                       </SelectContent>
