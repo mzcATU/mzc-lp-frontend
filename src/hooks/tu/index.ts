@@ -63,6 +63,7 @@ export {
 // Learning Player Hooks
 export {
   learningPlayerKeys,
+  useEnrollmentForPlayer,
   useEnrollmentWithCurriculum,
   useUpdateProgress,
   useMarkItemComplete,

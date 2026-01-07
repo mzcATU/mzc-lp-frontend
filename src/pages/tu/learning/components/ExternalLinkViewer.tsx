@@ -22,7 +22,6 @@ export function ExternalLinkViewer({
   url,
   title,
   onProgress,
-  onComplete,
   onReady,
   onError,
 }: ExternalLinkViewerProps) {
@@ -57,13 +56,9 @@ export function ExternalLinkViewer({
   const handleProgress = useCallback(
     (state: { played: number }) => {
       onProgress?.({ played: state.played });
-
-      // 80% 이상 재생 시 완료 처리
-      if (state.played >= 0.8) {
-        onComplete?.();
-      }
+      // 자동 완료 처리 제거 - 사용자가 직접 "학습 완료" 버튼을 클릭해야 함
     },
-    [onProgress, onComplete]
+    [onProgress]
   );
 
   const handleRetry = useCallback(() => {
@@ -73,9 +68,8 @@ export function ExternalLinkViewer({
 
   const handleOpenExternal = useCallback(() => {
     window.open(url, '_blank', 'noopener,noreferrer');
-    // 외부 링크를 열면 완료로 처리
-    onComplete?.();
-  }, [url, onComplete]);
+    // 자동 완료 처리 제거 - 사용자가 직접 "학습 완료" 버튼을 클릭해야 함
+  }, [url]);
 
   // 에러 상태
   if (hasError) {

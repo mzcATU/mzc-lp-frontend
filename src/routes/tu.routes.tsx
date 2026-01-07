@@ -13,13 +13,13 @@ import { tuTeachingRoutes } from './tu.teaching.routes';
  */
 export const tuRoutes = (
   <>
-    {/* B2C 메인 페이지 */}
-    {tuB2cRoutes}
-
-    {/* 마이페이지 */}
+    {/* 마이페이지 (플레이어 포함 - 더 구체적인 경로 먼저) */}
     {tuMyPageRoutes}
 
     {/* 강의 관리 */}
     {tuTeachingRoutes}
+
+    {/* B2C 메인 페이지 (가장 일반적인 경로 마지막) */}
+    {tuB2cRoutes}
   </>
 );

@@ -12,8 +12,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
   Input,
@@ -47,10 +47,8 @@ export function SettingsSecurityPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { theme } = useThemeStore();
   const { t } = useTranslation();
   const { language } = useLanguageStore();
-  const isDark = theme === 'dark';
 
   // API Hooks
   const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
@@ -226,42 +224,47 @@ export function SettingsSecurityPage() {
     });
   };
 
-  const cardClass = isDark
-    ? 'bg-white/5 border-white/10'
-    : 'bg-white border-gray-200 shadow-sm';
-
-  const inputClass = isDark
-    ? 'bg-white/5 border-white/10 text-white placeholder:text-gray-500'
-    : 'bg-white border-gray-200 text-gray-900';
-
-  const readonlyInputClass = isDark
-    ? 'bg-white/5 border-white/10 text-gray-400'
-    : 'bg-gray-50 border-gray-200 text-gray-500';
-
   if (isLoadingProfile) {
     return (
-      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-        <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+      <div
+        className="flex items-center justify-center min-h-full"
+        style={{ backgroundColor: designTokens.bg.app_default }}
+      >
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.secondary }} />
       </div>
     );
   }
 
   return (
-    <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      <div className="max-w-3xl mx-auto">
-        <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+    <div
+      style={{
+        padding: '40px',
+        backgroundColor: designTokens.bg.app_default,
+        minHeight: '100%',
+        overflowY: 'auto',
+      }}
+    >
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <h1
+          style={{
+            color: designTokens.text.primary,
+            fontSize: '24px',
+            fontWeight: 600,
+            marginBottom: '8px',
+          }}
+        >
           {t.profileSecurity.title}
         </h1>
-        <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+        <p style={{ color: designTokens.text.secondary, marginBottom: '32px' }}>
           {t.profileSecurity.description}
         </p>
 
         {/* Profile Information Section */}
-        <Card className={`mb-6 ${cardClass}`}>
-          <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-3">
-              <Shield className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-              <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Shield className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">
                 {t.profileSecurity.profileInfo}
               </CardTitle>
             </div>
@@ -269,18 +272,19 @@ export function SettingsSecurityPage() {
           <CardContent className="px-6 py-6">
             {/* Profile Image */}
             <div className="mb-6">
-              <Label className={`mb-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Label className="mb-3 text-sm" style={{ color: designTokens.text.secondary }}>
                 {t.profileSecurity.profileImage}
               </Label>
               <div className="flex items-center gap-4 mt-3">
                 <div className="relative">
-                  <div className={`w-20 h-20 rounded-full flex items-center justify-center overflow-hidden ${
-                    isDark ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]' : 'bg-blue-100'
-                  }`}>
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden"
+                    style={{ backgroundColor: designTokens.badge.blue.bg }}
+                  >
                     {profileImagePreview ? (
                       <img src={profileImagePreview} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      <User className={`w-10 h-10 ${isDark ? 'text-white' : 'text-blue-600'}`} />
+                      <User className="w-10 h-10" style={{ color: designTokens.badge.blue.text }} />
                     )}
                   </div>
                   <button
@@ -303,10 +307,10 @@ export function SettingsSecurityPage() {
                   />
                 </div>
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <p className="text-sm" style={{ color: designTokens.text.primary }}>
                     {t.profileSecurity.imageGuide}
                   </p>
-                  <p className="text-xs mt-1 text-gray-500">
+                  <p className="text-xs mt-1" style={{ color: designTokens.text.secondary }}>
                     {t.profileSecurity.imageClickGuide}
                   </p>
                 </div>
@@ -315,19 +319,18 @@ export function SettingsSecurityPage() {
 
             {/* Name */}
             <div className="mb-5">
-              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
                 {t.profileSecurity.name}
               </Label>
               <Input
                 value={profileData.name}
                 onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
-                className={inputClass}
               />
             </div>
 
             {/* Email (Read-only) */}
             <div className="mb-5">
-              <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
                 <Mail className="w-4 h-4" />
                 {t.profileSecurity.email}
               </Label>
@@ -335,13 +338,18 @@ export function SettingsSecurityPage() {
                 type="email"
                 value={profile?.email || ''}
                 readOnly
-                className={`w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border ${readonlyInputClass}`}
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border"
+                style={{
+                  backgroundColor: designTokens.bg.app_default,
+                  borderColor: designTokens.bg.border,
+                  color: designTokens.text.secondary,
+                }}
               />
             </div>
 
             {/* Join Date (Read-only) */}
             <div className="mb-6">
-              <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
                 <Calendar className="w-4 h-4" />
                 {t.profileSecurity.joinDate}
               </Label>
@@ -349,7 +357,12 @@ export function SettingsSecurityPage() {
                 type="text"
                 value={formatDate(profile?.createdAt)}
                 readOnly
-                className={`w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border ${readonlyInputClass}`}
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border"
+                style={{
+                  backgroundColor: designTokens.bg.app_default,
+                  borderColor: designTokens.bg.border,
+                  color: designTokens.text.secondary,
+                }}
               />
             </div>
 
@@ -368,18 +381,18 @@ export function SettingsSecurityPage() {
         </Card>
 
         {/* Password Change Section */}
-        <Card className={`mb-6 ${cardClass}`}>
-          <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+        <Card className="mb-6">
+          <CardHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-3">
-              <Lock className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-              <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Lock className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">
                 {t.profileSecurity.passwordChange}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="px-6 py-6">
             <div className="mb-5">
-              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
                 {t.profileSecurity.currentPassword}
               </Label>
               <Input
@@ -388,12 +401,11 @@ export function SettingsSecurityPage() {
                 onChange={(e) =>
                   setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))
                 }
-                className={inputClass}
               />
             </div>
 
             <div className="mb-5">
-              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
                 {t.profileSecurity.newPassword}
               </Label>
               <Input
@@ -402,15 +414,14 @@ export function SettingsSecurityPage() {
                 onChange={(e) =>
                   setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))
                 }
-                className={inputClass}
               />
-              <p className="text-xs mt-1.5 text-gray-500">
+              <p className="text-xs mt-1.5" style={{ color: designTokens.text.secondary }}>
                 {t.profileSecurity.passwordMinLength}
               </p>
             </div>
 
             <div className="mb-6">
-              <Label className={`mb-2 block text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
                 {t.profileSecurity.confirmPassword}
               </Label>
               <Input
@@ -419,7 +430,6 @@ export function SettingsSecurityPage() {
                 onChange={(e) =>
                   setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))
                 }
-                className={inputClass}
               />
             </div>
 
@@ -438,18 +448,18 @@ export function SettingsSecurityPage() {
 
         {/* Design Authority Section (User Role Only) */}
         {isUserRole && (
-          <Card className={`mb-6 ${cardClass}`}>
-            <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+          <Card className="mb-6">
+            <CardHeader className="border-b px-6 py-4">
               <div className="flex items-center gap-3">
-                <CheckCircle className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <CheckCircle className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+                <CardTitle className="text-lg font-medium">
                   {t.profileSecurity.coursePermission}
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent className="px-6 py-6">
               <div className="mb-5">
-                <Label className={`mb-3 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                <Label className="mb-3 text-sm" style={{ color: designTokens.text.secondary }}>
                   {t.profileSecurity.currentPermissionStatus}
                 </Label>
                 <div className="mt-3">
@@ -461,7 +471,7 @@ export function SettingsSecurityPage() {
 
               {designAuthStatus === 'USER' && (
                 <div>
-                  <p className={`text-sm mb-4 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <p className="text-sm mb-4 leading-relaxed" style={{ color: designTokens.text.secondary }}>
                     {t.profileSecurity.permissionRequestDesc}
                   </p>
                   <Button onClick={handleRequestDesignAuth} disabled={isRequestPending}>
@@ -478,9 +488,15 @@ export function SettingsSecurityPage() {
               )}
 
               {(designAuthStatus === 'DESIGNER' || designAuthStatus === 'OWNER') && (
-                <Alert className={`flex items-center gap-3 ${isDark ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200'}`}>
-                  <CheckCircle className={`w-5 h-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
-                  <AlertDescription className={isDark ? 'text-green-400' : 'text-green-700'}>
+                <Alert
+                  className="flex items-center gap-3"
+                  style={{
+                    backgroundColor: designTokens.badge.green.bg,
+                    borderColor: designTokens.badge.green.text,
+                  }}
+                >
+                  <CheckCircle className="w-5 h-5" style={{ color: designTokens.badge.green.text }} />
+                  <AlertDescription style={{ color: designTokens.badge.green.text }}>
                     {t.profileSecurity.permissionEnabled}
                   </AlertDescription>
                 </Alert>
@@ -490,18 +506,24 @@ export function SettingsSecurityPage() {
         )}
 
         {/* Account Management Section */}
-        <Card className={cardClass}>
-          <CardHeader className={`border-b px-6 py-4 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+        <Card>
+          <CardHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-3">
-              <AlertTriangle className={`w-5 h-5 ${isDark ? 'text-orange-400' : 'text-orange-500'}`} />
-              <CardTitle className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <AlertTriangle className="w-5 h-5" style={{ color: designTokens.badge.orange.text }} />
+              <CardTitle className="text-lg font-medium">
                 {t.profileSecurity.accountManagement}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="px-6 py-6">
-            <Alert className={`mb-4 ${isDark ? 'bg-orange-500/10 border-orange-500/30' : 'bg-orange-50 border-orange-200'}`}>
-              <AlertDescription className={isDark ? 'text-orange-400' : 'text-orange-700'}>
+            <Alert
+              className="mb-4"
+              style={{
+                backgroundColor: designTokens.badge.orange.bg,
+                borderColor: designTokens.badge.orange.text,
+              }}
+            >
+              <AlertDescription style={{ color: designTokens.badge.orange.text }}>
                 {t.profileSecurity.accountDeleteWarning}
               </AlertDescription>
             </Alert>
@@ -510,7 +532,7 @@ export function SettingsSecurityPage() {
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`text-red-500 border-red-500 ${isDark ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}
+                  className="text-red-500 border-red-500 hover:bg-red-50"
                 >
                   {t.profileSecurity.withdraw}
                 </Button>
