@@ -19,6 +19,7 @@ import {
 } from '@/pages/to/program';
 import { InstructorAssignmentsPage } from '@/pages/to/instructor';
 import { UserManagementPage } from '@/pages/to/user';
+import { OperatorNoticesPage } from '@/pages/to/notices';
 import { DashboardPage } from '@/pages/to';
 import { PlaceholderPage } from './pages';
 
@@ -52,6 +53,8 @@ export const toRoutes = (
     <Route path="learning-objects" element={<PlaceholderPage title="학습 객체 관리" />} />
     {/* 사용자 관리 */}
     <Route path="users" element={<UserManagementPage />} />
+    {/* 공지사항 관리 */}
+    <Route path="notices" element={<OperatorNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />
