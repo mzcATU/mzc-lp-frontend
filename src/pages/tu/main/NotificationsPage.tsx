@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
@@ -58,6 +59,7 @@ export function NotificationsPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [activeType, setActiveType] = useState<NotificationType | 'all'>('all');
 
   // React Query 훅
@@ -234,7 +236,7 @@ export function NotificationsPage() {
                   key={notification.id}
                   onClick={() => {
                     markAsRead(notification.id);
-                    navigate(`/tu/b2c/notifications/${notification.id}`);
+                    navigate(prefixPath(`/tu/b2c/notifications/${notification.id}`));
                   }}
                   className={`rounded-xl p-4 flex gap-4 cursor-pointer transition-all border ${
                     isDark

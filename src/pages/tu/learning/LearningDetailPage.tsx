@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import {
   ArrowLeft,
   PlayCircle,
@@ -154,6 +155,7 @@ function CurriculumListItem({ item, isDark, onClick }: CurriculumListItemProps) 
 export function LearningDetailPage() {
   const { enrollmentId } = useParams<{ enrollmentId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -265,7 +267,7 @@ export function LearningDetailPage() {
     try {
       await cancelEnrollment.mutateAsync(enrollment.id);
       setCancelDialogOpen(false);
-      navigate('/tu/b2c/mypage/learning');
+      navigate(prefixPath('/tu/b2c/mypage/learning'));
     } catch (error) {
       console.error('Failed to cancel enrollment:', error);
     }
@@ -293,7 +295,7 @@ export function LearningDetailPage() {
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate('/tu/b2c/mypage/learning')}>
+        <Button onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
           {t.learning.backToLearning}
         </Button>
       </div>
@@ -310,7 +312,7 @@ export function LearningDetailPage() {
         <Button
           variant="ghost"
           className={`mb-6 gap-2 ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : ''}`}
-          onClick={() => navigate('/tu/b2c/mypage/learning')}
+          onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
         >
           <ArrowLeft className="w-4 h-4" />
           {t.learning.backToLearning}

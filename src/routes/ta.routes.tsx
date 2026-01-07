@@ -40,8 +40,9 @@ function TenantAdminWrapper() {
   );
 }
 
-export const taRoutes = (
-  <Route path="/ta" element={<TenantAdminWrapper />}>
+// TA 하위 라우트
+const taChildRoutes = (
+  <>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
@@ -73,5 +74,18 @@ export const taRoutes = (
     <Route path="settings/appearance" element={<SettingsAppearancePage />} />
     <Route path="settings/tenant-settings" element={<TenantSettingsPage />} />
     <Route path="settings/user-management" element={<UserManagementSettingsPage />} />
-  </Route>
+  </>
+);
+
+export const taRoutes = (
+  <>
+    {/* 기본 테넌트용 (subdomain 없음) */}
+    <Route path="/ta" element={<TenantAdminWrapper />}>
+      {taChildRoutes}
+    </Route>
+    {/* 특정 테넌트용 (subdomain 있음) */}
+    <Route path="/:subdomain/ta" element={<TenantAdminWrapper />}>
+      {taChildRoutes}
+    </Route>
+  </>
 );

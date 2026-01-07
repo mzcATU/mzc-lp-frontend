@@ -13,16 +13,6 @@ import type { PageResponse } from '@/services/tu/catalogService';
  * 강의 상세 정보 조회 및 관련 API 호출
  */
 
-// API 응답 래퍼 타입
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
 // 백엔드 CourseItem 응답 타입
 interface BackendCourseItemResponse {
   itemId: number;
@@ -178,10 +168,10 @@ export const courseDetailService = {
    * @param id 강의 ID
    */
   getCourseDetail: async (id: number): Promise<CourseDetail> => {
-    const response = await axiosInstance.get<ApiResponse<BackendCourseDetailResponse>>(
+    const response = await axiosInstance.get<BackendCourseDetailResponse>(
       `/courses/${id}`
     );
-    return transformCourseDetail(response.data.data);
+    return transformCourseDetail(response.data);
   },
 
   /**
@@ -189,11 +179,11 @@ export const courseDetailService = {
    * @param params 필터 파라미터
    */
   getCourses: async (params?: CourseFilterParams): Promise<PageResponse<CourseCard>> => {
-    const response = await axiosInstance.get<ApiResponse<PageResponse<CourseCard>>>(
+    const response = await axiosInstance.get<PageResponse<CourseCard>>(
       '/courses/explore',
       { params }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -201,11 +191,11 @@ export const courseDetailService = {
    * @param limit 조회 개수
    */
   getPopularCourses: async (limit: number = 10): Promise<CourseCard[]> => {
-    const response = await axiosInstance.get<ApiResponse<CourseCard[]>>(
+    const response = await axiosInstance.get<CourseCard[]>(
       '/courses/popular',
       { params: { limit } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -213,11 +203,11 @@ export const courseDetailService = {
    * @param limit 조회 개수
    */
   getRecommendedCourses: async (limit: number = 10): Promise<CourseCard[]> => {
-    const response = await axiosInstance.get<ApiResponse<CourseCard[]>>(
+    const response = await axiosInstance.get<CourseCard[]>(
       '/courses/recommended',
       { params: { limit } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -226,11 +216,11 @@ export const courseDetailService = {
    * @param limit 조회 개수
    */
   getRelatedCourses: async (courseId: number, limit: number = 4): Promise<CourseCard[]> => {
-    const response = await axiosInstance.get<ApiResponse<CourseCard[]>>(
+    const response = await axiosInstance.get<CourseCard[]>(
       `/courses/${courseId}/related`,
       { params: { limit } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**

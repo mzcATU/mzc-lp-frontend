@@ -31,37 +31,37 @@ export const userService = {
 
   /** 사용자 상세 조회 */
   async getUser(id: number): Promise<UserDetail> {
-    const { data } = await axiosInstance.get<{ data: UserDetail }>(
+    const { data } = await axiosInstance.get<UserDetail>(
       API_ENDPOINTS.USERS.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 사용자 정보 수정 */
   async update(id: number, request: UpdateUserDetailRequest): Promise<UserDetail> {
-    const { data } = await axiosInstance.put<{ data: UserDetail }>(
+    const { data } = await axiosInstance.put<UserDetail>(
       API_ENDPOINTS.USERS.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 사용자 역할 변경 */
   async updateRole(id: number, request: UpdateUserRoleRequest): Promise<AdminUser> {
-    const { data } = await axiosInstance.patch<{ data: AdminUser }>(
+    const { data } = await axiosInstance.patch<AdminUser>(
       API_ENDPOINTS.USERS.ROLE(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 사용자 상태 변경 */
   async updateStatus(id: number, status: string): Promise<AdminUser> {
-    const { data } = await axiosInstance.patch<{ data: AdminUser }>(
+    const { data } = await axiosInstance.patch<AdminUser>(
       API_ENDPOINTS.USERS.STATUS(id),
       { status }
     );
-    return data.data;
+    return data;
   },
 
   /** 사용자 삭제 */
@@ -75,10 +75,10 @@ export const userService = {
 
   /** 사용자 통계 조회 */
   async getStats(): Promise<UserStats> {
-    const { data } = await axiosInstance.get<{ data: UserStats }>(
+    const { data } = await axiosInstance.get<UserStats>(
       `${API_ENDPOINTS.USERS.BASE}/stats`
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -87,10 +87,10 @@ export const userService = {
 
   /** 단체 계정 생성 */
   async bulkCreateUsers(request: BulkCreateUsersRequest): Promise<BulkCreateUsersResponse> {
-    const { data } = await axiosInstance.post<{ data: BulkCreateUsersResponse }>(
+    const { data } = await axiosInstance.post<BulkCreateUsersResponse>(
       API_ENDPOINTS.USERS.BULK,
       request
     );
-    return data.data;
+    return data;
   },
 };

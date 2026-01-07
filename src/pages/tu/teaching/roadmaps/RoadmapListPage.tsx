@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Map, Users, TrendingUp, Plus, Filter, MoreVertical, Edit, Trash2, Copy } from 'lucide-react';
+import { Map, Users, TrendingUp, Plus, Filter, MoreVertical, Edit, Trash2, Copy, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard, Card, CardContent, Badge } from '@/components/common';
 import {
@@ -9,50 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/common/DropdownMenu';
-
-interface Roadmap {
-  id: string;
-  title: string;
-  description: string;
-  courseCount: number;
-  enrolledStudents: number;
-  status: 'published' | 'draft';
-  createdAt: string;
-  updatedAt: string;
-}
-
-const MOCK_ROADMAPS: Roadmap[] = [
-  {
-    id: '1',
-    title: '프론트엔드 개발자 로드맵',
-    description: 'HTML, CSS, JavaScript부터 React까지 프론트엔드 개발의 전체 과정',
-    courseCount: 8,
-    enrolledStudents: 124,
-    status: 'published',
-    createdAt: '2024-01-15',
-    updatedAt: '2024-03-20',
-  },
-  {
-    id: '2',
-    title: '백엔드 개발자 로드맵',
-    description: 'Node.js와 데이터베이스를 활용한 서버 개발 학습 경로',
-    courseCount: 6,
-    enrolledStudents: 89,
-    status: 'published',
-    createdAt: '2024-02-10',
-    updatedAt: '2024-03-18',
-  },
-  {
-    id: '3',
-    title: 'DevOps 엔지니어 로드맵',
-    description: 'CI/CD, Docker, Kubernetes 등 DevOps 핵심 기술 학습',
-    courseCount: 5,
-    enrolledStudents: 0,
-    status: 'draft',
-    createdAt: '2024-03-01',
-    updatedAt: '2024-03-22',
-  },
-];
+import {
+  useMyRoadmaps,
+  useRoadmapStatistics,
+  useDeleteRoadmap,
+  useDuplicateRoadmap,
+} from '@/hooks/tu';
+import type { RoadmapStatus } from '@/types/tu/roadmap.types';
 
 const t = {
   title: { ko: '로드맵', en: 'Roadmaps' },
@@ -75,28 +39,62 @@ const t = {
   delete: { ko: '삭제', en: 'Delete' },
   noRoadmaps: { ko: '생성된 로드맵이 없습니다', en: 'No roadmaps created yet' },
   noRoadmapsDesc: { ko: '새로운 로드맵을 만들어 학습 경로를 설계하세요', en: 'Create a new roadmap to design learning paths' },
+  loading: { ko: '로딩 중...', en: 'Loading...' },
+  deleteConfirm: { ko: '정말 삭제하시겠습니까?', en: 'Are you sure you want to delete?' },
+  deleteSuccess: { ko: '로드맵이 삭제되었습니다', en: 'Roadmap deleted successfully' },
+  deleteError: { ko: '로드맵 삭제에 실패했습니다', en: 'Failed to delete roadmap' },
+  duplicateSuccess: { ko: '로드맵이 복제되었습니다', en: 'Roadmap duplicated successfully' },
+  duplicateError: { ko: '로드맵 복제에 실패했습니다', en: 'Failed to duplicate roadmap' },
 };
 
 export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' | 'en' }>) {
   const navigate = useNavigate();
-  const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
-  const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
+  const [filterStatus, setFilterStatus] = useState<'all' | RoadmapStatus>('all');
+  const [sortBy, setSortBy] = useState<'updatedAt' | 'title' | 'enrolledStudents'>('updatedAt');
 
-  const filteredRoadmaps = MOCK_ROADMAPS.filter((roadmap) => {
-    if (filterStatus === 'all') return true;
-    return roadmap.status === filterStatus;
-  });
+  // API 호출
+  const queryParams = {
+    status: filterStatus === 'all' ? undefined : filterStatus,
+    sortBy,
+  };
 
-  const sortedRoadmaps = [...filteredRoadmaps].sort((a, b) => {
-    if (sortBy === 'students') return b.enrolledStudents - a.enrolledStudents;
-    if (sortBy === 'title') return a.title.localeCompare(b.title);
-    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-  });
+  const { data: roadmapsData, isLoading: isLoadingRoadmaps } = useMyRoadmaps(queryParams);
+  const { data: statistics, isLoading: isLoadingStats } = useRoadmapStatistics();
+  const deleteMutation = useDeleteRoadmap();
+  const duplicateMutation = useDuplicateRoadmap();
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  const totalStudents = MOCK_ROADMAPS.reduce((acc, r) => acc + r.enrolledStudents, 0);
-  const avgCourses = Math.round(MOCK_ROADMAPS.reduce((acc, r) => acc + r.courseCount, 0) / MOCK_ROADMAPS.length);
+  const roadmaps = roadmapsData?.content || [];
+  const isLoading = isLoadingRoadmaps || isLoadingStats;
+
+  // 삭제 핸들러
+  const handleDelete = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(getText('deleteConfirm'))) return;
+
+    try {
+      await deleteMutation.mutateAsync(id);
+      toast.success(getText('deleteSuccess'));
+    } catch (error: any) {
+      toast.error(getText('deleteError'));
+      console.error('Failed to delete roadmap:', error);
+      console.error('Error response:', error.response?.data);
+    }
+  };
+
+  // 복제 핸들러
+  const handleDuplicate = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    try {
+      await duplicateMutation.mutateAsync(id);
+      toast.success(getText('duplicateSuccess'));
+    } catch (error) {
+      toast.error(getText('duplicateError'));
+      console.error('Failed to duplicate roadmap:', error);
+    }
+  };
 
   return (
     <div className="p-8 bg-bg-app min-h-screen">
@@ -114,9 +112,21 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
 
       {/* Statistics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        <IconStatCard icon={<Map size={20} />} label={getText('totalRoadmaps')} value={MOCK_ROADMAPS.length} />
-        <IconStatCard icon={<Users size={20} />} label={getText('totalStudents')} value={totalStudents} />
-        <IconStatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCourses')} value={avgCourses} />
+        <IconStatCard
+          icon={<Map size={20} />}
+          label={getText('totalRoadmaps')}
+          value={isLoading ? 0 : statistics?.totalRoadmaps || 0}
+        />
+        <IconStatCard
+          icon={<Users size={20} />}
+          label={getText('totalStudents')}
+          value={isLoading ? 0 : statistics?.totalEnrollments || 0}
+        />
+        <IconStatCard
+          icon={<TrendingUp size={20} className="text-status-success" />}
+          label={getText('avgCourses')}
+          value={isLoading ? 0 : Math.round(statistics?.averageCourseCount || 0)}
+        />
       </div>
 
       {/* Filters and Sort */}
@@ -124,7 +134,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
         <div className="flex gap-2 items-center">
           <Filter size={18} className="text-text-secondary" />
           <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg">
-            {(['all', 'published', 'draft'] as const).map((status) => (
+            {(['all', 'PUBLISHED', 'DRAFT'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
@@ -135,7 +145,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
                     : 'bg-transparent text-text-secondary hover:bg-bg-secondary'
                 )}
               >
-                {getText(status)}
+                {status === 'all' ? getText('all') : status === 'PUBLISHED' ? getText('published') : getText('draft')}
               </button>
             ))}
           </div>
@@ -145,64 +155,104 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
           <span className="text-sm text-text-secondary">{getText('sortBy')}:</span>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'recent' | 'students' | 'title')}
+            onChange={(e) => setSortBy(e.target.value as 'updatedAt' | 'title' | 'enrolledStudents')}
             className="px-3 py-2 bg-bg-secondary text-text-primary border border-border rounded-md text-sm cursor-pointer"
           >
-            <option value="recent">{getText('recent')}</option>
-            <option value="students">{getText('studentCount')}</option>
+            <option value="updatedAt">{getText('recent')}</option>
+            <option value="enrolledStudents">{getText('studentCount')}</option>
             <option value="title">{getText('titleSort')}</option>
           </select>
         </div>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="animate-spin text-text-secondary" size={32} />
+          <span className="ml-2 text-text-secondary">{getText('loading')}</span>
+        </div>
+      )}
+
       {/* Roadmap List */}
-      <div className="flex flex-col gap-4">
-        {sortedRoadmaps.map((roadmap) => (
-          <Card key={roadmap.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/tu/teaching/roadmaps/${roadmap.id}`)}>
-            <CardContent className="p-5">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-text-primary m-0">{roadmap.title}</h3>
-                    <Badge variant={roadmap.status === 'published' ? 'default' : 'secondary'}>
-                      {getText(roadmap.status)}
-                    </Badge>
+      {!isLoading && roadmaps.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {roadmaps.map((roadmap) => (
+            <Card
+              key={roadmap.id}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => navigate(`/tu/teaching/roadmaps/${roadmap.id}`)}
+            >
+              <CardContent className="p-5">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold text-text-primary m-0">{roadmap.title}</h3>
+                      <Badge variant={roadmap.status === 'PUBLISHED' ? 'default' : 'secondary'}>
+                        {roadmap.status === 'PUBLISHED' ? getText('published') : getText('draft')}
+                      </Badge>
+                    </div>
+                    <p className="text-text-secondary text-sm mb-3 m-0">{roadmap.description}</p>
+                    <div className="flex gap-4 text-sm text-text-secondary">
+                      <span>
+                        {roadmap.courseCount}
+                        {getText('courses')}
+                      </span>
+                      <span>
+                        {roadmap.enrolledStudents}
+                        {getText('students')}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-text-secondary text-sm mb-3 m-0">{roadmap.description}</p>
-                  <div className="flex gap-4 text-sm text-text-secondary">
-                    <span>{roadmap.courseCount}{getText('courses')}</span>
-                    <span>{roadmap.enrolledStudents}{getText('students')}</span>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                        <MoreVertical size={18} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/tu/teaching/roadmaps/${roadmap.id}/edit`);
+                        }}
+                      >
+                        <Edit size={16} className="mr-2" />
+                        {getText('edit')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => handleDuplicate(roadmap.id, e)}
+                        disabled={duplicateMutation.isPending}
+                      >
+                        {duplicateMutation.isPending ? (
+                          <Loader2 size={16} className="mr-2 animate-spin" />
+                        ) : (
+                          <Copy size={16} className="mr-2" />
+                        )}
+                        {getText('duplicate')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => handleDelete(roadmap.id, e)}
+                        className="text-status-error"
+                        disabled={deleteMutation.isPending}
+                      >
+                        {deleteMutation.isPending ? (
+                          <Loader2 size={16} className="mr-2 animate-spin" />
+                        ) : (
+                          <Trash2 size={16} className="mr-2" />
+                        )}
+                        {getText('delete')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                      <MoreVertical size={18} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/tu/teaching/roadmaps/${roadmap.id}/edit`); }}>
-                      <Edit size={16} className="mr-2" />
-                      {getText('edit')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
-                      <Copy size={16} className="mr-2" />
-                      {getText('duplicate')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => e.stopPropagation()} className="text-status-error">
-                      <Trash2 size={16} className="mr-2" />
-                      {getText('delete')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Empty State */}
-      {sortedRoadmaps.length === 0 && (
+      {!isLoading && roadmaps.length === 0 && (
         <div className="text-center py-20 px-5 bg-bg-secondary rounded-xl border border-border">
           <Map size={64} className="text-text-secondary mb-4 opacity-30 mx-auto" />
           <h3 className="text-text-primary mb-2">{getText('noRoadmaps')}</h3>

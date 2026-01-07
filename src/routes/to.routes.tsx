@@ -33,7 +33,7 @@ function TenantOperatorWrapper() {
 }
 
 export const toRoutes = (
-  <Route path="/to" element={<TenantOperatorWrapper />}>
+  <Route path="/:subdomain/to" element={<TenantOperatorWrapper />}>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}

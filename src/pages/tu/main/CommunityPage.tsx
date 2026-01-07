@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Loader2, ChevronRight, ChevronLeft, Users, BookOpen, Hash, Sparkles, Heart } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useSubdomainPath } from '@/hooks/common';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useCommunityPosts, useCommunityCategories, useCreatePost, useMyPosts, useCommentedPosts } from '@/hooks/tu';
@@ -168,9 +169,13 @@ export function CommunityPage() {
   const [popularTab, setPopularTab] = useState<PopularTab>('today');
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [pendingTags, setPendingTags] = useState<string[]>([]); // 추가 대기 중인 태그
+  const [confirmedTags, setConfirmedTags] = useState<string[]>([]); // 사용자가 확인한 태그
+  const [rejectedTags, setRejectedTags] = useState<string[]>([]); // 거절된 태그
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const createPostMutation = useCreatePost();
   const { isAuthenticated } = useAuth();
 
@@ -188,7 +193,7 @@ export function CommunityPage() {
   const { data: commentedPostsData } = useCommentedPosts(0, 5, USE_API && isAuthenticated);
 
   // 사용자의 관심 태그 추출 (내가 쓴 글 + 참여한 글에서 태그 수집)
-  const userInterestTags = (() => {
+  const suggestedTags = (() => {
     const tagCount: Record<string, number> = {};
 
     // 내가 쓴 글의 태그
@@ -211,6 +216,38 @@ export function CommunityPage() {
       .slice(0, 5)
       .map(([tag]) => tag);
   })();
+
+  // 추가 대기 중인 태그 업데이트 (새로운 태그가 발견되면)
+  useEffect(() => {
+    const newTags = suggestedTags.filter(tag =>
+      !confirmedTags.includes(tag) &&
+      !pendingTags.includes(tag) &&
+      !rejectedTags.includes(tag)
+    );
+    if (newTags.length > 0) {
+      setPendingTags(prev => [...prev, ...newTags]);
+    }
+  }, [suggestedTags, confirmedTags, pendingTags, rejectedTags]);
+
+  // 실제 사용할 관심 태그 (확인된 태그만)
+  const userInterestTags = confirmedTags;
+
+  // 태그 추가 확인 핸들러
+  const handleConfirmTag = (tag: string) => {
+    setConfirmedTags(prev => [...prev, tag]);
+    setPendingTags(prev => prev.filter(t => t !== tag));
+  };
+
+  // 태그 추가 거절 핸들러
+  const handleRejectTag = (tag: string) => {
+    setPendingTags(prev => prev.filter(t => t !== tag));
+    setRejectedTags(prev => [...prev, tag]);
+  };
+
+  // 태그 삭제 핸들러
+  const handleRemoveTag = (tag: string) => {
+    setConfirmedTags(prev => prev.filter(t => t !== tag));
+  };
 
   // 관심 태그 기반 추천 게시글 필터링
   const recommendedPosts = (() => {
@@ -391,7 +428,7 @@ export function CommunityPage() {
                 {popularPosts.left.map((post) => (
                   <Link
                     key={post.id}
-                    to={`/tu/b2c/community/${post.id}`}
+                    to={prefixPath(`/tu/b2c/community/${post.id}`)}
                     className="flex items-center gap-3 group"
                   >
                     <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
@@ -415,7 +452,7 @@ export function CommunityPage() {
                   {popularPosts.right.map((post) => (
                     <Link
                       key={post.id}
-                      to={`/tu/b2c/community/${post.id}`}
+                      to={prefixPath(`/tu/b2c/community/${post.id}`)}
                       className="flex items-center gap-3 group"
                     >
                       <span className="text-sm landing-text-primary group-hover:text-[#6778ff] transition-colors truncate flex-1">
@@ -445,7 +482,7 @@ export function CommunityPage() {
                 나의 커뮤니티
               </h2>
               <Link
-                to="/tu/b2c/mypage/posts"
+                to={prefixPath('/tu/b2c/mypage/posts')}
                 className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
               >
                 더 보기 <ChevronRight className="w-4 h-4" />
@@ -467,7 +504,7 @@ export function CommunityPage() {
                     <h3 className="font-semibold landing-text-primary">내가 쓴 글</h3>
                   </div>
                   <Link
-                    to="/tu/b2c/mypage/posts"
+                    to={prefixPath('/tu/b2c/mypage/posts')}
                     className="text-xs landing-text-muted hover:text-[#6778ff] transition-colors flex items-center gap-1"
                   >
                     전체보기 <ChevronRight className="w-3 h-3" />
@@ -478,7 +515,7 @@ export function CommunityPage() {
                     {myPostsData.posts.slice(0, 3).map((post) => (
                       <Link
                         key={post.id}
-                        to={`/tu/b2c/community/${post.id}`}
+                        to={prefixPath(`/tu/b2c/community/${post.id}`)}
                         className={`block p-3 rounded-xl transition-colors ${
                           isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
                         }`}
@@ -521,7 +558,7 @@ export function CommunityPage() {
                     <h3 className="font-semibold landing-text-primary">참여한 글</h3>
                   </div>
                   <Link
-                    to="/tu/b2c/mypage/comments"
+                    to={prefixPath('/tu/b2c/mypage/comments')}
                     className="text-xs landing-text-muted hover:text-[#10b981] transition-colors flex items-center gap-1"
                   >
                     전체보기 <ChevronRight className="w-3 h-3" />
@@ -532,7 +569,7 @@ export function CommunityPage() {
                     {commentedPostsData.posts.slice(0, 3).map((post) => (
                       <Link
                         key={post.id}
-                        to={`/tu/b2c/community/${post.id}`}
+                        to={prefixPath(`/tu/b2c/community/${post.id}`)}
                         className={`block p-3 rounded-xl transition-colors ${
                           isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
                         }`}
@@ -554,7 +591,7 @@ export function CommunityPage() {
                   <div className="text-center py-6">
                     <p className="text-sm landing-text-muted mb-3">아직 참여한 글이 없어요</p>
                     <Link
-                      to="/tu/b2c/community"
+                      to={prefixPath('/tu/b2c/community')}
                       className="text-sm text-[#10b981] hover:underline"
                     >
                       커뮤니티 둘러보기
@@ -577,7 +614,7 @@ export function CommunityPage() {
                     <h3 className="font-semibold landing-text-primary">관심 글</h3>
                   </div>
                   <Link
-                    to="/tu/b2c/mypage/posts?tab=liked"
+                    to={prefixPath('/tu/b2c/mypage/posts?tab=liked')}
                     className="text-xs landing-text-muted hover:text-[#f43f5e] transition-colors flex items-center gap-1"
                   >
                     전체보기 <ChevronRight className="w-3 h-3" />
@@ -587,7 +624,7 @@ export function CommunityPage() {
                 <div className="text-center py-6">
                   <p className="text-sm landing-text-muted mb-3">좋아요한 글을 모아보세요</p>
                   <Link
-                    to="/tu/b2c/community"
+                    to={prefixPath('/tu/b2c/community')}
                     className="text-sm text-[#f43f5e] hover:underline"
                   >
                     글 둘러보기
@@ -597,7 +634,7 @@ export function CommunityPage() {
             </div>
 
             {/* 관심 태그 기반 추천 */}
-            {(userInterestTags.length > 0 || recommendedPosts.length > 0) && (
+            {(pendingTags.length > 0 || userInterestTags.length > 0 || recommendedPosts.length > 0) && (
               <div className={`mt-6 rounded-2xl p-6 border ${
                 isDark ? 'glass border-white/10' : 'bg-gradient-to-r from-[#6778ff]/5 to-[#10b981]/5 border-gray-200'
               }`}>
@@ -613,7 +650,53 @@ export function CommunityPage() {
                   </div>
                 </div>
 
-                {/* 관심 태그 */}
+                {/* 추천 태그 추가 질문 */}
+                {pendingTags.length > 0 && (
+                  <div className={`mb-4 p-4 rounded-xl border ${
+                    isDark ? 'bg-[#f59e0b]/10 border-[#f59e0b]/20' : 'bg-[#f59e0b]/5 border-[#f59e0b]/20'
+                  }`}>
+                    <p className="text-sm landing-text-primary mb-3 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#f59e0b]" />
+                      이 태그를 관심 태그에 추가할까요?
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {pendingTags.map((tag) => (
+                        <div
+                          key={tag}
+                          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${
+                            isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          <span>#{tag}</span>
+                          <button
+                            onClick={() => handleConfirmTag(tag)}
+                            className={`ml-1 p-0.5 rounded-full transition-colors ${
+                              isDark ? 'hover:bg-green-500/30 text-green-400' : 'hover:bg-green-100 text-green-600'
+                            }`}
+                            title="추가"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleRejectTag(tag)}
+                            className={`p-0.5 rounded-full transition-colors ${
+                              isDark ? 'hover:bg-red-500/30 text-red-400' : 'hover:bg-red-100 text-red-600'
+                            }`}
+                            title="거절"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 확인된 관심 태그 */}
                 {userInterestTags.length > 0 && (
                   <div className="mb-4">
                     <p className="text-xs landing-text-muted mb-2 flex items-center gap-1">
@@ -621,17 +704,29 @@ export function CommunityPage() {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {userInterestTags.map((tag) => (
-                        <Link
+                        <div
                           key={tag}
-                          to={`/tu/b2c/community?search=${encodeURIComponent(tag)}`}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          className={`group flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             isDark
-                              ? 'bg-[#6778ff]/20 text-[#6778ff] hover:bg-[#6778ff]/30'
-                              : 'bg-[#6778ff]/10 text-[#6778ff] hover:bg-[#6778ff]/20'
+                              ? 'bg-[#6778ff]/20 text-[#6778ff]'
+                              : 'bg-[#6778ff]/10 text-[#6778ff]'
                           }`}
                         >
-                          #{tag}
-                        </Link>
+                          <Link to={prefixPath(`/tu/b2c/community?search=${encodeURIComponent(tag)}`)}>
+                            #{tag}
+                          </Link>
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className={`opacity-0 group-hover:opacity-100 p-0.5 rounded-full transition-all ${
+                              isDark ? 'hover:bg-white/20' : 'hover:bg-[#6778ff]/20'
+                            }`}
+                            title="삭제"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -644,7 +739,7 @@ export function CommunityPage() {
                     {recommendedPosts.map((post) => (
                       <Link
                         key={post.id}
-                        to={`/tu/b2c/community/${post.id}`}
+                        to={prefixPath(`/tu/b2c/community/${post.id}`)}
                         className={`block p-3 rounded-xl transition-colors ${
                           isDark ? 'hover:bg-white/5' : 'hover:bg-white'
                         }`}
@@ -700,7 +795,7 @@ export function CommunityPage() {
                 </p>
               </div>
               <Link
-                to="/tu/b2c/community?category=tech"
+                to={prefixPath('/tu/b2c/community?category=tech')}
                 className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
               >
                 더 보기 <ChevronRight className="w-4 h-4" />
@@ -727,7 +822,7 @@ export function CommunityPage() {
                   {extendedNews.map((news, index) => (
                     <Link
                       key={`${news.id}-${index}`}
-                      to={`/tu/b2c/community/${news.id}`}
+                      to={prefixPath(`/tu/b2c/community/${news.id}`)}
                       className={`group block rounded-2xl p-6 transition-all duration-300 border flex-shrink-0 w-[calc(33.333%-16px)] ${
                         isDark
                           ? 'glass border-white/10 hover:border-[#6778ff]/50'
@@ -817,7 +912,7 @@ export function CommunityPage() {
                 {filteredPosts.map((post) => (
                   <Link
                     key={post.id}
-                    to={`/tu/b2c/community/${post.id}`}
+                    to={prefixPath(`/tu/b2c/community/${post.id}`)}
                     className={`flex items-start gap-4 px-6 py-5 transition-colors ${
                       isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
                     }`}
@@ -889,7 +984,7 @@ export function CommunityPage() {
           if (USE_API) {
             const result = await createPostMutation.mutateAsync(data);
             setIsWriteModalOpen(false);
-            navigate(`/tu/b2c/community/${result.id}`);
+            navigate(prefixPath(`/tu/b2c/community/${result.id}`));
           } else {
             console.log('New post data:', data);
             setIsWriteModalOpen(false);

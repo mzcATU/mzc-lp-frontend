@@ -23,11 +23,11 @@ export const instructorAssignmentService = {
   async getAssignments(
     params?: InstructorAssignmentFilterParams
   ): Promise<PageResponse<InstructorAssignmentListResponse>> {
-    const { data } = await axiosInstance.get<{ data: PageResponse<InstructorAssignmentListResponse> }>(
+    const { data } = await axiosInstance.get<PageResponse<InstructorAssignmentListResponse>>(
       API_ENDPOINTS.INSTRUCTOR_ASSIGNMENTS.BASE,
       { params }
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -39,11 +39,11 @@ export const instructorAssignmentService = {
     timeId: number,
     request: AssignInstructorRequest
   ): Promise<InstructorAssignmentResponse> {
-    const { data } = await axiosInstance.post<{ data: InstructorAssignmentResponse }>(
+    const { data } = await axiosInstance.post<InstructorAssignmentResponse>(
       API_ENDPOINTS.TIMES.INSTRUCTORS(timeId),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 차수별 강사 목록 조회 */
@@ -51,11 +51,11 @@ export const instructorAssignmentService = {
     timeId: number,
     params?: InstructorAssignmentFilterParams
   ): Promise<InstructorAssignmentResponse[]> {
-    const { data } = await axiosInstance.get<{ data: InstructorAssignmentResponse[] }>(
+    const { data } = await axiosInstance.get<InstructorAssignmentResponse[]>(
       API_ENDPOINTS.TIMES.INSTRUCTORS(timeId),
       { params }
     );
-    return data.data;
+    return data;
   },
 
   /** 강사 역할 변경 */
@@ -64,11 +64,11 @@ export const instructorAssignmentService = {
     assignmentId: number,
     request: UpdateInstructorRoleRequest
   ): Promise<InstructorAssignmentResponse> {
-    const { data } = await axiosInstance.put<{ data: InstructorAssignmentResponse }>(
+    const { data } = await axiosInstance.put<InstructorAssignmentResponse>(
       API_ENDPOINTS.TIMES.INSTRUCTOR_BY_ID(timeId, assignmentId),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 강사 교체 */
@@ -77,11 +77,11 @@ export const instructorAssignmentService = {
     assignmentId: number,
     request: ReplaceInstructorRequest
   ): Promise<InstructorAssignmentResponse> {
-    const { data } = await axiosInstance.post<{ data: InstructorAssignmentResponse }>(
+    const { data } = await axiosInstance.post<InstructorAssignmentResponse>(
       API_ENDPOINTS.TIMES.INSTRUCTOR_REPLACE(timeId, assignmentId),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 배정 취소 */

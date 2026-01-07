@@ -64,6 +64,8 @@ export interface UserDetailResponse {
   profileImageUrl?: string;
   tenantId?: number;
   tenantName?: string;
+  tenantSubdomain?: string;
+  tenantCustomDomain?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +78,7 @@ export interface AuthUser {
   name: string;
   role: TenantRole;
   tenantId?: number;
+  tenantSubdomain?: string;
 }
 
 // --- 역할 라벨 맵 ---

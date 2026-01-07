@@ -15,6 +15,7 @@ export function TenantAdminSidebar(props: TenantAdminSidebarProps) {
       {...props}
       menuData={tenantAdminMenuData}
       roleLabel={roleLabels.tenantAdmin}
+      roleType="ta"
     />
   );
 }

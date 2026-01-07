@@ -252,3 +252,19 @@ export type {
   OwnerProgramStats,
   OwnerStatsResponse,
 } from './ownerStats.types';
+
+// Certificate (수료증)
+export type {
+  CertificateStatus,
+  CertificateResponse,
+  CertificateDetailResponse,
+  CertificateVerifyResponse,
+  CertificateReissueRequest,
+  CertificateFilterParams,
+  CertificatePageResponse,
+} from './certificate.types';
+
+export {
+  CERTIFICATE_STATUS_LABELS,
+  CERTIFICATE_STATUS_COLORS,
+} from './certificate.types';

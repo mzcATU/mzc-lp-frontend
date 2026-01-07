@@ -29,11 +29,14 @@ export interface CourseRoleResponse {
 
 /** 사용자 목록 응답 */
 export interface UserListResponse {
-  userId: number;
+  id: number;
   email: string;
   name: string;
-  role: TenantRole;
+  profileImageUrl: string | null;
+  systemRole: TenantRole;
   status: UserStatus;
+  organizationName: string | null;
+  lastLoginAt: string | null;
   createdAt: string;
 }
 

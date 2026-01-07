@@ -47,7 +47,7 @@ export interface MyProgramFilterParams {
 // Query Hooks
 // ============================================
 
-/** 내 프로그램 목록 조회 (creatorId 필터) */
+/** 내 프로그램 목록 조회 (createdBy 필터) */
 export const useMyPrograms = (params?: MyProgramFilterParams) => {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -57,7 +57,7 @@ export const useMyPrograms = (params?: MyProgramFilterParams) => {
     queryFn: () =>
       programService.getPrograms({
         ...params,
-        creatorId: user?.id,
+        createdBy: user?.id,
       } as ProgramFilterParams),
     enabled: isAuthenticated && !!user?.id,
   });

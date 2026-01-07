@@ -65,18 +65,6 @@ export interface PageResponse<T> {
 }
 
 /**
- * API 응답 래퍼 타입
- */
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
-/**
  * 카탈로그 서비스
  */
 export const catalogService = {
@@ -84,42 +72,42 @@ export const catalogService = {
    * 프로그램 목록 조회 (카탈로그)
    */
   getPrograms: async (params?: CatalogFilterParams): Promise<PageResponse<CatalogProgram>> => {
-    const response = await axiosInstance.get<ApiResponse<PageResponse<CatalogProgram>>>(
+    const response = await axiosInstance.get<PageResponse<CatalogProgram>>(
       API_ENDPOINTS.PROGRAMS.BASE,
       { params: { ...params, status: 'APPROVED' } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 프로그램 상세 조회
    */
   getProgram: async (id: number): Promise<CatalogProgram> => {
-    const response = await axiosInstance.get<ApiResponse<CatalogProgram>>(
+    const response = await axiosInstance.get<CatalogProgram>(
       API_ENDPOINTS.PROGRAMS.BY_ID(id)
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 프로그램의 차수 목록 조회
    */
   getCourseTimes: async (programId: number): Promise<CatalogCourseTime[]> => {
-    const response = await axiosInstance.get<ApiResponse<CatalogCourseTime[]>>(
+    const response = await axiosInstance.get<CatalogCourseTime[]>(
       API_ENDPOINTS.TIMES.BASE,
       { params: { programId, status: 'OPEN' } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 차수 상세 조회
    */
   getCourseTime: async (id: number): Promise<CatalogCourseTime> => {
-    const response = await axiosInstance.get<ApiResponse<CatalogCourseTime>>(
+    const response = await axiosInstance.get<CatalogCourseTime>(
       API_ENDPOINTS.TIMES.BY_ID(id)
     );
-    return response.data.data;
+    return response.data;
   },
 };
 

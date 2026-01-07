@@ -180,76 +180,69 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
   }
 
   return (
-    <div className="h-full flex flex-col bg-bg-app">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-bg-default border-b border-border px-6 py-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/to/courses')}>
-                <ArrowLeft size={18} />
-                {getText('back')}
-              </Button>
-            </div>
+    <div className="h-full overflow-auto bg-bg-app">
+      <div className="p-8">
+        {/* 뒤로가기 버튼 */}
+        <div className="mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/to/courses')} className="border border-border">
+            <ArrowLeft size={18} />
+            {getText('back')}
+          </Button>
+        </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {program.status === 'PENDING' && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowRejectModal(true)}
-                    disabled={rejectProgram.isPending}
-                    className="border border-status-error text-status-error hover:bg-status-error-bg"
-                  >
-                    <XCircle size={16} />
-                    {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowApproveModal(true)}
-                    disabled={approveProgram.isPending}
-                  >
-                    <CheckCircle size={16} />
-                    {approveProgram.isPending ? getText('approving') : getText('approve')}
-                  </Button>
-                </>
-              )}
-              {(program.status === 'APPROVED' || program.status === 'DRAFT') && (
+        {/* Header Section - 목록 페이지와 동일한 스타일 */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-text-primary mb-0">{program.title}</h1>
+              <Badge variant={statusBadgeVariant[program.status]} className="text-sm">
+                {PROGRAM_STATUS_LABELS[program.status]}
+              </Badge>
+            </div>
+            <p className="text-text-secondary m-0">ID: {program.id}</p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {program.status === 'PENDING' && (
+              <>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleClose}
-                  disabled={closeProgram.isPending}
-                  className="border border-border"
+                  onClick={() => setShowRejectModal(true)}
+                  disabled={rejectProgram.isPending}
+                  className="border border-status-error text-status-error hover:bg-status-error-bg"
                 >
-                  <Archive size={16} />
-                  {closeProgram.isPending ? getText('closing') : getText('close')}
+                  <XCircle size={16} />
+                  {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
                 </Button>
-              )}
-            </div>
+                <Button
+                  size="sm"
+                  onClick={() => setShowApproveModal(true)}
+                  disabled={approveProgram.isPending}
+                >
+                  <CheckCircle size={16} />
+                  {approveProgram.isPending ? getText('approving') : getText('approve')}
+                </Button>
+              </>
+            )}
+            {(program.status === 'APPROVED' || program.status === 'DRAFT') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClose}
+                disabled={closeProgram.isPending}
+                className="border border-border"
+              >
+                <Archive size={16} />
+                {closeProgram.isPending ? getText('closing') : getText('close')}
+              </Button>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-          {/* Title Section */}
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold text-text-primary m-0">
-                  {program.title}
-                </h1>
-                <Badge variant={statusBadgeVariant[program.status]} className="text-sm">
-                  {PROGRAM_STATUS_LABELS[program.status]}
-                </Badge>
-              </div>
-              <p className="text-text-secondary text-sm">ID: {program.id}</p>
-            </div>
-          </div>
+        {/* Content */}
+        <div className="space-y-6">
 
           {/* Description */}
           {program.description && (

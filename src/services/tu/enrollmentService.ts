@@ -80,18 +80,6 @@ export interface PageResponse<T> {
 }
 
 /**
- * API 응답 래퍼 타입
- */
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
-
-/**
  * 백엔드 상태를 프론트엔드 상태로 매핑
  */
 const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
@@ -150,21 +138,21 @@ export const enrollmentService = {
    * 수강 신청
    */
   enroll: async (courseTimeId: number): Promise<Enrollment> => {
-    const response = await axiosInstance.post<ApiResponse<Enrollment>>(
+    const response = await axiosInstance.post<Enrollment>(
       API_ENDPOINTS.TIMES.ENROLLMENTS(courseTimeId)
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 일괄 수강 신청
    */
   enrollBulk: async (courseTimeIds: number[]): Promise<BulkEnrollmentResponse> => {
-    const response = await axiosInstance.post<ApiResponse<BulkEnrollmentResponse>>(
+    const response = await axiosInstance.post<BulkEnrollmentResponse>(
       API_ENDPOINTS.ENROLLMENTS.BULK,
       { courseTimeIds }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -174,11 +162,11 @@ export const enrollmentService = {
    */
   getMyEnrollments: async (params?: EnrollmentFilterParams): Promise<PageResponse<Enrollment>> => {
     // 1. 수강 목록 조회
-    const response = await axiosInstance.get<ApiResponse<PageResponse<BackendEnrollmentResponse>>>(
+    const response = await axiosInstance.get<PageResponse<BackendEnrollmentResponse>>(
       API_ENDPOINTS.ENROLLMENTS.MY,
       { params }
     );
-    const pageData = response.data.data;
+    const pageData = response.data;
 
     // 2. 고유한 courseTimeId 목록 추출
     const courseTimeIds = [...new Set(pageData.content.map((e) => e.courseTimeId))];
@@ -188,10 +176,10 @@ export const enrollmentService = {
     if (courseTimeIds.length > 0) {
       const courseTimePromises = courseTimeIds.map(async (id) => {
         try {
-          const res = await axiosInstance.get<ApiResponse<BackendCourseTimeResponse>>(
+          const res = await axiosInstance.get<BackendCourseTimeResponse>(
             API_ENDPOINTS.TIMES.BY_ID(id)
           );
-          return { id, data: res.data.data };
+          return { id, data: res.data };
         } catch {
           return { id, data: null };
         }
@@ -218,18 +206,18 @@ export const enrollmentService = {
    */
   getEnrollment: async (id: number): Promise<Enrollment> => {
     // 1. 수강 정보 조회
-    const response = await axiosInstance.get<ApiResponse<BackendEnrollmentResponse>>(
+    const response = await axiosInstance.get<BackendEnrollmentResponse>(
       API_ENDPOINTS.ENROLLMENTS.BY_ID(id)
     );
-    const enrollment = response.data.data;
+    const enrollment = response.data;
 
     // 2. 차수 정보 조회
     let courseTimeInfo: BackendCourseTimeResponse | undefined;
     try {
-      const courseTimeRes = await axiosInstance.get<ApiResponse<BackendCourseTimeResponse>>(
+      const courseTimeRes = await axiosInstance.get<BackendCourseTimeResponse>(
         API_ENDPOINTS.TIMES.BY_ID(enrollment.courseTimeId)
       );
-      courseTimeInfo = courseTimeRes.data.data;
+      courseTimeInfo = courseTimeRes.data;
     } catch {
       // 차수 정보 조회 실패 시 빈 값 사용
     }
@@ -249,10 +237,10 @@ export const enrollmentService = {
    * 수강 상세 + 커리큘럼 조회 (학습 플레이어용)
    */
   getEnrollmentWithCurriculum: async (id: number): Promise<EnrollmentWithCurriculumResponse> => {
-    const response = await axiosInstance.get<ApiResponse<EnrollmentWithCurriculumResponse>>(
+    const response = await axiosInstance.get<EnrollmentWithCurriculumResponse>(
       API_ENDPOINTS.ENROLLMENTS.CURRICULUM(id)
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**

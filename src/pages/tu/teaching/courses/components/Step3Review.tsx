@@ -22,7 +22,7 @@ import { Button, Label, Card, CardHeader, CardContent, Alert, AlertDescription }
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse } from '@/types/common';
 import type { CurriculumItem } from '@/types/tu';
-import { isCurriculumFolder } from '@/types/tu';
+import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
 import { translations, levelOptions, type TranslationKey } from './courseCreate.constants';
 
 /** 커리큘럼 아이템 수 계산 (폴더/콘텐츠 분리) */
@@ -55,6 +55,7 @@ function CurriculumTreeItem({
   onToggle: (id: string) => void;
 }) {
   const isFolder = isCurriculumFolder(item);
+  const isContent = isCurriculumContent(item);
   const isExpanded = expandedIds.has(item.id);
 
   return (
@@ -83,7 +84,16 @@ function CurriculumTreeItem({
         ) : (
           <File size={16} className="text-blue-500 shrink-0" />
         )}
-        <span className="text-text-primary text-sm truncate">{item.name}</span>
+        <span className="text-text-primary text-sm truncate">
+          {isContent && item.displayName ? (
+            <>
+              {item.displayName}
+              <span className="text-text-placeholder ml-1 text-xs">({item.originalFileName})</span>
+            </>
+          ) : (
+            item.name
+          )}
+        </span>
       </div>
       {isFolder && isExpanded && item.children.length > 0 && (
         <div>

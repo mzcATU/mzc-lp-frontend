@@ -1,9 +1,9 @@
 import { type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { TenantAdminSidebar } from './TenantAdminSidebar';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { tenantAdminMenuData } from '@/config/sidebar-menus';
-import { useUIStore } from '@/store/common/uiStore';
+import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
 
 interface TenantAdminLayoutProps {
   children: ReactNode;
@@ -11,13 +11,23 @@ interface TenantAdminLayoutProps {
 
 export function TenantAdminLayout({ children }: TenantAdminLayoutProps) {
   const navigate = useNavigate();
-  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
+  const { subdomain } = useParams<{ subdomain: string }>();
+  const { isSidebarExpanded, language, toggleSidebar } = useUIStore();
+  const isDarkMode = useIsDarkMode();
+
+  // 서브도메인이 있으면 경로에 프리픽스 추가
+  const prefixPath = (path: string) => {
+    if (subdomain) {
+      return `/${subdomain}${path}`;
+    }
+    return path;
+  };
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items
     const menuItem = tenantAdminMenuData.find((item) => item.id === itemId);
     if (menuItem?.path) {
-      navigate(menuItem.path);
+      navigate(prefixPath(menuItem.path));
       return;
     }
 
@@ -25,7 +35,7 @@ export function TenantAdminLayout({ children }: TenantAdminLayoutProps) {
     for (const item of tenantAdminMenuData) {
       const subItem = item.subItems?.find((sub) => sub.id === itemId);
       if (subItem?.path) {
-        navigate(subItem.path);
+        navigate(prefixPath(subItem.path));
         return;
       }
     }

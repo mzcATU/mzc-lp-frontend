@@ -43,9 +43,21 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Response interceptor: 에러 처리 및 토큰 갱신
+// Response interceptor: ApiResponse wrapper 처리 및 토큰 갱신
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // ApiResponse wrapper에서 data 추출
+    // 서버 응답: { success: boolean, data: T, error?: {...} }
+    if (
+      response.data &&
+      typeof response.data === 'object' &&
+      'success' in response.data &&
+      'data' in response.data
+    ) {
+      response.data = response.data.data;
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 

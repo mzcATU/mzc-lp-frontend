@@ -7,7 +7,7 @@ export type TenantType = 'B2C' | 'B2B';
 export type PlanType = 'BASIC' | 'PRO' | 'ENTERPRISE';
 
 export interface Tenant {
-  id: number;
+  tenantId: number;
   code: string;
   name: string;
   type: TenantType;
@@ -51,6 +51,25 @@ export interface CreateTenantRequest {
   subdomain: string;
   adminEmail: string;
   adminName: string;
+}
+
+/** 테넌트 생성 응답 (관리자 정보 포함) */
+export interface CreateTenantResponse {
+  tenantId: number;
+  code: string;
+  name: string;
+  type: TenantType;
+  status: TenantStatus;
+  plan: PlanType;
+  subdomain: string;
+  customDomain?: string;
+  createdAt: string;
+  admin: {
+    userId: number;
+    email: string;
+    name: string;
+    tempPassword: string;  // 생성 시에만 반환되는 임시 비밀번호
+  };
 }
 
 export interface UpdateTenantRequest {

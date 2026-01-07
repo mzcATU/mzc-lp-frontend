@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import {
   ArrowLeft,
   Heart,
@@ -406,6 +407,7 @@ function CommentItem({ comment, isDark, onReply, onLike, onDelete, isReply = fal
 export function CommunityDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const postId = id ? parseInt(id, 10) : 0;
 
   const { theme } = useThemeStore();
@@ -534,7 +536,7 @@ export function CommunityDetailPage() {
     try {
       await deletePostMutation.mutateAsync(postId);
       toast.success('게시글이 삭제되었습니다.');
-      navigate('/tu/b2c/community');
+      navigate(prefixPath('/tu/b2c/community'));
     } catch (err) {
       console.error('게시글 삭제 실패:', err);
       toast.error('게시글 삭제에 실패했습니다.');
@@ -702,7 +704,7 @@ export function CommunityDetailPage() {
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <div className="text-center">
           <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>게시글을 불러올 수 없습니다.</p>
-          <Link to="/tu/b2c/community" className="text-[#6778ff] hover:underline mt-4 inline-block">
+          <Link to={prefixPath('/tu/b2c/community')} className="text-[#6778ff] hover:underline mt-4 inline-block">
             커뮤니티로 돌아가기
           </Link>
         </div>
@@ -726,9 +728,9 @@ export function CommunityDetailPage() {
           <span>목록으로</span>
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
           {/* 메인 콘텐츠 */}
-          <article className="flex-1 max-w-3xl">
+          <article className="flex-1 min-w-0">
             {/* 프로필 섹션 */}
             <div className="flex items-center gap-4 mb-6">
               {getImageUrl(post.author.avatar) ? (
@@ -1085,7 +1087,7 @@ export function CommunityDetailPage() {
                 }`}
               >
                 {/* 강의 썸네일 */}
-                <Link to={`/tu/b2c/courses/${post.relatedCourse.id}`}>
+                <Link to={prefixPath(`/tu/b2c/courses/${post.relatedCourse.id}`)}>
                   <img
                     src={post.relatedCourse.thumbnailUrl || 'https://via.placeholder.com/320x180'}
                     alt={post.relatedCourse.title}
@@ -1095,7 +1097,7 @@ export function CommunityDetailPage() {
 
                 <div className="p-4">
                   {/* 강의 제목 */}
-                  <Link to={`/tu/b2c/courses/${post.relatedCourse.id}`}>
+                  <Link to={prefixPath(`/tu/b2c/courses/${post.relatedCourse.id}`)}>
                     <h3
                       className={`font-semibold mb-2 line-clamp-2 hover:text-[#6778ff] transition-colors ${
                         isDark ? 'text-white' : 'text-gray-900'
@@ -1133,7 +1135,7 @@ export function CommunityDetailPage() {
                   </div>
 
                   {/* 강의 보기 버튼 */}
-                  <Link to={`/tu/b2c/courses/${post.relatedCourse.id}`}>
+                  <Link to={prefixPath(`/tu/b2c/courses/${post.relatedCourse.id}`)}>
                     <Button className="w-full gap-2">
                       강의 상세보기
                       <ChevronRight className="w-4 h-4" />

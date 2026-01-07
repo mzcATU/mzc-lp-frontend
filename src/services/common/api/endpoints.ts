@@ -68,6 +68,9 @@ export const API_ENDPOINTS = {
     NAVIGATION_ITEM: (id: number) => `/tenant/settings/navigation/${id}`,
     NAVIGATION_REORDER: '/tenant/settings/navigation/reorder',
     NAVIGATION_RESET: '/tenant/settings/navigation/reset',
+    // TU용 공개 API
+    LAYOUT_PUBLIC: '/tenant/settings/layout/public',
+    NAVIGATION_PUBLIC: '/tenant/settings/navigation/public',
   },
 
   // User Groups (TA)
@@ -266,6 +269,15 @@ export const API_ENDPOINTS = {
     ITEM_CHECK: (courseTimeId: number) => `/cart/items/${courseTimeId}/check`,
   },
 
+  // Roadmaps (로드맵) - TU Teaching
+  ROADMAPS: {
+    BASE: '/roadmaps',
+    BY_ID: (id: number) => `/roadmaps/${id}`,
+    DRAFT: (id: number) => `/roadmaps/${id}/draft`,
+    DUPLICATE: (id: number) => `/roadmaps/${id}/duplicate`,
+    STATISTICS: '/roadmaps/statistics',
+  },
+
   // Dashboard (TA, SA)
   DASHBOARD: {
     TA_KPI: '/admin/dashboard/kpi',
@@ -288,5 +300,26 @@ export const API_ENDPOINTS = {
   SYSTEM_SETTINGS: {
     BASE: '/admin/system/settings',
     TENANT_DEFAULTS: '/admin/system/tenant-defaults',
+  },
+
+  // Banners (TA)
+  BANNERS: {
+    BASE: '/banners',
+    BY_ID: (id: number) => `/banners/${id}`,
+    ACTIVATE: (id: number) => `/banners/${id}/activate`,
+    DEACTIVATE: (id: number) => `/banners/${id}/deactivate`,
+    PUBLIC: '/banners/public/displayable',
+  },
+
+  // Certificates (수료증) - TU
+  CERTIFICATES: {
+    BASE: '/certificates',
+    MY: '/users/me/certificates',
+    BY_ID: (id: number) => `/certificates/${id}`,
+    DOWNLOAD: (id: number) => `/certificates/${id}/download`,
+    VERIFY: (certificateNumber: string) => `/certificates/verify/${certificateNumber}`,
+    ISSUE: (enrollmentId: number) => `/enrollments/${enrollmentId}/certificate`,
+    BY_ENROLLMENT: (enrollmentId: number) => `/enrollments/${enrollmentId}/certificate`,
+    REISSUE: (id: number) => `/certificates/${id}/reissue`,
   },
 } as const;

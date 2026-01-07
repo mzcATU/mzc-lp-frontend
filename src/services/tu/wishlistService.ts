@@ -5,7 +5,7 @@
 
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
-import type { ApiResponse, PageResponse } from '@/types/common/api.types';
+import type { PageResponse } from '@/types/common/api.types';
 import type {
   WishlistItemResponse,
   WishlistAddRequest,
@@ -19,11 +19,11 @@ export const wishlistService = {
    * 찜 추가
    */
   addToWishlist: async (request: WishlistAddRequest): Promise<WishlistItemResponse> => {
-    const response = await axiosInstance.post<ApiResponse<WishlistItemResponse>>(
+    const response = await axiosInstance.post<WishlistItemResponse>(
       API_ENDPOINTS.WISHLIST.BASE,
       request
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -40,41 +40,41 @@ export const wishlistService = {
     page: number = 0,
     size: number = 20
   ): Promise<PageResponse<WishlistItemResponse>> => {
-    const response = await axiosInstance.get<ApiResponse<PageResponse<WishlistItemResponse>>>(
+    const response = await axiosInstance.get<PageResponse<WishlistItemResponse>>(
       API_ENDPOINTS.WISHLIST.BASE,
       { params: { page, size } }
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 특정 CourseTime 찜 여부 확인
    */
   checkWishlistStatus: async (courseTimeId: number): Promise<boolean> => {
-    const response = await axiosInstance.get<ApiResponse<boolean>>(
+    const response = await axiosInstance.get<boolean>(
       API_ENDPOINTS.WISHLIST.COURSE_TIME_CHECK(courseTimeId)
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 여러 CourseTime 찜 여부 일괄 확인
    */
   checkWishlistStatusBulk: async (request: WishlistCheckRequest): Promise<WishlistCheckResponse> => {
-    const response = await axiosInstance.post<ApiResponse<WishlistCheckResponse>>(
+    const response = await axiosInstance.post<WishlistCheckResponse>(
       API_ENDPOINTS.WISHLIST.CHECK_BULK,
       request
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 내 찜 개수 조회
    */
   getMyWishlistCount: async (): Promise<WishlistCountResponse> => {
-    const response = await axiosInstance.get<ApiResponse<WishlistCountResponse>>(
+    const response = await axiosInstance.get<WishlistCountResponse>(
       API_ENDPOINTS.WISHLIST.COUNT
     );
-    return response.data.data;
+    return response.data;
   },
 };

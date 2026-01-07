@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Heart, ChevronRight, Clock, Loader2 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useSubdomainPath } from '@/hooks/common';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useMyWishlist, useRemoveFromWishlist } from '@/hooks/tu/useWishlistQueries';
@@ -17,18 +18,20 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 /**
- * 가격 포맷팅 (₩180,000 형식)
+ * 가격 표시 (유료 → 금액, 무료 → 표시 안함)
  */
-function formatPrice(price: string | null | undefined): string {
-  if (!price) return '';
+function formatPrice(price: string | null | undefined, isFree: boolean): string | null {
+  if (isFree) return null; // 무료는 표시 안함
+  if (!price) return null;
   const numPrice = parseFloat(price);
-  if (isNaN(numPrice)) return price;
+  if (isNaN(numPrice) || numPrice === 0) return null;
   return `₩${numPrice.toLocaleString()}`;
 }
 
 export function WishlistPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const { prefixPath } = useSubdomainPath();
   const { isAuthenticated } = useAuthStore();
 
   // 페이징 상태
@@ -143,7 +146,7 @@ export function WishlistPage() {
               관심 있는 강의에 하트를 눌러 저장해보세요!
             </p>
             <Link
-              to="/tu/b2c/courses"
+              to={prefixPath('/tu/b2c/courses')}
               className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-full text-white font-medium"
             >
               강의 둘러보기 <ChevronRight className="w-4 h-4" />
@@ -162,7 +165,7 @@ export function WishlistPage() {
                   }`}
                 >
                   {/* Image */}
-                  <Link to={`/tu/b2c/times/${item.courseTimeId}`} className="block relative">
+                  <Link to={prefixPath(`/tu/b2c/times/${item.courseTimeId}`)} className="block relative">
                     <div className="w-full aspect-video bg-gradient-to-br from-[#6778ff]/20 to-[#a855f7]/20 flex items-center justify-center">
                       {item.thumbnailUrl ? (
                         <img
@@ -183,7 +186,7 @@ export function WishlistPage() {
 
                   {/* Content */}
                   <div className="p-4">
-                    <Link to={`/tu/b2c/times/${item.courseTimeId}`}>
+                    <Link to={prefixPath(`/tu/b2c/times/${item.courseTimeId}`)}>
                       <h3 className={`font-semibold mb-2 line-clamp-2 group-hover:text-[#6778ff] transition-colors ${
                         isDark ? 'text-white' : 'text-gray-900'
                       }`}>
@@ -199,13 +202,9 @@ export function WishlistPage() {
                           {item.estimatedHours}시간
                         </span>
                       )}
-                      {item.isFree ? (
-                        <span className={`px-2 py-0.5 rounded ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
-                          무료
-                        </span>
-                      ) : item.price && (
-                        <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {formatPrice(item.price)}
+                      {formatPrice(item.price, item.isFree) && (
+                        <span className={`px-2 py-0.5 rounded text-xs ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                          {formatPrice(item.price, item.isFree)}
                         </span>
                       )}
                     </div>
@@ -218,7 +217,7 @@ export function WishlistPage() {
                     {/* Actions */}
                     <div className="flex gap-2">
                       <Link
-                        to={`/tu/b2c/times/${item.courseTimeId}`}
+                        to={prefixPath(`/tu/b2c/times/${item.courseTimeId}`)}
                         className="flex-1 py-2.5 rounded-lg font-medium text-sm landing-btn-primary text-white flex items-center justify-center gap-2"
                       >
                         상세보기
@@ -286,7 +285,7 @@ export function WishlistPage() {
                 찜한 강의를 기반으로 추천 강의를 준비하고 있어요.
               </p>
               <Link
-                to="/tu/b2c/courses"
+                to={prefixPath('/tu/b2c/courses')}
                 className={`inline-flex items-center gap-2 font-medium transition-colors ${
                   isDark ? 'text-[#6778ff] hover:text-[#8b99ff]' : 'text-[#6778ff] hover:text-[#5566ee]'
                 }`}

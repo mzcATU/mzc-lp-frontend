@@ -7,8 +7,6 @@ import type {
   TokenResponse,
   UserResponse,
 } from '@/types/common/auth.types';
-import type { ApiResponse } from '@/types/common/api.types';
-
 /**
  * 인증 관련 API 서비스
  */
@@ -17,22 +15,22 @@ export const authService = {
    * 회원가입
    */
   register: async (request: RegisterRequest): Promise<UserResponse> => {
-    const response = await axiosInstance.post<ApiResponse<UserResponse>>(
+    const response = await axiosInstance.post<UserResponse>(
       API_ENDPOINTS.AUTH.REGISTER,
       request
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * 로그인
    */
   login: async (request: LoginRequest): Promise<TokenResponse> => {
-    const response = await axiosInstance.post<ApiResponse<TokenResponse>>(
+    const response = await axiosInstance.post<TokenResponse>(
       API_ENDPOINTS.AUTH.LOGIN,
       request
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
@@ -40,11 +38,11 @@ export const authService = {
    */
   refresh: async (refreshToken: string): Promise<TokenResponse> => {
     const request: RefreshTokenRequest = { refreshToken };
-    const response = await axiosInstance.post<ApiResponse<TokenResponse>>(
+    const response = await axiosInstance.post<TokenResponse>(
       API_ENDPOINTS.AUTH.REFRESH,
       request
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**

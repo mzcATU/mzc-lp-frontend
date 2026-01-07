@@ -1,6 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  ArrowLeft,
   Palette,
   Monitor,
   Sun,
@@ -18,21 +16,13 @@ import {
   Label,
   RadioOptionCard,
 } from '@/components/common';
-import { useUIStore } from '@/store/common/uiStore';
+import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
 
 export function SettingsAppearancePage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const { isDarkMode, setDarkMode, isSidebarExpanded, setSidebarExpanded } = useUIStore();
+  const { setDarkMode, isSidebarExpanded, setSidebarExpanded } = useUIStore();
+  const isDarkMode = useIsDarkMode();
   const themeMode = isDarkMode ? 'dark' : 'light';
   const sidebarDefault = isSidebarExpanded ? 'expanded' : 'collapsed';
-
-  const basePath = location.pathname.split('/settings')[0];
-
-  const handleBack = () => {
-    navigate(`${basePath}/settings`);
-  };
 
   const handleSave = () => {
     alert('외관 설정이 저장되었습니다.');
@@ -67,16 +57,6 @@ export function SettingsAppearancePage() {
       }}
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Header with Back Button */}
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>설정으로 돌아가기</span>
-        </Button>
-
         <h1
           style={{
             color: designTokens.text.primary,

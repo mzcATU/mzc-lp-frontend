@@ -6,12 +6,8 @@ import {
   Plus,
   Search,
   Filter,
-  Eye,
-  Trash2,
   FileText,
   ChevronDown,
-  Archive,
-  RotateCcw,
   Loader2,
   Video,
   FileIcon,
@@ -25,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, ViewToggle, DataTable, DataTableColumnHeader, IconStatCard, Checkbox } from '@/components/common';
-import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent, useContentFolderTree } from '@/hooks/tu';
+import { useMyContents, useDeleteContent, useContentFolderTree } from '@/hooks/tu';
 import { learningObjectService } from '@/services/tu';
 import {
   ContentCard,
@@ -92,7 +88,6 @@ const t = {
   columnType: { ko: '유형', en: 'Type' },
   columnDate: { ko: '등록일', en: 'Date' },
   columnFile: { ko: '파일', en: 'File' },
-  columnActions: { ko: '액션', en: 'Actions' },
   organizeManage: { ko: '분류 및 관리', en: 'Organize' },
   moveToFolder: { ko: '폴더로 이동', en: 'Move to Folder' },
   selectedCount: { ko: '{count}개 선택됨', en: '{count} selected' },
@@ -146,8 +141,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
   const { data, isLoading, error } = useMyContents(params);
   const { data: folderTree = [] } = useContentFolderTree();
   const deleteContent = useDeleteContent();
-  const archiveContent = useArchiveContent();
-  const restoreContent = useRestoreContent();
 
   // 선택된 폴더 정보
   const selectedFolder = selectedFolderId ? findFolderById(folderTree, selectedFolderId) : null;
@@ -178,22 +171,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       } else {
         alert(getText('error'));
       }
-    }
-  };
-
-  const handleArchive = async (id: number) => {
-    try {
-      await archiveContent.mutateAsync(id);
-    } catch (err) {
-      console.error('Archive failed:', err);
-    }
-  };
-
-  const handleRestore = async (id: number) => {
-    try {
-      await restoreContent.mutateAsync(id);
-    } catch (err) {
-      console.error('Restore failed:', err);
     }
   };
 
@@ -297,7 +274,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
         <DataTableColumnHeader column={column} title={getText('columnTitle')} />
       ),
       cell: ({ row }) => (
-        <p className="text-sm text-text-primary max-w-md truncate">
+        <p className="text-sm text-text-primary max-w-[200px] truncate overflow-hidden">
           {row.original.originalFileName}
         </p>
       ),
@@ -326,8 +303,8 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       id: 'file',
       header: getText('columnFile'),
       cell: ({ row }) => (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-text-primary truncate max-w-xs">
+        <div className="flex flex-col gap-1 max-w-[180px] overflow-hidden">
+          <p className="text-sm text-text-primary truncate">
             {row.original.originalFileName}
           </p>
           <p className="text-xs text-text-secondary">
@@ -335,45 +312,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
           </p>
         </div>
       ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className="text-right">{getText('columnActions')}</div>,
-      cell: ({ row }) => {
-        const item = row.original;
-        return (
-          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => handlePreview(item)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
-            >
-              <Eye size={16} />
-            </button>
-            {item.status === 'ARCHIVED' ? (
-              <button
-                onClick={() => handleRestore(item.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
-              >
-                <RotateCcw size={16} />
-              </button>
-            ) : (
-              <button
-                onClick={() => handleArchive(item.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
-              >
-                <Archive size={16} />
-              </button>
-            )}
-            <button
-              onClick={() => handleDelete(item.id)}
-              disabled={deleteContent.isPending}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-status-error/10 transition-colors"
-            >
-              <Trash2 size={16} className="text-status-error" />
-            </button>
-          </div>
-        );
-      },
     },
   ], [language, deleteContent.isPending, contents, selectedContentIds]);
 
@@ -407,6 +345,10 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button onClick={() => navigate('/tu/teaching/content/create')}>
+                <Plus size={20} />
+                <span>{getText('createContent')}</span>
+              </Button>
               <Button
                 variant="ghost"
                 className="border border-border"
@@ -414,10 +356,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               >
                 <FolderTree size={20} />
                 <span>{getText('organizeManage')}</span>
-              </Button>
-              <Button onClick={() => navigate('/tu/teaching/content/create')}>
-                <Plus size={20} />
-                <span>{getText('createContent')}</span>
               </Button>
             </div>
           </div>
