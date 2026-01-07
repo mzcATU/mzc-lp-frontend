@@ -39,7 +39,7 @@ export interface CourseReviewListResponse {
 export interface CourseReviewStats {
   averageRating: number;
   totalReviews: number;
-  ratingDistribution: {
+  ratingDistribution?: {
     1: number;
     2: number;
     3: number;
