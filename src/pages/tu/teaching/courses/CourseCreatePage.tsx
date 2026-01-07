@@ -16,7 +16,7 @@ import { courseService, categoryService } from '@/services/common';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse, CreateCourseRequest } from '@/types/common';
 import type { CurriculumItem } from '@/types/tu';
-import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
+import { isCurriculumFolder, isCurriculumContent, convertHierarchyToCurriculumItems } from '@/types/tu';
 import { Step1BasicInfo, Step3Review, translations } from './components';
 import { Step2CurriculumTree } from './components/Step2CurriculumTree';
 import type { TranslationKey } from './components';
@@ -58,6 +58,17 @@ async function createCurriculumItemsRecursively(
         description: item.description || undefined,
       });
     }
+  }
+}
+
+/**
+ * 기존 회차/콘텐츠를 모두 삭제
+ * 루트 레벨 항목만 삭제 (하위 항목은 cascade 삭제됨)
+ */
+async function deleteAllCurriculumItems(courseId: number): Promise<void> {
+  const hierarchy = await courseService.getItemsHierarchy(courseId);
+  for (const item of hierarchy) {
+    await courseService.deleteItem(courseId, item.itemId);
   }
 }
 
@@ -117,7 +128,15 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
       setIsLoading(true);
       try {
-        const course = await courseService.getCourse(courseId);
+        // 기본 정보와 회차 계층구조를 병렬로 조회
+        const [course, hierarchyData] = await Promise.all([
+          courseService.getCourse(courseId),
+          courseService.getItemsHierarchy(courseId),
+        ]);
+
+        // 회차 계층구조를 CurriculumItem 형태로 변환
+        const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+
         setFormData((prev) => ({
           ...prev,
           title: course.title,
@@ -129,6 +148,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           startDate: course.startDate || '',
           endDate: course.endDate || '',
           tags: course.tags || [],
+          curriculumItems,
           isDraft: !course.isComplete,
           lastSaved: course.updatedAt,
         }));
@@ -169,22 +189,49 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
+      let targetCourseId = courseId;
+
       if (courseId) {
         // 기존 강의 수정
         await courseService.update(courseId, request);
+
+        // 기존 회차/콘텐츠 삭제 후 재생성
+        if (formData.curriculumItems.length > 0) {
+          await deleteAllCurriculumItems(courseId);
+          await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
+        }
       } else {
         // 새 강의 생성
         const response = await courseService.create(request);
+        targetCourseId = response.courseId;
         setCourseId(response.courseId);
         // URL 업데이트 (뒤로가기 시에도 courseId 유지)
         navigate(`/tu/teaching/courses/create?courseId=${response.courseId}`, { replace: true });
+
+        // 회차/콘텐츠 생성
+        if (formData.curriculumItems.length > 0) {
+          await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
+        }
       }
 
-      setFormData((prev) => ({
-        ...prev,
-        isDraft: true,
-        lastSaved: new Date().toISOString(),
-      }));
+      // 저장 후 최신 회차 계층구조 다시 로드하여 ID 동기화
+      if (targetCourseId) {
+        const hierarchyData = await courseService.getItemsHierarchy(targetCourseId);
+        const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+        setFormData((prev) => ({
+          ...prev,
+          curriculumItems,
+          isDraft: true,
+          lastSaved: new Date().toISOString(),
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          isDraft: true,
+          lastSaved: new Date().toISOString(),
+        }));
+      }
+
       alert('저장되었습니다.');
     } catch (error) {
       console.error('저장 실패:', error);
