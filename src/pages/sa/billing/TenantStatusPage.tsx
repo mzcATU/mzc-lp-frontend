@@ -45,7 +45,7 @@ const mockTenantStatus: {
   { id: 2, name: '삼성전자', code: 'samsung', status: 'ACTIVE', plan: 'ENTERPRISE', users: { current: 480, max: 500 }, courses: { current: 78, max: 100 }, storage: { current: 156, max: 200 }, lastActivity: '2025-12-30 10:22', trend: 'up' },
   { id: 3, name: '네이버', code: 'naver', status: 'PENDING', plan: 'PRO', users: { current: 45, max: 200 }, courses: { current: 12, max: 50 }, storage: { current: 15, max: 50 }, lastActivity: '2025-12-29 14:30', trend: 'stable' },
   { id: 4, name: '카카오', code: 'kakao', status: 'ACTIVE', plan: 'PRO', users: { current: 180, max: 200 }, courses: { current: 42, max: 50 }, storage: { current: 38, max: 50 }, lastActivity: '2025-12-30 08:45', trend: 'up' },
-  { id: 5, name: '라인', code: 'line', status: 'INACTIVE', plan: 'BASIC', users: { current: 25, max: 50 }, courses: { current: 8, max: 20 }, storage: { current: 5, max: 10 }, lastActivity: '2025-12-15 11:20', trend: 'down' },
+  { id: 5, name: '라인', code: 'line', status: 'SUSPENDED', plan: 'BASIC', users: { current: 25, max: 50 }, courses: { current: 8, max: 20 }, storage: { current: 5, max: 10 }, lastActivity: '2025-12-15 11:20', trend: 'down' },
   { id: 6, name: 'SK텔레콤', code: 'skt', status: 'ACTIVE', plan: 'ENTERPRISE', users: { current: 320, max: 500 }, courses: { current: 55, max: 100 }, storage: { current: 120, max: 200 }, lastActivity: '2025-12-30 11:00', trend: 'up' },
 ];
 
