@@ -22,6 +22,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { CourseCommunitySection } from '@/components/domain/course-community';
 import { useCourseTimeDetail, useEnroll, useMyEnrollments, useCheckWishlistStatus, useToggleWishlist, useCheckCartStatus, useToggleCart } from '@/hooks/tu';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
 import {
@@ -846,6 +847,15 @@ export function CourseDetailPage() {
               </div>
             </section>
           )}
+
+          {/* 강의 커뮤니티 */}
+          <section className="mb-12">
+            <CourseCommunitySection
+              timeId={courseTimeId}
+              isDark={isDark}
+              canWrite={isAlreadyEnrolled}
+            />
+          </section>
         </div>
       </main>
 
