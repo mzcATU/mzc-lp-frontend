@@ -1,47 +1,54 @@
 import { Bell, Construction } from 'lucide-react';
-import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
+import { designTokens } from '@/styles/admin-design-tokens';
 import { Card, CardHeader, CardTitle, CardContent, EmptyState } from '@/components/common';
 
 export function SettingsNotificationsPage() {
-  const { theme } = useThemeStore();
   const { t } = useTranslation();
-  const isDark = theme === 'dark';
-
-  const cardClass = isDark
-    ? 'bg-white/5 border-white/10'
-    : 'bg-white border-gray-200 shadow-sm';
 
   return (
-    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      <div className="max-w-3xl mx-auto">
+    <div
+      style={{
+        padding: '40px',
+        backgroundColor: designTokens.bg.app_default,
+        minHeight: '100%',
+        overflowY: 'auto',
+      }}
+    >
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Header */}
-        <div className="mb-8">
-          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {t.mypage.notifications}
-          </h1>
-          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-            {t.settings.notificationsDesc}
-          </p>
-        </div>
+        <h1
+          style={{
+            color: designTokens.text.primary,
+            fontSize: '24px',
+            fontWeight: 600,
+            marginBottom: '8px',
+          }}
+        >
+          {t.mypage.notifications}
+        </h1>
+        <p style={{ color: designTokens.text.secondary, marginBottom: '32px' }}>
+          {t.settings.notificationsDesc}
+        </p>
 
         {/* Notifications Card */}
-        <Card className={cardClass}>
-          <CardHeader>
+        <Card>
+          <CardHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-3">
-              <Bell className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-              <CardTitle className={isDark ? 'text-white' : 'text-gray-900'}>
+              <Bell className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">
                 {t.settings.notificationSettings}
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-6 py-6">
             {/* Under Development Placeholder */}
             <EmptyState
               icon={Construction}
               title={t.common.comingSoon}
               description={t.settings.notificationsComingSoon}
-              className={`border-2 border-dashed rounded-lg ${isDark ? 'border-white/10' : 'border-gray-200'}`}
+              className="border-2 border-dashed rounded-lg"
+              style={{ borderColor: designTokens.bg.border }}
             />
           </CardContent>
         </Card>
