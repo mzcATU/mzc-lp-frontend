@@ -133,3 +133,10 @@ export {
   useVisibleTenantNotice,
   useVisibleTenantNoticeCount,
 } from './useTenantNoticeQueries';
+
+export {
+  memberPoolKeys,
+  useMemberPools,
+  useMemberPool,
+  useMemberPoolMembers,
+} from './useMemberPoolQueries';
