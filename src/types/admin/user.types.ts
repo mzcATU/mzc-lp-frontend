@@ -153,7 +153,7 @@ export interface CreatedUserInfo {
   email: string;
   name: string;
   employeeLinked?: boolean;         // 임직원 자동 연동 여부
-  employeeId?: string;              // 연동된 임직원 ID
+  employeeId?: number;              // 연동된 임직원 ID
 }
 
 export interface FailedUserInfo {
@@ -164,11 +164,12 @@ export interface FailedUserInfo {
 export interface AutoLinkedUserInfo {
   userId: number;
   email: string;
-  employeeId: string;
+  employeeId: number;
+  employeeNumber?: string;
   employeeName: string;
-  department: string;
-  position: string;
-  rank: string;
+  department?: string;
+  position?: string;
+  jobTitle?: string;
 }
 
 // CSV/Excel 파일 업로드 기반 단체 계정 생성

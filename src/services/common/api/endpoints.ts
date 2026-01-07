@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     COURSE_ROLES: (id: number) => `/users/${id}/course-roles`,
     COURSE_ROLE_BY_ID: (userId: number, roleId: number) => `/users/${userId}/course-roles/${roleId}`,
     BULK: '/users/bulk',
+    BULK_FILE: '/users/bulk/file',
     ENROLLMENTS: (id: number) => `/users/${id}/enrollments`,
     ENROLLMENT_STATS: (id: number) => `/users/${id}/enrollments/stats`,
     INSTRUCTOR_STATS: (id: number) => `/users/${id}/instructor-statistics`,
