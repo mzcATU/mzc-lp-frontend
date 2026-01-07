@@ -35,6 +35,8 @@ export interface UpdateProfileRequest {
   name?: string;
   phone?: string;
   profileImageUrl?: string;
+  department?: string;  // 부서 (개발팀, 회계팀 등)
+  position?: string;    // 직급 (인턴, 신입, 대리, 과장, 차장, 팀장 등)
 }
 
 // --- Response DTOs ---
@@ -62,6 +64,8 @@ export interface UserDetailResponse {
   role: TenantRole;
   status: UserStatus;
   profileImageUrl?: string;
+  department?: string;    // 부서 (개발팀, 회계팀 등)
+  position?: string;      // 직급 (인턴, 신입, 대리, 과장, 차장, 팀장 등)
   tenantId?: number;
   tenantName?: string;
   tenantSubdomain?: string;
