@@ -23,6 +23,7 @@ import { useAuthStore } from '@/store/common/authStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { CourseCommunitySection } from '@/components/domain/course-community';
+import { CourseReviewSection } from '@/components/domain/course-review';
 import { useCourseTimeDetail, useEnroll, useMyEnrollments, useCheckWishlistStatus, useToggleWishlist, useCheckCartStatus, useToggleCart } from '@/hooks/tu';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
 import {
@@ -195,7 +196,7 @@ export function CourseDetailPage() {
 
   const [expandedSections, setExpandedSections] = useState<number[]>([0]);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
-  const [activeTab, setActiveTab] = useState<'intro' | 'curriculum' | 'community'>('intro');
+  const [activeTab, setActiveTab] = useState<'intro' | 'curriculum' | 'review' | 'community'>('intro');
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
@@ -790,6 +791,27 @@ export function CourseDetailPage() {
               )}
             </button>
             <button
+              onClick={() => setActiveTab('review')}
+              className={`py-4 font-medium transition-colors relative ${
+                activeTab === 'review'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-900'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              수강평
+              {activeTab === 'review' && (
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}
+                />
+              )}
+            </button>
+            <button
               onClick={() => setActiveTab('community')}
               className={`py-4 font-medium transition-colors relative ${
                 activeTab === 'community'
@@ -944,6 +966,17 @@ export function CourseDetailPage() {
                   </p>
                 </div>
               )}
+            </section>
+          )}
+
+          {/* 수강평 탭 */}
+          {activeTab === 'review' && (
+            <section className="mb-12">
+              <CourseReviewSection
+                timeId={courseTimeId}
+                isDark={isDark}
+                canWrite={isAlreadyEnrolled}
+              />
             </section>
           )}
 
