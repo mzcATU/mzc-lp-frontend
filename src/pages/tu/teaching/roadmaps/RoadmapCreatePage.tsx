@@ -1,8 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, GripVertical, X, Search, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, GripVertical, X, Search, Loader2, AlertTriangle, Info, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea, Badge } from '@/components/common';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Textarea,
+  Badge,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/common';
 import {
   useCreateRoadmap,
   useUpdateRoadmap,
@@ -10,6 +39,11 @@ import {
   useRoadmap,
   useMyPrograms,
 } from '@/hooks/tu';
+import {
+  isDestructiveUpdate,
+  isDestructiveUpdateRestricted,
+  analyzeProgramChanges,
+} from '@/utils/roadmapUtils';
 
 const t = {
   createRoadmap: { ko: '로드맵 생성', en: 'Create Roadmap' },
@@ -45,6 +79,26 @@ const t = {
   titleRequired: { ko: '제목을 입력해주세요', en: 'Please enter a title' },
   coursesRequired: { ko: '최소 1개 이상의 강의를 추가해주세요', en: 'Please add at least one course' },
   noAvailableCourses: { ko: '추가 가능한 강의가 없습니다', en: 'No available courses' },
+  destructiveUpdateWarning: {
+    ko: '수강생이 있는 공개된 로드맵은 프로그램 삭제 또는 순서 변경이 불가능합니다',
+    en: 'Cannot delete or reorder programs in published roadmap with enrollments',
+  },
+  cannotDeleteRestricted: {
+    ko: '수강생이 있어 삭제할 수 없습니다',
+    en: 'Cannot delete (has enrollments)',
+  },
+  cannotReorderRestricted: {
+    ko: '수강생이 있어 순서 변경이 불가능합니다',
+    en: 'Cannot reorder (has enrollments)',
+  },
+  restrictedModeInfo: {
+    ko: '수강생이 있는 공개된 로드맵입니다. 기존 프로그램의 삭제 및 순서 변경이 제한됩니다.',
+    en: 'This is a published roadmap with enrollments. Deletion and reordering of existing programs is restricted.',
+  },
+  newProgramsAllowed: {
+    ko: '새로운 프로그램 추가는 가능합니다.',
+    en: 'Adding new programs is allowed.',
+  },
 };
 
 interface SelectedProgram {
@@ -64,6 +118,8 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
   const [selectedPrograms, setSelectedPrograms] = useState<SelectedProgram[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [originalStatus, setOriginalStatus] = useState<'PUBLISHED' | 'DRAFT' | null>(null);
+  const [originalProgramIds, setOriginalProgramIds] = useState<number[]>([]);
+  const [enrolledStudents, setEnrolledStudents] = useState(0);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -83,7 +139,12 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     if (roadmapData && isEditMode) {
       setTitle(roadmapData.title);
       setDescription(roadmapData.description || '');
-      setOriginalStatus(roadmapData.status);
+      // 백엔드에서 소문자로 응답하므로 대문자로 정규화
+      setOriginalStatus(roadmapData.status.toUpperCase() as 'PUBLISHED' | 'DRAFT');
+      setEnrolledStudents(roadmapData.enrolledStudents);
+
+      const programIds = roadmapData.programs.map((p) => p.id);
+      setOriginalProgramIds(programIds);
       setSelectedPrograms(
         roadmapData.programs.map((p) => ({
           id: p.id,
@@ -121,6 +182,52 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     setSelectedPrograms(selectedPrograms.filter((p) => p.id !== programId));
   };
 
+  // 드래그 앤 드롭 센서 설정
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // 드래그 종료 핸들러
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setSelectedPrograms((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // 파괴적 업데이트 검증
+  const destructiveValidation = useMemo(() => {
+    if (!isEditMode || !originalStatus) {
+      return {
+        isRestricted: false,
+        isDestructive: false,
+        changes: { added: [], removed: [], reordered: false },
+      };
+    }
+
+    const currentIds = selectedPrograms.map((p) => p.id);
+    const isRestricted = isDestructiveUpdateRestricted(originalStatus, enrolledStudents);
+    const isDestructive = isDestructiveUpdate(originalProgramIds, currentIds);
+    const changes = analyzeProgramChanges(originalProgramIds, currentIds);
+
+    return {
+      isRestricted,
+      isDestructive,
+      changes,
+      shouldBlock: isRestricted && isDestructive,
+    };
+  }, [isEditMode, originalStatus, enrolledStudents, originalProgramIds, selectedPrograms]);
+
   const handleSave = async (isDraft: boolean) => {
     // 유효성 검사
     if (!title.trim()) {
@@ -130,6 +237,12 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
 
     if (!isDraft && selectedPrograms.length === 0) {
       toast.error(getText('coursesRequired'));
+      return;
+    }
+
+    // 파괴적 업데이트 사전 검증 (PUBLISHED 상태로 저장 시도 시만 검증)
+    if (!isDraft && destructiveValidation.shouldBlock) {
+      toast.error(getText('destructiveUpdateWarning'));
       return;
     }
 
@@ -168,6 +281,13 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
       // mutation의 onSuccess가 완료된 후 페이지 이동
       navigate('/tu/teaching/roadmaps');
     } catch (error: any) {
+      // RM007 에러 처리 (파괴적 업데이트 차단)
+      if (error?.response?.data?.code === 'RM007') {
+        toast.error(getText('destructiveUpdateWarning'));
+        return;
+      }
+
+      // 일반 에러 처리
       if (isDraft) {
         toast.error(getText('draftError'));
       } else if (isEditMode) {
@@ -202,6 +322,28 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
           {isEditMode ? getText('editRoadmap') : getText('createRoadmap')}
         </h1>
       </div>
+
+      {/* 제한 상태 안내 배너 */}
+      {destructiveValidation.isRestricted && (
+        <Card className="mb-6 border-primary bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Info className="text-primary shrink-0 mt-0.5" size={20} />
+              <div>
+                <p className="font-medium text-text-primary m-0 mb-1">
+                  {getText('restrictedModeInfo')}
+                </p>
+                <p className="text-sm text-text-secondary m-0">
+                  • 현재 수강생: {enrolledStudents}명
+                </p>
+                <p className="text-sm text-text-secondary m-0">
+                  • {getText('newProgramsAllowed')}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Basic Info & Course List */}
@@ -249,28 +391,34 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
                   <p className="text-sm">{getText('noCoursesDesc')}</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {selectedPrograms.map((program, index) => (
-                    <div
-                      key={program.id}
-                      className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-border"
-                    >
-                      <GripVertical size={18} className="text-text-secondary cursor-grab" />
-                      <Badge variant="outline" className="shrink-0">
-                        {getText('step')} {index + 1}
-                      </Badge>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-text-primary m-0 truncate">{program.title}</p>
-                        <p className="text-sm text-text-secondary m-0">
-                          {program.category} · {program.duration}
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeProgram(program.id)}>
-                        <X size={18} />
-                      </Button>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={selectedPrograms.map((p) => p.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="flex flex-col gap-2">
+                      {selectedPrograms.map((program, index) => {
+                        const isOriginalProgram = originalProgramIds.includes(program.id);
+                        const isActionRestricted = destructiveValidation.isRestricted && isOriginalProgram;
+
+                        return (
+                          <SortableProgramItem
+                            key={program.id}
+                            program={program}
+                            index={index}
+                            isActionRestricted={isActionRestricted}
+                            getText={getText}
+                            onRemove={removeProgram}
+                          />
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </CardContent>
           </Card>
@@ -324,6 +472,35 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
         </Card>
       </div>
 
+      {/* Destructive Update Warning */}
+      {destructiveValidation.shouldBlock && (
+        <Card className="mt-6 border-status-error bg-status-error/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-status-error shrink-0 mt-0.5" size={20} />
+              <div>
+                <p className="font-medium text-text-primary m-0 mb-1">
+                  {getText('destructiveUpdateWarning')}
+                </p>
+                <p className="text-sm text-text-secondary m-0">
+                  현재 수강생: {enrolledStudents}명
+                </p>
+                {destructiveValidation.changes.removed.length > 0 && (
+                  <p className="text-sm text-text-secondary m-0 mt-1">
+                    • {destructiveValidation.changes.removed.length}개 프로그램 삭제 감지
+                  </p>
+                )}
+                {destructiveValidation.changes.reordered && (
+                  <p className="text-sm text-text-secondary m-0 mt-1">
+                    • 프로그램 순서 변경 감지
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 mt-8">
         <Button variant="outline" onClick={() => navigate('/tu/teaching/roadmaps')} disabled={isSaving}>
@@ -344,7 +521,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
         </Button>
         <Button
           onClick={() => handleSave(false)}
-          disabled={!title || selectedPrograms.length === 0 || isSaving}
+          disabled={!title || selectedPrograms.length === 0 || isSaving || destructiveValidation.shouldBlock}
         >
           {isSaving && (createMutation.isPending || updateMutation.isPending) && (
             <Loader2 size={16} className="animate-spin mr-2" />
@@ -352,6 +529,117 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
           {getText('publish')}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** 정렬 가능한 프로그램 아이템 컴포넌트 */
+interface SortableProgramItemProps {
+  program: SelectedProgram;
+  index: number;
+  isActionRestricted: boolean;
+  getText: (key: keyof typeof t) => string;
+  onRemove: (id: number) => void;
+}
+
+function SortableProgramItem({
+  program,
+  index,
+  isActionRestricted,
+  getText,
+  onRemove,
+}: Readonly<SortableProgramItemProps>) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: program.id,
+    disabled: isActionRestricted,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border ${
+        isActionRestricted ? 'border-border bg-bg-secondary/50' : 'border-border'
+      } ${isDragging ? 'opacity-50 shadow-lg z-50' : ''}`}
+    >
+      {/* 드래그 핸들 - 제한 상태에서 비활성화 */}
+      {isActionRestricted ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className="cursor-not-allowed"
+              aria-disabled="true"
+              aria-label={getText('cannotReorderRestricted')}
+              role="button"
+            >
+              <Lock size={18} className="text-text-disabled" aria-hidden="true" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{getText('cannotReorderRestricted')}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing touch-none"
+          aria-label="드래그하여 순서 변경"
+        >
+          <GripVertical size={18} className="text-text-secondary" />
+        </button>
+      )}
+      <Badge variant="outline" className="shrink-0">
+        {getText('step')} {index + 1}
+      </Badge>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-text-primary m-0 truncate">{program.title}</p>
+        <p className="text-sm text-text-secondary m-0">
+          {program.category} · {program.duration}
+        </p>
+      </div>
+      {/* 삭제 버튼 - 제한 상태에서 비활성화 */}
+      {isActionRestricted ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled
+                aria-disabled="true"
+                aria-label={getText('cannotDeleteRestricted')}
+              >
+                <X size={18} className="text-text-disabled" aria-hidden="true" />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{getText('cannotDeleteRestricted')}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove(program.id)}
+          aria-label={`${program.title} 삭제`}
+        >
+          <X size={18} aria-hidden="true" />
+        </Button>
+      )}
     </div>
   );
 }

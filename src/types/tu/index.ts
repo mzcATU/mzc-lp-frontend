@@ -209,6 +209,7 @@ export {
   createContentItem,
   findItemInTree,
   findParentInTree,
+  convertHierarchyToCurriculumItems,
 } from './curriculum.types';
 
 // CourseTime Catalog (학습자용 차수 카탈로그)
