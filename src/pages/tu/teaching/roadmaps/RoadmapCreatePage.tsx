@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, GripVertical, X, Search, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, GripVertical, X, Search, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea, Badge } from '@/components/common';
 import {
@@ -10,6 +10,11 @@ import {
   useRoadmap,
   useMyPrograms,
 } from '@/hooks/tu';
+import {
+  isDestructiveUpdate,
+  isDestructiveUpdateRestricted,
+  analyzeProgramChanges,
+} from '@/utils/roadmapUtils';
 
 const t = {
   createRoadmap: { ko: '로드맵 생성', en: 'Create Roadmap' },
@@ -45,6 +50,18 @@ const t = {
   titleRequired: { ko: '제목을 입력해주세요', en: 'Please enter a title' },
   coursesRequired: { ko: '최소 1개 이상의 강의를 추가해주세요', en: 'Please add at least one course' },
   noAvailableCourses: { ko: '추가 가능한 강의가 없습니다', en: 'No available courses' },
+  destructiveUpdateWarning: {
+    ko: '수강생이 있는 공개된 로드맵은 프로그램 삭제 또는 순서 변경이 불가능합니다',
+    en: 'Cannot delete or reorder programs in published roadmap with enrollments',
+  },
+  cannotDeleteRestricted: {
+    ko: '수강생이 있어 삭제할 수 없습니다',
+    en: 'Cannot delete (has enrollments)',
+  },
+  cannotReorderRestricted: {
+    ko: '수강생이 있어 순서 변경이 불가능합니다',
+    en: 'Cannot reorder (has enrollments)',
+  },
 };
 
 interface SelectedProgram {
@@ -64,6 +81,8 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
   const [selectedPrograms, setSelectedPrograms] = useState<SelectedProgram[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [originalStatus, setOriginalStatus] = useState<'PUBLISHED' | 'DRAFT' | null>(null);
+  const [originalProgramIds, setOriginalProgramIds] = useState<number[]>([]);
+  const [enrolledStudents, setEnrolledStudents] = useState(0);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -84,6 +103,10 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
       setTitle(roadmapData.title);
       setDescription(roadmapData.description || '');
       setOriginalStatus(roadmapData.status);
+      setEnrolledStudents(roadmapData.enrolledStudents);
+
+      const programIds = roadmapData.programs.map((p) => p.id);
+      setOriginalProgramIds(programIds);
       setSelectedPrograms(
         roadmapData.programs.map((p) => ({
           id: p.id,
@@ -121,6 +144,29 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     setSelectedPrograms(selectedPrograms.filter((p) => p.id !== programId));
   };
 
+  // 파괴적 업데이트 검증
+  const destructiveValidation = useMemo(() => {
+    if (!isEditMode || !originalStatus) {
+      return {
+        isRestricted: false,
+        isDestructive: false,
+        changes: { added: [], removed: [], reordered: false },
+      };
+    }
+
+    const currentIds = selectedPrograms.map((p) => p.id);
+    const isRestricted = isDestructiveUpdateRestricted(originalStatus, enrolledStudents);
+    const isDestructive = isDestructiveUpdate(originalProgramIds, currentIds);
+    const changes = analyzeProgramChanges(originalProgramIds, currentIds);
+
+    return {
+      isRestricted,
+      isDestructive,
+      changes,
+      shouldBlock: isRestricted && isDestructive,
+    };
+  }, [isEditMode, originalStatus, enrolledStudents, originalProgramIds, selectedPrograms]);
+
   const handleSave = async (isDraft: boolean) => {
     // 유효성 검사
     if (!title.trim()) {
@@ -130,6 +176,12 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
 
     if (!isDraft && selectedPrograms.length === 0) {
       toast.error(getText('coursesRequired'));
+      return;
+    }
+
+    // 파괴적 업데이트 사전 검증 (PUBLISHED 상태로 저장 시도 시만 검증)
+    if (!isDraft && destructiveValidation.shouldBlock) {
+      toast.error(getText('destructiveUpdateWarning'));
       return;
     }
 
@@ -168,6 +220,13 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
       // mutation의 onSuccess가 완료된 후 페이지 이동
       navigate('/tu/teaching/roadmaps');
     } catch (error: any) {
+      // RM007 에러 처리 (파괴적 업데이트 차단)
+      if (error?.response?.data?.code === 'RM007') {
+        toast.error(getText('destructiveUpdateWarning'));
+        return;
+      }
+
+      // 일반 에러 처리
       if (isDraft) {
         toast.error(getText('draftError'));
       } else if (isEditMode) {
@@ -324,6 +383,35 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
         </Card>
       </div>
 
+      {/* Destructive Update Warning */}
+      {destructiveValidation.shouldBlock && (
+        <Card className="mt-6 border-status-error bg-status-error/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-status-error shrink-0 mt-0.5" size={20} />
+              <div>
+                <p className="font-medium text-text-primary m-0 mb-1">
+                  {getText('destructiveUpdateWarning')}
+                </p>
+                <p className="text-sm text-text-secondary m-0">
+                  현재 수강생: {enrolledStudents}명
+                </p>
+                {destructiveValidation.changes.removed.length > 0 && (
+                  <p className="text-sm text-text-secondary m-0 mt-1">
+                    • {destructiveValidation.changes.removed.length}개 프로그램 삭제 감지
+                  </p>
+                )}
+                {destructiveValidation.changes.reordered && (
+                  <p className="text-sm text-text-secondary m-0 mt-1">
+                    • 프로그램 순서 변경 감지
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 mt-8">
         <Button variant="outline" onClick={() => navigate('/tu/teaching/roadmaps')} disabled={isSaving}>
@@ -344,7 +432,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
         </Button>
         <Button
           onClick={() => handleSave(false)}
-          disabled={!title || selectedPrograms.length === 0 || isSaving}
+          disabled={!title || selectedPrograms.length === 0 || isSaving || destructiveValidation.shouldBlock}
         >
           {isSaving && (createMutation.isPending || updateMutation.isPending) && (
             <Loader2 size={16} className="animate-spin mr-2" />
