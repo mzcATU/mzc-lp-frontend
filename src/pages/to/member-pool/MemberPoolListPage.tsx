@@ -1,15 +1,25 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
+  Plus,
   Search,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
   Users,
   UserPlus,
+  Download,
+  X,
+  Save,
   ChevronRight,
   GraduationCap,
   FileDown,
-  Loader2,
-  AlertCircle,
+  FileUp,
+  Filter,
   Play,
   Pause,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
@@ -19,7 +29,14 @@ import {
   CardTitle,
   Button,
   Input,
+  Label,
   Badge,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  Checkbox,
   Table,
   TableBody,
   TableCell,
@@ -27,19 +44,41 @@ import {
   TableHeader,
   TableRow,
   EmptyState,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  Textarea,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/common';
 import { cn } from '@/utils/cn';
 import {
   useMemberPools,
   useMemberPool,
   useMemberPoolMembers,
-} from '@/hooks/ta';
+  useCreateMemberPool,
+  useUpdateMemberPool,
+  useDeleteMemberPool,
+  useActivateMemberPool,
+  useDeactivateMemberPool,
+} from '@/hooks/to';
 import type {
   MemberPoolResponse,
+  MemberPoolConditionDto,
+  CreateMemberPoolRequest,
+  UpdateMemberPoolRequest,
   MemberPoolMemberDto,
   EmployeeStatus,
 } from '@/types/to/memberPool.types';
@@ -51,18 +90,51 @@ const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
   RESIGNED: '퇴직',
 };
 
+// 폼 데이터 타입
+interface MemberPoolFormData {
+  name: string;
+  description: string;
+  condition: MemberPoolConditionDto;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+const initialFormData: MemberPoolFormData = {
+  name: '',
+  description: '',
+  condition: {
+    departmentIds: [],
+    positions: [],
+    jobTitles: [],
+    employeeStatuses: [],
+  },
+  isActive: true,
+  sortOrder: 0,
+};
+
 /**
- * TA 회원 풀 페이지
- * - 회원 풀 조회 전용 (CRUD는 TO에서 담당)
- * - 조건 기반 직원 그룹 확인
+ * TO 회원 풀 관리 페이지
+ * - 조건 기반 직원 그룹 관리
+ * - CRUD 및 활성화/비활성화 기능
  */
-export const MemberPoolPage = () => {
-  // 검색 상태
+export default function MemberPoolListPage() {
+  const navigate = useNavigate();
+
+  // 검색 및 필터 상태
   const [searchTerm, setSearchTerm] = useState('');
   const [filterActive, setFilterActive] = useState<boolean | undefined>(undefined);
 
   // 선택된 풀 상태
   const [selectedPoolId, setSelectedPoolId] = useState<number | null>(null);
+
+  // 모달 상태
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editingPool, setEditingPool] = useState<MemberPoolResponse | null>(null);
+  const [poolToDelete, setPoolToDelete] = useState<MemberPoolResponse | null>(null);
+
+  // 폼 상태
+  const [formData, setFormData] = useState<MemberPoolFormData>(initialFormData);
 
   // 멤버 목록 페이징
   const [memberPage, setMemberPage] = useState(0);
@@ -79,6 +151,12 @@ export const MemberPoolPage = () => {
     { page: memberPage, size: 10 }
   );
 
+  const createMemberPool = useCreateMemberPool();
+  const updateMemberPool = useUpdateMemberPool();
+  const deleteMemberPool = useDeleteMemberPool();
+  const activateMemberPool = useActivateMemberPool();
+  const deactivateMemberPool = useDeactivateMemberPool();
+
   // 통계 계산
   const stats = useMemo(() => ({
     total: memberPools?.length || 0,
@@ -94,6 +172,96 @@ export const MemberPoolPage = () => {
   const handleSelectPool = (pool: MemberPoolResponse) => {
     setSelectedPoolId(pool.id);
     setMemberPage(0);
+  };
+
+  // 새 풀 생성 모달 열기
+  const openCreateModal = () => {
+    setEditingPool(null);
+    setFormData(initialFormData);
+    setShowCreateModal(true);
+  };
+
+  // 풀 수정 모달 열기
+  const openEditModal = (pool: MemberPoolResponse) => {
+    setEditingPool(pool);
+    setFormData({
+      name: pool.name,
+      description: pool.description || '',
+      condition: pool.condition,
+      isActive: pool.isActive,
+      sortOrder: pool.sortOrder,
+    });
+    setShowCreateModal(true);
+  };
+
+  // 풀 저장
+  const handleSavePool = async () => {
+    if (!formData.name.trim()) return;
+
+    try {
+      if (editingPool) {
+        // 수정
+        const request: UpdateMemberPoolRequest = {
+          name: formData.name,
+          description: formData.description || undefined,
+          condition: formData.condition,
+          isActive: formData.isActive,
+          sortOrder: formData.sortOrder,
+        };
+        await updateMemberPool.mutateAsync({ id: editingPool.id, ...request });
+      } else {
+        // 생성
+        const request: CreateMemberPoolRequest = {
+          name: formData.name,
+          description: formData.description || undefined,
+          condition: formData.condition,
+          isActive: formData.isActive,
+          sortOrder: formData.sortOrder,
+        };
+        await createMemberPool.mutateAsync(request);
+      }
+
+      setShowCreateModal(false);
+      setFormData(initialFormData);
+      setEditingPool(null);
+    } catch (err) {
+      console.error('Failed to save member pool:', err);
+    }
+  };
+
+  // 풀 삭제 확인
+  const confirmDeletePool = (pool: MemberPoolResponse) => {
+    setPoolToDelete(pool);
+    setShowDeleteDialog(true);
+  };
+
+  // 풀 삭제 실행
+  const handleDeletePool = async () => {
+    if (!poolToDelete) return;
+
+    try {
+      await deleteMemberPool.mutateAsync(poolToDelete.id);
+      if (selectedPoolId === poolToDelete.id) {
+        setSelectedPoolId(null);
+      }
+      setShowDeleteDialog(false);
+      setPoolToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete member pool:', err);
+    }
+  };
+
+  // 풀 활성화/비활성화 토글
+  const togglePoolActive = async (pool: MemberPoolResponse) => {
+    try {
+      if (pool.isActive) {
+        await deactivateMemberPool.mutateAsync(pool.id);
+      } else {
+        await activateMemberPool.mutateAsync(pool.id);
+      }
+    } catch (err) {
+      console.error('Failed to toggle pool active status:', err);
+    }
   };
 
   // 날짜 포맷
@@ -139,16 +307,31 @@ export const MemberPoolPage = () => {
               className="text-[28px] font-semibold mb-2"
               style={{ color: designTokens.text.primary }}
             >
-              회원 풀 조회
+              회원 풀 관리
             </h1>
             <p className="text-sm" style={{ color: designTokens.text.secondary }}>
-              조건 기반 직원 그룹을 조회합니다. 회원 풀 관리는 운영자(TO) 메뉴에서 가능합니다.
+              조건 기반 직원 그룹을 관리하고 일괄 입과에 활용할 수 있습니다.
             </p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" className="gap-2">
+              <FileUp className="w-4 h-4" />
+              대량 업로드
+            </Button>
+            <Button variant="outline" className="gap-2">
               <FileDown className="w-4 h-4" />
               엑셀 내보내기
+            </Button>
+            <Button
+              className="gap-2"
+              style={{
+                backgroundColor: designTokens.button.brand_default,
+                color: designTokens.button.brand_text,
+              }}
+              onClick={openCreateModal}
+            >
+              <Plus className="w-4 h-4" />
+              회원 풀 생성
             </Button>
           </div>
         </div>
@@ -308,7 +491,7 @@ export const MemberPoolPage = () => {
                   <EmptyState
                     icon={Users}
                     title="회원 풀이 없습니다"
-                    description="운영자(TO) 메뉴에서 회원 풀을 생성할 수 있습니다."
+                    description="새 회원 풀을 생성해보세요."
                     className="py-12"
                   />
                 ) : (
@@ -405,10 +588,71 @@ export const MemberPoolPage = () => {
                           </p>
                         )}
                       </div>
-                      <Button variant="outline" size="sm" className="gap-1">
-                        <FileDown className="w-3 h-3" />
-                        회원 목록 내보내기
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => openEditModal(selectedPool)}
+                        >
+                          <Pencil className="w-3 h-3" />
+                          수정
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => togglePoolActive(selectedPool)}
+                        >
+                          {selectedPool.isActive ? (
+                            <>
+                              <Pause className="w-3 h-3" />
+                              비활성화
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3 h-3" />
+                              활성화
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="gap-1"
+                          style={{
+                            backgroundColor: designTokens.button.brand_default,
+                            color: designTokens.button.brand_text,
+                          }}
+                          onClick={() => navigate(`/to/enrollments/batch?poolId=${selectedPool.id}`)}
+                        >
+                          <GraduationCap className="w-3 h-3" />
+                          일괄 입과
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-2 rounded-lg transition-colors">
+                              <MoreHorizontal
+                                className="w-4 h-4"
+                                style={{ color: designTokens.text.secondary }}
+                              />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Download className="w-4 h-4 mr-2" />
+                              회원 목록 내보내기
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => confirmDeletePool(selectedPool)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -419,7 +663,7 @@ export const MemberPoolPage = () => {
                           회원 목록 ({selectedPool.memberCount})
                         </TabsTrigger>
                         <TabsTrigger value="conditions" className="gap-1">
-                          <GraduationCap className="w-4 h-4" />
+                          <Filter className="w-4 h-4" />
                           조건 설정
                         </TabsTrigger>
                       </TabsList>
@@ -432,6 +676,12 @@ export const MemberPoolPage = () => {
                               style={{ color: designTokens.text.placeholder }}
                             />
                             <Input placeholder="회원 검색..." className="pl-10" />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="gap-1">
+                              <FileDown className="w-3 h-3" />
+                              엑셀 내보내기
+                            </Button>
                           </div>
                         </div>
 
@@ -596,9 +846,14 @@ export const MemberPoolPage = () => {
                                 )}
                             </div>
                           </div>
-                          <p className="text-sm" style={{ color: designTokens.text.placeholder }}>
-                            조건 수정은 운영자(TO) 메뉴에서 가능합니다.
-                          </p>
+                          <Button
+                            variant="outline"
+                            className="gap-1"
+                            onClick={() => openEditModal(selectedPool)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                            조건 수정
+                          </Button>
                         </div>
                       </TabsContent>
                     </Tabs>
@@ -621,6 +876,201 @@ export const MemberPoolPage = () => {
           </div>
         </div>
       </div>
+
+      {/* 회원 풀 생성/수정 모달 */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              {editingPool ? '회원 풀 수정' : '새 회원 풀 생성'}
+            </DialogTitle>
+            <DialogDescription>
+              조건을 설정하여 자동으로 매칭되는 회원 그룹을 생성합니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* 기본 정보 */}
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block">
+                  회원 풀 이름 <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="회원 풀 이름을 입력하세요"
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <Label className="mb-2 block">설명</Label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="회원 풀에 대한 설명을 입력하세요"
+                  maxLength={500}
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* 조건 설정 */}
+            <div>
+              <Label className="mb-2 block">대상 조건</Label>
+              <p className="text-xs mb-3" style={{ color: designTokens.text.secondary }}>
+                아래 조건에 해당하는 직원이 자동으로 이 풀에 포함됩니다.
+              </p>
+
+              <div className="space-y-4 p-4 rounded-lg" style={{ backgroundColor: designTokens.bg.secondary }}>
+                {/* 직원 상태 */}
+                <div>
+                  <Label className="text-sm mb-2 block">직원 상태</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {(['ACTIVE', 'ON_LEAVE', 'RESIGNED'] as EmployeeStatus[]).map((status) => (
+                      <label key={status} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={formData.condition.employeeStatuses.includes(status)}
+                          onCheckedChange={(checked) => {
+                            setFormData({
+                              ...formData,
+                              condition: {
+                                ...formData.condition,
+                                employeeStatuses: checked
+                                  ? [...formData.condition.employeeStatuses, status]
+                                  : formData.condition.employeeStatuses.filter((s) => s !== status),
+                              },
+                            });
+                          }}
+                        />
+                        <span className="text-sm">{EMPLOYEE_STATUS_LABELS[status]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 직책 입력 */}
+                <div>
+                  <Label className="text-sm mb-2 block">직책</Label>
+                  <Input
+                    placeholder="직책을 쉼표로 구분하여 입력 (예: 팀장, 파트장)"
+                    value={formData.condition.positions.join(', ')}
+                    onChange={(e) => {
+                      const positions = e.target.value
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      setFormData({
+                        ...formData,
+                        condition: { ...formData.condition, positions },
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* 직무 입력 */}
+                <div>
+                  <Label className="text-sm mb-2 block">직무</Label>
+                  <Input
+                    placeholder="직무를 쉼표로 구분하여 입력 (예: 개발자, 디자이너)"
+                    value={formData.condition.jobTitles.join(', ')}
+                    onChange={(e) => {
+                      const jobTitles = e.target.value
+                        .split(',')
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      setFormData({
+                        ...formData,
+                        condition: { ...formData.condition, jobTitles },
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 활성화 상태 */}
+            <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: designTokens.bg.secondary }}>
+              <div>
+                <p className="font-medium" style={{ color: designTokens.text.primary }}>
+                  활성화 상태
+                </p>
+                <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+                  비활성화하면 일괄 입과 등에서 사용할 수 없습니다.
+                </p>
+              </div>
+              <Checkbox
+                checked={formData.isActive}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked as boolean })
+                }
+              />
+            </div>
+          </div>
+
+          {/* 액션 버튼 */}
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateModal(false);
+                setFormData(initialFormData);
+                setEditingPool(null);
+              }}
+              className="gap-1"
+            >
+              <X className="w-4 h-4" />
+              취소
+            </Button>
+            <Button
+              onClick={handleSavePool}
+              disabled={!formData.name.trim() || createMemberPool.isPending || updateMemberPool.isPending}
+              className="gap-1"
+              style={{
+                backgroundColor: designTokens.button.brand_default,
+                color: designTokens.button.brand_text,
+              }}
+            >
+              {(createMemberPool.isPending || updateMemberPool.isPending) ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {editingPool ? '수정' : '저장'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>회원 풀 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              '{poolToDelete?.name}' 회원 풀을 삭제하시겠습니까?
+              <br />
+              이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePool}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMemberPool.isPending}
+            >
+              {deleteMemberPool.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-};
+}
