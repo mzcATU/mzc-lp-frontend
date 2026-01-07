@@ -77,3 +77,44 @@ export {
   useDeleteTenantCategory,
   useReorderTenantCategories,
 } from './useTenantCategoryQueries';
+
+export {
+  employeeKeys,
+  useEmployees,
+  useEmployeeSearch,
+  useEmployeesByDepartment,
+  useEmployeeByNumber,
+  useEmployee,
+  useEmployeeLmsAccount,
+  useHasLmsAccount,
+  useCreateEmployee,
+  useUpdateEmployee,
+  useChangeEmployeeStatus,
+  useDeleteEmployee,
+  useCreateLmsAccount,
+} from './useEmployeeQueries';
+
+export {
+  departmentKeys,
+  useDepartments,
+  useDepartmentTree,
+  useActiveDepartments,
+  useDepartmentSearch,
+  useDepartment,
+  useCreateDepartment,
+  useUpdateDepartment,
+  useDeleteDepartment,
+} from './useDepartmentQueries';
+
+export {
+  autoEnrollmentRuleKeys,
+  useAutoEnrollmentRules,
+  useActiveAutoEnrollmentRules,
+  useAutoEnrollmentRulesByTrigger,
+  useAutoEnrollmentRule,
+  useCreateAutoEnrollmentRule,
+  useUpdateAutoEnrollmentRule,
+  useDeleteAutoEnrollmentRule,
+  useActivateAutoEnrollmentRule,
+  useDeactivateAutoEnrollmentRule,
+} from './useAutoEnrollmentRuleQueries';

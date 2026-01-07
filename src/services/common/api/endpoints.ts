@@ -339,4 +339,35 @@ export const API_ENDPOINTS = {
     BY_ENROLLMENT: (enrollmentId: number) => `/enrollments/${enrollmentId}/certificate`,
     REISSUE: (id: number) => `/certificates/${id}/reissue`,
   },
+
+  // Employees (임직원 관리) - TA
+  EMPLOYEES: {
+    BASE: '/employees',
+    SEARCH: '/employees/search',
+    BY_ID: (id: number) => `/employees/${id}`,
+    BY_DEPARTMENT: (departmentId: number) => `/employees/department/${departmentId}`,
+    BY_NUMBER: (employeeNumber: string) => `/employees/number/${employeeNumber}`,
+    STATUS: (id: number) => `/employees/${id}/status`,
+    LMS_ACCOUNT: (id: number) => `/employees/${id}/lms-account`,
+    HAS_LMS_ACCOUNT: (id: number) => `/employees/${id}/has-lms-account`,
+  },
+
+  // Departments (부서 관리) - TA
+  DEPARTMENTS: {
+    BASE: '/departments',
+    TREE: '/departments/tree',
+    ACTIVE: '/departments/active',
+    SEARCH: '/departments/search',
+    BY_ID: (id: number) => `/departments/${id}`,
+  },
+
+  // Auto Enrollment Rules (자동 등록 규칙) - TA
+  AUTO_ENROLLMENT_RULES: {
+    BASE: '/auto-enrollment-rules',
+    ACTIVE: '/auto-enrollment-rules/active',
+    BY_TRIGGER: (trigger: string) => `/auto-enrollment-rules/trigger/${trigger}`,
+    BY_ID: (id: number) => `/auto-enrollment-rules/${id}`,
+    ACTIVATE: (id: number) => `/auto-enrollment-rules/${id}/activate`,
+    DEACTIVATE: (id: number) => `/auto-enrollment-rules/${id}/deactivate`,
+  },
 } as const;
