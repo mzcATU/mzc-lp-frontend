@@ -13,7 +13,7 @@ export interface ReviewAuthor {
   profileImageUrl: string | null;
 }
 
-/** 코스 리뷰 응답 */
+/** 코스 리뷰 응답 (프론트엔드용) */
 export interface CourseReview {
   id: number;
   courseTimeId: number;
@@ -26,13 +26,39 @@ export interface CourseReview {
   isMyReview: boolean;
 }
 
-/** 리뷰 목록 응답 */
+/** 백엔드 리뷰 응답 (API 원본) */
+export interface CourseReviewApiResponse {
+  reviewId: number;
+  courseTimeId: number;
+  userId: number;
+  userName: string;
+  userProfileImageUrl?: string | null;
+  rating: number;
+  content: string;
+  completionRate?: number;
+  createdAt: string;
+  updatedAt: string;
+  isMyReview?: boolean;
+}
+
+/** 리뷰 목록 응답 (프론트엔드용) */
 export interface CourseReviewListResponse {
   content: CourseReview[];
   totalElements: number;
   totalPages: number;
   page: number;
   size: number;
+}
+
+/** 백엔드 리뷰 목록 응답 (API 원본) */
+export interface CourseReviewListApiResponse {
+  reviews: CourseReviewApiResponse[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 /** 리뷰 통계 응답 */
