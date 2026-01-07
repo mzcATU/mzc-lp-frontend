@@ -102,7 +102,8 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     if (roadmapData && isEditMode) {
       setTitle(roadmapData.title);
       setDescription(roadmapData.description || '');
-      setOriginalStatus(roadmapData.status);
+      // 백엔드에서 소문자로 응답하므로 대문자로 정규화
+      setOriginalStatus(roadmapData.status.toUpperCase() as 'PUBLISHED' | 'DRAFT');
       setEnrolledStudents(roadmapData.enrolledStudents);
 
       const programIds = roadmapData.programs.map((p) => p.id);

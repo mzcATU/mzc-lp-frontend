@@ -61,7 +61,9 @@ export function isDestructiveUpdateRestricted(
   status: string,
   enrolledStudents: number
 ): boolean {
-  return status === 'PUBLISHED' && enrolledStudents > 0;
+  // 백엔드에서 status를 소문자로 반환 (published, draft)
+  const normalizedStatus = status.toUpperCase();
+  return normalizedStatus === 'PUBLISHED' && enrolledStudents > 0;
 }
 
 /**
