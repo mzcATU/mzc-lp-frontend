@@ -47,8 +47,7 @@ export function SettingsNotificationsPage() {
               icon={Construction}
               title={t.common.comingSoon}
               description={t.settings.notificationsComingSoon}
-              className="border-2 border-dashed rounded-lg"
-              style={{ borderColor: designTokens.bg.border }}
+              className="border-2 border-dashed rounded-lg border-border"
             />
           </CardContent>
         </Card>
