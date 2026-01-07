@@ -107,13 +107,6 @@ export {
 } from './useDepartmentQueries';
 
 export {
-  memberPoolKeys,
-  useMemberPools,
-  useMemberPool,
-  useMemberPoolMatchCount,
-} from './useMemberPoolQueries';
-
-export {
   autoEnrollmentRuleKeys,
   useAutoEnrollmentRules,
   useActiveAutoEnrollmentRules,

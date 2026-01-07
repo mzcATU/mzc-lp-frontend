@@ -374,6 +374,8 @@ export const API_ENDPOINTS = {
   // Auto Enrollment Rules (자동 입과 규칙) - TO 관리, TA 조회
   AUTO_ENROLLMENT_RULES: {
     BASE: '/api/auto-enrollment-rules',
+    ACTIVE: '/api/auto-enrollment-rules/active',
+    BY_TRIGGER: (trigger: string) => `/api/auto-enrollment-rules/trigger/${trigger}`,
     BY_ID: (id: number) => `/api/auto-enrollment-rules/${id}`,
     ACTIVATE: (id: number) => `/api/auto-enrollment-rules/${id}/activate`,
     DEACTIVATE: (id: number) => `/api/auto-enrollment-rules/${id}/deactivate`,
