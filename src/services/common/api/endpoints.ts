@@ -370,4 +370,17 @@ export const API_ENDPOINTS = {
     ACTIVATE: (id: number) => `/auto-enrollment-rules/${id}/activate`,
     DEACTIVATE: (id: number) => `/auto-enrollment-rules/${id}/deactivate`,
   },
+
+  // Tenant Notices (테넌트 공지) - TA/TO 관리, TU/TO 조회
+  TENANT_NOTICES: {
+    BASE: '/tenant/notices',
+    SEARCH: '/tenant/notices/search',
+    BY_ID: (id: number) => `/tenant/notices/${id}`,
+    PUBLISH: (id: number) => `/tenant/notices/${id}/publish`,
+    ARCHIVE: (id: number) => `/tenant/notices/${id}/archive`,
+    // TU/TO 조회용
+    TU_BASE: '/tu/notices',
+    TU_BY_ID: (id: number) => `/tu/notices/${id}`,
+    TU_COUNT: '/tu/notices/count',
+  },
 } as const;

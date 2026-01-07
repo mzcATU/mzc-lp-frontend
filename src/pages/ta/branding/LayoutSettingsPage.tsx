@@ -94,17 +94,17 @@ interface BrandingSettings {
   };
 }
 
-// 기본 설정값
+// 기본 설정값 - 실제 TU 홈페이지(LandingPage)와 일치
 const defaultBrandingSettings: BrandingSettings = {
   category: {
     enabled: true,
-    items: ['개발', '디자인', '마케팅', '비즈니스', '데이터'],
+    items: ['전체', '개발', 'AI', '데이터', '디자인', '비즈니스', '마케팅', '외국어'],
   },
   company: {
     enabled: true,
     logo: null,
     logoPreview: null,
-    name: 'MZC Learn Platform',
+    name: 'MEGAZONECLOUD',
   },
   logo: {
     enabled: true,
@@ -117,12 +117,12 @@ const defaultBrandingSettings: BrandingSettings = {
   },
   colors: {
     enabled: true,
-    primary: '#4C2D9A',
-    secondary: '#6366F1',
+    primary: '#6778ff',
+    secondary: '#a855f7',
     success: '#10B981',
     warning: '#F59E0B',
     error: '#EF4444',
-    info: '#3B82F6',
+    info: '#6bc2f0',
   },
   banner: {
     enabled: true,
@@ -133,12 +133,12 @@ const defaultBrandingSettings: BrandingSettings = {
   },
   footer: {
     enabled: true,
-    content: '교육의 미래를 함께 만들어갑니다.',
-    copyright: '© 2024 MZC Learn Platform. All rights reserved.',
+    content: '',
+    copyright: `© ${new Date().getFullYear()} MEGAZONECLOUD. All rights reserved.`,
     links: [
-      { label: '이용약관', url: '/terms' },
       { label: '개인정보처리방침', url: '/privacy' },
-      { label: '고객센터', url: '/support' },
+      { label: '이용약관', url: '/terms' },
+      { label: '이메일무단수집거부', url: '/email-policy' },
     ],
   },
   header: {
@@ -147,37 +147,36 @@ const defaultBrandingSettings: BrandingSettings = {
     showSearch: true,
     showNotifications: true,
     menuItems: [
-      { label: '홈', url: '/', visible: true },
-      { label: '강의', url: '/courses', visible: true },
-      { label: '커뮤니티', url: '/community', visible: true },
+      { label: '강의 탐색', url: '/tu/b2c/courses', visible: true },
+      { label: '로드맵', url: '/tu/b2c/roadmaps', visible: true },
+      { label: '커뮤니티', url: '/tu/b2c/community', visible: true },
     ],
   },
   navbar: {
     enabled: true,
     items: [
-      { label: '대시보드', url: '/dashboard', icon: 'home', visible: true },
-      { label: '강의관리', url: '/courses', icon: 'book', visible: true },
-      { label: '사용자', url: '/users', icon: 'users', visible: true },
-      { label: '설정', url: '/settings', icon: 'settings', visible: true },
+      { label: '강의 탐색', url: '/tu/b2c/courses', icon: 'BookOpen', visible: true },
+      { label: '로드맵', url: '/tu/b2c/roadmaps', icon: 'Map', visible: true },
+      { label: '커뮤니티', url: '/tu/b2c/community', icon: 'Users', visible: true },
     ],
   },
   sidebarTU: {
     enabled: true,
     items: [
-      { label: '내 학습', url: '/my-learning', icon: 'book', visible: true },
-      { label: '수강 내역', url: '/history', icon: 'clock', visible: true },
-      { label: '북마크', url: '/bookmarks', icon: 'bookmark', visible: true },
-      { label: '인증서', url: '/certificates', icon: 'award', visible: true },
+      { label: '내 학습', url: '/tu/b2c/mypage/learning', icon: 'BookOpen', visible: true },
+      { label: '수강 완료', url: '/tu/b2c/mypage/completed', icon: 'Award', visible: true },
+      { label: '인증서', url: '/tu/b2c/mypage/certificates', icon: 'Award', visible: true },
+      { label: '프로필 설정', url: '/tu/b2c/mypage/profile', icon: 'Settings', visible: true },
     ],
   },
   sidebarTO: {
     enabled: true,
     items: [
-      { label: '대시보드', url: '/admin/dashboard', icon: 'layout', visible: true },
-      { label: '사용자 관리', url: '/admin/users', icon: 'users', visible: true },
-      { label: '강의 관리', url: '/admin/courses', icon: 'book', visible: true },
-      { label: '분석', url: '/admin/analytics', icon: 'chart', visible: true },
-      { label: '설정', url: '/admin/settings', icon: 'settings', visible: true },
+      { label: '대시보드', url: '/tu/dashboard', icon: 'Home', visible: true },
+      { label: '강의 디자인', url: '/tu/teaching/courses', icon: 'BookOpen', visible: true },
+      { label: '강의 운영', url: '/tu/teaching/assignments', icon: 'Settings', visible: true },
+      { label: '내 콘텐츠', url: '/tu/teaching/content', icon: 'FolderTree', visible: true },
+      { label: '로드맵', url: '/tu/teaching/roadmaps', icon: 'Map', visible: true },
     ],
   },
 };

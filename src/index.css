@@ -43,6 +43,9 @@
   --color-action-text: #FFFFFF;
   --color-action-delete: #F44336;
 
+  /* === Switch/Toggle === */
+  --switch-background: #D1D5DB;
+
   /* === Button - Neutral === */
   --color-btn-neutral: #2A2A2A;
   --color-btn-neutral-hover: #3D3D3D;
