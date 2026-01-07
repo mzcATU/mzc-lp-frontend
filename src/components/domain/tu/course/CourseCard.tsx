@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Pencil } from 'lucide-react';
 import { Button, CategoryBadge } from '@/components/common';
@@ -17,6 +18,9 @@ interface CourseCardProps {
   labels: CourseCardLabels;
   onManage?: () => void;
   onEdit?: () => void;
+  hideActions?: boolean;
+  /** 커스텀 액션 버튼 영역 (hideActions와 함께 사용) */
+  renderActions?: ReactNode;
 }
 
 /**
@@ -25,7 +29,7 @@ interface CourseCardProps {
  * - 콘텐츠 완성도 진행 바
  * - 마지막 접근 시간, 관리/수정 버튼
  */
-export const CourseCard = ({ course, labels, onManage, onEdit }: Readonly<CourseCardProps>) => {
+export const CourseCard = ({ course, labels, onManage, onEdit, hideActions = false, renderActions }: Readonly<CourseCardProps>) => {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
 
@@ -87,16 +91,22 @@ export const CourseCard = ({ course, labels, onManage, onEdit }: Readonly<Course
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-4">
-          <Button className="flex-1" onClick={handleManage}>
-            {labels.manageCourse}
-          </Button>
-          {labels.editCourse && (
-            <Button variant="ghost" className="border border-border" onClick={handleEdit}>
-              <Pencil size={16} />
-            </Button>
-          )}
-        </div>
+        {renderActions ? (
+          <div className="flex gap-2 mt-4">{renderActions}</div>
+        ) : (
+          !hideActions && (
+            <div className="flex gap-2 mt-4">
+              <Button className="flex-1" onClick={handleManage}>
+                {labels.manageCourse}
+              </Button>
+              {labels.editCourse && (
+                <Button variant="ghost" className="border border-border" onClick={handleEdit}>
+                  <Pencil size={16} />
+                </Button>
+              )}
+            </div>
+          )
+        )}
       </div>
     </div>
   );
