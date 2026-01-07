@@ -78,7 +78,6 @@ export function VideoPlayer({
           ? contentService.getLearnerStreamUrl(contentId)
           : contentService.getStreamUrl(contentId);
 
-        console.log('[VideoPlayer] Fetching video from:', url);
         const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -95,7 +94,6 @@ export function VideoPlayer({
         if (isCancelled) return;
 
         const blobObjectUrl = URL.createObjectURL(blob);
-        console.log('[VideoPlayer] Blob URL created:', blobObjectUrl);
         currentBlobUrl = blobObjectUrl;
         setBlobUrl(blobObjectUrl);
       } catch (error) {
@@ -335,7 +333,6 @@ export function VideoPlayer({
         style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }}
         onLoadedMetadata={(e) => {
           const video = e.currentTarget;
-          console.log('[VideoPlayer] Video loaded, duration:', video.duration);
           setDuration(video.duration);
           onDuration?.(video.duration);
           setIsReady(true);

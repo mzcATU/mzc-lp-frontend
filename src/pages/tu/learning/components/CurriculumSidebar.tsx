@@ -36,7 +36,7 @@ interface CurriculumSidebarProps {
   snapshotId: number;
   currentItemId: number | null;
   progressRecords: ProgressRecordResponse[];
-  onItemSelect: (itemId: number, contentId: number, contentType: PlayerContentType) => void;
+  onItemSelect: (itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null) => void;
   demoItems?: DemoItem[];
 }
 
@@ -56,7 +56,7 @@ const mapItemTypeToContentType = (itemType: string | null | undefined): PlayerCo
     VIDEO: 'VIDEO',
     AUDIO: 'VIDEO', // 오디오도 비디오 플레이어로 재생
     DOCUMENT: 'DOCUMENT',
-    IMAGE: 'DOCUMENT', // 이미지는 문서 뷰어로 표시
+    IMAGE: 'IMAGE',
     EXTERNAL_LINK: 'EXTERNAL_LINK',
   };
   return typeMap[itemType.toUpperCase()] || 'VIDEO';
@@ -315,6 +315,7 @@ export function CurriculumSidebar({
             const contentId = demoContentId ?? item.snapshotLearningObject?.contentId ?? 0;
             // 데모 모드에서는 demoContentType 사용, 실제 모드에서는 itemType을 매핑
             const contentType = demoContentType ?? mapItemTypeToContentType(item.itemType);
+            const externalUrl = item.snapshotLearningObject?.externalUrl;
 
             return (
               <CurriculumItem
@@ -327,7 +328,7 @@ export function CurriculumSidebar({
                 isDark={isDark}
                 onSelect={() => {
                   if (contentId > 0) {
-                    onItemSelect(itemId, contentId, contentType);
+                    onItemSelect(itemId, contentId, contentType, externalUrl);
                   }
                 }}
               />

@@ -50,7 +50,7 @@ const mapItemTypeToContentType = (itemType: string | null | undefined): PlayerCo
     VIDEO: 'VIDEO',
     AUDIO: 'VIDEO',
     DOCUMENT: 'DOCUMENT',
-    IMAGE: 'DOCUMENT',
+    IMAGE: 'IMAGE',
     EXTERNAL_LINK: 'EXTERNAL_LINK',
   };
   return typeMap[itemType.toUpperCase()] || 'VIDEO';
@@ -103,7 +103,8 @@ export function LearningPlayerPage() {
   // 상태
   const [currentItemId, setCurrentItemId] = useState<number | null>(itemId ? Number(itemId) : null);
   const [currentContentId, setCurrentContentId] = useState<number | null>(null);
-  const [currentContentType, setCurrentContentType] = useState<PlayerContentType>('VIDEO');
+  const [currentContentType, setCurrentContentType] = useState<PlayerContentType | null>(null);
+  const [currentExternalUrl, setCurrentExternalUrl] = useState<string | null>(null);
   const [playedPercent, setPlayedPercent] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -201,6 +202,7 @@ export function LearningPlayerPage() {
     itemName: string;
     contentId: number;
     contentType: PlayerContentType;
+    externalUrl?: string | null;
     seq: number;
   }
 
@@ -231,6 +233,7 @@ export function LearningPlayerPage() {
             itemName: displayName,
             contentId: item.snapshotLearningObject.contentId,
             contentType: mapItemTypeToContentType(item.itemType),
+            externalUrl: item.snapshotLearningObject.externalUrl,
             seq: seq++,
           });
         }
@@ -271,22 +274,25 @@ export function LearningPlayerPage() {
     };
   }, [orderedCurriculumItems, currentItemId]);
 
-  // 첫 번째 아이템 자동 선택 (데모/실제 공통)
+  // 첫 번째 아이템 자동 선택 또는 URL의 itemId로 선택 (데모/실제 공통)
   useEffect(() => {
-    if (!currentContentId && orderedCurriculumItems.length > 0) {
+    if (orderedCurriculumItems.length > 0) {
       const targetItemId = itemId ? Number(itemId) : orderedCurriculumItems[0].itemId;
       const targetItem = orderedCurriculumItems.find(item => item.itemId === targetItemId) || orderedCurriculumItems[0];
 
-      setCurrentItemId(targetItem.itemId);
-      setCurrentContentId(targetItem.contentId);
-      setCurrentContentType(targetItem.contentType);
+      // 현재 선택된 아이템과 다르면 업데이트
+      if (currentItemId !== targetItem.itemId || currentContentId !== targetItem.contentId || currentContentType !== targetItem.contentType) {
+        setCurrentItemId(targetItem.itemId);
+        setCurrentContentId(targetItem.contentId);
+        setCurrentContentType(targetItem.contentType);
+        setCurrentExternalUrl(targetItem.externalUrl || null);
+      }
     }
-  }, [currentContentId, orderedCurriculumItems, itemId]);
+  }, [orderedCurriculumItems, itemId]);
 
   // 진도 저장 (임시 비활성화)
   const saveProgress = useCallback(async () => {
     // TODO: 테스트 후 다시 활성화
-    console.log('[LearningPlayer] saveProgress disabled for testing');
     return;
 
     // if (!currentItemId || playedPercent <= 0) return;
@@ -323,7 +329,6 @@ export function LearningPlayerPage() {
         await axiosInstance.post(
           API_ENDPOINTS.ENROLLMENTS.ITEM_COMPLETE(Number(enrollmentId), currentItemId)
         );
-        console.log('[LearningPlayer] Item marked as complete via API:', currentItemId);
       } catch (error) {
         console.error('[LearningPlayer] Failed to mark item complete:', error);
         return; // API 실패 시 로컬 상태 업데이트 안 함
@@ -352,8 +357,6 @@ export function LearningPlayerPage() {
         },
       ];
     });
-
-    console.log('[LearningPlayer] Item marked as complete:', currentItemId, isDemoMode ? '(demo mode)' : '');
   }, [currentItemId, isCompleted, isDemoMode, enrollmentId]);
 
   // 비디오 진도 핸들러 (임시 비활성화)
@@ -388,7 +391,7 @@ export function LearningPlayerPage() {
   }, [playedPercent, saveProgress]);
 
   // 아이템 선택 핸들러
-  const handleItemSelect = useCallback((itemId: number, contentId: number, contentType: PlayerContentType) => {
+  const handleItemSelect = useCallback((itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null) => {
     // 현재 진도 저장
     saveProgress();
 
@@ -396,6 +399,7 @@ export function LearningPlayerPage() {
     setCurrentItemId(itemId);
     setCurrentContentId(contentId);
     setCurrentContentType(contentType);
+    setCurrentExternalUrl(externalUrl || null);
     setPlayedPercent(0);
     setIsCompleted(progressRecords.some((r) => r.itemId === itemId && r.completed));
 
@@ -417,13 +421,13 @@ export function LearningPlayerPage() {
   // 이전 아이템으로 이동
   const handlePrevious = useCallback(() => {
     if (!previousItem) return;
-    handleItemSelect(previousItem.itemId, previousItem.contentId, previousItem.contentType);
+    handleItemSelect(previousItem.itemId, previousItem.contentId, previousItem.contentType, previousItem.externalUrl);
   }, [previousItem, handleItemSelect]);
 
   // 다음 아이템으로 이동
   const handleNext = useCallback(() => {
     if (!nextItem) return;
-    handleItemSelect(nextItem.itemId, nextItem.contentId, nextItem.contentType);
+    handleItemSelect(nextItem.itemId, nextItem.contentId, nextItem.contentType, nextItem.externalUrl);
   }, [nextItem, handleItemSelect]);
 
   // 로딩 상태 (데모 모드에서는 스킵)
@@ -511,116 +515,68 @@ export function LearningPlayerPage() {
       </header>
 
       {/* 메인 콘텐츠 */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         {/* 플레이어 영역 */}
-        <main className="flex-1 flex flex-col overflow-hidden transition-all duration-300">
+        <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
           {/* 플레이어 컨테이너 */}
-          <div className={`flex-1 flex flex-col ${isDark ? 'bg-[#0a0a0a]' : 'bg-gray-900'}`}>
-            {/* 비디오 플레이어 영역 - 꽉 차게 */}
-            <div className="flex-1 min-h-0">
-              {/* 비디오 플레이어 */}
-              {currentContentId && currentContentType === 'VIDEO' && (
-                <div className="w-full h-full flex items-center justify-center bg-black">
-                  <VideoPlayer
-                    contentId={currentContentId}
-                    externalUrl={isDemoMode ? DEMO_VIDEO_URLS[currentContentId] : undefined}
-                    initialProgress={
-                      progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent
-                        ? (progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent || 0) / 100
-                        : 0
-                    }
-                    onProgress={handleVideoProgress}
-                    isLearnerMode={!isDemoMode}
-                  />
-                </div>
-              )}
-
-              {/* 문서 뷰어 */}
-              {currentContentId && currentContentType === 'DOCUMENT' && (
-                <div className="w-full h-full">
-                  <DocumentViewer
-                    contentId={currentContentId}
-                  />
-                </div>
-              )}
-
-              {/* 외부 링크 뷰어 */}
-              {currentContentId && currentContentType === 'EXTERNAL_LINK' && (
-                <div className="w-full h-full">
-                  <ExternalLinkViewer
-                    url={`https://example.com/content/${currentContentId}`}
-                  />
-                </div>
-              )}
-
-              {/* 콘텐츠가 없는 경우 */}
-              {!currentContentId && (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-black">
-                  <BookOpen className="w-16 h-16 mb-4 text-gray-600" />
-                  <p className="text-gray-400">
-                    {t.player.selectContent}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* 하단 컨트롤 바 */}
-            <div className={`shrink-0 px-4 py-3 flex items-center justify-between ${
-              isDark ? 'bg-[#1a1a1a]' : 'bg-gray-800'
-            }`}>
-              {/* 현재 콘텐츠 정보 */}
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <h2 className="text-white font-medium truncate">
-                  {orderedCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || '콘텐츠'}
-                </h2>
-                {isCompleted && (
-                  <Badge variant="green" className="gap-1 shrink-0">
-                    <CheckCircle className="w-3 h-3" />
-                    완료
-                  </Badge>
-                )}
+          <div className={`flex-1 min-h-0 ${isDark ? 'bg-[#0a0a0a]' : 'bg-gray-900'}`}>
+            {/* 비디오 플레이어 */}
+            {currentContentId && currentContentType === 'VIDEO' && (
+              <div key={`video-${currentContentId}`} className="w-full h-full flex items-center justify-center bg-black">
+                <VideoPlayer
+                  contentId={currentContentId}
+                  externalUrl={isDemoMode ? DEMO_VIDEO_URLS[currentContentId] : undefined}
+                  initialProgress={
+                    progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent
+                      ? (progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent || 0) / 100
+                      : 0
+                  }
+                  onProgress={handleVideoProgress}
+                  isLearnerMode={!isDemoMode}
+                />
               </div>
+            )}
 
-              {/* 네비게이션 버튼 */}
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePrevious}
-                  disabled={!hasPrevious}
-                  className="gap-1 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t.player.previous}</span>
-                </Button>
-
-                {!isCompleted && (
-                  <button
-                    onClick={handleComplete}
-                    disabled={markItemComplete.isPending}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium text-sm hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50"
-                  >
-                    {markItemComplete.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4" />
-                    )}
-                    <span className="hidden sm:inline">{t.player.markComplete}</span>
-                  </button>
-                )}
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleNext}
-                  disabled={!hasNext}
-                  className="gap-1 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
-                >
-                  <span className="hidden sm:inline">{t.player.next}</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+            {/* 문서 뷰어 */}
+            {currentContentId && currentContentType === 'DOCUMENT' && (
+              <div key={`doc-${currentContentId}`} className="w-full h-full">
+                <DocumentViewer
+                  contentId={currentContentId}
+                  contentType="DOCUMENT"
+                  isLearnerMode={!isDemoMode}
+                />
               </div>
-            </div>
+            )}
+
+            {/* 이미지 뷰어 */}
+            {currentContentId && currentContentType === 'IMAGE' && (
+              <div key={`img-${currentContentId}`} className="w-full h-full">
+                <DocumentViewer
+                  contentId={currentContentId}
+                  contentType="IMAGE"
+                  isLearnerMode={!isDemoMode}
+                />
+              </div>
+            )}
+
+            {/* 외부 링크 뷰어 */}
+            {currentContentType === 'EXTERNAL_LINK' && currentExternalUrl && (
+              <div className="w-full h-full">
+                <ExternalLinkViewer
+                  url={currentExternalUrl}
+                />
+              </div>
+            )}
+
+            {/* 콘텐츠가 없는 경우 */}
+            {!currentContentId && (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-black">
+                <BookOpen className="w-16 h-16 mb-4 text-gray-600" />
+                <p className="text-gray-400">
+                  {t.player.selectContent}
+                </p>
+              </div>
+            )}
           </div>
         </main>
 
@@ -640,6 +596,66 @@ export function LearningPlayerPage() {
             />
           </div>
         </aside>
+      </div>
+
+      {/* 하단 컨트롤 바 - 전체 너비 */}
+      <div className={`shrink-0 px-4 py-3 border-t ${
+        isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-gray-800 border-gray-700'
+      }`}>
+        <div className="flex items-center justify-between gap-3">
+          {/* 현재 콘텐츠 정보 */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <h2 className="text-white font-medium truncate text-sm sm:text-base">
+              {orderedCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || '콘텐츠'}
+            </h2>
+            {isCompleted && (
+              <Badge variant="green" className="gap-1 shrink-0">
+                <CheckCircle className="w-3 h-3" />
+                완료
+              </Badge>
+            )}
+          </div>
+
+          {/* 네비게이션 버튼 */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePrevious}
+              disabled={!hasPrevious}
+              className="gap-1 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">{t.player.previous}</span>
+            </Button>
+
+            {!isCompleted && (
+              <button
+                onClick={handleComplete}
+                disabled={markItemComplete.isPending}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white font-medium text-sm hover:shadow-lg hover:shadow-blue-500/25 transition-all disabled:opacity-50"
+              >
+                {markItemComplete.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-4 h-4" />
+                )}
+                <span>{t.player.markComplete}</span>
+              </button>
+            )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNext}
+              disabled={!hasNext}
+              className="gap-1 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
+            >
+              <span className="hidden sm:inline">{t.player.next}</span>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

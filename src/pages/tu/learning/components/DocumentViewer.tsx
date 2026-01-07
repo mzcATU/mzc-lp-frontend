@@ -1,17 +1,20 @@
 /**
  * DocumentViewer 컴포넌트
- * PDF 및 문서 콘텐츠를 표시하고 진도 추적 기능 제공
+ * PDF, 문서 및 이미지 콘텐츠를 표시하고 진도 추적 기능 제공
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Loader2, AlertCircle, RefreshCw, FileText, Download, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, FileText, Download, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/common';
 import { useTranslation } from '@/store/common/languageStore';
 import { useThemeStore } from '@/store/common/themeStore';
-import { contentService } from '@/services/tu/contentService';
+import axiosInstance from '@/services/common/api/axiosInstance';
+import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 
 interface DocumentViewerProps {
   contentId: number;
   externalUrl?: string;
+  contentType?: 'DOCUMENT' | 'IMAGE' | 'PDF';
+  isLearnerMode?: boolean;
   onProgress?: (progress: { viewed: number }) => void;
   onComplete?: () => void;
   onReady?: () => void;
@@ -21,6 +24,8 @@ interface DocumentViewerProps {
 export function DocumentViewer({
   contentId,
   externalUrl,
+  contentType = 'DOCUMENT',
+  isLearnerMode = true,
   onProgress,
   onComplete,
   onReady,
@@ -40,8 +45,9 @@ export function DocumentViewer({
   const [viewedPages, setViewedPages] = useState<Set<number>>(new Set([1]));
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const isImage = contentType === 'IMAGE';
 
-  // 문서 URL 로드
+  // 문서/이미지 Blob URL 로드 (인증 토큰 포함)
   useEffect(() => {
     if (externalUrl) {
       setDocumentUrl(externalUrl);
@@ -50,15 +56,29 @@ export function DocumentViewer({
       return;
     }
 
-    const loadDocument = async () => {
+    const loadContent = async () => {
       try {
         setIsLoading(true);
         setHasError(false);
-        const url = await contentService.getStreamUrl(contentId);
-        setDocumentUrl(url);
+
+        // API 엔드포인트 선택 (학습자용/관리자용)
+        const endpoint = isLearnerMode
+          ? API_ENDPOINTS.LEARNING.CONTENT_STREAM(contentId)
+          : API_ENDPOINTS.CONTENTS.STREAM(contentId);
+
+        // Blob으로 가져오기 (인증 토큰 자동 포함)
+        const response = await axiosInstance.get(endpoint, {
+          responseType: 'blob',
+        });
+
+        // 서버 응답의 Content-Type 사용
+        const responseContentType = response.headers['content-type'] || 'application/octet-stream';
+        const blob = new Blob([response.data], { type: responseContentType });
+        const blobUrl = URL.createObjectURL(blob);
+        setDocumentUrl(blobUrl);
         onReady?.();
       } catch (error) {
-        console.error('Failed to load document:', error);
+        console.error('Failed to load content:', error);
         setHasError(true);
         onError?.(error as Error);
       } finally {
@@ -66,8 +86,15 @@ export function DocumentViewer({
       }
     };
 
-    loadDocument();
-  }, [contentId, externalUrl, onReady, onError]);
+    loadContent();
+
+    // 클린업: Blob URL 해제
+    return () => {
+      if (documentUrl && documentUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(documentUrl);
+      }
+    };
+  }, [contentId, externalUrl, isLearnerMode, onReady, onError]);
 
   // 페이지 변경 시 진도 업데이트
   useEffect(() => {
@@ -147,23 +174,22 @@ export function DocumentViewer({
     );
   }
 
-  // PDF 뷰어 (Google Docs Viewer 또는 iframe 사용)
-  const pdfViewerUrl = documentUrl
-    ? `https://docs.google.com/viewer?url=${encodeURIComponent(documentUrl)}&embedded=true`
-    : null;
-
   return (
-    <div className={`rounded-lg overflow-hidden ${isDark ? 'bg-[#1a1a2e]' : 'bg-white'}`}>
+    <div className={`h-full flex flex-col ${isDark ? 'bg-[#1a1a2e]' : 'bg-white'}`}>
       {/* 툴바 */}
       <div
-        className={`flex items-center justify-between px-4 py-2 border-b ${
+        className={`shrink-0 flex items-center justify-between px-4 py-2 border-b ${
           isDark ? 'bg-[#12121a] border-white/10' : 'bg-gray-50 border-gray-200'
         }`}
       >
         <div className="flex items-center gap-2">
-          <FileText className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          {isImage ? (
+            <ImageIcon className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          ) : (
+            <FileText className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          )}
           <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-            {t.player.curriculum}
+            {isImage ? '이미지' : '문서'}
           </span>
         </div>
 
@@ -188,32 +214,49 @@ export function DocumentViewer({
         </div>
       </div>
 
-      {/* 문서 뷰어 */}
-      <div
-        className="relative overflow-auto"
-        style={{
-          height: 'calc(100vh - 300px)',
-          minHeight: '400px',
-        }}
-      >
-        {pdfViewerUrl ? (
+      {/* 콘텐츠 뷰어 */}
+      <div className="flex-1 relative overflow-auto min-h-0">
+        {/* 이미지 뷰어 - 배경 흰색 */}
+        {isImage && documentUrl && (
+          <div className="w-full h-full flex items-center justify-center p-4 bg-white">
+            <img
+              src={documentUrl}
+              alt="Content"
+              className="max-w-full max-h-full object-contain"
+              style={{
+                transform: `scale(${zoom / 100})`,
+                transition: 'transform 0.2s ease',
+              }}
+              onLoad={() => {
+                setIsLoading(false);
+                onReady?.();
+              }}
+              onError={() => {
+                setHasError(true);
+                onError?.(new Error('Failed to load image'));
+              }}
+            />
+          </div>
+        )}
+
+        {/* 문서 뷰어 (PDF, TXT 등) - iframe 사용 */}
+        {!isImage && documentUrl && (
           <iframe
             ref={iframeRef}
-            src={pdfViewerUrl}
-            className="w-full h-full border-0"
+            src={documentUrl}
+            className="w-full h-full border-0 bg-white"
             style={{
-              transform: `scale(${zoom / 100})`,
+              transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
               transformOrigin: 'top left',
-              width: `${10000 / zoom}%`,
-              height: `${10000 / zoom}%`,
+              width: zoom !== 100 ? `${10000 / zoom}%` : '100%',
+              height: zoom !== 100 ? `${10000 / zoom}%` : '100%',
             }}
             title="Document Viewer"
-            onLoad={() => {
-              setIsLoading(false);
-              onReady?.();
-            }}
           />
-        ) : (
+        )}
+
+        {/* URL 없는 경우 */}
+        {!documentUrl && (
           <div className="flex items-center justify-center h-full">
             <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
               {t.player.selectContent}
