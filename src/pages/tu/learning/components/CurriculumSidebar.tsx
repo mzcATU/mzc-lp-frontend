@@ -36,7 +36,7 @@ interface CurriculumSidebarProps {
   snapshotId: number;
   currentItemId: number | null;
   progressRecords: ProgressRecordResponse[];
-  onItemSelect: (itemId: number, contentId: number, contentType: PlayerContentType) => void;
+  onItemSelect: (itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null) => void;
   demoItems?: DemoItem[];
 }
 
@@ -49,6 +49,18 @@ const contentTypeIcons: Record<string, React.ReactNode> = {
   EXTERNAL_LINK: <LinkIcon className="w-4 h-4" />,
 };
 
+// itemType을 PlayerContentType으로 매핑
+const mapItemTypeToContentType = (itemType: string | null | undefined): PlayerContentType => {
+  if (!itemType) return 'VIDEO';
+  const typeMap: Record<string, PlayerContentType> = {
+    VIDEO: 'VIDEO',
+    AUDIO: 'VIDEO', // 오디오도 비디오 플레이어로 재생
+    DOCUMENT: 'DOCUMENT',
+    IMAGE: 'IMAGE',
+    EXTERNAL_LINK: 'EXTERNAL_LINK',
+  };
+  return typeMap[itemType.toUpperCase()] || 'VIDEO';
+};
 // 스냅샷 아이템 조회 훅
 function useSnapshotItems(snapshotId: number, enabled: boolean = true) {
   return useQuery({
@@ -91,6 +103,8 @@ function CurriculumItem({ item, seq, isActive, isCompleted, progress, onSelect, 
   const contentType = item.snapshotLearningObject?.contentId ? 'VIDEO' : null; // 기본값, 실제로는 LO에서 가져와야 함
   const duration = item.snapshotLearningObject?.duration;
   const isFolder = item.isFolder;
+  // displayName이 있으면 우선 사용, 없으면 itemName(파일명) 사용
+  const displayName = item.snapshotLearningObject?.displayName || item.itemName;
 
   if (isFolder) {
     return (
@@ -145,7 +159,7 @@ function CurriculumItem({ item, seq, isActive, isCompleted, progress, onSelect, 
               : isDark ? 'text-gray-300' : 'text-gray-600'
           }`}
         >
-          {item.itemName}
+          {displayName}
         </div>
         {duration && (
           <div className={`flex items-center gap-2 mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -221,14 +235,24 @@ export function CurriculumSidebar({
     }
 
     // API 모드
-    if (!items || !relationsData) return [];
+    if (!items) return [];
 
     const itemsMap = new Map<number, SnapshotItemResponse>();
+    const flatItems: { seq: number; itemId: number; item: SnapshotItemResponse }[] = [];
+    let seq = 1;
 
     // 재귀적으로 아이템 평탄화
     const flattenItems = (itemList: SnapshotItemResponse[]) => {
       itemList.forEach((item) => {
         itemsMap.set(item.itemId, item);
+        // 폴더가 아니고 콘텐츠가 있는 아이템만 추가
+        if (!item.isFolder && item.snapshotLearningObject?.contentId) {
+          flatItems.push({
+            seq: seq++,
+            itemId: item.itemId,
+            item: item,
+          });
+        }
         if (item.children && item.children.length > 0) {
           flattenItems(item.children);
         }
@@ -236,13 +260,22 @@ export function CurriculumSidebar({
     };
     flattenItems(items);
 
-    // 순서대로 아이템 반환
-    return relationsData.orderedItems.map((orderedItem) => ({
-      ...orderedItem,
-      item: itemsMap.get(orderedItem.itemId),
+    // relationsData가 있으면 순서대로, 없으면 평탄화된 순서대로 반환
+    if (relationsData?.orderedItems && relationsData.orderedItems.length > 0) {
+      return relationsData.orderedItems.map((orderedItem) => ({
+        ...orderedItem,
+        item: itemsMap.get(orderedItem.itemId),
+        contentId: undefined as number | undefined,
+        contentType: undefined as PlayerContentType | undefined,
+      })).filter((item) => item.item);
+    }
+
+    // relations가 없으면 평탄화된 아이템 반환
+    return flatItems.map((flatItem) => ({
+      ...flatItem,
       contentId: undefined as number | undefined,
       contentType: undefined as PlayerContentType | undefined,
-    })).filter((item) => item.item);
+    }));
   }, [items, relationsData, isDemoMode, demoItems]);
 
   const isLoading = !isDemoMode && (itemsLoading || relationsLoading);
@@ -280,7 +313,9 @@ export function CurriculumSidebar({
             const isCompleted = progressRecord?.completed ?? false;
             const progress = progressRecord?.progressPercent ?? 0;
             const contentId = demoContentId ?? item.snapshotLearningObject?.contentId ?? 0;
-            const contentType = demoContentType ?? 'VIDEO';
+            // 데모 모드에서는 demoContentType 사용, 실제 모드에서는 itemType을 매핑
+            const contentType = demoContentType ?? mapItemTypeToContentType(item.itemType);
+            const externalUrl = item.snapshotLearningObject?.externalUrl;
 
             return (
               <CurriculumItem
@@ -293,7 +328,7 @@ export function CurriculumSidebar({
                 isDark={isDark}
                 onSelect={() => {
                   if (contentId > 0) {
-                    onItemSelect(itemId, contentId, contentType);
+                    onItemSelect(itemId, contentId, contentType, externalUrl);
                   }
                 }}
               />

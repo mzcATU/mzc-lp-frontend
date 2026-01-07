@@ -23,6 +23,7 @@ export interface SnapshotLearningObjectResponse {
   duration: number | null;
   thumbnailUrl: string | null;
   resolution: string | null;
+  externalUrl: string | null;
   isCustomized: boolean;
 }
 

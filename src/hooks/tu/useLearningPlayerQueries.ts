@@ -13,6 +13,25 @@ import { learningStatsKeys } from './useLearningStatsQueries';
 export const learningPlayerKeys = {
   all: ['learningPlayer'] as const,
   curriculum: (enrollmentId: number) => [...learningPlayerKeys.all, 'curriculum', enrollmentId] as const,
+  playerData: (enrollmentId: number) => [...learningPlayerKeys.all, 'playerData', enrollmentId] as const,
+};
+
+/**
+ * 학습 플레이어용 Enrollment 데이터 조회 훅
+ * - Enrollment + CourseTime + Program 정보를 조합하여 snapshotId까지 획득
+ */
+export const useEnrollmentForPlayer = (
+  enrollmentId: number,
+  options?: { enabled?: boolean }
+) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  return useQuery({
+    queryKey: learningPlayerKeys.playerData(enrollmentId),
+    queryFn: () => enrollmentService.getEnrollmentForPlayer(enrollmentId),
+    enabled: options?.enabled !== false && isAuthenticated && enrollmentId > 0,
+    staleTime: 1000 * 60 * 5, // 5분간 캐시
+  });
 };
 
 /**

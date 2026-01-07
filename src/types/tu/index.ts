@@ -57,6 +57,7 @@ export type {
   MarkItemCompleteRequest,
   ProgressRecordResponse,
   EnrollmentWithCurriculumResponse,
+  EnrollmentPlayerData,
   PlayerState,
   VideoPlayerProps,
   CurriculumSidebarProps,
