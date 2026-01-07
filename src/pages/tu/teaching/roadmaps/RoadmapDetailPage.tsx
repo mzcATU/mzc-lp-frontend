@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -11,9 +12,10 @@ import {
   Loader2,
   Map,
   MoreVertical,
-  GripVertical,
+  Timer,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/utils/cn';
 import {
   Button,
   Badge,
@@ -65,6 +67,7 @@ const t = {
   order: { ko: '순서', en: 'Order' },
   category: { ko: '카테고리', en: 'Category' },
   duration: { ko: '시간', en: 'Duration' },
+  totalDuration: { ko: '총 학습 시간', en: 'Total Duration' },
 };
 
 /**
@@ -77,6 +80,62 @@ function formatDate(dateString: string, language: 'ko' | 'en'): string {
     month: 'long',
     day: 'numeric',
   });
+}
+
+/**
+ * duration 문자열에서 시간 추출 (예: "8hours" -> 8)
+ */
+function parseDurationHours(duration: string): number {
+  const match = duration.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * 로딩 스켈레톤 컴포넌트
+ */
+function LoadingSkeleton() {
+  return (
+    <div className="p-8 bg-bg-app min-h-screen">
+      {/* Back button skeleton */}
+      <Skeleton className="h-8 w-24 mb-4" />
+
+      {/* Header skeleton */}
+      <div className="mb-6">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-6 w-16 rounded-md" />
+            </div>
+            <Skeleton className="h-5 w-96" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-10" />
+          </div>
+        </div>
+      </div>
+
+      {/* Stats skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-lg" />
+        ))}
+      </div>
+
+      {/* Program list skeleton */}
+      <div className="bg-bg-default rounded-lg border border-border">
+        <div className="p-6 border-b border-border">
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="p-6 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -94,6 +153,14 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
   const duplicateMutation = useDuplicateRoadmap();
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
+
+  // 총 학습 시간 계산
+  const totalDuration = useMemo(() => {
+    if (!roadmap?.programs) return 0;
+    return roadmap.programs.reduce((sum, program) => {
+      return sum + parseDurationHours(program.duration);
+    }, 0);
+  }, [roadmap?.programs]);
 
   // 삭제 핸들러
   const handleDelete = async () => {
@@ -121,21 +188,7 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
 
   // 로딩 상태
   if (isLoading) {
-    return (
-      <div className="p-8 bg-bg-app min-h-screen">
-        <div className="mb-6">
-          <Skeleton className="h-8 w-32 mb-4" />
-          <Skeleton className="h-10 w-96 mb-2" />
-          <Skeleton className="h-6 w-64" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-        <Skeleton className="h-64" />
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   // 에러 또는 데이터 없음
@@ -253,7 +306,7 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         <IconStatCard
           icon={<Users size={20} />}
           label={getText('enrolledStudents')}
@@ -263,6 +316,11 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
           icon={<BookOpen size={20} />}
           label={getText('programCount')}
           value={roadmap.courseCount}
+        />
+        <IconStatCard
+          icon={<Timer size={20} />}
+          label={getText('totalDuration')}
+          value={`${totalDuration}${language === 'ko' ? '시간' : 'h'}`}
         />
         <IconStatCard
           icon={<Calendar size={20} />}
@@ -290,12 +348,16 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
               {roadmap.programs.map((program, index) => (
                 <div
                   key={program.id}
-                  className="flex items-center gap-4 p-4 bg-bg-secondary rounded-lg border border-border"
+                  className={cn(
+                    'flex items-center gap-4 p-4 rounded-lg border',
+                    'bg-bg-secondary border-border',
+                    'hover:bg-bg-app hover:border-primary/30 hover:shadow-sm',
+                    'transition-all duration-200 cursor-default'
+                  )}
                 >
                   {/* Order Number */}
-                  <div className="flex items-center gap-2 text-text-secondary">
-                    <GripVertical size={16} className="opacity-30" />
-                    <span className="w-6 h-6 flex items-center justify-center bg-bg-app rounded text-sm font-medium">
+                  <div className="flex items-center gap-2 text-text-secondary flex-shrink-0">
+                    <span className="w-7 h-7 flex items-center justify-center bg-primary/10 text-primary rounded-full text-sm font-semibold">
                       {index + 1}
                     </span>
                   </div>
@@ -303,15 +365,16 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
                   {/* Program Info */}
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-text-primary truncate">{program.title}</h4>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-text-secondary">
-                      <span>{program.category}</span>
-                      <span>•</span>
+                    <div className="flex items-center gap-2 mt-1 text-sm text-text-secondary">
+                      <Clock size={14} className="flex-shrink-0" />
                       <span>{program.duration}</span>
                     </div>
                   </div>
 
-                  {/* Category Badge */}
-                  <Badge variant="gray">{program.category}</Badge>
+                  {/* Category Badge - hidden on mobile */}
+                  <Badge variant="gray" className="hidden sm:inline-flex flex-shrink-0">
+                    {program.category}
+                  </Badge>
                 </div>
               ))}
             </div>
