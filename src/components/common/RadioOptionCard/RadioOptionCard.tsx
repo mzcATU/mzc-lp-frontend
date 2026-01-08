@@ -58,6 +58,10 @@ interface RadioOptionCardProps {
   variant?: 'card' | 'simple';
   /** HTML id (simple 스타일에서 label 연결용) */
   id?: string;
+  /** 비활성화 여부 */
+  disabled?: boolean;
+  /** 비활성화 안내 문구 */
+  disabledMessage?: string;
 }
 
 export function RadioOptionCard({
@@ -73,6 +77,8 @@ export function RadioOptionCard({
   className,
   variant = 'card',
   id,
+  disabled = false,
+  disabledMessage,
 }: Readonly<RadioOptionCardProps>) {
   // Simple 스타일: 기본 라디오 버튼 (RadioGroup 대체)
   if (variant === 'simple') {
@@ -114,12 +120,13 @@ export function RadioOptionCard({
   return (
     <label
       className={cn(
-        'flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all',
+        'flex items-center gap-3 p-4 rounded-lg transition-all',
+        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         className
       )}
       style={{
-        border: `1px solid ${isSelected ? designTokens.action.primary_default : designTokens.bg.border}`,
-        backgroundColor: isSelected ? designTokens.bg.secondary : 'transparent',
+        border: `1px solid ${isSelected && !disabled ? designTokens.action.primary_default : designTokens.bg.border}`,
+        backgroundColor: isSelected && !disabled ? designTokens.bg.secondary : 'transparent',
       }}
     >
       <input
@@ -127,17 +134,18 @@ export function RadioOptionCard({
         name={name}
         value={value}
         checked={isSelected}
-        onChange={() => onChange(value)}
+        onChange={() => !disabled && onChange(value)}
+        disabled={disabled}
         className="hidden"
       />
       {/* 좌측 라디오 마커 */}
       <div
         className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
         style={{
-          borderColor: isSelected ? designTokens.action.primary_default : designTokens.bg.border,
+          borderColor: isSelected && !disabled ? designTokens.action.primary_default : designTokens.bg.border,
         }}
       >
-        {isSelected && (
+        {isSelected && !disabled && (
           <div
             className="w-2.5 h-2.5 rounded-full"
             style={{ backgroundColor: designTokens.action.primary_default }}
@@ -153,8 +161,13 @@ export function RadioOptionCard({
         </div>
       )}
       <div className="flex-1">
-        <div style={{ color: designTokens.text.primary, fontSize: '14px', marginBottom: description ? '4px' : 0 }}>
+        <div style={{ color: designTokens.text.primary, fontSize: '14px', marginBottom: (description || disabledMessage) ? '4px' : 0 }}>
           {label}
+          {disabled && disabledMessage && (
+            <span className="ml-2 text-xs text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded">
+              {disabledMessage}
+            </span>
+          )}
         </div>
         {description && (
           <div style={{ color: designTokens.text.secondary, fontSize: '12px' }}>
