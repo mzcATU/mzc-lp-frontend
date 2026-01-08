@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Save,
   BookOpen,
@@ -246,14 +247,20 @@ export function UserDetailPage() {
 
   const handleRoleChange = async (role: SystemRole) => {
     if (formState) {
+      const previousRole = formState.systemRole;
       setFormState({ ...formState, systemRole: role });
       try {
         await updateRoleMutation.mutateAsync({
           id: userId,
           request: { systemRole: role },
         });
+        toast.success('역할이 성공적으로 변경되었습니다.');
+        refetch(); // 데이터 다시 가져오기
       } catch (err) {
         console.error('Failed to update role:', err);
+        // 실패 시 이전 역할로 롤백
+        setFormState({ ...formState, systemRole: previousRole });
+        toast.error('역할 변경에 실패했습니다.');
       }
     }
   };
