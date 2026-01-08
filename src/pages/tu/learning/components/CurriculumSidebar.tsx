@@ -36,7 +36,7 @@ interface CurriculumSidebarProps {
   snapshotId: number;
   currentItemId: number | null;
   progressRecords: ProgressRecordResponse[];
-  onItemSelect: (itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null) => void;
+  onItemSelect: (itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null, downloadable?: boolean | null) => void;
   demoItems?: DemoItem[];
 }
 
@@ -100,11 +100,14 @@ interface CurriculumItemProps {
 }
 
 function CurriculumItem({ item, seq, isActive, isCompleted, progress, onSelect, isDark }: CurriculumItemProps) {
-  const contentType = item.snapshotLearningObject?.contentId ? 'VIDEO' : null; // 기본값, 실제로는 LO에서 가져와야 함
   const duration = item.snapshotLearningObject?.duration;
+  const description = item.snapshotLearningObject?.description;
+  const pageCount = item.snapshotLearningObject?.pageCount;
   const isFolder = item.isFolder;
   // displayName이 있으면 우선 사용, 없으면 itemName(파일명) 사용
   const displayName = item.snapshotLearningObject?.displayName || item.itemName;
+  // itemType으로 콘텐츠 타입 결정
+  const itemType = item.itemType?.toUpperCase();
 
   if (isFolder) {
     return (
@@ -161,12 +164,29 @@ function CurriculumItem({ item, seq, isActive, isCompleted, progress, onSelect, 
         >
           {displayName}
         </div>
-        {duration && (
+        {description && (
+          <div
+            className={`text-xs mt-0.5 truncate ${
+              isDark ? 'text-gray-400' : 'text-gray-500'
+            }`}
+          >
+            {description}
+          </div>
+        )}
+        {/* 콘텐츠 메타 정보: 영상 길이 또는 페이지 수 */}
+        {(duration || pageCount) && (
           <div className={`flex items-center gap-2 mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-            {contentType && contentTypeIcons[contentType]}
-            <span className="text-xs">
-              {formatDuration(duration)}
-            </span>
+            {itemType && contentTypeIcons[itemType]}
+            {duration && (
+              <span className="text-xs">
+                {formatDuration(duration)}
+              </span>
+            )}
+            {pageCount && (
+              <span className="text-xs">
+                {pageCount}p
+              </span>
+            )}
             {progress > 0 && progress < 100 && (
               <span className="text-xs">
                 ({progress}%)
@@ -316,6 +336,7 @@ export function CurriculumSidebar({
             // 데모 모드에서는 demoContentType 사용, 실제 모드에서는 itemType을 매핑
             const contentType = demoContentType ?? mapItemTypeToContentType(item.itemType);
             const externalUrl = item.snapshotLearningObject?.externalUrl;
+            const downloadable = item.snapshotLearningObject?.downloadable;
 
             return (
               <CurriculumItem
@@ -328,7 +349,7 @@ export function CurriculumSidebar({
                 isDark={isDark}
                 onSelect={() => {
                   if (contentId > 0) {
-                    onItemSelect(itemId, contentId, contentType, externalUrl);
+                    onItemSelect(itemId, contentId, contentType, externalUrl, downloadable);
                   }
                 }}
               />
