@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   Clock,
   Users,
@@ -30,8 +30,9 @@ import { Progress } from '@/components/common/Progress';
 import { Skeleton } from '@/components/common/Skeleton';
 import { NoDataEmpty } from '@/components/common/EmptyState';
 import { useToDashboard } from '@/hooks/to';
+import type { DashboardPeriod } from '@/services/to';
 
-type DateRange = '7d' | '30d' | 'all';
+type DateRange = DashboardPeriod;
 
 const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: 'all', label: '전체' },
@@ -40,8 +41,8 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
 ];
 
 export function DashboardPage() {
-  const { data, isLoading, error } = useToDashboard();
   const [dateRange, setDateRange] = useState<DateRange>('all');
+  const { data, isLoading, error } = useToDashboard(dateRange);
 
   if (error) {
     return (
@@ -78,21 +79,6 @@ export function DashboardPage() {
     averageCapacityUtilization: 0,
   };
   const dailyTrend = data?.dailyTrend ?? [];
-
-  // 선택한 기간에 따라 데이터 필터링
-  const filteredDailyTrend = useMemo(() => {
-    if (dailyTrend.length === 0) return [];
-    if (dateRange === 'all') return dailyTrend;
-
-    const days = dateRange === '7d' ? 7 : 30;
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - days);
-
-    return dailyTrend.filter((item) => {
-      const itemDate = new Date(item.date);
-      return itemDate >= cutoffDate;
-    });
-  }, [dailyTrend, dateRange]);
 
   // 선택된 기간 라벨 가져오기
   const selectedRangeLabel = DATE_RANGE_OPTIONS.find((opt) => opt.value === dateRange)?.label ?? '';
@@ -359,7 +345,7 @@ export function DashboardPage() {
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-64" />
-            ) : filteredDailyTrend.length === 0 ? (
+            ) : dailyTrend.length === 0 ? (
               <NoDataEmpty
                 title="데이터가 없습니다"
                 description="선택한 기간에 수강 신청 데이터가 없습니다."
@@ -368,10 +354,10 @@ export function DashboardPage() {
             ) : (
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  {filteredDailyTrend.length >= 7 ? (
+                  {dailyTrend.length >= 7 ? (
                     // 7일 이상: AreaChart로 트렌드 시각화
                     <AreaChart
-                      data={filteredDailyTrend}
+                      data={dailyTrend}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
                       <defs>
@@ -413,7 +399,7 @@ export function DashboardPage() {
                   ) : (
                     // 7일 미만: BarChart (막대 너비 제한 + 호버 효과 + 그라데이션)
                     <BarChart
-                      data={filteredDailyTrend}
+                      data={dailyTrend}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
                       <defs>
