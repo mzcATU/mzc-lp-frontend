@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -143,6 +144,7 @@ function StatCard({
 
 export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProgramStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -312,7 +314,7 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           {/* 상세보기 - 모든 상태 */}
-          <DropdownMenuItem onClick={() => navigate(`/to/courses/${item.id}`)}>
+          <DropdownMenuItem onClick={() => navigate(prefixPath(`/to/courses/${item.id}`))}>
             <Eye size={14} />
             {getText('view')}
           </DropdownMenuItem>
@@ -587,7 +589,7 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
               pageIndex={page}
               pageSize={10}
               onPageChange={setPage}
-              onRowClick={(item) => navigate(`/to/courses/${item.id}`)}
+              onRowClick={(item) => navigate(prefixPath(`/to/courses/${item.id}`))}
               labels={{
                 noResults: getText('noResults'),
                 rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',

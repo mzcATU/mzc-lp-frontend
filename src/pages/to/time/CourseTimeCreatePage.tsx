@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info, UserPlus, X, Users } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -127,6 +128,7 @@ interface InstructorAssignment {
 
 export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCreatePageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const createTime = useCreateTime();
   const { data: approvedProgramsData, isLoading: isLoadingPrograms } = useApprovedPrograms();
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'DESIGNER', size: 100 });
@@ -321,13 +323,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               ? '차수가 생성되었으나 일부 강사 배정에 실패했습니다.'
               : 'Course time created but some instructor assignments failed.'
           );
-          navigate('/to/times');
+          navigate(prefixPath('/to/times'));
           return;
         }
       }
 
       toast.success(getText('createSuccess'));
-      navigate('/to/times');
+      navigate(prefixPath('/to/times'));
     } catch (err: unknown) {
       console.error('Create failed:', err);
 
@@ -446,7 +448,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       <div className="bg-bg-default border-b border-border px-6 py-4">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <h1 className="text-text-primary m-0">{getText('title')}</h1>
-          <Button variant="ghost" onClick={() => navigate('/to/times')} className="border border-border">
+          <Button variant="ghost" onClick={() => navigate(prefixPath('/to/times'))} className="border border-border">
             {getText('close')}
           </Button>
         </div>

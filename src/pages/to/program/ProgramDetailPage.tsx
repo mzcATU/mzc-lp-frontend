@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import {
   CheckCircle,
   XCircle,
@@ -90,6 +91,7 @@ const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'succe
 export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const programId = Number(id);
 
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -170,7 +172,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
           <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
           <p className="text-text-secondary">{error ? getText('error') : getText('notFound')}</p>
           <BackButton
-            onClick={() => navigate('/to/courses')}
+            onClick={() => navigate(prefixPath('/to/courses'))}
             label={getText('back')}
             className="mt-4"
           />
@@ -185,7 +187,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
         {/* 뒤로가기 버튼 */}
         <div className="mb-4">
           <BackButton
-            onClick={() => navigate('/to/courses')}
+            onClick={() => navigate(prefixPath('/to/courses'))}
             label={getText('back')}
           />
         </div>

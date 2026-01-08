@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -112,6 +113,7 @@ function StatCard({
 
 export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
 
@@ -226,7 +228,7 @@ export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingP
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem onClick={() => navigate(`/to/courses/${item.id}`)}>
+          <DropdownMenuItem onClick={() => navigate(prefixPath(`/to/courses/${item.id}`))}>
             <Eye size={14} />
             {getText('view')}
           </DropdownMenuItem>
@@ -439,7 +441,7 @@ export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingP
               pageIndex={page}
               pageSize={10}
               onPageChange={setPage}
-              onRowClick={(item) => navigate(`/to/courses/${item.id}`)}
+              onRowClick={(item) => navigate(prefixPath(`/to/courses/${item.id}`))}
               labels={{
                 noResults: getText('noResults'),
                 rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -147,6 +148,7 @@ function StatCard({
 
 export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CourseTimeStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -259,11 +261,11 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem onClick={() => navigate(`/to/times/${item.id}`)}>
+          <DropdownMenuItem onClick={() => navigate(prefixPath(`/to/times/${item.id}`))}>
             <Eye size={14} />
             {getText('view')}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate(`/to/times/${item.id}/clone`)}>
+          <DropdownMenuItem onClick={() => navigate(prefixPath(`/to/times/${item.id}/clone`))}>
             <Copy size={14} />
             {getText('clone')}
           </DropdownMenuItem>
@@ -419,7 +421,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
               <h1 className="text-text-primary mb-1">{getText('title')}</h1>
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
-            <Button onClick={() => navigate('/to/times/create')}>
+            <Button onClick={() => navigate(prefixPath('/to/times/create'))}>
               <Plus size={20} />
               <span>{getText('createTime')}</span>
             </Button>
@@ -562,7 +564,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
               pageIndex={page}
               pageSize={10}
               onPageChange={setPage}
-              onRowClick={(item) => navigate(`/to/times/${item.id}`)}
+              onRowClick={(item) => navigate(prefixPath(`/to/times/${item.id}`))}
               labels={{
                 noResults: getText('noResults'),
                 rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',

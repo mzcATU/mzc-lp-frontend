@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import {
   Plus,
   Search,
@@ -119,6 +120,7 @@ const initialFormData: MemberPoolFormData = {
  */
 export default function MemberPoolListPage() {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   // 검색 및 필터 상태
   const [searchTerm, setSearchTerm] = useState('');
@@ -623,7 +625,7 @@ export default function MemberPoolListPage() {
                             backgroundColor: designTokens.button.brand_default,
                             color: designTokens.button.brand_text,
                           }}
-                          onClick={() => navigate(`/to/enrollments/batch?poolId=${selectedPool.id}`)}
+                          onClick={() => navigate(prefixPath(`/to/enrollments/batch?poolId=${selectedPool.id}`))}
                         >
                           <GraduationCap className="w-3 h-3" />
                           일괄 입과

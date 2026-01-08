@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import {
   Edit,
@@ -138,6 +139,7 @@ const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'su
 export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const timeId = parseInt(id || '0');
 
   const [isEditing, setIsEditing] = useState(false);
@@ -221,7 +223,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     try {
       await deleteTime.mutateAsync(timeId);
       toast.success(getText('deleteSuccess'));
-      navigate('/to/times');
+      navigate(prefixPath('/to/times'));
     } catch (err) {
       console.error('Delete failed:', err);
       toast.error(getText('statusChangeError'));
@@ -309,7 +311,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
           <Calendar size={48} className="mx-auto mb-3 text-text-placeholder" />
           <p className="text-text-secondary">{error ? getText('error') : getText('notFound')}</p>
           <BackButton
-            onClick={() => navigate('/to/times')}
+            onClick={() => navigate(prefixPath('/to/times'))}
             label={getText('back')}
             className="mt-4"
           />
@@ -326,7 +328,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <BackButton
-                onClick={() => navigate('/to/times')}
+                onClick={() => navigate(prefixPath('/to/times'))}
                 label={getText('back')}
               />
               <div>
@@ -363,7 +365,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                       <span>{getText('edit')}</span>
                     </Button>
                   )}
-                  <Button variant="ghost" onClick={() => navigate(`/to/times/${timeId}/clone`)}>
+                  <Button variant="ghost" onClick={() => navigate(prefixPath(`/to/times/${timeId}/clone`))}>
                     <Copy size={20} />
                     <span>{getText('clone')}</span>
                   </Button>
