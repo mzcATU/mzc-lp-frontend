@@ -1217,7 +1217,7 @@ export function UsersPage() {
                     </Button>
                   </DialogFooter>
                 </div>
-              ) : (
+              ) : uploadResult ? (
                 <div className="space-y-6">
                   {/* 업로드 결과 */}
                   <div className="grid grid-cols-3 gap-4">
@@ -1362,7 +1362,7 @@ export function UsersPage() {
                     </Button>
                   </DialogFooter>
                 </div>
-              )}
+              ) : null}
             </TabsContent>
           </Tabs>
         </DialogContent>
