@@ -77,8 +77,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
     checkCourseRole();
   }, []);
 
-  // 사용자가 DESIGNER 이상의 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
-  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || courseRoleStatus !== 'USER';
+  // 사용자가 강사/디자이너 역할을 가지고 있는지 확인 (CourseRole 기준)
+  const isDesigner = courseRoleStatus !== 'USER';
 
   // 강의 개설하기 클릭 핸들러
   const handleCreateCourseClick = () => {
