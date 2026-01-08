@@ -3,7 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Label, NativeSelect, Switch, Textarea } from '@/components/common';
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+  Textarea,
+} from '@/components/common';
 import { useCreateTime } from '@/hooks/to/useTimeQueries';
 import { useApprovedPrograms } from '@/hooks/to/useProgramQueries';
 import type {
@@ -192,6 +203,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       setFormData((prev) => ({
         ...prev,
         programId: program.id,
+        // 차수명이 비어있으면 교육 과정명으로 자동 설정
+        title: prev.title || program.title,
       }));
       // 에러 클리어
       if (errors.programId) {
@@ -313,19 +326,24 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     <span className="text-sm">{getText('noApprovedPrograms')}</span>
                   </div>
                 ) : (
-                  <NativeSelect
-                    id="programSelect"
-                    value={formData.programId?.toString() || ''}
-                    onChange={(e) => handleProgramSelect(e.target.value)}
-                    options={[
-                      { value: '', label: getText('selectProgramPlaceholder') },
-                      ...approvedPrograms.map((program) => ({
-                        value: program.id.toString(),
-                        label: program.title,
-                      })),
-                    ]}
-                    className={errors.programId ? 'border-status-error' : ''}
-                  />
+                  <Select
+                    value={formData.programId ? formData.programId.toString() : ''}
+                    onValueChange={handleProgramSelect}
+                  >
+                    <SelectTrigger
+                      id="programSelect"
+                      className={errors.programId ? 'border-status-error' : ''}
+                    >
+                      <SelectValue placeholder={getText('selectProgramPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {approvedPrograms.map((program) => (
+                        <SelectItem key={program.id} value={program.id.toString()}>
+                          {program.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
                 {errors.programId && (
                   <p className="text-sm text-status-error">{errors.programId}</p>
@@ -429,26 +447,42 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <NativeSelect
-                  id="deliveryType"
-                  label={getText('deliveryType')}
-                  value={formData.deliveryType}
-                  onChange={(e) => handleInputChange('deliveryType', e.target.value as DeliveryType)}
-                  options={Object.entries(DELIVERY_TYPE_LABELS).map(([value, label]) => ({
-                    value,
-                    label,
-                  }))}
-                />
-                <NativeSelect
-                  id="enrollmentMethod"
-                  label={getText('enrollmentMethod')}
-                  value={formData.enrollmentMethod}
-                  onChange={(e) => handleInputChange('enrollmentMethod', e.target.value as EnrollmentMethod)}
-                  options={Object.entries(ENROLLMENT_METHOD_LABELS).map(([value, label]) => ({
-                    value,
-                    label,
-                  }))}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryType">{getText('deliveryType')}</Label>
+                  <Select
+                    value={formData.deliveryType}
+                    onValueChange={(value) => handleInputChange('deliveryType', value as DeliveryType)}
+                  >
+                    <SelectTrigger id="deliveryType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(DELIVERY_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="enrollmentMethod">{getText('enrollmentMethod')}</Label>
+                  <Select
+                    value={formData.enrollmentMethod}
+                    onValueChange={(value) => handleInputChange('enrollmentMethod', value as EnrollmentMethod)}
+                  >
+                    <SelectTrigger id="enrollmentMethod">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(ENROLLMENT_METHOD_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
