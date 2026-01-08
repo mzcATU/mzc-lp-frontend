@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Building2,
   Save,
@@ -222,8 +223,10 @@ export function TenantDetailPage() {
           customDomain: formState.customDomain || undefined,
         },
       });
+      toast.success('테넌트 정보가 수정되었습니다.');
     } catch (err) {
       console.error('Failed to save tenant:', err);
+      toast.error('테넌트 정보 수정에 실패했습니다.');
     }
   };
 
@@ -234,9 +237,11 @@ export function TenantDetailPage() {
 
     try {
       await deleteMutation.mutateAsync(tenantId);
+      toast.success('테넌트가 삭제되었습니다.');
       navigate('/sa/tenants');
     } catch (err) {
       console.error('Failed to delete tenant:', err);
+      toast.error('테넌트 삭제에 실패했습니다.');
     }
   };
 
