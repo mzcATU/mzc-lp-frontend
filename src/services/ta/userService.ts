@@ -22,9 +22,26 @@ export const userService = {
 
   /** 사용자 목록 조회 */
   async getUsers(params?: UserListParams): Promise<UserListResponse> {
+    // 프론트엔드 파라미터를 백엔드 API 파라미터로 매핑
+    // undefined 값은 제외하여 쿼리 파라미터로 전달되지 않도록 함
+    const apiParams: Record<string, string | number | undefined> = {};
+
+    if (params) {
+      if (params.search) apiParams.keyword = params.search;
+      if (params.systemRole) apiParams.role = params.systemRole;
+      if (params.status) apiParams.status = params.status;
+      if (params.page !== undefined) apiParams.page = params.page;
+      if (params.size !== undefined) apiParams.size = params.size;
+      // 정렬 파라미터 전달 (Spring Pageable 형식: sort=field,direction)
+      if (params.sortBy) {
+        const direction = params.sortDirection || 'asc';
+        apiParams.sort = `${params.sortBy},${direction}`;
+      }
+    }
+
     const { data } = await axiosInstance.get<UserListResponse>(
       API_ENDPOINTS.USERS.BASE,
-      { params }
+      { params: Object.keys(apiParams).length > 0 ? apiParams : undefined }
     );
     return data;
   },
@@ -48,9 +65,10 @@ export const userService = {
 
   /** 사용자 역할 변경 */
   async updateRole(id: number, request: UpdateUserRoleRequest): Promise<AdminUser> {
-    const { data } = await axiosInstance.patch<AdminUser>(
+    // 백엔드는 PUT 메서드와 { role: TenantRole } 형식을 기대
+    const { data } = await axiosInstance.put<AdminUser>(
       API_ENDPOINTS.USERS.ROLE(id),
-      request
+      { role: request.systemRole }
     );
     return data;
   },
@@ -90,6 +108,40 @@ export const userService = {
     const { data } = await axiosInstance.post<BulkCreateUsersResponse>(
       API_ENDPOINTS.USERS.BULK,
       request
+    );
+    return data;
+  },
+
+  /** 파일 기반 단체 계정 생성 (Excel/CSV) */
+  async fileBulkCreateUsers(
+    file: File,
+    options?: {
+      defaultPassword?: string;
+      role?: string;
+      autoLinkEmployees?: boolean;
+      sendWelcomeEmail?: boolean;
+    }
+  ): Promise<BulkCreateUsersResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (options?.defaultPassword) {
+      formData.append('defaultPassword', options.defaultPassword);
+    }
+    if (options?.role) {
+      formData.append('role', options.role);
+    }
+    if (options?.autoLinkEmployees !== undefined) {
+      formData.append('autoLinkEmployees', String(options.autoLinkEmployees));
+    }
+    if (options?.sendWelcomeEmail !== undefined) {
+      formData.append('sendWelcomeEmail', String(options.sendWelcomeEmail));
+    }
+
+    // Content-Type을 설정하지 않으면 axios가 자동으로 multipart/form-data와 boundary를 설정함
+    const { data } = await axiosInstance.post<BulkCreateUsersResponse>(
+      API_ENDPOINTS.USERS.BULK_FILE,
+      formData
     );
     return data;
   },

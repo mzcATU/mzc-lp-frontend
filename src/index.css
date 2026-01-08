@@ -43,6 +43,9 @@
   --color-action-text: #FFFFFF;
   --color-action-delete: #F44336;
 
+  /* === Switch/Toggle === */
+  --switch-background: #D1D5DB;
+
   /* === Button - Neutral === */
   --color-btn-neutral: #2A2A2A;
   --color-btn-neutral-hover: #3D3D3D;
@@ -204,7 +207,7 @@
 }
 
 .gradient-text {
-  background: linear-gradient(90deg, #70f2a0, #6778ff, #6bc2f0, #70f2a0);
+  background: linear-gradient(90deg, var(--landing-accent-color, #70f2a0), var(--landing-primary-color, #6778ff), #6bc2f0, var(--landing-accent-color, #70f2a0));
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -213,7 +216,7 @@
 }
 
 .gradient-text-purple {
-  background: linear-gradient(90deg, #a855f7, #6366f1, #06b6d4, #a855f7);
+  background: linear-gradient(90deg, var(--landing-secondary-color, #a855f7), var(--landing-primary-color, #6366f1), #06b6d4, var(--landing-secondary-color, #a855f7));
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -236,25 +239,25 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Hover glow effect */
+/* Hover glow effect - Uses dynamic branding variables */
 .hover-glow {
   transition: all 0.3s ease;
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 30px rgba(103, 120, 255, 0.3);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--landing-primary-color, #6778ff) 30%, transparent);
 }
 
-/* Landing Button styles */
+/* Landing Button styles - Uses dynamic branding variables */
 .landing-btn-primary {
-  background: linear-gradient(135deg, #6778ff 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--landing-primary-color, #6778ff) 0%, var(--landing-secondary-color, #a855f7) 100%);
   transition: all 0.3s ease;
 }
 
 .landing-btn-primary:hover {
-  background: linear-gradient(135deg, #8b99ff 0%, #c084fc 100%);
+  background: linear-gradient(135deg, var(--landing-primary-hover, #8b99ff) 0%, var(--landing-secondary-hover, #c084fc) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(103, 120, 255, 0.4);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--landing-primary-color, #6778ff) 40%, transparent);
 }
 
 .landing-btn-outline {

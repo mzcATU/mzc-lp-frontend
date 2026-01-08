@@ -105,10 +105,10 @@ axiosInstance.interceptors.response.use(
           { refreshToken }
         );
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken, expiresIn } =
           response.data.data;
 
-        setTokens(newAccessToken, newRefreshToken);
+        setTokens(newAccessToken, newRefreshToken, expiresIn);
         processQueue(null, newAccessToken);
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

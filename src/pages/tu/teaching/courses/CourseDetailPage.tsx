@@ -15,6 +15,7 @@ import {
   useCourseItemsHierarchy,
   useDeleteCourse,
 } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { categoryService } from '@/services/common';
 import { CourseInfoSection } from './components/CourseInfoSection';
 import { CourseCurriculumSection } from './components/CourseCurriculumSection';
@@ -51,6 +52,7 @@ const TYPE_LABELS: Record<CourseType, string> = {
 export function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const id = courseId ? parseInt(courseId, 10) : 0;
 
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
@@ -80,7 +82,7 @@ export function CourseDetailPage() {
     try {
       await deleteCourseMutation.mutateAsync(id);
       alert('삭제되었습니다.');
-      navigate('/tu/teaching/courses');
+      navigate(prefixPath('/tu/teaching/courses'));
     } catch (err) {
       console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
@@ -109,7 +111,7 @@ export function CourseDetailPage() {
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/courses')}
+            onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
           >
             <ArrowLeft size={16} />
             목록으로
@@ -128,7 +130,7 @@ export function CourseDetailPage() {
             variant="ghost"
             size="sm"
             className="border border-border"
-            onClick={() => navigate('/tu/teaching/courses')}
+            onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
           >
             <ArrowLeft size={16} />
             목록으로
@@ -160,7 +162,7 @@ export function CourseDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              onClick={() => navigate(`/tu/teaching/courses/${id}/apply`)}
+              onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/apply`))}
             >
               <Send size={16} />
               프로그램 신청
@@ -169,7 +171,7 @@ export function CourseDetailPage() {
               variant="ghost"
               size="sm"
               className="border border-border"
-              onClick={() => navigate(`/tu/teaching/courses/${id}/edit`)}
+              onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/edit`))}
             >
               <Edit2 size={16} />
               수정

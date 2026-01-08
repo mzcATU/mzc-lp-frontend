@@ -731,17 +731,17 @@ export function EnrollmentTab({ courseTimeId, language = 'ko' }: Readonly<Enroll
               <div className="border border-border rounded-lg max-h-[300px] overflow-auto">
                 {users.map((user) => (
                   <label
-                    key={user.userId}
+                    key={user.id}
                     className="flex items-center gap-3 p-3 hover:bg-bg-secondary cursor-pointer border-b border-border last:border-0"
                   >
                     <input
                       type="checkbox"
-                      checked={selectedUserIds.includes(user.userId)}
+                      checked={selectedUserIds.includes(user.id)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedUserIds([...selectedUserIds, user.userId]);
+                          setSelectedUserIds([...selectedUserIds, user.id]);
                         } else {
-                          setSelectedUserIds(selectedUserIds.filter((id) => id !== user.userId));
+                          setSelectedUserIds(selectedUserIds.filter((id) => id !== user.id));
                         }
                       }}
                       className="w-4 h-4 rounded border-border"

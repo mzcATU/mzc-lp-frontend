@@ -95,6 +95,8 @@ export interface VideoPlayerProps {
   onReady?: () => void;
   onError?: (error: Error) => void;
   autoPlay?: boolean;
+  /** 학습자 모드 - true일 경우 학습자용 스트리밍 API 사용 */
+  isLearnerMode?: boolean;
 }
 
 /**
@@ -116,3 +118,23 @@ export const COMPLETION_THRESHOLD = 0.8; // 80%
  * 자동 저장 간격 (ms)
  */
 export const AUTO_SAVE_INTERVAL = 30000; // 30초
+
+/**
+ * 플레이어용 Enrollment 데이터
+ * - Enrollment + CourseTime + Program 조합
+ */
+export interface EnrollmentPlayerData {
+  enrollmentId: number;
+  userId: number;
+  courseTimeId: number;
+  courseTimeName: string;
+  programId: number;
+  programTitle: string;
+  snapshotId: number;
+  status: string;
+  progressPercent: number;
+  enrolledAt: string;
+  completedAt: string | null;
+  classStartDate: string;
+  classEndDate: string;
+}

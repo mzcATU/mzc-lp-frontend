@@ -94,6 +94,9 @@ export function WritePostModal({
             img.preview === preview ? { ...img, uploading: false, url } : img
           )
         );
+        // 업로드 완료 후 자동으로 본문에 이미지 마크다운 추가
+        const imageMarkdown = `\n![이미지](${url})\n`;
+        setContent(prev => prev + imageMarkdown);
         setErrors(prev => ({ ...prev, images: undefined }));
       } catch {
         setImages(prev => prev.filter(img => img.preview !== preview));
@@ -421,7 +424,7 @@ export function WritePostModal({
               <p className="mt-2 text-sm text-red-500">{errors.images}</p>
             )}
             <p className={`mt-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              이미지를 업로드 후 클릭하여 본문에 삽입할 수 있습니다. (최대 5MB)
+              이미지 업로드 시 자동으로 본문에 삽입됩니다. (최대 5MB)
             </p>
           </div>
 

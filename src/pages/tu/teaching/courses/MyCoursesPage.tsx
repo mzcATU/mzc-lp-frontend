@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
 import { useMyCourses, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
-import type { Course, CourseStatus } from '@/types';
-import type { CourseResponse } from '@/types/common/course.types';
+import type { Course } from '@/types';
+import type { CourseResponse, CoursePublishStatus } from '@/types/common/course.types';
 
-/** 완성 상태 필터 타입 */
-type CompletionFilter = 'all' | 'complete' | 'incomplete';
+/** 발행 상태 필터 타입 */
+type StatusFilter = 'all' | 'draft' | 'published';
 
 interface MyCoursesPageProps {
   language?: 'ko' | 'en';
@@ -18,7 +19,7 @@ interface MyCoursesPageProps {
 const DEFAULT_THUMBNAIL = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
 /** CourseResponse를 UI용 Course 타입으로 변환 */
-function mapCourseResponseToCourse(response: CourseResponse): Course & { isComplete: boolean } {
+function mapCourseResponseToCourse(response: CourseResponse): Course & { isComplete: boolean; courseStatus: CoursePublishStatus } {
   return {
     id: String(response.courseId),
     title: response.title,
@@ -30,8 +31,9 @@ function mapCourseResponseToCourse(response: CourseResponse): Course & { isCompl
     category: response.tags?.[0] || '미분류',
     students: 0,
     lastAccessed: new Date(response.updatedAt).toLocaleDateString('ko-KR'),
-    status: response.isComplete ? 'active' as CourseStatus : 'draft' as CourseStatus,
+    status: response.status === 'PUBLISHED' ? 'active' : 'draft',
     isComplete: response.isComplete,
+    courseStatus: response.status,
   };
 }
 
@@ -40,8 +42,8 @@ const t = {
   subtitle: { ko: '개설한 강의를 관리하고 수강생을 확인하세요', en: 'Manage your courses and track student progress' },
   createCourse: { ko: '강의 생성', en: 'Create Course' },
   all: { ko: '전체', en: 'All' },
-  complete: { ko: '작성완료', en: 'Complete' },
-  incomplete: { ko: '작성중', en: 'In Progress' },
+  draft: { ko: '임시저장', en: 'Draft' },
+  published: { ko: '발행됨', en: 'Published' },
   sortBy: { ko: '정렬', en: 'Sort By' },
   recent: { ko: '최신순', en: 'Recent' },
   studentCount: { ko: '수강생 순', en: 'Students' },
@@ -54,9 +56,9 @@ const t = {
   lessons: { ko: '차시', en: 'Lessons' },
   manageCourse: { ko: '과정 관리', en: 'Manage Course' },
   editCourse: { ko: '수정', en: 'Edit' },
-  noCourses: { ko: '개설한 과정이 없습니다', en: 'No courses created yet' },
-  noCoursesDesc: { ko: '새로운 과정을 개설하여 학생들과 지식을 공유하세요', en: 'Create a new course to share knowledge with students' },
-  createNewCourse: { ko: '과정 개설하기', en: 'Create Course' },
+  noCourses: { ko: '작성한 강의 계획서가 없습니다', en: 'No course plans yet' },
+  noCoursesDesc: { ko: '새로운 강의 계획서를 설계하여 학습 여정을 구성하세요', en: 'Design a new course plan to structure the learning journey' },
+  createNewCourse: { ko: '강의 계획서 만들기', en: 'Create Course Plan' },
   loading: { ko: '강의 목록을 불러오는 중...', en: 'Loading courses...' },
   error: { ko: '강의 목록을 불러오는데 실패했습니다', en: 'Failed to load courses' },
   retry: { ko: '다시 시도', en: 'Retry' },
@@ -71,7 +73,8 @@ const t = {
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
   const navigate = useNavigate();
-  const [filterStatus, setFilterStatus] = useState<CompletionFilter>('all');
+  const { prefixPath } = useSubdomainPath();
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
 
@@ -176,8 +179,8 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
   const filteredCourses = courses.filter((course) => {
     if (filterStatus === 'all') return true;
-    if (filterStatus === 'complete') return course.isComplete;
-    if (filterStatus === 'incomplete') return !course.isComplete;
+    if (filterStatus === 'draft') return course.courseStatus === 'DRAFT';
+    if (filterStatus === 'published') return course.courseStatus === 'PUBLISHED';
     return true;
   });
 
@@ -202,7 +205,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
           <h1 className="text-text-primary mb-2">{getText('title')}</h1>
           <p className="text-text-secondary m-0">{getText('subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/tu/teaching/courses/create')}>
+        <Button onClick={() => navigate(prefixPath('/tu/teaching/courses/create'))}>
           <Plus size={20} />
           <span>{getText('createCourse')}</span>
         </Button>
@@ -220,7 +223,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
         <div className="flex gap-2 items-center">
           <Filter size={18} className="text-text-secondary" />
           <div className="flex gap-1 bg-bg-secondary p-1 rounded-lg">
-            {(['all', 'complete', 'incomplete'] as const).map((status) => (
+            {(['all', 'draft', 'published'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
@@ -292,18 +295,15 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedCourses.map((course) => {
-          const courseResponse = courseResponses.find(
-            (r) => String(r.courseId) === course.id
-          );
           const isSelected = selectedCourseIds.has(course.id);
 
           return (
             <div key={course.id} className="relative">
-              {/* Status Badge */}
-              {!course.isComplete && (
-                <div className="absolute top-3 left-3 z-10 px-2 py-1 rounded-md bg-status-warning/20 text-status-warning text-xs font-medium flex items-center gap-1">
+              {/* Status Badge - 썸네일 우측 하단 */}
+              {course.courseStatus === 'DRAFT' && (
+                <div className="absolute top-[10rem] left-3 z-10 px-2 py-1 rounded-md bg-status-warning text-white text-xs font-medium flex items-center gap-1 shadow-sm">
                   <AlertTriangle size={12} />
-                  {getText('incomplete')}
+                  {getText('draft')}
                 </div>
               )}
 
@@ -323,8 +323,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
               {/* Course Card */}
               <div className={cn(
                 'transition-all',
-                isSelected && 'ring-2 ring-btn-primary rounded-xl',
-                !course.isComplete && 'opacity-80'
+                isSelected && 'ring-2 ring-btn-primary rounded-xl'
               )}>
                 <CourseCard
                   course={course}
@@ -333,48 +332,41 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                     courseCompletion: getText('courseCompletion'),
                     lessons: getText('lessons'),
                     manageCourse: getText('manageCourse'),
-                    editCourse: getText('editCourse'),
                   }}
-                />
-              </div>
-
-              {/* Action Buttons */}
-              {courseResponse && (
-                <div className="mt-2 flex gap-2">
-                  {course.isComplete ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="flex-1 border border-border"
-                      onClick={() => navigate(`/tu/teaching/courses/${course.id}/apply`)}
-                    >
-                      <Send size={14} />
-                      {getText('applyProgram')}
-                    </Button>
-                  ) : (
-                    <>
+                  renderActions={
+                    course.courseStatus === 'PUBLISHED' ? (
+                      <>
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
+                        >
+                          {getText('manageCourse')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="flex-1 border border-border"
+                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}/apply`))}
+                        >
+                          <Send size={14} />
+                          {getText('applyProgram')}
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         size="sm"
                         variant="ghost"
                         className="flex-1 border border-border"
-                        onClick={() => navigate(`/tu/teaching/courses/create?courseId=${course.id}`)}
+                        onClick={() => navigate(prefixPath(`/tu/teaching/courses/create?courseId=${course.id}`))}
                       >
                         <Edit size={14} />
                         {getText('continueEditing')}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="border border-border opacity-50 cursor-not-allowed"
-                        disabled
-                        title={getText('incompleteWarning')}
-                      >
-                        <Send size={14} />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
+                    )
+                  }
+                />
+              </div>
             </div>
           );
         })}
@@ -386,7 +378,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
           <Award size={64} className="text-text-secondary mb-4 opacity-30 mx-auto" />
           <h3 className="text-text-primary mb-2">{getText('noCourses')}</h3>
           <p className="text-text-secondary mb-6">{getText('noCoursesDesc')}</p>
-          <Button onClick={() => navigate('/tu/teaching/courses/create')}>
+          <Button onClick={() => navigate(prefixPath('/tu/teaching/courses/create'))}>
             {getText('createNewCourse')}
           </Button>
         </div>

@@ -100,7 +100,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
       const updatedUser = await userService.getMe();
       updateUser({ role: updatedUser.role });
 
-      toast.success(language === 'ko' ? '강의 개설 권한이 부여되었습니다.' : 'Designer permission granted.');
+      toast.success(language === 'ko' ? '강의 디자인 권한이 부여되었습니다.' : 'Designer permission granted.');
       setShowCreateCourseDialog(false);
       onMenuItemClick?.('create-course');
     } catch (error) {
@@ -117,7 +117,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
         const updatedUser = await userService.getMe();
         updateUser({ role: updatedUser.role });
 
-        toast.success(language === 'ko' ? '이미 강의 개설 권한이 있습니다.' : 'You already have designer permission.');
+        toast.success(language === 'ko' ? '이미 강의 디자인 권한이 있습니다.' : 'You already have designer permission.');
         setShowCreateCourseDialog(false);
         onMenuItemClick?.('create-course');
       } else {
@@ -128,21 +128,21 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
     }
   };
 
-  // 강의 개설 다이얼로그 설명 텍스트
+  // 강의 디자인 다이얼로그 설명 텍스트
   const getCreateCourseDialogDescription = () => {
     if (courseRoleStatus === 'OWNER') {
       return language === 'ko'
-        ? '이미 강의 소유자입니다. 새 강의를 만드시겠습니까?'
-        : 'You are already a course owner. Would you like to create a new course?';
+        ? '이미 강의 소유자입니다. 새 강의를 디자인하시겠습니까?'
+        : 'You are already a course owner. Would you like to design a new course?';
     }
     if (courseRoleStatus === 'DESIGNER') {
       return language === 'ko'
-        ? '이미 강의 개설 권한이 있습니다. 강의 설계 페이지로 이동하시겠습니까?'
-        : 'You already have course creation permission. Would you like to go to the course design page?';
+        ? '이미 강의 디자인 권한이 있습니다. 강의 디자인 페이지로 이동하시겠습니까?'
+        : 'You already have course design permission. Would you like to go to the course design page?';
     }
     return language === 'ko'
-      ? '강의 개설을 위해 디자이너 권한이 부여됩니다. 강의 설계 / 개설 페이지로 이동하시겠습니까?'
-      : 'Designer permission will be granted for course creation. Would you like to proceed to the course design / creation page?';
+      ? '강의 디자인을 위해 디자이너 권한이 부여됩니다. 강의 디자인 페이지로 이동하시겠습니까?'
+      : 'Designer permission will be granted for course design. Would you like to proceed to the course design page?';
   };
 
   // 현재 유저 롤로 subItem 필터링
@@ -380,12 +380,12 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
         </div>
       </div>
 
-      {/* 강의 개설 확인 다이얼로그 */}
+      {/* 강의 디자인 확인 다이얼로그 */}
       <AlertDialog open={showCreateCourseDialog} onOpenChange={setShowCreateCourseDialog}>
         <AlertDialogContent className={isDark ? 'bg-[#2a2a2a] border-white/10' : ''}>
           <AlertDialogHeader>
             <AlertDialogTitle className={isDark ? 'text-white' : ''}>
-              {language === 'ko' ? '강의 설계 / 개설' : 'Course Design / Creation'}
+              {language === 'ko' ? '강의 디자인' : 'Course Design'}
             </AlertDialogTitle>
             <AlertDialogDescription className={isDark ? 'text-gray-300' : ''}>
               {getCreateCourseDialogDescription()}

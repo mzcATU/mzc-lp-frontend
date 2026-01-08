@@ -12,19 +12,66 @@ import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
 import { categoryService } from '@/services/common';
 import { useCourse, useCourseItemsHierarchy, useUpdateCourse } from '@/hooks/tu/useCourseQueries';
+import { courseService } from '@/services/common';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse, UpdateCourseRequest } from '@/types/common';
-import { convertHierarchyToCurriculumItems } from '@/types/tu/curriculum.types';
+import type { CurriculumItem } from '@/types/tu';
+import { convertHierarchyToCurriculumItems, isCurriculumFolder, isCurriculumContent } from '@/types/tu/curriculum.types';
 import { Step1BasicInfo, Step3Review, translations } from './components';
 import { Step2CurriculumTree } from './components/Step2CurriculumTree';
 import type { TranslationKey } from './components';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 interface CourseEditPageProps {
   language?: 'ko' | 'en';
 }
 
+/**
+ * 커리큘럼 트리를 재귀적으로 순회하며 API 호출
+ */
+async function createCurriculumItemsRecursively(
+  courseId: number,
+  items: CurriculumItem[],
+  parentId: number | null
+): Promise<void> {
+  for (const item of items) {
+    if (isCurriculumFolder(item)) {
+      const folderResponse = await courseService.createFolder(courseId, {
+        folderName: item.name,
+        parentId: parentId ?? undefined,
+      });
+      if (item.children.length > 0) {
+        await createCurriculumItemsRecursively(
+          courseId,
+          item.children,
+          folderResponse.itemId
+        );
+      }
+    } else if (isCurriculumContent(item)) {
+      await courseService.createItem(courseId, {
+        itemName: item.name,
+        parentId: parentId ?? undefined,
+        contentId: item.contentId,
+        displayName: item.displayName || undefined,
+        description: item.description || undefined,
+      });
+    }
+  }
+}
+
+/**
+ * 기존 회차/콘텐츠를 모두 삭제
+ */
+async function deleteAllCurriculumItems(courseId: number): Promise<void> {
+  const hierarchy = await courseService.getItemsHierarchy(courseId);
+  for (const item of hierarchy) {
+    await courseService.deleteItem(courseId, item.itemId);
+  }
+}
+
 export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNum = Number(courseId);
 
@@ -100,11 +147,57 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
   const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   const handleGoToStep = (step: number) => setCurrentStep(step);
-  const handleClose = () => navigate('/tu/teaching/courses');
+  const handleClose = () => navigate(prefixPath('/tu/teaching/courses'));
 
-  const handleSaveDraft = () => {
-    setFormData({ ...formData, isDraft: true, lastSaved: new Date().toISOString() });
-    alert('임시저장되었습니다.');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveDraft = async () => {
+    if (!formData.title) {
+      alert('강의명을 입력해주세요.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const request: UpdateCourseRequest = {
+        title: formData.title,
+        description: formData.description || undefined,
+        thumbnailUrl: formData.thumbnailUrl || undefined,
+        level: formData.level || undefined,
+        type: formData.type || undefined,
+        categoryId: formData.categoryId ?? undefined,
+        startDate: formData.startDate || undefined,
+        endDate: formData.endDate || undefined,
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
+      };
+
+      // 기본 정보 업데이트
+      await courseService.update(courseIdNum, request);
+
+      // 기존 회차/콘텐츠 삭제 후 재생성
+      if (formData.curriculumItems.length > 0) {
+        await deleteAllCurriculumItems(courseIdNum);
+        await createCurriculumItemsRecursively(courseIdNum, formData.curriculumItems, null);
+      }
+
+      // 저장 후 최신 회차 계층구조 다시 로드하여 ID 동기화
+      const hierarchyData = await courseService.getItemsHierarchy(courseIdNum);
+      const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+
+      setFormData((prev) => ({
+        ...prev,
+        curriculumItems,
+        isDraft: true,
+        lastSaved: new Date().toISOString(),
+      }));
+
+      alert('임시저장되었습니다.');
+    } catch (error) {
+      console.error('저장 실패:', error);
+      alert('저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -129,7 +222,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
       await updateCourseMutation.mutateAsync({ id: courseIdNum, request });
 
       alert('강의가 수정되었습니다!');
-      navigate(`/tu/teaching/courses/${courseIdNum}`);
+      navigate(prefixPath(`/tu/teaching/courses/${courseIdNum}`));
     } catch (error) {
       console.error('강의 수정 실패:', error);
       alert('강의 수정에 실패했습니다. 다시 시도해주세요.');
@@ -262,9 +355,14 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
                 {getText('previous')}
               </Button>
             )}
-            <Button variant="ghost" onClick={handleSaveDraft} className="border border-border">
-              <Save size={18} />
-              {getText('saveDraft')}
+            <Button
+              variant="ghost"
+              onClick={handleSaveDraft}
+              disabled={isSaving}
+              className="border border-border"
+            >
+              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+              {isSaving ? '저장 중...' : getText('saveDraft')}
             </Button>
           </div>
 

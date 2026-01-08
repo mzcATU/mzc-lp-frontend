@@ -77,8 +77,8 @@ export function BillingPage() {
   return (
     <div className="p-6">
       <AdminPageHeader
-        title="요금제 및 라이선스 관리"
-        description="테넌트 요금제와 결제 현황을 관리합니다"
+        title="구독 관리"
+        description="테넌트 구독 및 결제 현황을 관리합니다"
         actions={
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />

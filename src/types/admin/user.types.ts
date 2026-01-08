@@ -3,8 +3,10 @@
  */
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'BLOCKED';
-export type SystemRole = 'SUPER_ADMIN' | 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'USER';
-export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR' | 'TUTOR' | 'VIEWER';
+// 백엔드 TenantRole enum과 동기화: SYSTEM_ADMIN, TENANT_ADMIN, OPERATOR, DESIGNER, INSTRUCTOR, USER
+export type SystemRole = 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'DESIGNER' | 'INSTRUCTOR' | 'USER';
+// 백엔드 CourseRole enum과 동기화: DESIGNER, OWNER, INSTRUCTOR
+export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR';
 
 export interface AdminUser {
   id: number;
@@ -151,7 +153,7 @@ export interface CreatedUserInfo {
   email: string;
   name: string;
   employeeLinked?: boolean;         // 임직원 자동 연동 여부
-  employeeId?: string;              // 연동된 임직원 ID
+  employeeId?: number;              // 연동된 임직원 ID
 }
 
 export interface FailedUserInfo {
@@ -162,11 +164,12 @@ export interface FailedUserInfo {
 export interface AutoLinkedUserInfo {
   userId: number;
   email: string;
-  employeeId: string;
+  employeeId: number;
+  employeeNumber?: string;
   employeeName: string;
-  department: string;
-  position: string;
-  rank: string;
+  department?: string;
+  position?: string;
+  jobTitle?: string;
 }
 
 // CSV/Excel 파일 업로드 기반 단체 계정 생성

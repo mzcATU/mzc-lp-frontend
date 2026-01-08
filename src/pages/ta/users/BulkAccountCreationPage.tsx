@@ -27,6 +27,8 @@ import {
   TableRow,
   Progress,
 } from '@/components/common';
+import { userService } from '@/services/ta/userService';
+import type { BulkCreateUsersResponse } from '@/types/admin';
 
 // 업로드 결과 타입
 interface UploadResult {
@@ -64,88 +66,78 @@ export const BulkAccountCreationPage = () => {
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  // API 응답을 UploadResult 형식으로 변환
+  const convertApiResponse = (response: BulkCreateUsersResponse): UploadResult => {
+    const preview: AccountPreview[] = response.createdUsers.slice(0, 5).map((user) => {
+      const linkedInfo = response.autoLinkedUsers?.find((linked) => linked.userId === user.id);
+      return {
+        email: user.email,
+        name: user.name,
+        status: 'valid' as const,
+        employeeLinked: user.employeeLinked || false,
+        employeeInfo: linkedInfo
+          ? {
+              employeeId: linkedInfo.employeeNumber || String(linkedInfo.employeeId),
+              department: linkedInfo.department || '',
+              position: linkedInfo.position || '',
+              rank: linkedInfo.jobTitle || '',
+            }
+          : undefined,
+      };
+    });
+
+    // 실패 항목도 preview에 추가
+    response.failedUsers.slice(0, Math.max(0, 5 - preview.length)).forEach((failed) => {
+      preview.push({
+        email: failed.email,
+        name: '',
+        status: 'error' as const,
+        errorMessage: failed.reason,
+        employeeLinked: false,
+      });
+    });
+
+    return {
+      total: response.totalRequested,
+      success: response.successCount,
+      failed: response.failedCount,
+      autoLinked: response.autoLinkedCount || 0,
+      errors: response.failedUsers.map((failed, index) => ({
+        row: index + 1,
+        email: failed.email,
+        error: failed.reason,
+      })),
+      preview,
+    };
+  };
 
   // 파일 드롭존
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
 
     setIsProcessing(true);
     setProcessingProgress(0);
+    setError(null);
 
-    // 파일 파싱 시뮬레이션
-    setTimeout(() => {
+    try {
       setProcessingProgress(30);
-    }, 300);
 
-    setTimeout(() => {
-      setProcessingProgress(60);
-    }, 600);
-
-    setTimeout(() => {
-      setProcessingProgress(100);
-
-      // 시뮬레이션 데이터 - 임직원 자동 매칭 포함
-      setUploadResult({
-        total: 25,
-        success: 22,
-        failed: 3,
-        autoLinked: 18,  // 22명 중 18명이 임직원과 자동 연동됨
-        errors: [
-          { row: 5, email: 'invalid-email', error: '이메일 형식이 올바르지 않습니다.' },
-          { row: 12, email: 'duplicate@company.com', error: '이미 존재하는 이메일입니다.' },
-          { row: 18, email: 'test@company.com', error: '필수 항목(이름)이 누락되었습니다.' },
-        ],
-        preview: [
-          {
-            email: 'cskim@company.com',
-            name: '김철수',
-            department: '개발팀',
-            role: 'USER',
-            status: 'valid',
-            employeeLinked: true,
-            employeeInfo: { employeeId: 'E001', department: '개발팀', position: '팀원', rank: '대리' }
-          },
-          {
-            email: 'yhlee@company.com',
-            name: '이영희',
-            department: '마케팅팀',
-            role: 'USER',
-            status: 'valid',
-            employeeLinked: true,
-            employeeInfo: { employeeId: 'E002', department: '마케팅팀', position: '팀원', rank: '과장' }
-          },
-          {
-            email: 'duplicate@company.com',
-            name: '박민수',
-            department: '개발팀',
-            role: 'USER',
-            status: 'duplicate',
-            errorMessage: '이미 존재하는 이메일',
-            employeeLinked: false
-          },
-          {
-            email: 'sjchoi@company.com',
-            name: '최수진',
-            department: '인사팀',
-            role: 'USER',
-            status: 'valid',
-            employeeLinked: true,
-            employeeInfo: { employeeId: 'E004', department: '인사팀', position: '팀원', rank: '사원' }
-          },
-          {
-            email: 'invalid-email',
-            name: '정민호',
-            department: '영업팀',
-            role: 'USER',
-            status: 'error',
-            errorMessage: '잘못된 이메일 형식',
-            employeeLinked: false
-          },
-        ],
+      // 실제 API 호출
+      const response = await userService.fileBulkCreateUsers(file, {
+        autoLinkEmployees: true,
       });
+
+      setProcessingProgress(100);
+      setUploadResult(convertApiResponse(response));
+    } catch (err) {
+      console.error('파일 업로드 실패:', err);
+      setError(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.');
+    } finally {
       setIsProcessing(false);
-    }, 900);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -159,18 +151,18 @@ export const BulkAccountCreationPage = () => {
     maxSize: 10 * 1024 * 1024, // 10MB
   });
 
-  // 계정 생성 확정
+  // 계정 생성 완료 확인
   const handleConfirm = () => {
-    // API 호출 시뮬레이션
-    console.log('Creating accounts:', uploadResult);
+    // 이미 API 호출로 계정이 생성되었으므로 결과만 알림
     alert(`${uploadResult?.success}개의 계정이 생성되었습니다.`);
-    setUploadResult(null);
+    handleReset();
   };
 
   // 다시 업로드
   const handleReset = () => {
     setUploadResult(null);
     setProcessingProgress(0);
+    setError(null);
   };
 
   // 템플릿 다운로드
@@ -277,6 +269,45 @@ export const BulkAccountCreationPage = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* 에러 메시지 */}
+            {error && (
+              <Card className="mb-6">
+                <CardContent className="p-4">
+                  <div
+                    className="flex items-center gap-3 p-4 rounded-lg"
+                    style={{ backgroundColor: designTokens.status.error_background }}
+                  >
+                    <AlertCircle
+                      className="w-5 h-5 flex-shrink-0"
+                      style={{ color: designTokens.status.error_text }}
+                    />
+                    <div>
+                      <p
+                        className="font-medium"
+                        style={{ color: designTokens.status.error_text }}
+                      >
+                        파일 업로드 실패
+                      </p>
+                      <p
+                        className="text-sm mt-1"
+                        style={{ color: designTokens.status.error_text }}
+                      >
+                        {error}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto"
+                      onClick={() => setError(null)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* 템플릿 다운로드 */}
             <Card>

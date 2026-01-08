@@ -63,6 +63,7 @@ export {
 // Learning Player Hooks
 export {
   learningPlayerKeys,
+  useEnrollmentForPlayer,
   useEnrollmentWithCurriculum,
   useUpdateProgress,
   useMarkItemComplete,
@@ -238,6 +239,19 @@ export {
   usePublicBranding,
 } from './usePublicBranding';
 
+// Roadmap Hooks (TU Teaching)
+export {
+  roadmapKeys,
+  useMyRoadmaps,
+  useRoadmapStatistics,
+  useRoadmap,
+  useCreateRoadmap,
+  useUpdateRoadmap,
+  useSaveDraft,
+  useDeleteRoadmap,
+  useDuplicateRoadmap,
+} from './useRoadmapQueries';
+
 export { useBrandingApply } from './useBrandingApply';
 
 // Learning Stats Hooks (내 학습 통계)
@@ -263,3 +277,26 @@ export {
   useIssueCertificate,
   useReissueCertificate,
 } from './useCertificateQueries';
+
+// Public Banner Hooks (공개 배너)
+export {
+  publicBannerKeys,
+  useDisplayableBanners,
+} from './usePublicBannerQueries';
+
+// Public Layout Hooks (공개 레이아웃)
+export {
+  usePublicLayout,
+  usePublicNavigation,
+} from './usePublicLayout';
+
+// Course Review Hooks (코스 리뷰)
+export {
+  courseReviewKeys,
+  useCourseReviews,
+  useCourseReviewStats,
+  useMyCourseReview,
+  useCreateCourseReview,
+  useUpdateCourseReview,
+  useDeleteCourseReview,
+} from './useCourseReviewQueries';

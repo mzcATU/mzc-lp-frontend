@@ -98,8 +98,14 @@ export function TenantsPage() {
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<TenantFormData>({
     defaultValues: {
+      code: '',
+      name: '',
       type: 'B2B',
       plan: 'BASIC',
+      subdomain: '',
+      adminEmail: '',
+      adminName: '',
+      status: 'ACTIVE',
     },
   });
 
@@ -196,7 +202,7 @@ export function TenantsPage() {
   ];
 
   const handleViewDetail = (tenant: Tenant) => {
-    navigate(`/sa/tenants/${tenant.id}`);
+    navigate(`/sa/tenants/${tenant.tenantId}`);
   };
 
   const handleEdit = (tenant: Tenant) => {
@@ -214,7 +220,7 @@ export function TenantsPage() {
     if (!deleteTarget) return;
 
     try {
-      await deleteMutation.mutateAsync(deleteTarget.id);
+      await deleteMutation.mutateAsync(deleteTarget.tenantId);
       toast.success(`'${deleteTarget.name}' 테넌트가 삭제되었습니다.`);
       setDeleteTarget(null);
     } catch {
@@ -227,6 +233,7 @@ export function TenantsPage() {
     reset({
       type: 'B2B',
       plan: 'BASIC',
+      status: 'ACTIVE',
       code: '',
       name: '',
       subdomain: '',
@@ -245,7 +252,7 @@ export function TenantsPage() {
           status: data.status,
           plan: data.plan,
         };
-        await updateMutation.mutateAsync({ id: selectedTenant.id, request: updateData });
+        await updateMutation.mutateAsync({ id: selectedTenant.tenantId, request: updateData });
         toast.success('테넌트가 수정되었습니다.');
         setIsCreateDialogOpen(false);
       } else {
@@ -341,9 +348,9 @@ export function TenantsPage() {
           <SelectContent>
             <SelectItem value="all">전체 상태</SelectItem>
             <SelectItem value="ACTIVE">활성</SelectItem>
-            <SelectItem value="INACTIVE">비활성</SelectItem>
-            <SelectItem value="SUSPENDED">정지</SelectItem>
             <SelectItem value="PENDING">대기</SelectItem>
+            <SelectItem value="SUSPENDED">정지</SelectItem>
+            <SelectItem value="TERMINATED">종료</SelectItem>
           </SelectContent>
         </Select>
         <Select value={planFilter} onValueChange={setPlanFilter}>
@@ -453,9 +460,9 @@ export function TenantsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ACTIVE">활성</SelectItem>
-                      <SelectItem value="INACTIVE">비활성</SelectItem>
-                      <SelectItem value="SUSPENDED">정지</SelectItem>
                       <SelectItem value="PENDING">대기</SelectItem>
+                      <SelectItem value="SUSPENDED">정지</SelectItem>
+                      <SelectItem value="TERMINATED">종료</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

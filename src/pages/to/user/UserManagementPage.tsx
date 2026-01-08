@@ -204,8 +204,8 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const changeStatus = useChangeUserStatus();
 
   // 사용자 상세 정보 및 수강/강사 통계 조회
-  const selectedUserId = selectedUserForDetail?.userId ?? 0;
-  const isDesigner = selectedUserForDetail?.role === 'DESIGNER';
+  const selectedUserId = selectedUserForDetail?.id ?? 0;
+  const isDesigner = selectedUserForDetail?.systemRole === 'DESIGNER';
   const { data: userDetail, isLoading: isDetailLoading } = useUser(selectedUserId);
   const { data: enrollmentStats, isLoading: isStatsLoading } = useUserEnrollmentStats(selectedUserId);
   const { data: instructorStats, isLoading: isInstructorStatsLoading } = useUserInstructorStats(selectedUserId, isDesigner);
@@ -214,7 +214,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const filteredUsers = useMemo(() => {
     const allUsers = data?.content ?? [];
     return allUsers.filter(
-      (user) => user.role !== 'SYSTEM_ADMIN' && user.role !== 'TENANT_ADMIN' && user.role !== 'OPERATOR'
+      (user) => user.systemRole !== 'SYSTEM_ADMIN' && user.systemRole !== 'TENANT_ADMIN' && user.systemRole !== 'OPERATOR'
     );
   }, [data?.content]);
 
@@ -254,7 +254,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
     try {
       await changeStatus.mutateAsync({
-        id: selectedUser.userId,
+        id: selectedUser.id,
         request: {
           status: targetStatus,
           ...(statusReason && { reason: statusReason }),
@@ -322,7 +322,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
               {row.original.name}
             </p>
             <p className="text-xs text-text-secondary mt-0.5">
-              ID: {row.original.userId}
+              ID: {row.original.id}
             </p>
           </div>
         ),
@@ -339,13 +339,13 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
         ),
       },
       {
-        accessorKey: 'role',
+        accessorKey: 'systemRole',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={getText('columnRole')} />
         ),
         cell: ({ row }) => (
-          <Badge variant={roleBadgeVariant[row.original.role]}>
-            {TENANT_ROLE_LABELS[row.original.role]}
+          <Badge variant={roleBadgeVariant[row.original.systemRole]}>
+            {TENANT_ROLE_LABELS[row.original.systemRole]}
           </Badge>
         ),
       },
@@ -695,7 +695,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
                         ID
                       </dt>
                       <dd className="text-sm font-medium text-text-primary">
-                        {selectedUserForDetail.userId}
+                        {selectedUserForDetail.id}
                       </dd>
                     </div>
 
@@ -727,8 +727,8 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
                         {getText('columnRole')}
                       </dt>
                       <dd>
-                        <Badge variant={roleBadgeVariant[userDetail?.role ?? selectedUserForDetail.role]}>
-                          {TENANT_ROLE_LABELS[userDetail?.role ?? selectedUserForDetail.role]}
+                        <Badge variant={roleBadgeVariant[userDetail?.role ?? selectedUserForDetail.systemRole]}>
+                          {TENANT_ROLE_LABELS[userDetail?.role ?? selectedUserForDetail.systemRole]}
                         </Badge>
                       </dd>
                     </div>

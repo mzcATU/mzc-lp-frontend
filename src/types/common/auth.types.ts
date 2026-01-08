@@ -35,6 +35,8 @@ export interface UpdateProfileRequest {
   name?: string;
   phone?: string;
   profileImageUrl?: string;
+  department?: string;  // 부서 (개발팀, 회계팀 등)
+  position?: string;    // 직급 (인턴, 신입, 대리, 과장, 차장, 팀장 등)
 }
 
 // --- Response DTOs ---
@@ -62,12 +64,15 @@ export interface UserDetailResponse {
   role: TenantRole;
   status: UserStatus;
   profileImageUrl?: string;
+  department?: string;    // 부서 (개발팀, 회계팀 등)
+  position?: string;      // 직급 (인턴, 신입, 대리, 과장, 차장, 팀장 등)
   tenantId?: number;
   tenantName?: string;
   tenantSubdomain?: string;
   tenantCustomDomain?: string;
   createdAt: string;
   updatedAt: string;
+  profileCompleted?: boolean;  // 프로필 완성 여부 (단체 계정 생성 시 false)
 }
 
 // --- Auth Store 타입 ---
@@ -78,6 +83,7 @@ export interface AuthUser {
   name: string;
   role: TenantRole;
   tenantId?: number;
+  tenantSubdomain?: string;
 }
 
 // --- 역할 라벨 맵 ---

@@ -12,3 +12,75 @@ export interface PublicBrandingResponse {
   headingFont: string | null;
   bodyFont: string | null;
 }
+
+/**
+ * 네비게이션 아이템 타입
+ */
+export interface NavigationItemResponse {
+  id: number;
+  label: string;
+  icon: string;
+  path: string;
+  enabled: boolean;
+  displayOrder: number;
+  target: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 헤더 설정 타입
+ */
+export interface HeaderSettings {
+  style?: 'fixed' | 'sticky' | 'static';
+  height?: 'compact' | 'default' | 'large';
+  showLogo?: boolean;
+  showSearch?: boolean;
+  showNotifications?: boolean;
+  backgroundOpacity?: number;
+  navigationPosition?: 'left' | 'center' | 'right';
+  userMenuStyle?: 'dropdown' | 'drawer';
+  showShadow?: boolean;
+  mobileMenuStyle?: 'drawer' | 'fullscreen';
+}
+
+/**
+ * 푸터 설정 타입
+ */
+export interface FooterSettings {
+  enabled?: boolean;
+  showLinks?: boolean;
+  showCopyright?: boolean;
+  showSocialLinks?: boolean;
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+    linkedin?: string;
+  };
+  companyInfoFields?: string[];
+  showNewsletter?: boolean;
+}
+
+/**
+ * 콘텐츠 설정 타입
+ */
+export interface ContentSettings {
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  padding?: 'none' | 'compact' | 'normal' | 'relaxed';
+  pageTransition?: 'none' | 'fade' | 'slide';
+  cardStyle?: 'flat' | 'bordered' | 'elevated';
+  tableStyle?: 'simple' | 'striped' | 'bordered';
+  buttonStyle?: 'square' | 'rounded' | 'pill';
+}
+
+/**
+ * 공개 레이아웃 정보 타입 (TU용)
+ */
+export interface PublicLayoutResponse {
+  headerSettings: HeaderSettings | null;
+  footerSettings: FooterSettings | null;
+  contentSettings: ContentSettings | null;
+  navigationItems: NavigationItemResponse[];
+}

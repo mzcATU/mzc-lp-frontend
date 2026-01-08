@@ -14,13 +14,15 @@ import {
   GroupsPage,
   PermissionsPage,
   DomainSettingsPage,
-  BillingPage,
   LayoutSettingsPage,
   RealtimePage,
   ExportPage,
   LogsPage,
   TenantSettingsPage,
   UserManagementSettingsPage,
+  FeatureSettingsPage,
+  TenantCategoryPage,
+  TenantNoticesPage,
 } from '@/pages/ta';
 import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
 import { AutoEnrollmentRulesPage } from '@/pages/ta/automation/AutoEnrollmentRulesPage';
@@ -37,13 +39,13 @@ function TenantAdminWrapper() {
   );
 }
 
-export const taRoutes = (
-  <Route path="/ta" element={<TenantAdminWrapper />}>
+// TA 하위 라우트
+const taChildRoutes = (
+  <>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
-    <Route path="system/billing" element={<BillingPage />} />
     {/* 디자인 및 정책 */}
     <Route path="branding/layout" element={<LayoutSettingsPage />} />
     {/* 사용자 및 권한 */}
@@ -60,6 +62,11 @@ export const taRoutes = (
     <Route path="analytics/realtime" element={<RealtimePage />} />
     <Route path="analytics/export" element={<ExportPage />} />
     <Route path="analytics/logs" element={<LogsPage />} />
+    {/* 기능 설정 */}
+    <Route path="features" element={<FeatureSettingsPage />} />
+    <Route path="features/categories" element={<TenantCategoryPage />} />
+    {/* 공지사항 관리 */}
+    <Route path="notices" element={<TenantNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />
@@ -67,5 +74,18 @@ export const taRoutes = (
     <Route path="settings/appearance" element={<SettingsAppearancePage />} />
     <Route path="settings/tenant-settings" element={<TenantSettingsPage />} />
     <Route path="settings/user-management" element={<UserManagementSettingsPage />} />
-  </Route>
+  </>
+);
+
+export const taRoutes = (
+  <>
+    {/* 기본 테넌트용 (subdomain 없음) */}
+    <Route path="/ta" element={<TenantAdminWrapper />}>
+      {taChildRoutes}
+    </Route>
+    {/* 특정 테넌트용 (subdomain 있음) */}
+    <Route path="/:subdomain/ta" element={<TenantAdminWrapper />}>
+      {taChildRoutes}
+    </Route>
+  </>
 );

@@ -9,6 +9,7 @@ import {
   useUpdateSnapshot,
   useSubmitMyProgram,
 } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import type { ProgramStatus } from '@/types/common';
 import { ProgramBasicInfoForm, type ProgramFormData } from './components/ProgramBasicInfoForm';
 import { SnapshotEditForm, type SnapshotFormData } from './components/SnapshotEditForm';
@@ -54,6 +55,7 @@ const canEdit = (status: ProgramStatus) => status === 'DRAFT' || status === 'REJ
 export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPageProps>) {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const id = programId ? parseInt(programId, 10) : 0;
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
@@ -199,7 +201,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
       // 신청
       await submitProgramMutation.mutateAsync(id);
       alert(getText('submitSuccess'));
-      navigate('/tu/teaching/programs');
+      navigate(prefixPath('/tu/teaching/programs'));
     } catch (err) {
       console.error('Submit failed:', err);
       alert(getText('submitFailed'));
@@ -234,7 +236,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/programs')}
+            onClick={() => navigate(prefixPath('/tu/teaching/programs'))}
           >
             <ArrowLeft size={16} />
             목록으로
@@ -254,7 +256,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate(`/tu/teaching/programs/${id}`)}
+            onClick={() => navigate(prefixPath(`/tu/teaching/programs/${id}`))}
           >
             <ArrowLeft size={16} />
             상세보기로 이동
@@ -278,7 +280,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
                 variant="ghost"
                 size="sm"
                 className="border border-border"
-                onClick={() => navigate('/tu/teaching/programs')}
+                onClick={() => navigate(prefixPath('/tu/teaching/programs'))}
               >
                 <ArrowLeft size={16} />
                 {getText('back')}

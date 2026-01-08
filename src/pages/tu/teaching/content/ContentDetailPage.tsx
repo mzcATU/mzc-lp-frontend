@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Download,
   Eye,
   Edit2,
@@ -17,7 +16,6 @@ import {
   Music,
   Image,
   Link,
-  Calendar,
   HardDrive,
   Loader2,
   AlertCircle,
@@ -25,7 +23,7 @@ import {
   History,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge } from '@/components/common';
+import { Button, Badge, BackButton } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import {
   useContent,
@@ -37,18 +35,10 @@ import {
   useContentVersions,
   useRestoreVersion,
 } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { contentService } from '@/services/tu';
 import { ContentPreviewModal } from '@/components/domain/tu/content';
 import type { ContentType, ContentVersionResponse } from '@/types/tu';
-
-// 콘텐츠 타입별 Badge 컬러 매핑
-const contentTypeBadgeColor: Record<ContentType, BadgeColor> = {
-  VIDEO: 'blue',
-  AUDIO: 'purple',
-  DOCUMENT: 'orange',
-  IMAGE: 'green',
-  EXTERNAL_LINK: 'gray',
-};
 
 // 콘텐츠 타입별 아이콘
 const contentTypeIcon: Record<ContentType, React.ElementType> = {
@@ -59,9 +49,27 @@ const contentTypeIcon: Record<ContentType, React.ElementType> = {
   EXTERNAL_LINK: Link,
 };
 
+// 콘텐츠 타입별 아이콘 배경색
+const contentTypeIconBg: Record<ContentType, string> = {
+  VIDEO: 'bg-blue-50 text-blue-600',
+  AUDIO: 'bg-purple-50 text-purple-600',
+  DOCUMENT: 'bg-orange-50 text-orange-600',
+  IMAGE: 'bg-green-50 text-green-600',
+  EXTERNAL_LINK: 'bg-gray-100 text-gray-600',
+};
+
+// 콘텐츠 타입별 Badge 컬러
+const contentTypeBadgeColor: Record<ContentType, BadgeColor> = {
+  VIDEO: 'blue',
+  AUDIO: 'purple',
+  DOCUMENT: 'orange',
+  IMAGE: 'green',
+  EXTERNAL_LINK: 'gray',
+};
+
 // 번역 텍스트
 const t = {
-  backToList: { ko: '목록으로', en: 'Back to List' },
+  backToList: { ko: '목록으로 돌아가기', en: 'Back to List' },
   contentDetail: { ko: '콘텐츠 상세', en: 'Content Detail' },
   basicInfo: { ko: '기본 정보', en: 'Basic Information' },
   contentName: { ko: '콘텐츠 이름', en: 'Content Name' },
@@ -89,7 +97,7 @@ const t = {
   version: { ko: '버전', en: 'Version' },
   changeType: { ko: '변경 유형', en: 'Change Type' },
   changeSummary: { ko: '변경 내용', en: 'Change Summary' },
-  restoreVersion: { ko: '이 버전으로 복원', en: 'Restore to this version' },
+  restoreVersion: { ko: '복원', en: 'Restore' },
   VIDEO: { ko: '동영상', en: 'Video' },
   AUDIO: { ko: '오디오', en: 'Audio' },
   DOCUMENT: { ko: '문서', en: 'Document' },
@@ -123,6 +131,7 @@ const t = {
   tags: { ko: '태그', en: 'Tags' },
   noDescription: { ko: '설명 없음', en: 'No description' },
   noTags: { ko: '태그 없음', en: 'No tags' },
+  fileInfo: { ko: '파일 정보', en: 'File Information' },
 };
 
 // 파일 크기 포맷팅
@@ -150,9 +159,32 @@ function formatDate(dateString: string | null | undefined): string {
 // 재생 시간 포맷팅
 function formatDuration(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined) return '-';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${String(secs).padStart(2, '0')}`;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m ${String(s).padStart(2, '0')}s`;
+  return `${m}m ${String(s).padStart(2, '0')}s`;
+}
+
+// DetailItem 컴포넌트
+interface DetailItemProps {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
+function DetailItem({ label, value, icon }: DetailItemProps) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">
+        {label}
+      </label>
+      <div className="text-sm text-[#2A2A2A] font-medium flex items-center gap-1.5">
+        {icon && <span className="text-gray-400">{icon}</span>}
+        {value}
+      </div>
+    </div>
+  );
 }
 
 interface ContentDetailPageProps {
@@ -162,6 +194,7 @@ interface ContentDetailPageProps {
 export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const contentId = id ? parseInt(id, 10) : 0;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -229,12 +262,10 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
     }
 
     try {
-      // 1. 파일 교체가 있으면 먼저 실행
       if (hasFileChange && newFile) {
         await replaceFile.mutateAsync({ id: contentId, file: newFile });
       }
 
-      // 2. 파일명 변경이 있으면 실행
       if (hasNameChange && editFileName.trim()) {
         await updateContent.mutateAsync({
           id: contentId,
@@ -287,10 +318,9 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
     try {
       await deleteContent.mutateAsync(contentId);
       alert(getText('deleteSuccess'));
-      navigate('/tu/teaching/content');
+      navigate(prefixPath('/tu/teaching/content'));
     } catch (err: unknown) {
       console.error('Delete failed:', err);
-      // 강의에 포함된 콘텐츠 삭제 시도 시 에러 처리
       const error = err as { response?: { data?: { error?: { code?: string } } } };
       if (error.response?.data?.error?.code === 'CT010') {
         alert(getText('deleteFailedInUse'));
@@ -325,9 +355,8 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   // 로딩 상태
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-bg-app">
-        <Loader2 size={32} className="animate-spin text-text-secondary" />
-        <span className="ml-2 text-text-secondary">{getText('loading')}</span>
+      <div className="h-full flex items-center justify-center bg-[#FAFAFA]">
+        <Loader2 size={32} className="animate-spin text-gray-400" />
       </div>
     );
   }
@@ -335,16 +364,11 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   // 에러 상태
   if (error || !content) {
     return (
-      <div className="h-full flex items-center justify-center bg-bg-app">
+      <div className="h-full flex items-center justify-center bg-[#FAFAFA]">
         <div className="text-center">
-          <AlertCircle size={48} className="mx-auto mb-3 text-status-error" />
-          <p className="text-text-secondary">{error ? getText('error') : getText('notFound')}</p>
-          <Button
-            variant="ghost"
-            className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/content')}
-          >
-            <ArrowLeft size={16} />
+          <AlertCircle size={48} className="mx-auto mb-3 text-red-500" />
+          <p className="text-gray-600 mb-4">{error ? getText('error') : getText('notFound')}</p>
+          <Button variant="outline" onClick={() => navigate(prefixPath('/tu/teaching/content'))}>
             {getText('backToList')}
           </Button>
         </div>
@@ -357,356 +381,344 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   const isExternalLink = content.contentType === 'EXTERNAL_LINK';
 
   return (
-    <div className="h-full flex flex-col bg-bg-app">
+    <div className="h-full flex flex-col bg-[#FAFAFA]">
       {/* Header */}
-      <div className="border-b border-border bg-bg-default sticky top-0 z-10">
-        <div className="p-6 px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="border border-border"
-                onClick={() => navigate('/tu/teaching/content')}
-              >
-                <ArrowLeft size={16} />
-                {getText('backToList')}
-              </Button>
-              <div>
-                <h1 className="text-text-primary text-xl mb-1">{getText('contentDetail')}</h1>
-                <div className="flex items-center gap-2">
+      <div className="border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
+        <div className="px-8 py-6">
+          <div className="max-w-6xl mx-auto">
+            {/* Back Button */}
+            <div className="mb-4">
+              <BackButton
+                onClick={() => navigate(prefixPath('/tu/teaching/content'))}
+                label={getText('backToList')}
+              />
+            </div>
+
+            {/* Title & Actions */}
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className={cn('p-2 rounded-lg', contentTypeIconBg[content.contentType])}>
+                    <IconComponent size={24} />
+                  </div>
+                  <h1 className="text-2xl font-bold text-[#2A2A2A] tracking-tight">
+                    {content.originalFileName}
+                  </h1>
+                </div>
+
+                <div className="flex items-center gap-2 pl-[52px]">
+                  <Badge variant={isArchived ? 'gray' : 'green'}>
+                    {getText(content.status)}
+                  </Badge>
                   <Badge variant={contentTypeBadgeColor[content.contentType]}>
                     {getText(content.contentType)}
                   </Badge>
-                  {isArchived && (
-                    <Badge variant="gray">{getText('ARCHIVED')}</Badge>
-                  )}
+                  <span className="text-sm text-gray-400">|</span>
+                  <span className="text-sm text-gray-500">v{content.currentVersion}</span>
+                  <span className="text-sm text-gray-400">|</span>
+                  <span className="text-sm text-gray-500">{formatDate(content.updatedAt)}</span>
                 </div>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {!isExternalLink && (
-                <>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                {!isExternalLink && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                      onClick={() => setPreviewModal(true)}
+                    >
+                      <Eye size={16} className="mr-2" />
+                      {getText('preview')}
+                    </Button>
+                    {content.downloadable !== false && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                        onClick={handleDownload}
+                      >
+                        <Download size={16} className="mr-2" />
+                        {getText('download')}
+                      </Button>
+                    )}
+                  </>
+                )}
+
+                <div className="h-6 w-px bg-gray-200 mx-1" />
+
+                {isArchived ? (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="border border-border"
-                    onClick={() => setPreviewModal(true)}
+                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    onClick={handleRestore}
+                    disabled={restoreContent.isPending}
                   >
-                    <Eye size={16} />
-                    {getText('preview')}
+                    <RotateCcw size={16} className="mr-2" />
+                    {getText('restore')}
                   </Button>
-                  {content.downloadable !== false && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="border border-border"
-                      onClick={handleDownload}
-                    >
-                      <Download size={16} />
-                      {getText('download')}
-                    </Button>
-                  )}
-                </>
-              )}
-              {isArchived ? (
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    onClick={handleArchive}
+                    disabled={archiveContent.isPending}
+                  >
+                    <Archive size={16} className="mr-2" />
+                    {getText('archive')}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="border border-border"
-                  onClick={handleRestore}
-                  disabled={restoreContent.isPending}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                  onClick={handleDelete}
+                  disabled={deleteContent.isPending}
                 >
-                  <RotateCcw size={16} />
-                  {getText('restore')}
+                  <Trash2 size={16} className="mr-2" />
+                  {getText('delete')}
                 </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="border border-border"
-                  onClick={handleArchive}
-                  disabled={archiveContent.isPending}
-                >
-                  <Archive size={16} />
-                  {getText('archive')}
-                </Button>
-              )}
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteContent.isPending}
-              >
-                <Trash2 size={16} />
-                {getText('delete')}
-              </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8 max-w-5xl">
-          {/* Basic Info Section */}
-          <div className="bg-bg-default border border-border rounded-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-text-primary text-lg font-medium flex items-center gap-2">
-                <FileText size={20} />
-                {getText('basicInfo')}
-              </h2>
-              {!isEditing ? (
-                <Button variant="ghost" size="sm" className="border border-border" onClick={handleStartEdit}>
-                  <Edit2 size={16} />
-                  {getText('edit')}
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSave} disabled={updateContent.isPending}>
-                    <Save size={16} />
-                    {getText('save')}
-                  </Button>
-                  <Button variant="ghost" size="sm" className="border border-border" onClick={handleCancelEdit}>
-                    <X size={16} />
-                    {getText('cancel')}
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Content Name (수정 가능) */}
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">{getText('contentName')}</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editFileName}
-                    onChange={(e) => setEditFileName(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-action-primary"
-                  />
-                ) : (
-                  <p className="text-text-primary flex items-center gap-2">
-                    <IconComponent size={16} className="text-text-secondary" />
-                    {content.originalFileName}
-                  </p>
-                )}
-              </div>
-
-              {/* Actual File Name (읽기 전용) */}
-              {!isExternalLink && content.uploadedFileName && (
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">{getText('actualFileName')}</label>
-                  <p className="text-text-primary text-sm truncate" title={content.uploadedFileName}>
-                    {content.uploadedFileName}
-                  </p>
-                </div>
-              )}
-
-              {/* File Replace (편집 모드에서만 표시) */}
-              {isEditing && !isExternalLink && (
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">{getText('replaceFile')}</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
+        <div className="max-w-6xl mx-auto p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Metadata */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Basic Info Card */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <h3 className="font-semibold text-[#2A2A2A] flex items-center gap-2">
+                    <FileText size={18} className="text-gray-400" />
+                    {getText('basicInfo')}
+                  </h3>
+                  {!isEditing ? (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="border border-border"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={handleStartEdit}
+                      className="h-8 text-gray-500"
                     >
-                      <Upload size={16} />
-                      파일 선택
+                      <Edit2 size={14} className="mr-1.5" />
+                      {getText('edit')}
                     </Button>
-                    {newFile && (
-                      <span className="text-sm text-text-primary flex items-center gap-2">
-                        <Check size={14} className="text-status-success" />
-                        {newFile.name}
-                      </span>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        onClick={handleSave}
+                        className="h-8"
+                        disabled={updateContent.isPending || replaceFile.isPending}
+                      >
+                        <Save size={14} className="mr-1.5" />
+                        {getText('save')}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={handleCancelEdit} className="h-8">
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                    {/* Content Name */}
+                    <div className="col-span-full">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">
+                        {getText('contentName')}
+                      </label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editFileName}
+                          onChange={(e) => setEditFileName(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4C2D9A]/20 focus:border-[#4C2D9A]"
+                        />
+                      ) : (
+                        <p className="text-[#2A2A2A] text-lg font-medium">
+                          {content.originalFileName}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* File Replace (Edit Mode) */}
+                    {isEditing && !isExternalLink && (
+                      <div className="col-span-full p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">
+                          {getText('replaceFile')}
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            onChange={handleFileSelect}
+                            className="hidden"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Upload size={14} className="mr-2" />
+                            파일 선택
+                          </Button>
+                          {newFile && (
+                            <span className="text-sm text-[#4C2D9A] flex items-center gap-2">
+                              <Check size={14} />
+                              {newFile.name}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    <div className="col-span-full">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">
+                        {getText('description')}
+                      </label>
+                      <p className="text-sm text-[#2A2A2A] leading-relaxed">
+                        {content.description || (
+                          <span className="text-gray-400 italic">{getText('noDescription')}</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="col-span-full">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">
+                        {getText('tags')}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {content.tags ? (
+                          content.tags.split(',').map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium"
+                            >
+                              #{tag.trim()}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-400 italic text-sm">{getText('noTags')}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* External URL */}
+                    {isExternalLink && content.externalUrl && (
+                      <div className="col-span-full">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">
+                          {getText('externalUrl')}
+                        </label>
+                        <a
+                          href={content.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline break-all"
+                        >
+                          {content.externalUrl}
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* Content Type */}
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">{getText('contentType')}</label>
-                <p className="text-text-primary">
-                  <Badge variant={contentTypeBadgeColor[content.contentType]}>
-                    {getText(content.contentType)}
-                  </Badge>
-                </p>
               </div>
 
-              {/* Status */}
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">{getText('status')}</label>
-                <p className="text-text-primary">
-                  <Badge variant={isArchived ? 'gray' : 'green'}>
-                    {getText(content.status)}
-                  </Badge>
-                </p>
-              </div>
-
-              {/* File Size */}
-              {!isExternalLink && (
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">{getText('fileSize')}</label>
-                  <p className="text-text-primary flex items-center gap-2">
-                    <HardDrive size={16} className="text-text-secondary" />
-                    {formatFileSize(content.fileSize)}
-                  </p>
+              {/* Version History */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                  <h3 className="font-semibold text-[#2A2A2A] flex items-center gap-2">
+                    <History size={18} className="text-gray-400" />
+                    {getText('versionHistory')}
+                  </h3>
                 </div>
-              )}
-
-              {/* Duration (Video/Audio) */}
-              {content.duration !== null && (
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">{getText('duration')}</label>
-                  <p className="text-text-primary flex items-center gap-2">
-                    <Clock size={16} className="text-text-secondary" />
-                    {formatDuration(content.duration)}
-                  </p>
-                </div>
-              )}
-
-              {/* Resolution (Video/Image) */}
-              {content.resolution && (
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">{getText('resolution')}</label>
-                  <p className="text-text-primary">{content.resolution}</p>
-                </div>
-              )}
-
-              {/* Page Count (Document) */}
-              {content.pageCount !== null && (
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">{getText('pageCount')}</label>
-                  <p className="text-text-primary">{content.pageCount}p</p>
-                </div>
-              )}
-
-              {/* External URL */}
-              {isExternalLink && content.externalUrl && (
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-text-secondary mb-1">{getText('externalUrl')}</label>
-                  <a
-                    href={content.externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-action-primary hover:underline flex items-center gap-2"
-                  >
-                    <Link size={16} />
-                    {content.externalUrl}
-                  </a>
-                </div>
-              )}
-
-              {/* Current Version */}
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">{getText('currentVersion')}</label>
-                <p className="text-text-primary">v{content.currentVersion}</p>
-              </div>
-
-              {/* In Course */}
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">{getText('inCourse')}</label>
-                <p className="text-text-primary flex items-center gap-2">
-                  {content.inCourse ? (
-                    <>
-                      <Check size={16} className="text-status-success" />
-                      {getText('yes')}
-                    </>
+                <div className="divide-y divide-gray-100">
+                  {versionsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 size={24} className="animate-spin text-gray-400" />
+                    </div>
+                  ) : versions && versions.length > 0 ? (
+                    versions.map((version) => (
+                      <VersionCard
+                        key={version.id}
+                        version={version}
+                        isCurrentVersion={version.versionNumber === content.currentVersion}
+                        isExternalLink={isExternalLink}
+                        getText={getText}
+                        onRestore={() => handleVersionRestore(version.versionNumber)}
+                        isRestoring={restoreVersion.isPending}
+                      />
+                    ))
                   ) : (
-                    getText('no')
+                    <p className="text-gray-500 text-center py-8 text-sm">
+                      버전 기록이 없습니다.
+                    </p>
                   )}
-                </p>
+                </div>
               </div>
-
-              {/* Created At */}
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">{getText('createdAt')}</label>
-                <p className="text-text-primary flex items-center gap-2">
-                  <Calendar size={16} className="text-text-secondary" />
-                  {formatDate(content.createdAt)}
-                </p>
-              </div>
-
-              {/* Updated At */}
-              <div>
-                <label className="block text-sm text-text-secondary mb-1">{getText('updatedAt')}</label>
-                <p className="text-text-primary flex items-center gap-2">
-                  <Calendar size={16} className="text-text-secondary" />
-                  {formatDate(content.updatedAt)}
-                </p>
-              </div>
-
-              {/* Description (설명) */}
-              <div className="md:col-span-2">
-                <label className="block text-sm text-text-secondary mb-1">{getText('description')}</label>
-                <p className="text-text-primary">
-                  {content.description || <span className="text-text-placeholder">{getText('noDescription')}</span>}
-                </p>
-              </div>
-
-              {/* Tags (태그) */}
-              <div className="md:col-span-2">
-                <label className="block text-sm text-text-secondary mb-1">{getText('tags')}</label>
-                {content.tags ? (
-                  <div className="flex flex-wrap gap-2">
-                    {content.tags.split(',').map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center px-2 py-1 bg-bg-secondary border border-border rounded-full text-sm text-text-primary"
-                      >
-                        {tag.trim()}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-text-placeholder">{getText('noTags')}</p>
-                )}
-              </div>
-
             </div>
-          </div>
 
-          {/* Version History Section */}
-          <div className="bg-bg-default border border-border rounded-lg p-6">
-            <h2 className="text-text-primary text-lg font-medium flex items-center gap-2 mb-4">
-              <History size={20} />
-              {getText('versionHistory')}
-            </h2>
+            {/* Right Column - File Info */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden sticky top-6">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                  <h3 className="font-semibold text-[#2A2A2A] flex items-center gap-2">
+                    <HardDrive size={18} className="text-gray-400" />
+                    {getText('fileInfo')}
+                  </h3>
+                </div>
+                <div className="p-6 space-y-5">
+                  {!isExternalLink && (
+                    <DetailItem label={getText('fileSize')} value={formatFileSize(content.fileSize)} />
+                  )}
+                  {content.duration !== null && content.duration !== undefined && (
+                    <DetailItem
+                      label={getText('duration')}
+                      value={formatDuration(content.duration)}
+                      icon={<Clock size={14} />}
+                    />
+                  )}
+                  {content.resolution && (
+                    <DetailItem label={getText('resolution')} value={content.resolution} />
+                  )}
+                  {content.pageCount !== null && content.pageCount !== undefined && (
+                    <DetailItem label={getText('pageCount')} value={`${content.pageCount}p`} />
+                  )}
+                  <div className="pt-4 border-t border-gray-100">
+                    <DetailItem label={getText('createdAt')} value={formatDate(content.createdAt)} />
+                    <div className="mt-4">
+                      <DetailItem label={getText('updatedAt')} value={formatDate(content.updatedAt)} />
+                    </div>
+                  </div>
 
-            {versionsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 size={24} className="animate-spin text-text-secondary" />
+                  {isExternalLink && content.externalUrl && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">
+                        {getText('externalUrl')}
+                      </label>
+                      <a
+                        href={content.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline break-all"
+                      >
+                        {content.externalUrl}
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : versions && versions.length > 0 ? (
-              <div className="space-y-3">
-                {versions.map((version) => (
-                  <VersionCard
-                    key={version.id}
-                    version={version}
-                    isCurrentVersion={version.versionNumber === content.currentVersion}
-                    isExternalLink={isExternalLink}
-                    getText={getText}
-                    onRestore={() => handleVersionRestore(version.versionNumber)}
-                    isRestoring={restoreVersion.isPending}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-text-secondary text-center py-8">버전 기록이 없습니다.</p>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -737,72 +749,62 @@ interface VersionCardProps {
 function VersionCard({
   version,
   isCurrentVersion,
-  isExternalLink,
   getText,
   onRestore,
   isRestoring,
 }: Readonly<VersionCardProps>) {
-  const changeTypeText: Record<string, { ko: string; en: string }> = {
-    FILE_UPLOAD: { ko: '파일 업로드', en: 'File Upload' },
-    FILE_REPLACE: { ko: '파일 교체', en: 'File Replace' },
-    METADATA_UPDATE: { ko: '메타데이터 수정', en: 'Metadata Update' },
+  const changeTypeText: Record<string, string> = {
+    FILE_UPLOAD: '파일 업로드',
+    FILE_REPLACE: '파일 교체',
+    METADATA_UPDATE: '메타데이터 수정',
   };
 
   return (
     <div
       className={cn(
-        'p-4 border rounded-lg',
-        isCurrentVersion
-          ? 'border-action-primary bg-bg-brand-active'
-          : 'border-border bg-bg-secondary'
+        'p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group',
+        isCurrentVersion && 'bg-blue-50/30 hover:bg-blue-50/50'
       )}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-text-primary font-medium">
-              v{version.versionNumber}
+      <div className="flex items-start gap-4">
+        <div className="mt-1">
+          <span
+            className={cn(
+              'inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold',
+              isCurrentVersion ? 'bg-btn-brand text-white' : 'bg-gray-100 text-gray-500'
+            )}
+          >
+            v{version.versionNumber}
+          </span>
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-text-primary">
+              {changeTypeText[version.changeType] || version.changeType}
             </span>
             {isCurrentVersion && (
-              <Badge variant="indigo">현재 버전</Badge>
+              <Badge variant="indigo">현재</Badge>
             )}
-            <Badge variant="gray">
-              {changeTypeText[version.changeType]?.ko || version.changeType}
-            </Badge>
           </div>
-          <p className="text-sm text-text-primary mb-1">
-            {version.originalFileName}
-          </p>
-          {!isExternalLink && version.uploadedFileName && (
-            <p className="text-xs text-text-secondary mb-1">
-              {version.uploadedFileName}
-            </p>
-          )}
-          {!isExternalLink && version.fileSize && (
-            <p className="text-xs text-text-secondary mb-1">
-              {formatFileSize(version.fileSize)}
-            </p>
-          )}
+          <p className="text-xs text-gray-500 mt-0.5">{formatDate(version.createdAt)}</p>
           {version.changeSummary && (
-            <p className="text-sm text-text-secondary">{version.changeSummary}</p>
+            <p className="text-sm text-gray-600 mt-2">{version.changeSummary}</p>
           )}
-          <p className="text-xs text-text-placeholder mt-2">
-            {formatDate(version.createdAt)}
-          </p>
         </div>
-        {!isCurrentVersion && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="border border-border shrink-0"
-            onClick={onRestore}
-            disabled={isRestoring}
-          >
-            <RotateCcw size={14} />
-            {getText('restoreVersion')}
-          </Button>
-        )}
       </div>
+
+      {!isCurrentVersion && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRestore}
+          disabled={isRestoring}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-btn-brand"
+        >
+          <RotateCcw size={14} className="mr-1.5" />
+          <span className="text-xs">{getText('restore')}</span>
+        </Button>
+      )}
     </div>
   );
 }

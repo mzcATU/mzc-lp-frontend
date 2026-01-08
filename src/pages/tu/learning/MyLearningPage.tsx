@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   Search,
   Filter,
@@ -65,11 +66,12 @@ function ProgressBar({ progress, isDark }: { progress: number; isDark: boolean }
 interface EnrollmentCardProps {
   enrollment: Enrollment;
   onClick: () => void;
+  onContinueLearning: () => void;
   t: ReturnType<typeof useTranslation>['t'];
   isDark: boolean;
 }
 
-function EnrollmentCard({ enrollment, onClick, t, isDark }: EnrollmentCardProps) {
+function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: EnrollmentCardProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
@@ -134,7 +136,7 @@ function EnrollmentCard({ enrollment, onClick, t, isDark }: EnrollmentCardProps)
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onClick();
+              onContinueLearning();
             }}
           >
             <PlayCircle className="w-4 h-4 mr-2" />
@@ -150,6 +152,8 @@ export function MyLearningPage() {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
@@ -158,17 +162,17 @@ export function MyLearningPage() {
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
   };
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
-  // API 파라미터
+  // API 파라미터 - "수강 중인 강의" 페이지이므로 APPROVED 상태만 조회
+  // 필터에서 다른 상태를 선택하면 해당 상태로 조회
   const params: EnrollmentFilterParams = {
     page,
     size: 12,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
+    status: statusFilter !== 'all' ? statusFilter : 'APPROVED',
   };
 
   const { data, isLoading, isError } = useMyEnrollments(params);
@@ -180,7 +184,11 @@ export function MyLearningPage() {
   ) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
-    navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
+    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
+  };
+
+  const handleContinueLearning = (enrollmentId: number) => {
+    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}/player`));
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -199,7 +207,7 @@ export function MyLearningPage() {
             </h1>
             {/* 데모 버튼 (테스트용 - 숨김) */}
             <button
-              onClick={() => navigate('/tu/b2c/mypage/learning/demo/player')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning/demo/player'))}
               className={`opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
               title="Demo Mode"
             >
@@ -316,7 +324,7 @@ export function MyLearningPage() {
             <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               {t.learning.noEnrollmentsDesc}
             </p>
-            <Button variant="brand" onClick={() => navigate('/tu/b2c/courses')}>
+            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2c/courses'))}>
               {t.learning.browseCourses}
             </Button>
           </div>
@@ -331,6 +339,7 @@ export function MyLearningPage() {
                   key={enrollment.id}
                   enrollment={enrollment}
                   onClick={() => handleEnrollmentClick(enrollment.id)}
+                  onContinueLearning={() => handleContinueLearning(enrollment.id)}
                   t={t}
                   isDark={isDark}
                 />

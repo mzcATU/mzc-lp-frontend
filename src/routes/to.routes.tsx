@@ -19,7 +19,10 @@ import {
 } from '@/pages/to/program';
 import { InstructorAssignmentsPage } from '@/pages/to/instructor';
 import { UserManagementPage } from '@/pages/to/user';
+import { OperatorNoticesPage } from '@/pages/to/notices';
 import { DashboardPage } from '@/pages/to';
+import MemberPoolListPage from '@/pages/to/member-pool/MemberPoolListPage';
+import AutoEnrollmentRulesPage from '@/pages/to/auto-enrollment/AutoEnrollmentRulesPage';
 import { PlaceholderPage } from './pages';
 
 function TenantOperatorWrapper() {
@@ -33,7 +36,7 @@ function TenantOperatorWrapper() {
 }
 
 export const toRoutes = (
-  <Route path="/to" element={<TenantOperatorWrapper />}>
+  <Route path="/:subdomain/to" element={<TenantOperatorWrapper />}>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}
@@ -52,6 +55,12 @@ export const toRoutes = (
     <Route path="learning-objects" element={<PlaceholderPage title="학습 객체 관리" />} />
     {/* 사용자 관리 */}
     <Route path="users" element={<UserManagementPage />} />
+    {/* 회원 풀 관리 */}
+    <Route path="member-pools" element={<MemberPoolListPage />} />
+    {/* 자동 입과 규칙 관리 */}
+    <Route path="auto-enrollment-rules" element={<AutoEnrollmentRulesPage />} />
+    {/* 공지사항 관리 */}
+    <Route path="notices" element={<OperatorNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

@@ -59,7 +59,8 @@ import {
   useDeleteUser,
   useBulkCreateUsers,
 } from '@/hooks/ta';
-import type { AdminUser, UserStatus, SystemRole, UpdateUserDetailRequest, BulkCreateUsersRequest } from '@/types/admin';
+import type { AdminUser, UserStatus, SystemRole, UpdateUserDetailRequest, BulkCreateUsersRequest, BulkCreateUsersResponse } from '@/types/admin';
+import { userService } from '@/services/ta/userService';
 
 interface UserFormData {
   name: string;
@@ -110,6 +111,8 @@ export function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isBulkCreateDialogOpen, setIsBulkCreateDialogOpen] = useState(false);
@@ -120,13 +123,15 @@ export function UsersPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
 
-  // API Hooks
+  // API Hooks - 정렬 파라미터 추가
   const { data: usersData, isLoading, isError } = useUsers({
     search: searchQuery || undefined,
     status: statusFilter !== 'all' ? statusFilter as UserStatus : undefined,
     systemRole: roleFilter !== 'all' ? roleFilter as SystemRole : undefined,
     page,
     size: 10,
+    sortBy,
+    sortDirection,
   });
 
   const updateMutation = useUpdateUser();
@@ -331,100 +336,76 @@ export function UsersPage() {
     }
   };
 
+  // API 응답을 UploadResult 형식으로 변환
+  const convertApiResponse = (response: BulkCreateUsersResponse): UploadResult => {
+    const preview: AccountPreview[] = response.createdUsers.slice(0, 5).map((user) => {
+      const linkedInfo = response.autoLinkedUsers?.find((linked) => linked.userId === user.id);
+      return {
+        email: user.email,
+        name: user.name,
+        status: 'valid' as const,
+        employeeLinked: user.employeeLinked || false,
+        employeeInfo: linkedInfo
+          ? {
+              employeeId: linkedInfo.employeeNumber || String(linkedInfo.employeeId),
+              department: linkedInfo.department || '',
+              position: linkedInfo.position || '',
+              rank: linkedInfo.jobTitle || '',
+              jobRole: linkedInfo.jobTitle || '',
+            }
+          : undefined,
+      };
+    });
+
+    // 실패 항목도 preview에 추가
+    response.failedUsers.slice(0, Math.max(0, 5 - preview.length)).forEach((failed) => {
+      preview.push({
+        email: failed.email,
+        name: '',
+        status: 'error' as const,
+        errorMessage: failed.reason,
+        employeeLinked: false,
+      });
+    });
+
+    return {
+      total: response.totalRequested,
+      success: response.successCount,
+      failed: response.failedCount,
+      autoLinked: response.autoLinkedCount || 0,
+      errors: response.failedUsers.map((failed, index) => ({
+        row: index + 1,
+        email: failed.email,
+        error: failed.reason,
+      })),
+      preview,
+    };
+  };
+
   // 파일 드롭존
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
 
     setIsProcessing(true);
     setProcessingProgress(0);
 
-    // 파일 파싱 시뮬레이션
-    setTimeout(() => setProcessingProgress(30), 300);
-    setTimeout(() => setProcessingProgress(60), 600);
+    try {
+      setProcessingProgress(30);
 
-    setTimeout(() => {
-      setProcessingProgress(100);
-
-      // 시뮬레이션 데이터 - 임직원 자동 매칭 포함
-      setUploadResult({
-        total: 25,
-        success: 22,
-        failed: 3,
-        autoLinked: 18,  // 22명 중 18명이 임직원 정보와 자동 연동됨
-        errors: [
-          { row: 5, email: 'invalid-email', error: '이메일 형식이 올바르지 않습니다.' },
-          { row: 12, email: 'duplicate@company.com', error: '이미 존재하는 이메일입니다.' },
-          { row: 18, email: 'test@company.com', error: '필수 항목(이름)이 누락되었습니다.' },
-        ],
-        preview: [
-          {
-            email: 'cskim@company.com',
-            name: '김철수',
-            department: '개발팀',
-            role: 'USER',
-            status: 'valid',
-            employeeLinked: true,
-            employeeInfo: {
-              employeeId: 'E001',
-              department: '개발팀',
-              position: '팀원',
-              rank: '대리',
-              jobRole: '백엔드 개발자'
-            }
-          },
-          {
-            email: 'yhlee@company.com',
-            name: '이영희',
-            department: '개발팀',
-            role: 'USER',
-            status: 'valid',
-            employeeLinked: true,
-            employeeInfo: {
-              employeeId: 'E002',
-              department: '개발팀',
-              position: '팀원',
-              rank: '과장',
-              jobRole: '프론트엔드 개발자'
-            }
-          },
-          {
-            email: 'duplicate@company.com',
-            name: '박민수',
-            department: '개발팀',
-            role: 'USER',
-            status: 'duplicate',
-            errorMessage: '이미 존재하는 이메일',
-            employeeLinked: false
-          },
-          {
-            email: 'sjchoi@company.com',
-            name: '최수진',
-            department: '인사팀',
-            role: 'USER',
-            status: 'valid',
-            employeeLinked: true,
-            employeeInfo: {
-              employeeId: 'E004',
-              department: '인사팀',
-              position: '팀원',
-              rank: '사원',
-              jobRole: '인사 담당'
-            }
-          },
-          {
-            email: 'invalid-email',
-            name: '정민호',
-            department: '영업팀',
-            role: 'USER',
-            status: 'error',
-            errorMessage: '잘못된 이메일 형식',
-            employeeLinked: false
-          },
-        ],
+      // 실제 API 호출
+      const response = await userService.fileBulkCreateUsers(file, {
+        autoLinkEmployees: true,
       });
+
+      setProcessingProgress(100);
+      setUploadResult(convertApiResponse(response));
+    } catch (err) {
+      console.error('파일 업로드 실패:', err);
+      toast.error(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.');
+    } finally {
       setIsProcessing(false);
-    }, 900);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -438,11 +419,9 @@ export function UsersPage() {
     maxSize: 10 * 1024 * 1024, // 10MB
   });
 
-  // 파일 업로드 계정 생성 확정
+  // 파일 업로드 계정 생성 확인 (이미 API 호출로 생성됨)
   const handleFileUploadConfirm = () => {
     if (!uploadResult) return;
-    // API 호출 시뮬레이션
-    console.log('Creating accounts from file:', uploadResult);
     toast.success(`${uploadResult.success}개의 계정이 생성되었습니다.`);
     setUploadResult(null);
     setIsBulkCreateDialogOpen(false);
@@ -579,6 +558,18 @@ export function UsersPage() {
               <Badge variant="gray" className="ml-2">{usersData.totalElements}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="INSTRUCTOR">
+            강사
+            {usersData && roleFilter === 'INSTRUCTOR' && (
+              <Badge variant="gray" className="ml-2">{usersData.totalElements}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="DESIGNER">
+            강의 개설자
+            {usersData && roleFilter === 'DESIGNER' && (
+              <Badge variant="gray" className="ml-2">{usersData.totalElements}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="OPERATOR">
             운영자
             {usersData && roleFilter === 'OPERATOR' && (
@@ -624,6 +615,18 @@ export function UsersPage() {
         columns={columns}
         data={users}
         showColumnToggle={false}
+        manualSorting={true}
+        sorting={sortBy ? [{ id: sortBy, desc: sortDirection === 'desc' }] : []}
+        onSortingChange={(sorting) => {
+          if (sorting.length > 0) {
+            setSortBy(sorting[0].id);
+            setSortDirection(sorting[0].desc ? 'desc' : 'asc');
+          } else {
+            setSortBy(undefined);
+            setSortDirection('desc');
+          }
+          setPage(0); // 정렬 변경 시 첫 페이지로 이동
+        }}
         labels={{
           noResults: '사용자가 없습니다.',
           rowsSelected: '{selected}개 선택됨',
@@ -713,6 +716,8 @@ export function UsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USER">일반 사용자</SelectItem>
+                    <SelectItem value="INSTRUCTOR">강사</SelectItem>
+                    <SelectItem value="DESIGNER">강의 개설자</SelectItem>
                     <SelectItem value="OPERATOR">운영자</SelectItem>
                     <SelectItem value="TENANT_ADMIN">테넌트 관리자</SelectItem>
                   </SelectContent>
@@ -782,6 +787,8 @@ export function UsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USER">일반 사용자</SelectItem>
+                  <SelectItem value="INSTRUCTOR">강사</SelectItem>
+                  <SelectItem value="DESIGNER">강의 개설자</SelectItem>
                   <SelectItem value="OPERATOR">운영자</SelectItem>
                 </SelectContent>
               </Select>

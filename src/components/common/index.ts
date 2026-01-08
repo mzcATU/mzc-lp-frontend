@@ -281,6 +281,9 @@ export { EmptyState, NoResultsEmpty, NoDataEmpty } from './EmptyState';
 // 7. NAVIGATION - 네비게이션
 // ═══════════════════════════════════════════════════════════════════════════════
 // 페이지/섹션 간 이동을 위한 컴포넌트들.
+// - BackButton: 상세 페이지에서 목록으로 돌아가기
+
+export { BackButton } from './BackButton';
 
 export {
   Breadcrumb,
@@ -370,6 +373,7 @@ export { ToggleGroup, ToggleGroupItem } from './ToggleGroup';
 // 9. AUTH - 인증 관련
 // ═══════════════════════════════════════════════════════════════════════════════
 export { ProtectedRoute } from './ProtectedRoute';
+export { ProfileRequiredRoute } from './ProfileRequiredRoute';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 10. WISHLIST - 찜 기능

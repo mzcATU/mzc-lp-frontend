@@ -45,6 +45,8 @@ import {
   Zap,
   FolderTree,
   Map,
+  ToggleRight,
+  Tags,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -63,8 +65,8 @@ export const superAdminMenuData: MenuItem[] = [
     label: { ko: '테넌트 관리', en: 'Tenant Management' },
     icon: Building2,
     subItems: [
-      { id: 'tenant-crud', label: { ko: '테넌트 생성/조회/수정/삭제', en: 'Tenant CRUD' }, icon: Building2, path: '/sa/tenants' },
-      { id: 'license-billing', label: { ko: '요금제 및 라이선스 관리', en: 'License & Billing Mgmt' }, icon: CreditCard, path: '/sa/tenants/billing' },
+      { id: 'tenant-crud', label: { ko: '테넌트 목록', en: 'Tenant List' }, icon: Building2, path: '/sa/tenants' },
+      { id: 'license-billing', label: { ko: '구독 관리', en: 'Subscription Management' }, icon: CreditCard, path: '/sa/tenants/billing' },
       { id: 'overall-status', label: { ko: '전체 현황 조회', en: 'Overall Status' }, icon: PieChart, path: '/sa/tenants/status' },
     ],
   },
@@ -75,7 +77,7 @@ export const superAdminMenuData: MenuItem[] = [
     subItems: [
       { id: 'domain-ssl', label: { ko: '도메인 및 SSL 설정', en: 'Domain & SSL Setup' }, icon: Globe, path: '/sa/system/domain' },
       { id: 'operator-mgmt', label: { ko: '운영자 관리', en: 'Operator Management' }, icon: UserCog, path: '/sa/system/operators' },
-      { id: 'global-branding', label: { ko: '글로벌 브랜딩/템플릿 기본값 설정', en: 'Global Branding/Template Defaults' }, icon: Palette, path: '/sa/system/branding' },
+      { id: 'global-branding', label: { ko: '브랜딩 설정', en: 'Branding Settings' }, icon: Palette, path: '/sa/system/branding' },
       { id: 'email-templates', label: { ko: '이메일 템플릿 관리', en: 'Email Template Mgmt' }, icon: Mail, path: '/sa/system/email-templates' },
     ],
   },
@@ -84,8 +86,8 @@ export const superAdminMenuData: MenuItem[] = [
     label: { ko: '글로벌 공지 관리', en: 'Global Notice Management' },
     icon: Megaphone,
     subItems: [
-      { id: 'notice-register', label: { ko: '전체 공지사항 등록 및 수정', en: 'Notice Registration & Edit' }, icon: FileEdit, path: '/sa/notices' },
-      { id: 'notice-distribution', label: { ko: '공지사항 배포 관리', en: 'Notice Distribution Mgmt' }, icon: Send, path: '/sa/notices/distribution' },
+      { id: 'notice-register', label: { ko: '공지사항', en: 'Notices' }, icon: FileEdit, path: '/sa/notices' },
+      { id: 'notice-distribution', label: { ko: '배포 관리', en: 'Distribution' }, icon: Send, path: '/sa/notices/distribution' },
     ],
   },
   {
@@ -93,7 +95,7 @@ export const superAdminMenuData: MenuItem[] = [
     label: { ko: '데이터 및 로그 분석', en: 'Log & Activity Analysis' },
     icon: Database,
     subItems: [
-      { id: 'usage-trend', label: { ko: '전체 사용량 트렌드 및 통계', en: 'Overall Usage Trend & Stats' }, icon: TrendingUp, path: '/sa/analytics/usage' },
+      { id: 'usage-trend', label: { ko: '사용량 통계', en: 'Usage Statistics' }, icon: TrendingUp, path: '/sa/analytics/usage' },
       { id: 'activity-analysis', label: { ko: '활동 분석', en: 'Activity Analysis' }, icon: Activity, path: '/sa/analytics/activity' },
       { id: 'log-management', label: { ko: '로그 관리', en: 'Log Management' }, icon: FileText, path: '/sa/analytics/logs' },
     ],
@@ -118,11 +120,10 @@ export const tenantAdminMenuData: MenuItem[] = [
   },
   {
     id: 'system-foundation',
-    label: { ko: '시스템 기반 관리', en: 'System Foundation & Licensing' },
+    label: { ko: '시스템 기반 관리', en: 'System Foundation' },
     icon: Server,
     subItems: [
       { id: 'domain-ssl', label: { ko: '도메인 및 SSL 설정', en: 'Domain & SSL Setup' }, icon: Globe, path: '/ta/system/domain' },
-      { id: 'license-billing', label: { ko: '요금제 및 라이선스 관리', en: 'License & Billing Mgmt' }, icon: CreditCard, path: '/ta/system/billing' },
     ],
   },
   {
@@ -161,6 +162,21 @@ export const tenantAdminMenuData: MenuItem[] = [
       { id: 'analytics-export', label: { ko: '통계 조회 및 내보내기', en: 'Analytics & Export' }, icon: Download, path: '/ta/analytics/export' },
       { id: 'log-history', label: { ko: '이력 분석 및 로그 관리', en: 'Log & History Analysis' }, icon: FileText, path: '/ta/analytics/logs' },
     ],
+  },
+  {
+    id: 'feature-settings',
+    label: { ko: '기능 설정', en: 'Feature Settings' },
+    icon: ToggleRight,
+    subItems: [
+      { id: 'feature-onoff', label: { ko: '기능 On/Off', en: 'Feature On/Off' }, icon: ToggleRight, path: '/ta/features' },
+      { id: 'custom-categories', label: { ko: '카테고리 관리', en: 'Category Management' }, icon: Tags, path: '/ta/features/categories' },
+    ],
+  },
+  {
+    id: 'notice-management',
+    label: { ko: '공지사항 관리', en: 'Notice Management' },
+    icon: Megaphone,
+    path: '/ta/notices',
   },
   {
     id: 'settings',
@@ -215,6 +231,21 @@ export const tenantOperatorMenuData: MenuItem[] = [
     path: '/to/users',
   },
   {
+    id: 'automation',
+    label: { ko: '자동화 관리', en: 'Automation' },
+    icon: Zap,
+    subItems: [
+      { id: 'member-pools', label: { ko: '회원 풀 관리', en: 'Member Pool Management' }, icon: Users, path: '/to/member-pools' },
+      { id: 'auto-enrollment', label: { ko: '자동 입과 규칙', en: 'Auto Enrollment Rules' }, icon: Zap, path: '/to/auto-enrollment-rules' },
+    ],
+  },
+  {
+    id: 'notice-management',
+    label: { ko: '공지사항 관리', en: 'Notice Management' },
+    icon: Megaphone,
+    path: '/to/notices',
+  },
+  {
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
@@ -238,11 +269,16 @@ export const tenantUserMenuData: MenuItem[] = [
     icon: Briefcase,
     subItems: [
       { id: 'my-courses', label: { ko: '강의 디자인', en: 'Course Design' }, icon: BookOpen, path: '/tu/teaching/courses' },
-      { id: 'my-programs', label: { ko: '강의 개설', en: 'Course Creation' }, icon: Package, path: '/tu/teaching/programs' },
-      { id: 'my-assignments', label: { ko: '강의 관리', en: 'Course Management' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
-      { id: 'my-content', label: { ko: '내 콘텐츠', en: 'My Content' }, icon: PenTool, path: '/tu/teaching/content' },
+      { id: 'my-assignments', label: { ko: '강의 운영', en: 'Course Operations' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
+      { id: 'my-programs', label: { ko: '개설 신청 현황', en: 'Submission Status' }, icon: Package, path: '/tu/teaching/programs' },
       { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'] },
     ],
+  },
+  {
+    id: 'my-content',
+    label: { ko: '내 콘텐츠', en: 'My Content' },
+    icon: PenTool,
+    path: '/tu/teaching/content',
   },
   // '과정 둘러보기' 메뉴 제거 - 모드 스위처의 '학습자 모드'로 대체
 ];
@@ -273,7 +309,7 @@ export const myPageMenuData: MenuItem[] = [
     icon: Briefcase,
     subItems: [
       { id: 'my-courses', label: { ko: '내 강의', en: 'My Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/teaching' },
-      { id: 'create-course', label: { ko: '강의 개설하기', en: 'Create Course' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
+      { id: 'create-course', label: { ko: '강의 디자인 시작하기', en: 'Start Course Design' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
       { id: 'teaching-stats', label: { ko: '내 강의 통계', en: 'Teaching Stats' }, icon: TrendingUp, path: '/tu/b2c/mypage/teaching/stats' },
     ],
   },

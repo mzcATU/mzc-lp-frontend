@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Shield, Bell, Globe, Palette, LucideIcon, ArrowLeft } from 'lucide-react';
 import { SettingsCard, Button } from '@/components/common';
 
-type UserRole = 'USER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SUPER_ADMIN';
+type UserRole = 'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SYSTEM_ADMIN';
 
 interface SettingCardData {
   id: string;
@@ -54,7 +54,7 @@ const getSettingCards = (userRole: UserRole): SettingCardData[] => {
 
 // URL 경로에서 역할 추출
 const getRoleFromPath = (pathname: string): UserRole => {
-  if (pathname.startsWith('/sa')) return 'SUPER_ADMIN';
+  if (pathname.startsWith('/sa')) return 'SYSTEM_ADMIN';
   if (pathname.startsWith('/ta')) return 'TENANT_ADMIN';
   if (pathname.startsWith('/to')) return 'OPERATOR';
   return 'USER';

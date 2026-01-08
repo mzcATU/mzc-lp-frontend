@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
-  ArrowLeft,
   BookOpen,
   Clock,
   Users,
@@ -22,6 +22,7 @@ import {
   Alert,
   AlertDescription,
   Skeleton,
+  BackButton,
 } from '@/components/common';
 import { useCatalogProgram, useCatalogCourseTimes, useEnroll } from '@/hooks/tu';
 import { useTranslation } from '@/store/common/languageStore';
@@ -134,6 +135,7 @@ function CourseTimeCard({
 export function CatalogDetailPage() {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { t } = useTranslation();
   const id = Number(programId);
 
@@ -148,7 +150,7 @@ export function CatalogDetailPage() {
   const enrollMutation = useEnroll();
 
   const handleBack = () => {
-    navigate('/tu/b2c/courses');
+    navigate(prefixPath('/tu/b2c/courses'));
   };
 
   const handleEnroll = async (courseTimeId: number) => {
@@ -156,7 +158,7 @@ export function CatalogDetailPage() {
       const enrollment = await enrollMutation.mutateAsync(courseTimeId);
       toast.success(t.catalog.enrollSuccess);
       // 수강 신청 성공 후 학습 페이지로 이동
-      navigate(`/tu/b2c/mypage/learning/${enrollment.id}`);
+      navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollment.id}`));
     } catch {
       toast.error(t.catalog.enrollFail);
     }
@@ -194,10 +196,7 @@ export function CatalogDetailPage() {
         }}
       >
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <Button variant="ghost" onClick={handleBack} className="mb-6 gap-2">
-            <ArrowLeft className="w-5 h-5" />
-            {t.catalog.backToCatalog}
-          </Button>
+          <BackButton onClick={handleBack} label={t.catalog.backToCatalog} className="mb-6" />
 
           <div className="text-center py-20">
             <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: designTokens.status.error_text }} />
@@ -223,10 +222,7 @@ export function CatalogDetailPage() {
     >
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         {/* Back Button */}
-        <Button variant="ghost" onClick={handleBack} className="mb-6 gap-2">
-          <ArrowLeft className="w-5 h-5" />
-          {t.catalog.backToCatalog}
-        </Button>
+        <BackButton onClick={handleBack} label={t.catalog.backToCatalog} className="mb-6" />
 
         {/* Hero Section */}
         <div className="flex flex-col md:flex-row gap-8 mb-8">

@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Edit2,
   Trash2,
   Send,
@@ -11,13 +10,14 @@ import {
   XCircle,
   Archive,
 } from 'lucide-react';
-import { Button, Badge } from '@/components/common';
+import { Button, Badge, BackButton } from '@/components/common';
 import {
   useMyProgram,
   useMyProgramSnapshot,
   useSubmitMyProgram,
   useDeleteMyProgram,
 } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import type { ProgramStatus } from '@/types/common';
 import { PROGRAM_STATUS_LABELS } from '@/types/common';
 import { ProgramInfoSection } from './components/ProgramInfoSection';
@@ -77,6 +77,7 @@ const canDelete = (status: ProgramStatus) => status === 'DRAFT' || status === 'R
 export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPageProps>) {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const id = programId ? parseInt(programId, 10) : 0;
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
@@ -107,7 +108,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
     try {
       await deleteMutation.mutateAsync(id);
       alert(getText('deleteSuccess'));
-      navigate('/tu/teaching/programs');
+      navigate(prefixPath('/tu/teaching/programs'));
     } catch (err) {
       console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
@@ -135,14 +136,11 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
           <p className="text-text-secondary">
             {error ? getText('error') : getText('notFound')}
           </p>
-          <Button
-            variant="ghost"
-            className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/programs')}
-          >
-            <ArrowLeft size={16} />
-            {getText('back')}
-          </Button>
+          <BackButton
+            onClick={() => navigate(prefixPath('/tu/teaching/programs'))}
+            label={getText('back')}
+            className="mt-4"
+          />
         </div>
       </div>
     );
@@ -153,21 +151,16 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
       <div className="p-8">
         {/* 뒤로가기 버튼 */}
         <div className="mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="border border-border"
-            onClick={() => navigate('/tu/teaching/programs')}
-          >
-            <ArrowLeft size={16} />
-            {getText('back')}
-          </Button>
+          <BackButton
+            onClick={() => navigate(prefixPath('/tu/teaching/programs'))}
+            label={getText('back')}
+          />
         </div>
 
         {/* Header Section - 목록 페이지와 동일한 스타일 */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3">
               <h1 className="text-text-primary mb-0">{program.title}</h1>
               <Badge
                 variant={statusBadgeVariant[program.status]}
@@ -177,7 +170,6 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 {PROGRAM_STATUS_LABELS[program.status]}
               </Badge>
             </div>
-            <p className="text-text-secondary m-0">ID: {program.id}</p>
           </div>
 
           {/* Action Buttons */}
@@ -198,7 +190,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 variant="ghost"
                 size="sm"
                 className="border border-border"
-                onClick={() => navigate(`/tu/teaching/programs/${id}/edit`)}
+                onClick={() => navigate(prefixPath(`/tu/teaching/programs/${id}/edit`))}
               >
                 <Edit2 size={16} />
                 {getText('edit')}

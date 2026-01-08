@@ -4,3 +4,5 @@ export * from './useProgramQueries';
 export * from './useUserQueries';
 export * from './useEnrollmentQueries';
 export * from './useDashboardQueries';
+export * from './useMemberPoolQueries';
+export * from './useAutoEnrollmentRuleQueries';

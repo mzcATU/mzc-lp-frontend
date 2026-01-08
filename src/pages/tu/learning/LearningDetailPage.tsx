@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import {
-  ArrowLeft,
   PlayCircle,
   CheckCircle,
   Clock,
@@ -14,6 +14,9 @@ import {
   FileText,
   Video,
   Link as LinkIcon,
+  Music,
+  Image,
+  Folder,
 } from 'lucide-react';
 import {
   Button,
@@ -31,11 +34,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  BackButton,
 } from '@/components/common';
-import { useEnrollment, useCancelEnrollment } from '@/hooks/tu';
+import { useQuery } from '@tanstack/react-query';
+import { useEnrollmentForPlayer, useCancelEnrollment } from '@/hooks/tu';
 import { useTranslation } from '@/store/common/languageStore';
 import { useThemeStore } from '@/store/common/themeStore';
+import axiosInstance from '@/services/common/api/axiosInstance';
+import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import type { EnrollmentStatus } from '@/services/tu/enrollmentService';
+import type { SnapshotItemResponse, SnapshotRelationsResponse } from '@/types/common/snapshot.types';
 
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
@@ -53,80 +61,93 @@ const statusIcons: Record<EnrollmentStatus, React.ReactNode> = {
   COMPLETED: <CheckCircle className="w-4 h-4" />,
 };
 
-// Mock 커리큘럼 데이터 (실제 API 연동 전)
-interface CurriculumItem {
-  id: number;
-  title: string;
-  type: 'video' | 'document' | 'link';
-  duration?: number;
-  completed: boolean;
+// 커리큘럼 아이템 타입
+interface CurriculumDisplayItem {
+  itemId: number;
+  itemName: string; // 표시용 이름 (displayName 또는 itemName)
+  itemType: string | null;
+  duration: number | null;
+  isFolder: boolean;
+  seq: number;
+  isCompleted: boolean;
 }
 
-const mockCurriculum: CurriculumItem[] = [
-  { id: 1, title: '강의 소개', type: 'video', duration: 10, completed: true },
-  { id: 2, title: '1장. 기본 개념 이해하기', type: 'video', duration: 45, completed: true },
-  { id: 3, title: '1장. 실습 자료', type: 'document', completed: true },
-  { id: 4, title: '2장. 심화 학습', type: 'video', duration: 60, completed: false },
-  { id: 5, title: '2장. 참고 자료', type: 'link', completed: false },
-  { id: 6, title: '3장. 실전 프로젝트', type: 'video', duration: 90, completed: false },
-];
-
-const typeIcons: Record<CurriculumItem['type'], React.ReactNode> = {
-  video: <Video className="w-4 h-4" />,
-  document: <FileText className="w-4 h-4" />,
-  link: <LinkIcon className="w-4 h-4" />,
+// 콘텐츠 타입별 아이콘
+const getTypeIcon = (itemType: string | null, isFolder: boolean) => {
+  if (isFolder) return <Folder className="w-4 h-4" />;
+  if (!itemType) return <Video className="w-4 h-4" />;
+  const iconMap: Record<string, React.ReactNode> = {
+    VIDEO: <Video className="w-4 h-4" />,
+    AUDIO: <Music className="w-4 h-4" />,
+    DOCUMENT: <FileText className="w-4 h-4" />,
+    IMAGE: <Image className="w-4 h-4" />,
+    EXTERNAL_LINK: <LinkIcon className="w-4 h-4" />,
+  };
+  return iconMap[itemType.toUpperCase()] || <Video className="w-4 h-4" />;
 };
 
 interface CurriculumListItemProps {
-  item: CurriculumItem;
+  item: CurriculumDisplayItem;
   isDark: boolean;
+  onClick: () => void;
 }
 
-function CurriculumListItem({ item, isDark }: CurriculumListItemProps) {
+function CurriculumListItem({ item, isDark, onClick }: CurriculumListItemProps) {
+  // 폴더인 경우 다르게 표시
+  if (item.isFolder) {
+    return (
+      <div className={`flex items-center gap-3 px-4 py-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+        <Folder className="w-4 h-4" />
+        <span className="font-medium text-sm">{item.itemName}</span>
+      </div>
+    );
+  }
+
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return null;
+    const mins = Math.floor(seconds / 60);
+    return `${mins}분`;
+  };
+
   return (
     <div
+      onClick={onClick}
       className={`flex items-center gap-4 p-4 rounded-lg transition-colors cursor-pointer ${
-        item.completed
+        item.isCompleted
           ? isDark
             ? 'bg-green-500/10 border border-green-500/20 hover:bg-green-500/20'
             : 'bg-green-50 border border-green-200 hover:bg-green-100'
           : isDark
-          ? 'bg-white/5 border border-white/10 hover:bg-white/10'
-          : 'bg-white border border-gray-200 hover:bg-gray-50'
+            ? 'bg-white/5 border border-white/10 hover:bg-white/10'
+            : 'bg-white border border-gray-200 hover:bg-gray-50'
       }`}
     >
-      {/* Type Icon */}
+      {/* Type Icon or Completed Check */}
       <div
         className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          item.completed
-            ? 'bg-green-500 text-white'
-            : isDark
-            ? 'bg-white/10 text-gray-400'
-            : 'bg-gray-100 text-gray-500'
+          item.isCompleted
+            ? 'bg-green-100 text-green-600'
+            : isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
         }`}
       >
-        {typeIcons[item.type]}
+        {item.isCompleted ? <CheckCircle className="w-5 h-5" /> : getTypeIcon(item.itemType, item.isFolder)}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <h4 className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          {item.title}
+          {item.itemName}
         </h4>
         {item.duration && (
           <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            {item.duration}분
+            {formatDuration(item.duration)}
           </p>
         )}
       </div>
 
-      {/* Status */}
+      {/* Arrow */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        {item.completed ? (
-          <CheckCircle className="w-5 h-5 text-green-500" />
-        ) : (
-          <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-        )}
+        <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
       </div>
     </div>
   );
@@ -135,6 +156,7 @@ function CurriculumListItem({ item, isDark }: CurriculumListItemProps) {
 export function LearningDetailPage() {
   const { enrollmentId } = useParams<{ enrollmentId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -148,8 +170,115 @@ export function LearningDetailPage() {
     COMPLETED: t.learning.statusCompleted,
   };
 
-  const { data: enrollment, isLoading, isError } = useEnrollment(Number(enrollmentId));
+  // Enrollment + Program + snapshotId 조회
+  const { data: playerData, isLoading, isError } = useEnrollmentForPlayer(Number(enrollmentId));
   const cancelEnrollment = useCancelEnrollment();
+
+  // snapshotId가 있으면 스냅샷 아이템 조회
+  const snapshotId = playerData?.snapshotId ?? 0;
+
+  // 스냅샷 아이템 조회
+  // axiosInstance가 ApiResponse wrapper를 자동으로 언래핑하므로 .data만 사용
+  const { data: snapshotItems, isLoading: itemsLoading } = useQuery({
+    queryKey: ['snapshot', 'items', snapshotId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<SnapshotItemResponse[]>(
+        API_ENDPOINTS.SNAPSHOTS.ITEMS(snapshotId)
+      );
+      return response.data;
+    },
+    enabled: snapshotId > 0,
+  });
+
+  // 스냅샷 관계(순서) 조회
+  const { data: relationsData, isLoading: relationsLoading } = useQuery({
+    queryKey: ['snapshot', 'relations', 'ordered', snapshotId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<SnapshotRelationsResponse>(
+        API_ENDPOINTS.SNAPSHOTS.RELATIONS_ORDERED(snapshotId)
+      );
+      return response.data;
+    },
+    enabled: snapshotId > 0,
+  });
+
+  // 아이템별 진도 조회
+  const { data: itemsProgressData } = useQuery({
+    queryKey: ['enrollment', 'items', 'progress', enrollmentId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<{ itemId: number; progressPercent: number; completed: boolean; completedAt: string | null }[]>(
+        API_ENDPOINTS.ENROLLMENTS.ITEMS_PROGRESS(Number(enrollmentId))
+      );
+      return response.data;
+    },
+    enabled: !!enrollmentId,
+  });
+
+  // 진도 데이터를 Map으로 변환
+  const progressMap = useMemo(() => {
+    const map = new Map<number, boolean>();
+    itemsProgressData?.forEach((item) => {
+      map.set(item.itemId, item.completed);
+    });
+    return map;
+  }, [itemsProgressData]);
+
+  // 순서가 있는 커리큘럼 아이템 목록 생성
+  const curriculumItems = useMemo((): CurriculumDisplayItem[] => {
+    if (!snapshotItems) return [];
+
+    // 아이템을 평탄화
+    const flatItems: CurriculumDisplayItem[] = [];
+    let seq = 1;
+
+    const flattenItems = (items: SnapshotItemResponse[]) => {
+      items.forEach((item) => {
+        // displayName이 있으면 우선 사용, 없으면 itemName(파일명) 사용
+        const displayName = item.snapshotLearningObject?.displayName || item.itemName;
+        flatItems.push({
+          itemId: item.itemId,
+          itemName: displayName,
+          itemType: item.itemType,
+          duration: item.snapshotLearningObject?.duration ?? null,
+          isFolder: item.isFolder,
+          seq: seq++,
+          isCompleted: progressMap.get(item.itemId) ?? false,
+        });
+        if (item.children && item.children.length > 0) {
+          flattenItems(item.children);
+        }
+      });
+    };
+    flattenItems(snapshotItems);
+
+    // relationsData가 있으면 순서대로, 없으면 평탄화된 순서대로 반환
+    if (relationsData?.orderedItems && relationsData.orderedItems.length > 0) {
+      const itemsMap = new Map<number, CurriculumDisplayItem>();
+      flatItems.forEach(item => itemsMap.set(item.itemId, item));
+
+      return relationsData.orderedItems
+        .map((orderedItem) => {
+          const item = itemsMap.get(orderedItem.itemId);
+          if (!item) return null;
+          return { ...item, seq: orderedItem.seq, isCompleted: progressMap.get(orderedItem.itemId) ?? false };
+        })
+        .filter((item): item is CurriculumDisplayItem => item !== null);
+    }
+
+    return flatItems;
+  }, [snapshotItems, relationsData, progressMap]);
+
+  // enrollment 형태로 변환 (기존 코드 호환용)
+  const enrollment = playerData ? {
+    id: playerData.enrollmentId,
+    programTitle: playerData.programTitle,
+    courseTimeName: playerData.courseTimeName,
+    status: playerData.status as EnrollmentStatus,
+    progress: playerData.progressPercent,
+    startDate: playerData.classStartDate,
+    endDate: playerData.classEndDate,
+    enrolledAt: playerData.enrolledAt,
+  } : null;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -162,16 +291,15 @@ export function LearningDetailPage() {
     try {
       await cancelEnrollment.mutateAsync(enrollment.id);
       setCancelDialogOpen(false);
-      navigate('/tu/b2c/mypage/learning');
+      navigate(prefixPath('/tu/b2c/mypage/learning'));
     } catch (error) {
       console.error('Failed to cancel enrollment:', error);
     }
   };
 
   const handleContinueLearning = () => {
-    // 미완료 아이템 중 첫 번째 아이템으로 이동, 없으면 첫 아이템
-    const nextItem = mockCurriculum.find((item) => !item.completed) || mockCurriculum[0];
-    navigate(`/tu/b2c/mypage/learning/${enrollmentId}/player/${nextItem?.id || ''}`);
+    // 플레이어 페이지로 이동 (첫 아이템 선택은 플레이어에서 자동 처리)
+    navigate(`/tu/b2c/mypage/learning/${enrollmentId}/player`);
   };
 
   // Loading State
@@ -191,7 +319,7 @@ export function LearningDetailPage() {
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate('/tu/b2c/mypage/learning')}>
+        <Button onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
           {t.learning.backToLearning}
         </Button>
       </div>
@@ -205,14 +333,11 @@ export function LearningDetailPage() {
     <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-[1200px] mx-auto">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          className={`mb-6 gap-2 ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : ''}`}
-          onClick={() => navigate('/tu/b2c/mypage/learning')}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.learning.backToLearning}
-        </Button>
+        <BackButton
+          onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+          label={t.learning.backToLearning}
+          className={`mb-6 ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : ''}`}
+        />
 
         {/* Header Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -308,11 +433,26 @@ export function LearningDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 pt-0">
-            <div className="space-y-3">
-              {mockCurriculum.map((item) => (
-                <CurriculumListItem key={item.id} item={item} isDark={isDark} />
-              ))}
-            </div>
+            {(itemsLoading || relationsLoading) ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className={`w-6 h-6 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+              </div>
+            ) : curriculumItems.length > 0 ? (
+              <div className="space-y-3">
+                {curriculumItems.map((item) => (
+                  <CurriculumListItem
+                    key={item.itemId}
+                    item={item}
+                    isDark={isDark}
+                    onClick={() => navigate(`/tu/b2c/mypage/learning/${enrollmentId}/player/${item.itemId}`)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                {snapshotId === 0 ? '프로그램에 스냅샷이 연결되지 않았습니다.' : '커리큘럼이 없습니다.'}
+              </div>
+            )}
           </CardContent>
         </Card>
 

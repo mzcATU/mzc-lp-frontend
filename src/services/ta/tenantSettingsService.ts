@@ -9,15 +9,33 @@ import type {
   UpdateBrandingRequest,
   UpdateUserManagementRequest,
 } from '@/types/admin';
-import type { PublicBrandingResponse } from '@/types/tu/branding.types';
+import type {
+  PublicBrandingResponse,
+  PublicLayoutResponse,
+  NavigationItemResponse,
+} from '@/types/tu/branding.types';
+
+/** 기본 브랜딩 (fallback) */
+const DEFAULT_BRANDING: PublicBrandingResponse = {
+  tenantName: 'MZC Learning Platform',
+  primaryColor: '#3B82F6',
+  secondaryColor: '#10B981',
+  logoUrl: null,
+  darkLogoUrl: null,
+  faviconUrl: null,
+  accentColor: null,
+  headingFont: null,
+  bodyFont: null,
+};
 
 export const tenantSettingsService = {
   /** 현재 테넌트 브랜딩 조회 (로그인 사용자용) */
   async getBranding(): Promise<PublicBrandingResponse> {
-    const { data } = await axiosInstance.get<{ data: PublicBrandingResponse }>(
+    const { data } = await axiosInstance.get<PublicBrandingResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.BRANDING
     );
-    return data.data;
+// data가 null/undefined인 경우 기본 브랜딩 반환
+    return data ?? DEFAULT_BRANDING;
   },
 
   /** 테넌트 설정 조회 */
@@ -51,6 +69,26 @@ export const tenantSettingsService = {
     const { data } = await axiosInstance.patch<TenantSettingsDetail>(
       API_ENDPOINTS.TENANT_SETTINGS.USER_MANAGEMENT,
       request
+    );
+    return data;
+  },
+
+  // ============================================
+  // TU용 공개 API
+  // ============================================
+
+  /** 공개 레이아웃 조회 (TU용, 인증된 사용자) */
+  async getPublicLayout(): Promise<PublicLayoutResponse> {
+    const { data } = await axiosInstance.get<PublicLayoutResponse>(
+      API_ENDPOINTS.TENANT_SETTINGS.LAYOUT_PUBLIC
+    );
+    return data;
+  },
+
+  /** 활성화된 네비게이션 항목 조회 (TU용) */
+  async getPublicNavigation(): Promise<NavigationItemResponse[]> {
+    const { data } = await axiosInstance.get<NavigationItemResponse[]>(
+      API_ENDPOINTS.TENANT_SETTINGS.NAVIGATION_PUBLIC
     );
     return data;
   },

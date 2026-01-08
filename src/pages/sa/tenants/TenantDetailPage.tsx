@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Building2,
   Save,
   Upload,
@@ -18,6 +17,7 @@ import {
   PlanBadge,
 } from '@/components/domain/admin';
 import { Button } from '@/components/common/Button';
+import { BackButton } from '@/components/common/BackButton';
 import { Input } from '@/components/common/Input';
 import { Label } from '@/components/common/Label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/common/Card';
@@ -36,7 +36,7 @@ import type { TenantStatus, PlanType, TenantDetail } from '@/types/admin';
 
 // Mock 데이터
 const MOCK_TENANT: TenantDetail = {
-  id: 1,
+  tenantId: 1,
   code: 'mzc',
   name: '메가존클라우드',
   type: 'B2B',
@@ -212,6 +212,7 @@ export function TenantDetailPage() {
     if (!formState) return;
 
     try {
+      // 백엔드 UpdateTenantRequest DTO에 맞는 필드만 전송
       await updateMutation.mutateAsync({
         id: tenantId,
         request: {
@@ -219,24 +220,6 @@ export function TenantDetailPage() {
           status: formState.status,
           plan: formState.plan,
           customDomain: formState.customDomain || undefined,
-          adminName: formState.adminName,
-          adminEmail: formState.adminEmail,
-          branding: {
-            tenantId: tenantId,
-            logoUrl: formState.branding.logoUrl || undefined,
-            faviconUrl: formState.branding.faviconUrl || undefined,
-            primaryColor: formState.branding.primaryColor,
-            secondaryColor: formState.branding.secondaryColor || undefined,
-          },
-          settings: {
-            tenantId: tenantId,
-            allowSelfRegistration: false,
-            requireEmailVerification: false,
-            defaultLanguage: 'ko',
-            timezone: 'Asia/Seoul',
-            maxStorageGB: formState.settings.maxStorageGB,
-            maxUsersCount: formState.settings.maxUsersCount,
-          },
         },
       });
     } catch (err) {
@@ -314,10 +297,7 @@ export function TenantDetailPage() {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/sa/tenants')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              목록으로
-            </Button>
+            <BackButton onClick={() => navigate('/sa/tenants')} />
             <Button onClick={handleSave} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

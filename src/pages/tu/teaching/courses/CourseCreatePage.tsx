@@ -9,14 +9,15 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, FileText, Upload, Loader2 } from 'lucide-react';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
+import { ArrowLeft, ArrowRight, Save, FileText, Loader2, Send } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
 import { courseService, categoryService } from '@/services/common';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse, CreateCourseRequest } from '@/types/common';
 import type { CurriculumItem } from '@/types/tu';
-import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
+import { isCurriculumFolder, isCurriculumContent, convertHierarchyToCurriculumItems } from '@/types/tu';
 import { Step1BasicInfo, Step3Review, translations } from './components';
 import { Step2CurriculumTree } from './components/Step2CurriculumTree';
 import type { TranslationKey } from './components';
@@ -61,16 +62,28 @@ async function createCurriculumItemsRecursively(
   }
 }
 
+/**
+ * 기존 회차/콘텐츠를 모두 삭제
+ * 루트 레벨 항목만 삭제 (하위 항목은 cascade 삭제됨)
+ */
+async function deleteAllCurriculumItems(courseId: number): Promise<void> {
+  const hierarchy = await courseService.getItemsHierarchy(courseId);
+  for (const item of hierarchy) {
+    await courseService.deleteItem(courseId, item.itemId);
+  }
+}
+
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [searchParams] = useSearchParams();
   const courseIdParam = searchParams.get('courseId');
 
   const [currentStep, setCurrentStep] = useState(1);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [courseId, setCourseId] = useState<number | null>(
     courseIdParam ? Number(courseIdParam) : null
   );
@@ -117,7 +130,15 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
       setIsLoading(true);
       try {
-        const course = await courseService.getCourse(courseId);
+        // 기본 정보와 회차 계층구조를 병렬로 조회
+        const [course, hierarchyData] = await Promise.all([
+          courseService.getCourse(courseId),
+          courseService.getItemsHierarchy(courseId),
+        ]);
+
+        // 회차 계층구조를 CurriculumItem 형태로 변환
+        const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+
         setFormData((prev) => ({
           ...prev,
           title: course.title,
@@ -129,25 +150,26 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           startDate: course.startDate || '',
           endDate: course.endDate || '',
           tags: course.tags || [],
+          curriculumItems,
           isDraft: !course.isComplete,
           lastSaved: course.updatedAt,
         }));
       } catch (error) {
         console.error('강의 불러오기 실패:', error);
         alert('강의를 불러오는데 실패했습니다.');
-        navigate('/tu/teaching/courses');
+        navigate(prefixPath('/tu/teaching/courses'));
       } finally {
         setIsLoading(false);
       }
     };
     loadExistingCourse();
-  }, [courseId, navigate]);
+  }, [courseId, navigate, prefixPath]);
 
   // 네비게이션 핸들러
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
   const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   const handleGoToStep = (step: number) => setCurrentStep(step);
-  const handleClose = () => navigate('/tu/teaching/courses');
+  const handleClose = () => navigate(prefixPath('/tu/teaching/courses'));
 
   const handleSaveDraft = async () => {
     if (!formData.title) {
@@ -169,22 +191,49 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
+      let targetCourseId = courseId;
+
       if (courseId) {
         // 기존 강의 수정
         await courseService.update(courseId, request);
+
+        // 기존 회차/콘텐츠 삭제 후 재생성
+        if (formData.curriculumItems.length > 0) {
+          await deleteAllCurriculumItems(courseId);
+          await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
+        }
       } else {
         // 새 강의 생성
         const response = await courseService.create(request);
+        targetCourseId = response.courseId;
         setCourseId(response.courseId);
         // URL 업데이트 (뒤로가기 시에도 courseId 유지)
-        navigate(`/tu/teaching/courses/create?courseId=${response.courseId}`, { replace: true });
+        navigate(prefixPath(`/tu/teaching/courses/create?courseId=${response.courseId}`), { replace: true });
+
+        // 회차/콘텐츠 생성
+        if (formData.curriculumItems.length > 0) {
+          await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
+        }
       }
 
-      setFormData((prev) => ({
-        ...prev,
-        isDraft: true,
-        lastSaved: new Date().toISOString(),
-      }));
+      // 저장 후 최신 회차 계층구조 다시 로드하여 ID 동기화
+      if (targetCourseId) {
+        const hierarchyData = await courseService.getItemsHierarchy(targetCourseId);
+        const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+        setFormData((prev) => ({
+          ...prev,
+          curriculumItems,
+          isDraft: true,
+          lastSaved: new Date().toISOString(),
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          isDraft: true,
+          lastSaved: new Date().toISOString(),
+        }));
+      }
+
       alert('저장되었습니다.');
     } catch (error) {
       console.error('저장 실패:', error);
@@ -194,13 +243,15 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     }
   };
 
-  const handleSubmit = async () => {
+  const handlePublish = async () => {
     if (!formData.title) {
       alert('강의명을 입력해주세요.');
       return;
     }
 
-    setIsSubmitting(true);
+    if (!confirm(getText('publishConfirm'))) return;
+
+    setIsPublishing(true);
     try {
       const request: CreateCourseRequest = {
         title: formData.title,
@@ -219,29 +270,33 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       if (courseId) {
         // 기존 강의 수정
         await courseService.update(courseId, request);
+
+        // 커리큘럼 저장
+        if (formData.curriculumItems.length > 0) {
+          await deleteAllCurriculumItems(courseId);
+          await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
+        }
       } else {
         // 새 강의 생성
-        const courseResponse = await courseService.create(request);
-        targetCourseId = courseResponse.courseId;
+        const response = await courseService.create(request);
+        targetCourseId = response.courseId;
+
+        // 커리큘럼 생성
+        if (formData.curriculumItems.length > 0) {
+          await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
+        }
       }
 
-      // 커리큘럼 항목 생성 (트리 구조 재귀 처리)
-      // 참고: 기존 강의 수정 시에는 이미 저장된 커리큘럼이 있을 수 있음
-      if (targetCourseId && formData.curriculumItems.length > 0) {
-        await createCurriculumItemsRecursively(
-          targetCourseId,
-          formData.curriculumItems,
-          null
-        );
-      }
+      // 발행 API 호출
+      await courseService.publish(targetCourseId!);
 
-      alert('강의가 등록되었습니다!');
-      navigate('/tu/teaching/courses');
+      alert(getText('publishSuccess'));
+      navigate(prefixPath('/tu/teaching/courses'));
     } catch (error) {
-      console.error('강의 등록 실패:', error);
-      alert('강의 등록에 실패했습니다. 다시 시도해주세요.');
+      console.error('강의 발행 실패:', error);
+      alert(getText('publishError'));
     } finally {
-      setIsSubmitting(false);
+      setIsPublishing(false);
     }
   };
 
@@ -385,9 +440,35 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 <ArrowRight size={18} />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                <Upload size={18} />
-                {isSubmitting ? '등록 중...' : getText('submit')}
+              <Button
+                onClick={handlePublish}
+                disabled={
+                  isPublishing ||
+                  !formData.title ||
+                  !formData.categoryId ||
+                  formData.curriculumItems.length === 0
+                }
+                title={
+                  !formData.title
+                    ? '강의명을 입력해주세요'
+                    : !formData.categoryId
+                      ? '카테고리를 선택해주세요'
+                      : formData.curriculumItems.length === 0
+                        ? '최소 1개의 차시가 필요합니다'
+                        : undefined
+                }
+              >
+                {isPublishing ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    {getText('publishing')}
+                  </>
+                ) : (
+                  <>
+                    <Send size={18} />
+                    {getText('publish')}
+                  </>
+                )}
               </Button>
             )}
           </div>
