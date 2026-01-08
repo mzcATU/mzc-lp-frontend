@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, BackButton } from '@/components/common';
+import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import {
   useContent,
   useUpdateContent,
@@ -55,6 +56,15 @@ const contentTypeIconBg: Record<ContentType, string> = {
   DOCUMENT: 'bg-orange-50 text-orange-600',
   IMAGE: 'bg-green-50 text-green-600',
   EXTERNAL_LINK: 'bg-gray-100 text-gray-600',
+};
+
+// 콘텐츠 타입별 Badge 컬러
+const contentTypeBadgeColor: Record<ContentType, BadgeColor> = {
+  VIDEO: 'blue',
+  AUDIO: 'purple',
+  DOCUMENT: 'orange',
+  IMAGE: 'green',
+  EXTERNAL_LINK: 'gray',
 };
 
 // 번역 텍스트
@@ -397,13 +407,10 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
                 </div>
 
                 <div className="flex items-center gap-2 pl-[52px]">
-                  <Badge
-                    variant={isArchived ? 'gray' : 'default'}
-                    className={isArchived ? '' : 'bg-[#4C2D9A] hover:bg-[#3d247a]'}
-                  >
+                  <Badge variant={isArchived ? 'gray' : 'green'}>
                     {getText(content.status)}
                   </Badge>
-                  <Badge variant="outline" className="border-gray-200 text-gray-600">
+                  <Badge variant={contentTypeBadgeColor[content.contentType]}>
                     {getText(content.contentType)}
                   </Badge>
                   <span className="text-sm text-gray-400">|</span>
@@ -509,7 +516,7 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
                       <Button
                         size="sm"
                         onClick={handleSave}
-                        className="h-8 bg-[#4C2D9A] hover:bg-[#3d247a]"
+                        className="h-8"
                         disabled={updateContent.isPending || replaceFile.isPending}
                       >
                         <Save size={14} className="mr-1.5" />
@@ -764,7 +771,7 @@ function VersionCard({
           <span
             className={cn(
               'inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold',
-              isCurrentVersion ? 'bg-[#4C2D9A] text-white' : 'bg-gray-100 text-gray-500'
+              isCurrentVersion ? 'bg-btn-brand text-white' : 'bg-gray-100 text-gray-500'
             )}
           >
             v{version.versionNumber}
@@ -772,13 +779,11 @@ function VersionCard({
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-[#2A2A2A]">
+            <span className="text-sm font-medium text-text-primary">
               {changeTypeText[version.changeType] || version.changeType}
             </span>
             {isCurrentVersion && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
-                Current
-              </span>
+              <Badge variant="indigo">현재</Badge>
             )}
           </div>
           <p className="text-xs text-gray-500 mt-0.5">{formatDate(version.createdAt)}</p>
@@ -794,7 +799,7 @@ function VersionCard({
           size="sm"
           onClick={onRestore}
           disabled={isRestoring}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-[#4C2D9A]"
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-btn-brand"
         >
           <RotateCcw size={14} className="mr-1.5" />
           <span className="text-xs">{getText('restore')}</span>

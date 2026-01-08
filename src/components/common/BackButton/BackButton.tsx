@@ -26,7 +26,7 @@ export function BackButton({ onClick, label = '목록으로', className }: BackB
     <Button
       variant="ghost"
       size="sm"
-      className={`border border-border ${className ?? ''}`}
+      className={className}
       onClick={onClick}
     >
       <ArrowLeft size={16} />
