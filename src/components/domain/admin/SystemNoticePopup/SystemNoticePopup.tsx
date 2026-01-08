@@ -3,7 +3,7 @@
  * SA가 TA/TO에게 배포한 공지사항을 팝업으로 표시
  */
 import { useState, useEffect } from 'react';
-import { X, Pin, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { Pin, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
 import {
@@ -14,7 +14,6 @@ import {
   DialogFooter,
 } from '@/components/common/Dialog';
 import { useSystemNotices, useMarkSystemNoticeAsRead } from '@/hooks/ta';
-import type { Notice } from '@/types/admin';
 
 const DISMISSED_NOTICES_KEY = 'dismissed_system_notices';
 
