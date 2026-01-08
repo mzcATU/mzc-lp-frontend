@@ -29,53 +29,53 @@ function transformToTreeNode(folder: ContentFolderResponse): ContentFolderTreeNo
 export const contentFolderService = {
   // 폴더 생성
   async create(request: CreateContentFolderRequest): Promise<ContentFolderTreeNode> {
-    const { data } = await axiosInstance.post<{ data: ContentFolderResponse }>(
+    const { data } = await axiosInstance.post<ContentFolderResponse>(
       API_ENDPOINTS.CONTENT_FOLDERS.BASE,
       request
     );
-    return transformToTreeNode(data.data);
+    return transformToTreeNode(data);
   },
 
   // 전체 폴더 트리 조회
   async getFolderTree(): Promise<ContentFolderTreeNode[]> {
-    const { data } = await axiosInstance.get<{ data: ContentFolderResponse[] }>(
+    const { data } = await axiosInstance.get<ContentFolderResponse[]>(
       API_ENDPOINTS.CONTENT_FOLDERS.TREE
     );
-    return (data.data ?? []).map(transformToTreeNode);
+    return (data ?? []).map(transformToTreeNode);
   },
 
   // 폴더 상세 조회
   async getFolder(id: number): Promise<ContentFolderTreeNode> {
-    const { data } = await axiosInstance.get<{ data: ContentFolderResponse }>(
+    const { data } = await axiosInstance.get<ContentFolderResponse>(
       API_ENDPOINTS.CONTENT_FOLDERS.BY_ID(id)
     );
-    return transformToTreeNode(data.data);
+    return transformToTreeNode(data);
   },
 
   // 하위 폴더 목록 조회
   async getChildren(id: number): Promise<ContentFolderTreeNode[]> {
-    const { data } = await axiosInstance.get<{ data: ContentFolderResponse[] }>(
+    const { data } = await axiosInstance.get<ContentFolderResponse[]>(
       API_ENDPOINTS.CONTENT_FOLDERS.CHILDREN(id)
     );
-    return (data.data ?? []).map(transformToTreeNode);
+    return (data ?? []).map(transformToTreeNode);
   },
 
   // 폴더명 수정
   async update(id: number, request: UpdateContentFolderRequest): Promise<ContentFolderTreeNode> {
-    const { data } = await axiosInstance.put<{ data: ContentFolderResponse }>(
+    const { data } = await axiosInstance.put<ContentFolderResponse>(
       API_ENDPOINTS.CONTENT_FOLDERS.BY_ID(id),
       request
     );
-    return transformToTreeNode(data.data);
+    return transformToTreeNode(data);
   },
 
   // 폴더 이동
   async move(id: number, request: MoveContentFolderRequest): Promise<ContentFolderTreeNode> {
-    const { data } = await axiosInstance.put<{ data: ContentFolderResponse }>(
+    const { data } = await axiosInstance.put<ContentFolderResponse>(
       API_ENDPOINTS.CONTENT_FOLDERS.MOVE(id),
       request
     );
-    return transformToTreeNode(data.data);
+    return transformToTreeNode(data);
   },
 
   // 폴더 삭제
