@@ -393,16 +393,55 @@ export function UsersPage() {
     try {
       setProcessingProgress(30);
 
-      // 실제 API 호출
+      // 실제 API 호출 (비밀번호 자동생성: 1q2w3e4r!)
       const response = await userService.fileBulkCreateUsers(file, {
+        defaultPassword: '1q2w3e4r!',
         autoLinkEmployees: true,
       });
 
       setProcessingProgress(100);
-      setUploadResult(convertApiResponse(response));
+      const result = convertApiResponse(response);
+      setUploadResult(result);
+
+      // 결과에 따른 피드백
+      if (result.failed > 0) {
+        // 일부 실패한 경우
+        toast.warning(`${result.success}개 계정 생성 완료, ${result.failed}개 실패`, {
+          description: '실패한 항목을 확인하고 수정 후 다시 시도해주세요.',
+          duration: 5000,
+        });
+      } else {
+        // 모두 성공한 경우
+        toast.success(`${result.success}개의 계정이 생성되었습니다.`);
+      }
     } catch (err) {
       console.error('파일 업로드 실패:', err);
-      toast.error(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.');
+
+      // Axios 에러에서 백엔드 에러 메시지 추출
+      let errorMessage = '파일 업로드에 실패했습니다.';
+      let errorDescription = '';
+
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { error?: { message?: string } }; status?: number } };
+
+        if (axiosError.response?.data?.error?.message) {
+          // 백엔드에서 보낸 상세한 에러 메시지 사용
+          errorMessage = axiosError.response.data.error.message;
+        } else if (axiosError.response?.status === 400) {
+          errorMessage = '파일 형식이 올바르지 않습니다.';
+          errorDescription = 'Excel 파일의 헤더를 확인해주세요. 필수 컬럼: email (또는 이메일)';
+        } else if (axiosError.response?.status === 500) {
+          errorMessage = '서버 오류가 발생했습니다.';
+          errorDescription = '파일 형식과 내용을 확인해주세요. 파일이 손상되었거나 올바른 Excel/CSV 파일이 아닐 수 있습니다.';
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      toast.error(errorMessage, {
+        description: errorDescription || '지원 형식: .xlsx, .csv (최대 500행)',
+        duration: 6000,
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -436,12 +475,16 @@ export function UsersPage() {
 
   // 템플릿 다운로드
   const handleDownloadTemplate = () => {
-    // CSV 템플릿 생성
-    const headers = ['email', 'name', 'department', 'role'];
+    // CSV 템플릿 생성 (백엔드 파서가 지원하는 컬럼)
+    // 필수: email (이메일)
+    // 선택: name (이름), phone (전화번호), department (부서), position (직급)
+    // 비밀번호는 자동으로 1q2w3e4r!로 생성됨
+    // 한글 헤더 사용 (백엔드가 한글 헤더 지원)
+    const headers = ['이메일', '이름', '전화번호', '부서', '직급'];
     const exampleRows = [
-      ['user1@company.com', '홍길동', '개발팀', 'USER'],
-      ['user2@company.com', '김영희', '마케팅팀', 'USER'],
-      ['user3@company.com', '이철수', '인사팀', 'OPERATOR'],
+      ['user1@company.com', '홍길동', '010-1234-5678', '개발팀', '대리'],
+      ['user2@company.com', '김영희', '010-2345-6789', '마케팅팀', '과장'],
+      ['user3@company.com', '이철수', '010-3456-7890', '인사팀', '팀장'],
     ];
 
     // CSV 콘텐츠 생성
@@ -458,14 +501,17 @@ export function UsersPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'bulk_account_template.csv');
+    link.setAttribute('download', '사용자_일괄_등록_템플릿.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success('템플릿 파일이 다운로드되었습니다.');
+    toast.success('템플릿 파일이 다운로드되었습니다.', {
+      description: '필수: 이메일 | 선택: 이름, 전화번호, 부서, 직급 | 비밀번호: 자동생성 (1q2w3e4r!)',
+      duration: 5000,
+    });
   };
 
   // 미리보기용 이메일 생성
