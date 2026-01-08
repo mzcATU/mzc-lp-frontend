@@ -174,7 +174,7 @@ export function Step3Review({
 
       {/* 경고 메시지 또는 완료 메시지 */}
       {warnings.length > 0 ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" style={{ backgroundColor: '#fd9a9a' }}>
           <AlertTriangle size={16} />
           <AlertDescription>
             <strong>{getText('warningTitle')}</strong>
