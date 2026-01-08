@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
@@ -34,6 +34,7 @@ type ViewMode = 'instructor' | 'learner';
 export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { subdomain } = useParams<{ subdomain?: string }>();
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
@@ -45,6 +46,14 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const [isGrantingRole, setIsGrantingRole] = useState(false);
   // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
   const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
+
+  // 서브도메인 prefix 계산
+  const getSubdomainPrefix = () => {
+    if (subdomain && subdomain !== 'default' && subdomain !== 'www') {
+      return `/${subdomain}`;
+    }
+    return '';
+  };
 
   // CourseRole API로 역할 확인
   useEffect(() => {
@@ -269,7 +278,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                 <button
                   onClick={() => {
                     setCurrentMode('instructor');
-                    navigate('/tu/dashboard');
+                    const subdomainPrefix = getSubdomainPrefix();
+                    navigate(`${subdomainPrefix}/tu/dashboard`);
                   }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
