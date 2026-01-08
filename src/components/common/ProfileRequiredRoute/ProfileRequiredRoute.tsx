@@ -58,11 +58,9 @@ export function ProfileRequiredRoute({
     );
   }
 
-  // 프로필 미완료 체크 (department 또는 position이 없는 경우)
-  // profileCompleted가 명시적으로 false이거나, 부서/직급이 비어있는 경우
-  const isProfileIncomplete =
-    profile?.profileCompleted === false ||
-    (!profile?.department && !profile?.position);
+  // 프로필 미완료 체크 (profileCompleted 플래그만 확인)
+  // 백엔드에서 이름, 부서, 직급을 종합적으로 판단하여 플래그 설정
+  const isProfileIncomplete = profile?.profileCompleted === false;
 
   if (isProfileIncomplete) {
     // 서브도메인이 있으면 포함하여 리다이렉트
