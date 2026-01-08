@@ -122,6 +122,9 @@ export default {
         // TU Theme Colors
         'tu-bg-light': 'var(--tu-bg-light)',
         'tu-bg-dark': 'var(--tu-bg-dark)',
+
+        // Switch/Toggle
+        'switch-background': 'var(--switch-background)',
       },
       borderRadius: {
         sm: 'var(--radius-sm)',

@@ -183,6 +183,12 @@ export const tenantAdminMenuData: MenuItem[] = [
     ],
   },
   {
+    id: 'notice-management',
+    label: { ko: '공지사항 관리', en: 'Notice Management' },
+    icon: Megaphone,
+    path: '/ta/notices',
+  },
+  {
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
@@ -233,6 +239,21 @@ export const tenantOperatorMenuData: MenuItem[] = [
     label: { ko: '사용자 관리', en: 'User Management' },
     icon: Users,
     path: '/to/users',
+  },
+  {
+    id: 'automation',
+    label: { ko: '자동화 관리', en: 'Automation' },
+    icon: Zap,
+    subItems: [
+      { id: 'member-pools', label: { ko: '회원 풀 관리', en: 'Member Pool Management' }, icon: Users, path: '/to/member-pools' },
+      { id: 'auto-enrollment', label: { ko: '자동 입과 규칙', en: 'Auto Enrollment Rules' }, icon: Zap, path: '/to/auto-enrollment-rules' },
+    ],
+  },
+  {
+    id: 'notice-management',
+    label: { ko: '공지사항 관리', en: 'Notice Management' },
+    icon: Megaphone,
+    path: '/to/notices',
   },
   {
     id: 'settings',

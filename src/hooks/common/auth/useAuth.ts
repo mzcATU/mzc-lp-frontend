@@ -23,7 +23,11 @@ export const useLogin = () => {
     mutationFn: async (request: LoginRequest) => {
       const tokenResponse = await authService.login(request);
       // 로그인 후 사용자 정보 조회를 위해 임시로 토큰 저장
-      useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+      useAuthStore.getState().setTokens(
+        tokenResponse.accessToken,
+        tokenResponse.refreshToken,
+        tokenResponse.expiresIn
+      );
       const userDetail = await userService.getMe();
       return { tokenResponse, userDetail };
     },
@@ -37,7 +41,7 @@ export const useLogin = () => {
         tenantSubdomain: userDetail.tenantSubdomain,
       };
 
-      setAuth(user, tokenResponse.accessToken, tokenResponse.refreshToken);
+      setAuth(user, tokenResponse.accessToken, tokenResponse.refreshToken, tokenResponse.expiresIn);
       toast.success(`${user.name}님, 환영합니다!`);
 
       // 역할별 리다이렉트 경로
