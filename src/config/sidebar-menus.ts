@@ -250,6 +250,12 @@ export const tenantOperatorMenuData: MenuItem[] = [
     ],
   },
   {
+    id: 'notice-management',
+    label: { ko: '공지사항 관리', en: 'Notice Management' },
+    icon: Megaphone,
+    path: '/to/notices',
+  },
+  {
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,

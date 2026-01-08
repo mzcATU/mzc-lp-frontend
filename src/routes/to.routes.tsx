@@ -19,6 +19,7 @@ import {
 } from '@/pages/to/program';
 import { InstructorAssignmentsPage } from '@/pages/to/instructor';
 import { UserManagementPage } from '@/pages/to/user';
+import { OperatorNoticesPage } from '@/pages/to/notices';
 import { DashboardPage } from '@/pages/to';
 import MemberPoolListPage from '@/pages/to/member-pool/MemberPoolListPage';
 import AutoEnrollmentRulesPage from '@/pages/to/auto-enrollment/AutoEnrollmentRulesPage';
@@ -58,6 +59,8 @@ export const toRoutes = (
     <Route path="member-pools" element={<MemberPoolListPage />} />
     {/* 자동 입과 규칙 관리 */}
     <Route path="auto-enrollment-rules" element={<AutoEnrollmentRulesPage />} />
+    {/* 공지사항 관리 */}
+    <Route path="notices" element={<OperatorNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

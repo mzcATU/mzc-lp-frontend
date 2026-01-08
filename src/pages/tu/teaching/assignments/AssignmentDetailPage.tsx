@@ -21,6 +21,7 @@ import {
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import { useCourseTimeEnrollments, useMyAssignments } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import type { StudentEnrollmentStatus, CourseTimeEnrollmentItem } from '@/types/tu';
 import { STUDENT_ENROLLMENT_STATUS_LABELS } from '@/types/tu';
 
@@ -90,6 +91,7 @@ interface AssignmentDetailPageProps {
 export function AssignmentDetailPage({ language = 'ko' }: Readonly<AssignmentDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const assignmentId = id ? parseInt(id, 10) : 0;
 
   const getText = (key: keyof typeof t) => t[key][language];
@@ -122,7 +124,7 @@ export function AssignmentDetailPage({ language = 'ko' }: Readonly<AssignmentDet
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/assignments')}
+            onClick={() => navigate(prefixPath('/tu/teaching/assignments'))}
           >
             <ArrowLeft size={16} />
             {getText('backToList')}
@@ -144,7 +146,7 @@ export function AssignmentDetailPage({ language = 'ko' }: Readonly<AssignmentDet
               variant="ghost"
               size="sm"
               className="border border-border"
-              onClick={() => navigate('/tu/teaching/assignments')}
+              onClick={() => navigate(prefixPath('/tu/teaching/assignments'))}
             >
               <ArrowLeft size={16} />
               {getText('backToList')}

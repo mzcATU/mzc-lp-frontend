@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { useCommentedPosts } from '@/hooks/tu/useCommunityQueries';
 import { Badge, Button } from '@/components/common';
 import { POST_TYPE_LABELS } from '@/types/tu/community.types';
@@ -27,6 +28,7 @@ const PAGE_SIZE = 10;
 export function MyCommentsPage() {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
+  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
   const [page, setPage] = useState(0);
 
@@ -89,7 +91,7 @@ export function MyCommentsPage() {
               </p>
             </div>
             <Button
-              onClick={() => navigate('/tu/b2c/community')}
+              onClick={() => navigate(prefixPath('/tu/b2c/community'))}
               className={`${
                 isDark
                   ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
@@ -207,7 +209,7 @@ export function MyCommentsPage() {
             커뮤니티에서 다양한 글에 의견을 남겨보세요
           </p>
           <Button
-            onClick={() => navigate('/tu/b2c/community')}
+            onClick={() => navigate(prefixPath('/tu/b2c/community'))}
             className="bg-emerald-500 hover:bg-emerald-600 text-white"
           >
             <MessageCircle className="w-4 h-4 mr-2" />

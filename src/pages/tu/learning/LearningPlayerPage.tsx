@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -84,6 +85,7 @@ export function LearningPlayerPage() {
   const { enrollmentId, itemId } = useParams<{ enrollmentId: string; itemId?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -96,6 +98,7 @@ export function LearningPlayerPage() {
   const [currentContentId, setCurrentContentId] = useState<number | null>(null);
   const [currentContentType, setCurrentContentType] = useState<PlayerContentType | null>(null);
   const [currentExternalUrl, setCurrentExternalUrl] = useState<string | null>(null);
+  const [currentDownloadable, setCurrentDownloadable] = useState<boolean>(true);
   const [playedPercent, setPlayedPercent] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -192,6 +195,7 @@ export function LearningPlayerPage() {
     contentId: number;
     contentType: PlayerContentType;
     externalUrl?: string | null;
+    downloadable?: boolean | null;
     seq: number;
   }
 
@@ -223,6 +227,7 @@ export function LearningPlayerPage() {
             contentId: item.snapshotLearningObject.contentId,
             contentType: mapItemTypeToContentType(item.itemType),
             externalUrl: item.snapshotLearningObject.externalUrl,
+            downloadable: item.snapshotLearningObject.downloadable,
             seq: seq++,
           });
         }
@@ -275,6 +280,7 @@ export function LearningPlayerPage() {
         setCurrentContentId(targetItem.contentId);
         setCurrentContentType(targetItem.contentType);
         setCurrentExternalUrl(targetItem.externalUrl || null);
+        setCurrentDownloadable(targetItem.downloadable ?? true);
       }
     }
   }, [orderedCurriculumItems, itemId]);
@@ -372,7 +378,7 @@ export function LearningPlayerPage() {
   }, [playedPercent, saveProgress]);
 
   // 아이템 선택 핸들러
-  const handleItemSelect = useCallback((itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null) => {
+  const handleItemSelect = useCallback((itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null, downloadable?: boolean | null) => {
     // 현재 진도 저장
     saveProgress();
 
@@ -381,34 +387,35 @@ export function LearningPlayerPage() {
     setCurrentContentId(contentId);
     setCurrentContentType(contentType);
     setCurrentExternalUrl(externalUrl || null);
+    setCurrentDownloadable(downloadable ?? true);
     setPlayedPercent(0);
     setIsCompleted(progressRecords.some((r) => r.itemId === itemId && r.completed));
 
     // URL 업데이트
     const basePath = isDemoMode ? '/tu/b2c/mypage/learning/demo/player' : `/tu/b2c/mypage/learning/${enrollmentId}/player`;
-    navigate(`${basePath}/${itemId}`, { replace: true });
+    navigate(prefixPath(`${basePath}/${itemId}`), { replace: true });
   }, [enrollmentId, navigate, progressRecords, saveProgress, isDemoMode]);
 
   // 뒤로가기
   const handleBack = useCallback(() => {
     saveProgress();
     if (isDemoMode) {
-      navigate('/tu/b2c/mypage/learning');
+      navigate(prefixPath('/tu/b2c/mypage/learning'));
     } else {
-      navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
+      navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
     }
-  }, [enrollmentId, navigate, saveProgress, isDemoMode]);
+  }, [enrollmentId, navigate, saveProgress, isDemoMode, prefixPath]);
 
   // 이전 아이템으로 이동
   const handlePrevious = useCallback(() => {
     if (!previousItem) return;
-    handleItemSelect(previousItem.itemId, previousItem.contentId, previousItem.contentType, previousItem.externalUrl);
+    handleItemSelect(previousItem.itemId, previousItem.contentId, previousItem.contentType, previousItem.externalUrl, previousItem.downloadable);
   }, [previousItem, handleItemSelect]);
 
   // 다음 아이템으로 이동
   const handleNext = useCallback(() => {
     if (!nextItem) return;
-    handleItemSelect(nextItem.itemId, nextItem.contentId, nextItem.contentType, nextItem.externalUrl);
+    handleItemSelect(nextItem.itemId, nextItem.contentId, nextItem.contentType, nextItem.externalUrl, nextItem.downloadable);
   }, [nextItem, handleItemSelect]);
 
   // 로딩 상태 (데모 모드에서는 스킵)
@@ -428,7 +435,7 @@ export function LearningPlayerPage() {
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate('/tu/b2c/mypage/learning')}>
+        <Button onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
           {t.learning.backToLearning}
         </Button>
       </div>
@@ -525,6 +532,7 @@ export function LearningPlayerPage() {
                   contentId={currentContentId}
                   contentType="DOCUMENT"
                   isLearnerMode={!isDemoMode}
+                  downloadable={currentDownloadable}
                 />
               </div>
             )}
@@ -536,6 +544,7 @@ export function LearningPlayerPage() {
                   contentId={currentContentId}
                   contentType="IMAGE"
                   isLearnerMode={!isDemoMode}
+                  downloadable={currentDownloadable}
                 />
               </div>
             )}
