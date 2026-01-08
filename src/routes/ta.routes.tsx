@@ -15,8 +15,6 @@ import {
   PermissionsPage,
   DomainSettingsPage,
   LayoutSettingsPage,
-  DesignSettingsPage,
-  NavigationSettingsPage,
   RealtimePage,
   ExportPage,
   LogsPage,
@@ -26,7 +24,6 @@ import {
   TenantCategoryPage,
   TenantNoticesPage,
 } from '@/pages/ta';
-import { BannerManagementPage } from '@/pages/ta/branding/BannerManagementPage';
 import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
 import { AutoEnrollmentRulesPage } from '@/pages/ta/automation/AutoEnrollmentRulesPage';
 import { MemberPoolPage } from '@/pages/ta/automation/MemberPoolPage';
@@ -51,9 +48,6 @@ const taChildRoutes = (
     <Route path="system/domain" element={<DomainSettingsPage />} />
     {/* 디자인 및 정책 */}
     <Route path="branding/layout" element={<LayoutSettingsPage />} />
-    <Route path="branding/design" element={<DesignSettingsPage />} />
-    <Route path="branding/navigation" element={<NavigationSettingsPage />} />
-    <Route path="branding/banners" element={<BannerManagementPage />} />
     {/* 사용자 및 권한 */}
     <Route path="users" element={<UsersPage />} />
     <Route path="users/:id" element={<UserDetailPage />} />
