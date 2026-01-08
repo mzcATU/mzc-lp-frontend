@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Plus,
   Edit,
@@ -121,8 +122,13 @@ export function TenantNoticesPage() {
 
   const handleCreate = async () => {
     if (!formData.title.trim() || !formData.content.trim()) return;
-    await createMutation.mutateAsync(formData);
-    setIsCreateOpen(false);
+    try {
+      await createMutation.mutateAsync(formData);
+      toast.success('공지사항이 생성되었습니다.');
+      setIsCreateOpen(false);
+    } catch (error) {
+      toast.error('공지사항 생성에 실패했습니다.');
+    }
   };
 
   const handleUpdate = async () => {
@@ -134,22 +140,42 @@ export function TenantNoticesPage() {
       targetAudience: formData.targetAudience,
       isPinned: formData.isPinned,
     };
-    await updateMutation.mutateAsync({ id: editingNotice.id, request });
-    setEditingNotice(null);
+    try {
+      await updateMutation.mutateAsync({ id: editingNotice.id, request });
+      toast.success('공지사항이 수정되었습니다.');
+      setEditingNotice(null);
+    } catch (error) {
+      toast.error('공지사항 수정에 실패했습니다.');
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteMutation.mutateAsync(deleteTarget.id);
-    setDeleteTarget(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      toast.success('공지사항이 삭제되었습니다.');
+      setDeleteTarget(null);
+    } catch (error) {
+      toast.error('공지사항 삭제에 실패했습니다.');
+    }
   };
 
   const handlePublish = async (id: number) => {
-    await publishMutation.mutateAsync(id);
+    try {
+      await publishMutation.mutateAsync(id);
+      toast.success('공지사항이 발행되었습니다.');
+    } catch (error) {
+      toast.error('공지사항 발행에 실패했습니다.');
+    }
   };
 
   const handleArchive = async (id: number) => {
-    await archiveMutation.mutateAsync(id);
+    try {
+      await archiveMutation.mutateAsync(id);
+      toast.success('공지사항이 보관되었습니다.');
+    } catch (error) {
+      toast.error('공지사항 보관에 실패했습니다.');
+    }
   };
 
   if (isLoading) {

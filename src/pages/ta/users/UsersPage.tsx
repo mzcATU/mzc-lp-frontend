@@ -617,7 +617,11 @@ export function UsersPage() {
         showColumnToggle={false}
         manualSorting={true}
         sorting={sortBy ? [{ id: sortBy, desc: sortDirection === 'desc' }] : []}
-        onSortingChange={(sorting) => {
+        onSortingChange={(updaterOrValue) => {
+          const sorting = typeof updaterOrValue === 'function'
+            ? updaterOrValue(sortBy ? [{ id: sortBy, desc: sortDirection === 'desc' }] : [])
+            : updaterOrValue;
+
           if (sorting.length > 0) {
             setSortBy(sorting[0].id);
             setSortDirection(sorting[0].desc ? 'desc' : 'asc');

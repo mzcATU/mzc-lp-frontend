@@ -117,9 +117,9 @@ export function DocumentViewer({
 
   const handleZoomIn = useCallback(() => {
     if (isImage) {
-      setImageZoom((prev) => Math.min(prev + 25, 200));
+      setImageZoom((prev: number) => Math.min(prev + 25, 200));
     } else {
-      setScale((prev) => {
+      setScale((prev: number | SpecialZoomLevel) => {
         const current = typeof prev === 'number' ? prev : 1;
         return Math.min(current + 0.25, 3);
       });
@@ -128,9 +128,9 @@ export function DocumentViewer({
 
   const handleZoomOut = useCallback(() => {
     if (isImage) {
-      setImageZoom((prev) => Math.max(prev - 25, 50));
+      setImageZoom((prev: number) => Math.max(prev - 25, 50));
     } else {
-      setScale((prev) => {
+      setScale((prev: number | SpecialZoomLevel) => {
         const current = typeof prev === 'number' ? prev : 1;
         return Math.max(current - 0.25, 0.5);
       });

@@ -33,7 +33,7 @@ function useAuthenticatedFeatures(enabled: boolean) {
     enabled,
     staleTime: 1000 * 60 * 30, // 30분 캐싱
     gcTime: 1000 * 60 * 60, // 1시간 가비지 컬렉션
-    retry: 1,
+    retry: false, // 403 에러 시 재시도 안 함
   });
 }
 
@@ -47,7 +47,7 @@ function usePublicFeatures(enabled: boolean) {
     enabled,
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
-    retry: 1,
+    retry: false, // 에러 시 재시도 안 함
   });
 }
 
@@ -57,19 +57,23 @@ export function TenantFeaturesProvider({ children }: { children: ReactNode }) {
   // SA 사용자인지 확인 (tenantId가 없는 인증된 사용자)
   const isSystemAdmin = isAuthenticated && !user?.tenantId;
 
+  // TODO: 백엔드 API가 준비될 때까지 API 호출 비활성화
+  // 현재 백엔드에서 /api/tenant/settings/features 엔드포인트가 403 반환
+  const enableFeatureApi = false;
+
   // 1. 인증된 사용자(tenantId 있음): tenantId 기반 기능 설정 조회
   const {
     data: authFeatures,
     isLoading: authLoading,
     error: authError,
-  } = useAuthenticatedFeatures(isAuthenticated && !!user?.tenantId);
+  } = useAuthenticatedFeatures(enableFeatureApi && isAuthenticated && !!user?.tenantId);
 
   // 2. 비로그인 사용자: 공개 API로 기능 설정 조회
   const {
     data: publicFeatures,
     isLoading: publicLoading,
     error: publicError,
-  } = usePublicFeatures(!isAuthenticated);
+  } = usePublicFeatures(enableFeatureApi && !isAuthenticated);
 
   // 기능 설정 결정 로직
   const { features, isLoading, error } = useMemo(() => {
@@ -79,9 +83,18 @@ export function TenantFeaturesProvider({ children }: { children: ReactNode }) {
     }
     // 인증된 사용자(tenantId 있음): authFeatures 사용
     if (isAuthenticated && user?.tenantId) {
+      // 403 등 에러 발생 시 기본 기능 설정 사용
+      if (authError) {
+        console.warn('Failed to load tenant features, using defaults:', authError);
+        return { features: DEFAULT_FEATURES, isLoading: false, error: null };
+      }
       return { features: authFeatures, isLoading: authLoading, error: authError };
     }
     // 비로그인 사용자: publicFeatures 사용
+    if (publicError) {
+      console.warn('Failed to load public features, using defaults:', publicError);
+      return { features: DEFAULT_FEATURES, isLoading: false, error: null };
+    }
     return { features: publicFeatures, isLoading: publicLoading, error: publicError };
   }, [isSystemAdmin, isAuthenticated, user?.tenantId, authFeatures, authLoading, authError, publicFeatures, publicLoading, publicError]);
 
