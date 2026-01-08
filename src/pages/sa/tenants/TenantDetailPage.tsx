@@ -416,7 +416,7 @@ export function TenantDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">상태</Label>
-                  <Select value={formState.status} onValueChange={(v) => handleStatusChange(v as TenantStatus)}>
+                  <Select value={formState.status || ''} onValueChange={(v) => handleStatusChange(v as TenantStatus)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -430,7 +430,7 @@ export function TenantDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="plan">플랜</Label>
-                  <Select value={formState.plan} onValueChange={(v) => handlePlanChange(v as PlanType)}>
+                  <Select value={formState.plan || ''} onValueChange={(v) => handlePlanChange(v as PlanType)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

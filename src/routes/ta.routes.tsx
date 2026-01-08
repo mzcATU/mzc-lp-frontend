@@ -15,6 +15,7 @@ import {
   PermissionsPage,
   DomainSettingsPage,
   LayoutSettingsPage,
+  DesignSettingsPage,
   RealtimePage,
   ExportPage,
   LogsPage,
@@ -47,6 +48,7 @@ const taChildRoutes = (
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
     {/* 디자인 및 정책 */}
+    <Route path="branding/design" element={<DesignSettingsPage />} />
     <Route path="branding/layout" element={<LayoutSettingsPage />} />
     {/* 사용자 및 권한 */}
     <Route path="users" element={<UsersPage />} />
