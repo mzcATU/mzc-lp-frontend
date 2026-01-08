@@ -133,10 +133,10 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  // API 파라미터 구성
+  // API 파라미터 구성 - 카드뷰는 3x3=9개, 리스트뷰는 10개
   const params: ContentFilterParams = {
     page,
-    size: 10,
+    size: viewMode === 'grid' ? 9 : 10,
     ...(typeFilter !== 'all' && { contentType: typeFilter }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
     ...(searchQuery && { keyword: searchQuery }),

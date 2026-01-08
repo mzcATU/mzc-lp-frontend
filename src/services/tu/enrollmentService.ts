@@ -94,6 +94,20 @@ const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
 };
 
 /**
+ * 프론트엔드 상태를 백엔드 상태로 매핑 (API 요청용)
+ */
+const mapStatusToBackend = (status: EnrollmentStatus): string | undefined => {
+  const statusMap: Record<EnrollmentStatus, string> = {
+    APPROVED: 'ENROLLED',
+    COMPLETED: 'COMPLETED',
+    CANCELLED: 'DROPPED',
+    PENDING: 'ENROLLED', // PENDING은 백엔드에 없으므로 ENROLLED로
+    REJECTED: 'DROPPED', // REJECTED도 백엔드에 없으므로 DROPPED로
+  };
+  return statusMap[status];
+};
+
+/**
  * 백엔드 응답을 프론트엔드 Enrollment로 변환
  */
 const transformEnrollment = (
@@ -161,10 +175,14 @@ export const enrollmentService = {
    * - 차수(courseTime) 정보를 추가로 조회하여 programTitle, courseTimeName 등 보완
    */
   getMyEnrollments: async (params?: EnrollmentFilterParams): Promise<PageResponse<Enrollment>> => {
-    // 1. 수강 목록 조회
+    // 1. 수강 목록 조회 (status를 백엔드 형식으로 변환)
+    const backendParams = {
+      ...params,
+      status: params?.status ? mapStatusToBackend(params.status) : undefined,
+    };
     const response = await axiosInstance.get<PageResponse<BackendEnrollmentResponse>>(
       API_ENDPOINTS.ENROLLMENTS.MY,
-      { params }
+      { params: backendParams }
     );
     const pageData = response.data;
 

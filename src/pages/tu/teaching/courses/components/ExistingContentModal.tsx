@@ -126,15 +126,15 @@ export function ExistingContentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-2xl sm:max-w-2xl max-h-[80vh] bg-bg-default">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl sm:max-w-2xl max-h-[80vh] flex flex-col bg-bg-default">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2 text-text-primary">
             <FileText size={20} />
             {getText('existingContentModalTitle')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4 flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col gap-4 py-4 flex-1 min-h-0">
           {/* 검색 및 필터 */}
           <div className="flex gap-3 shrink-0">
             <div className="relative flex-1">
@@ -164,7 +164,7 @@ export function ExistingContentModal({
           </div>
 
           {/* 콘텐츠 목록 */}
-          <div className="border border-border rounded-lg overflow-y-auto flex-1 min-h-0">
+          <div className="border border-border rounded-lg overflow-y-auto flex-1 min-h-0 max-h-[400px]">
               {isLoading ? (
                 <div className="p-8 text-center text-text-secondary">
                   {getText('processing')}

@@ -9,7 +9,7 @@ interface Step3Props {
   isExternalLink?: boolean;
 }
 
-const completionOptions: { value: CompletionCriteria; label: string; description: string }[] = [
+const completionOptions: { value: CompletionCriteria; label: string; description: string; disabled?: boolean; disabledMessage?: string }[] = [
   {
     value: 'button-click',
     label: '완료 버튼 클릭',
@@ -19,20 +19,26 @@ const completionOptions: { value: CompletionCriteria; label: string; description
     value: '90-percent',
     label: '90% 시청 완료',
     description: '콘텐츠의 90% 이상을 시청하면 자동으로 완료 처리됩니다',
+    disabled: true,
+    disabledMessage: '추후 개발 예정',
   },
   {
     value: '100-percent',
     label: '100% 시청 완료',
     description: '콘텐츠를 끝까지 시청해야 완료 처리됩니다',
+    disabled: true,
+    disabledMessage: '추후 개발 예정',
   },
 ];
 
-const accessOptions: { value: AccessControl; icon: typeof Globe; label: string; description: string }[] = [
+const accessOptions: { value: AccessControl; icon: typeof Globe; label: string; description: string; disabled?: boolean; disabledMessage?: string }[] = [
   {
     value: 'public',
     icon: Globe,
     label: '전체 공개',
     description: '모든 테넌트와 사용자가 접근할 수 있습니다',
+    disabled: true,
+    disabledMessage: '추후 개발 예정',
   },
   {
     value: 'private',
@@ -128,6 +134,8 @@ export function Step3Settings({ data, onUpdate, isExternalLink = false }: Readon
                 description={option.description}
                 isSelected={data.completionCriteria === option.value}
                 onChange={(value) => onUpdate({ completionCriteria: value as CompletionCriteria })}
+                disabled={option.disabled}
+                disabledMessage={option.disabledMessage}
               />
             ))}
           </div>
@@ -155,6 +163,8 @@ export function Step3Settings({ data, onUpdate, isExternalLink = false }: Readon
               icon={option.icon}
               isSelected={data.accessControl === option.value}
               onChange={(value) => onUpdate({ accessControl: value as AccessControl })}
+              disabled={option.disabled}
+              disabledMessage={option.disabledMessage}
             />
           ))}
         </div>

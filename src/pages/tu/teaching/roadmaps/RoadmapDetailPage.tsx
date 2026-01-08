@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Edit,
   Trash2,
   Copy,
@@ -38,6 +37,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  BackButton,
 } from '@/components/common';
 import { useRoadmap, useDeleteRoadmap, useDuplicateRoadmap } from '@/hooks/tu';
 
@@ -198,10 +198,7 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
         <div className="text-center py-20">
           <Map size={64} className="text-text-secondary mb-4 opacity-30 mx-auto" />
           <h3 className="text-text-primary text-xl font-semibold mb-2">{getText('notFound')}</h3>
-          <Button variant="outline" onClick={() => navigate('/tu/teaching/roadmaps')}>
-            <ArrowLeft size={16} className="mr-2" />
-            {getText('backToList')}
-          </Button>
+          <BackButton onClick={() => navigate('/tu/teaching/roadmaps')} label={getText('backToList')} />
         </div>
       </div>
     );
@@ -214,15 +211,11 @@ export function RoadmapDetailPage({ language = 'ko' }: Readonly<{ language?: 'ko
       {/* Header */}
       <div className="mb-6">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          size="sm"
+        <BackButton
           onClick={() => navigate('/tu/teaching/roadmaps')}
-          className="mb-4 -ml-2 text-text-secondary hover:text-text-primary"
-        >
-          <ArrowLeft size={16} className="mr-1" />
-          {getText('backToList')}
-        </Button>
+          label={getText('backToList')}
+          className="mb-4"
+        />
 
         {/* Title & Actions */}
         <div className="flex justify-between items-start">
