@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Edit,
   Copy,
   Trash2,
@@ -20,7 +19,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge, Input, Label, NativeSelect, Card } from '@/components/common';
+import { Button, Badge, Input, Label, NativeSelect, Card, BackButton } from '@/components/common';
 import { EnrollmentTab } from '@/pages/to/enrollment';
 import {
   useTime,
@@ -283,9 +282,11 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         <div className="text-center">
           <Calendar size={48} className="mx-auto mb-3 text-text-placeholder" />
           <p className="text-text-secondary">{error ? getText('error') : getText('notFound')}</p>
-          <Button variant="ghost" className="mt-4" onClick={() => navigate('/to/times')}>
-            {getText('back')}
-          </Button>
+          <BackButton
+            onClick={() => navigate('/to/times')}
+            label={getText('back')}
+            className="mt-4"
+          />
         </div>
       </div>
     );
@@ -298,10 +299,10 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         <div className="p-6 px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/to/times')}>
-                <ArrowLeft size={20} />
-                <span>{getText('back')}</span>
-              </Button>
+              <BackButton
+                onClick={() => navigate('/to/times')}
+                label={getText('back')}
+              />
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-text-primary mb-0">{courseTime.title}</h1>

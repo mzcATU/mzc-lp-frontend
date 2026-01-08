@@ -190,6 +190,7 @@ import { EmptyState, NoResultsEmpty, NoDataEmpty } from "@/components/common/Emp
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. NAVIGATION - 네비게이션
 // ═══════════════════════════════════════════════════════════════════════════════
+import { BackButton } from "@/components/common/BackButton";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -1021,8 +1022,19 @@ export default function ComponentShowcase() {
               ═══════════════════════════════════════════════════════════════════════════════ */}
           <CategoryHeader
             title="7. Navigation"
-            description="네비게이션 - Breadcrumb, Stepper 등"
+            description="네비게이션 - BackButton, Breadcrumb, Stepper 등"
           />
+
+          <Section title="BackButton">
+            <div className="flex flex-wrap gap-4">
+              <BackButton onClick={() => console.log("Back clicked")} />
+              <BackButton onClick={() => console.log("Back clicked")} label="Back to List" />
+              <BackButton onClick={() => console.log("Back clicked")} label="뒤로" />
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              상세 페이지에서 목록으로 돌아가는 용도로 사용합니다.
+            </p>
+          </Section>
 
           <Section title="Breadcrumb">
             <Breadcrumb>

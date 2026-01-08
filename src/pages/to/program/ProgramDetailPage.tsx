@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   CheckCircle,
   XCircle,
   Archive,
@@ -14,7 +13,7 @@ import {
   BookOpen,
   Layers,
 } from 'lucide-react';
-import { Button, Badge, Card, Label, Textarea } from '@/components/common';
+import { Button, Badge, Card, Label, Textarea, BackButton } from '@/components/common';
 import {
   useProgram,
   useApproveProgram,
@@ -170,10 +169,11 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
         <div className="text-center">
           <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
           <p className="text-text-secondary">{error ? getText('error') : getText('notFound')}</p>
-          <Button variant="ghost" onClick={() => navigate('/to/courses')} className="mt-4">
-            <ArrowLeft size={18} />
-            {getText('back')}
-          </Button>
+          <BackButton
+            onClick={() => navigate('/to/courses')}
+            label={getText('back')}
+            className="mt-4"
+          />
         </div>
       </div>
     );
@@ -184,10 +184,10 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
       <div className="p-8">
         {/* 뒤로가기 버튼 */}
         <div className="mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/to/courses')} className="border border-border">
-            <ArrowLeft size={18} />
-            {getText('back')}
-          </Button>
+          <BackButton
+            onClick={() => navigate('/to/courses')}
+            label={getText('back')}
+          />
         </div>
 
         {/* Header Section - 목록 페이지와 동일한 스타일 */}
