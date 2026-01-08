@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Input, Label, NativeSelect } from '@/components/common';
+import { Button, Input, Label, NativeSelect, Switch, Textarea } from '@/components/common';
 import { useCreateTime } from '@/hooks/to/useTimeQueries';
 import { useApprovedPrograms } from '@/hooks/to/useProgramQueries';
 import type {
@@ -39,8 +40,13 @@ const t = {
   programType: { ko: '타입', en: 'Type' },
   estimatedHours: { ko: '예상 학습 시간', en: 'Estimated Hours' },
   hours: { ko: '시간', en: 'hours' },
+  owner: { ko: '담당 강사', en: 'Owner' },
+  noOwner: { ko: '미배정', en: 'Not assigned' },
+  noThumbnail: { ko: '썸네일 없음', en: 'No thumbnail' },
   timeTitle: { ko: '차수명', en: 'Title' },
   timeTitlePlaceholder: { ko: '예: 2025년 1차', en: 'e.g., 2025 Session 1' },
+  description: { ko: '설명', en: 'Description' },
+  descriptionPlaceholder: { ko: '차수에 대한 설명을 입력하세요 (선택사항)', en: 'Enter course time description (optional)' },
   deliveryType: { ko: '진행 방식', en: 'Delivery Type' },
   enrollmentMethod: { ko: '수강 신청 방식', en: 'Enrollment Method' },
   location: { ko: '장소', en: 'Location' },
@@ -52,6 +58,8 @@ const t = {
   learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
   classStartDate: { ko: '학습 시작일', en: 'Start Date' },
   classEndDate: { ko: '학습 종료일', en: 'End Date' },
+  alwaysOpen: { ko: '상시모집', en: 'Always Open' },
+  alwaysOpenHint: { ko: '종료일 없이 언제든 수강 가능', en: 'No end date, always available' },
   // Step 3 - Capacity & Price
   capacity: { ko: '정원', en: 'Capacity' },
   capacityPlaceholder: { ko: '비워두면 무제한', en: 'Leave empty for unlimited' },
@@ -63,8 +71,12 @@ const t = {
   minProgressPlaceholder: { ko: '80', en: '80' },
   minProgressHint: { ko: '수료를 위한 최소 진도율입니다.', en: 'Minimum progress for completion.' },
   allowLateEnrollment: { ko: '중간 합류 허용', en: 'Allow Late Enrollment' },
+  allowLateEnrollmentHint: { ko: '학습 시작 후에도 수강 신청 허용', en: 'Allow enrollment after course starts' },
   // Validation
   required: { ko: '필수 항목입니다.', en: 'This field is required.' },
+  enrollEndBeforeStart: { ko: '모집 종료일은 시작일 이후여야 합니다.', en: 'Enrollment end date must be after start date.' },
+  classEndBeforeStart: { ko: '학습 종료일은 시작일 이후여야 합니다.', en: 'Class end date must be after start date.' },
+  classStartBeforeEnrollEnd: { ko: '학습 시작일은 모집 종료일 이후여야 합니다.', en: 'Class start date must be after enrollment end date.' },
   createSuccess: { ko: '차수가 생성되었습니다.', en: 'Course time created successfully.' },
   createError: { ko: '차수 생성에 실패했습니다.', en: 'Failed to create course time.' },
 };
@@ -86,10 +98,14 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   // 선택된 프로그램 정보
   const [selectedProgram, setSelectedProgram] = useState<ProgramResponse | null>(null);
 
+  // 상시모집 상태
+  const [isAlwaysOpen, setIsAlwaysOpen] = useState(false);
+
   // Form State
   const [formData, setFormData] = useState<CreateCourseTimeRequest>({
     programId: 0,
     title: '',
+    description: '',
     deliveryType: 'ONLINE',
     enrollmentMethod: 'FIRST_COME',
     enrollStartDate: '',
@@ -114,13 +130,51 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       if (!formData.title.trim()) newErrors.title = getText('required');
     } else if (step === 2) {
       if (!formData.enrollStartDate) newErrors.enrollStartDate = getText('required');
-      if (!formData.enrollEndDate) newErrors.enrollEndDate = getText('required');
+      if (!isAlwaysOpen && !formData.enrollEndDate) newErrors.enrollEndDate = getText('required');
       if (!formData.classStartDate) newErrors.classStartDate = getText('required');
-      if (!formData.classEndDate) newErrors.classEndDate = getText('required');
+      if (!isAlwaysOpen && !formData.classEndDate) newErrors.classEndDate = getText('required');
+
+      // 날짜 유효성 검사 (상시모집이 아닌 경우에만)
+      if (!isAlwaysOpen && formData.enrollStartDate && formData.enrollEndDate) {
+        if (new Date(formData.enrollEndDate) < new Date(formData.enrollStartDate)) {
+          newErrors.enrollEndDate = getText('enrollEndBeforeStart');
+        }
+      }
+      if (!isAlwaysOpen && formData.classStartDate && formData.classEndDate) {
+        if (new Date(formData.classEndDate) < new Date(formData.classStartDate)) {
+          newErrors.classEndDate = getText('classEndBeforeStart');
+        }
+      }
+      // 학습 시작일이 모집 종료일 이후인지 검사
+      if (formData.enrollEndDate && formData.classStartDate && !isAlwaysOpen) {
+        if (new Date(formData.classStartDate) < new Date(formData.enrollEndDate)) {
+          newErrors.classStartDate = getText('classStartBeforeEnrollEnd');
+        }
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // 상시모집 토글 핸들러
+  const handleAlwaysOpenToggle = (checked: boolean) => {
+    setIsAlwaysOpen(checked);
+    if (checked) {
+      // 상시모집 선택 시 종료일을 9999-12-31로 설정
+      setFormData((prev) => ({
+        ...prev,
+        enrollEndDate: '9999-12-31',
+        classEndDate: '9999-12-31',
+      }));
+    } else {
+      // 상시모집 해제 시 종료일 초기화
+      setFormData((prev) => ({
+        ...prev,
+        enrollEndDate: '',
+        classEndDate: '',
+      }));
+    }
   };
 
   // 프로그램 선택 핸들러
@@ -169,14 +223,15 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         price: priceNum.toString(),
         isFree: priceNum === 0,
         locationInfo: formData.locationInfo?.trim() || undefined,
+        description: formData.description?.trim() || undefined,
       };
 
       await createTime.mutateAsync(request);
-      alert(getText('createSuccess'));
+      toast.success(getText('createSuccess'));
       navigate('/to/times');
     } catch (err) {
       console.error('Create failed:', err);
-      alert(getText('createError'));
+      toast.error(getText('createError'));
     }
   };
 
@@ -286,37 +341,63 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       {getText('selectedProgramInfo')}
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    {selectedProgram.level && (
-                      <div>
-                        <span className="text-text-secondary">{getText('programLevel')}: </span>
-                        <span className="text-text-primary">
-                          {PROGRAM_LEVEL_LABELS[selectedProgram.level]}
-                        </span>
+                  <div className="flex gap-4">
+                    {/* 썸네일 이미지 */}
+                    <div className="flex-shrink-0">
+                      {selectedProgram.thumbnailUrl ? (
+                        <img
+                          src={selectedProgram.thumbnailUrl}
+                          alt={selectedProgram.title}
+                          className="w-24 h-16 object-cover rounded-lg border border-border"
+                        />
+                      ) : (
+                        <div className="w-24 h-16 bg-bg-secondary rounded-lg border border-border flex items-center justify-center">
+                          <span className="text-xs text-text-placeholder">{getText('noThumbnail')}</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* 프로그램 정보 */}
+                    <div className="flex-1">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        {selectedProgram.level && (
+                          <div>
+                            <span className="text-text-secondary">{getText('programLevel')}: </span>
+                            <span className="text-text-primary">
+                              {PROGRAM_LEVEL_LABELS[selectedProgram.level]}
+                            </span>
+                          </div>
+                        )}
+                        {selectedProgram.type && (
+                          <div>
+                            <span className="text-text-secondary">{getText('programType')}: </span>
+                            <span className="text-text-primary">
+                              {PROGRAM_TYPE_LABELS[selectedProgram.type]}
+                            </span>
+                          </div>
+                        )}
+                        {selectedProgram.estimatedHours && (
+                          <div>
+                            <span className="text-text-secondary">{getText('estimatedHours')}: </span>
+                            <span className="text-text-primary">
+                              {selectedProgram.estimatedHours} {getText('hours')}
+                            </span>
+                          </div>
+                        )}
+                        {/* Owner 정보 */}
+                        <div>
+                          <span className="text-text-secondary">{getText('owner')}: </span>
+                          <span className="text-text-primary">
+                            {selectedProgram.ownerName || getText('noOwner')}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                    {selectedProgram.type && (
-                      <div>
-                        <span className="text-text-secondary">{getText('programType')}: </span>
-                        <span className="text-text-primary">
-                          {PROGRAM_TYPE_LABELS[selectedProgram.type]}
-                        </span>
-                      </div>
-                    )}
-                    {selectedProgram.estimatedHours && (
-                      <div>
-                        <span className="text-text-secondary">{getText('estimatedHours')}: </span>
-                        <span className="text-text-primary">
-                          {selectedProgram.estimatedHours} {getText('hours')}
-                        </span>
-                      </div>
-                    )}
+                      {selectedProgram.description && (
+                        <p className="mt-2 text-sm text-text-secondary line-clamp-2">
+                          {selectedProgram.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  {selectedProgram.description && (
-                    <p className="mt-3 text-sm text-text-secondary line-clamp-2">
-                      {selectedProgram.description}
-                    </p>
-                  )}
                 </div>
               )}
 
@@ -333,6 +414,18 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 {errors.title && (
                   <p className="text-sm text-status-error">{errors.title}</p>
                 )}
+              </div>
+
+              {/* 설명 필드 추가 */}
+              <div className="space-y-2">
+                <Label htmlFor="description">{getText('description')}</Label>
+                <Textarea
+                  id="description"
+                  placeholder={getText('descriptionPlaceholder')}
+                  value={formData.description || ''}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  rows={3}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -376,6 +469,22 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
           {/* Step 2: 기간 설정 */}
           {currentStep === 2 && (
             <div className="flex flex-col gap-8">
+              {/* 상시모집 옵션 */}
+              <div className="bg-bg-subtle rounded-lg p-4 border border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={isAlwaysOpen}
+                      onCheckedChange={handleAlwaysOpenToggle}
+                    />
+                    <div>
+                      <span className="font-medium text-text-primary">{getText('alwaysOpen')}</span>
+                      <p className="text-sm text-text-secondary mt-0.5">{getText('alwaysOpenHint')}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* 모집 기간 */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-text-primary">
@@ -397,13 +506,17 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="enrollEndDate">{getText('enrollEndDate')} *</Label>
+                    <Label htmlFor="enrollEndDate">
+                      {getText('enrollEndDate')} {!isAlwaysOpen && '*'}
+                    </Label>
                     <Input
                       id="enrollEndDate"
                       type="date"
-                      value={formData.enrollEndDate}
+                      value={isAlwaysOpen ? '' : formData.enrollEndDate}
                       onChange={(e) => handleInputChange('enrollEndDate', e.target.value)}
                       className={errors.enrollEndDate ? 'border-status-error' : ''}
+                      disabled={isAlwaysOpen}
+                      placeholder={isAlwaysOpen ? '9999-12-31' : ''}
                     />
                     {errors.enrollEndDate && (
                       <p className="text-sm text-status-error">{errors.enrollEndDate}</p>
@@ -433,13 +546,17 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="classEndDate">{getText('classEndDate')} *</Label>
+                    <Label htmlFor="classEndDate">
+                      {getText('classEndDate')} {!isAlwaysOpen && '*'}
+                    </Label>
                     <Input
                       id="classEndDate"
                       type="date"
-                      value={formData.classEndDate}
+                      value={isAlwaysOpen ? '' : formData.classEndDate}
                       onChange={(e) => handleInputChange('classEndDate', e.target.value)}
                       className={errors.classEndDate ? 'border-status-error' : ''}
+                      disabled={isAlwaysOpen}
+                      placeholder={isAlwaysOpen ? '9999-12-31' : ''}
                     />
                     {errors.classEndDate && (
                       <p className="text-sm text-status-error">{errors.classEndDate}</p>
@@ -500,16 +617,18 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   <p className="text-sm text-text-secondary">{getText('minProgressHint')}</p>
                 </div>
 
-                <div className="space-y-2 flex items-center pt-8">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
+                {/* 중간 합류 허용 옵션 */}
+                <div className="bg-bg-subtle rounded-lg p-4 border border-border flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Switch
                       checked={formData.allowLateEnrollment ?? false}
-                      onChange={(e) => handleInputChange('allowLateEnrollment', e.target.checked)}
-                      className="w-4 h-4 rounded border-border"
+                      onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
                     />
-                    <span className="text-sm text-text-primary">{getText('allowLateEnrollment')}</span>
-                  </label>
+                    <div>
+                      <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
+                      <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

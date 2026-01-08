@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Edit,
@@ -18,9 +19,12 @@ import {
   UserPlus,
   FileText,
   GraduationCap,
+  BookOpen,
+  User,
+  DollarSign,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge, Input, Label, NativeSelect, Card } from '@/components/common';
+import { Button, Badge, Input, Label, NativeSelect, Card, Textarea } from '@/components/common';
 import { EnrollmentTab } from '@/pages/to/enrollment';
 import {
   useTime,
@@ -102,6 +106,13 @@ const t = {
   // Tabs
   tabBasicInfo: { ko: '기본 정보', en: 'Basic Info' },
   tabEnrollments: { ko: '수강생', en: 'Enrollments' },
+  // Additional Info
+  createdAt: { ko: '생성일', en: 'Created' },
+  allowLateEnrollment: { ko: '중간 합류', en: 'Late Enrollment' },
+  allowLateEnrollmentYes: { ko: '허용', en: 'Allowed' },
+  allowLateEnrollmentNo: { ko: '비허용', en: 'Not Allowed' },
+  minProgressForCompletion: { ko: '수료 기준', en: 'Completion Criteria' },
+  alwaysOpen: { ko: '상시모집', en: 'Always Open' },
 };
 
 // 백엔드 에러 코드 → 사용자 친화적 메시지 매핑
@@ -145,7 +156,21 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
   const closeTime = useCloseTime();
   const archiveTime = useArchiveTime();
 
+  // 날짜만 표시 (시간 제외)
   const formatDate = (dateStr: string) => {
+    // 상시모집 날짜인 경우
+    if (dateStr === '9999-12-31') {
+      return getText('alwaysOpen');
+    }
+    return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+
+  // 날짜+시간 표시 (생성일 등에 사용)
+  const formatDateTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleString(language === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
       month: '2-digit',
@@ -185,10 +210,10 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     try {
       await updateTime.mutateAsync({ id: timeId, request: editData });
       setIsEditing(false);
-      alert(getText('updateSuccess'));
+      toast.success(getText('updateSuccess'));
     } catch (err) {
       console.error('Update failed:', err);
-      alert(getText('updateError'));
+      toast.error(getText('updateError'));
     }
   };
 
@@ -196,10 +221,11 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     if (!confirm(getText('confirmDelete'))) return;
     try {
       await deleteTime.mutateAsync(timeId);
-      alert(getText('deleteSuccess'));
+      toast.success(getText('deleteSuccess'));
       navigate('/to/times');
     } catch (err) {
       console.error('Delete failed:', err);
+      toast.error(getText('statusChangeError'));
     }
   };
 
@@ -240,7 +266,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
       }
     } catch (err) {
       console.error('Status transition failed:', err);
-      alert(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -403,7 +429,8 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 기본 정보 */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">
+              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <FileText size={18} className="text-text-secondary" />
                 {getText('basicInfo')}
               </h2>
               <div className="space-y-4">
@@ -421,29 +448,39 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                 <div>
                   <Label className="text-text-secondary">{getText('description')}</Label>
                   {isEditing ? (
-                    <Input
+                    <Textarea
                       value={editData.description || ''}
                       onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                      rows={3}
                     />
                   ) : (
-                    <p className="text-text-primary">
+                    <p className="text-text-primary whitespace-pre-wrap">
                       {courseTime.description || getText('noDescription')}
                     </p>
                   )}
+                </div>
+                <div className="pt-2 border-t border-border">
+                  <Label className="text-text-secondary">{getText('createdAt')}</Label>
+                  <p className="text-text-primary text-sm">{formatDateTime(courseTime.createdAt)}</p>
                 </div>
               </div>
             </Card>
 
             {/* 프로그램 정보 */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">
+              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <BookOpen size={18} className="text-text-secondary" />
                 {getText('programInfo')}
               </h2>
               <div className="space-y-4">
+                <div>
+                  <Label className="text-text-secondary">{getText('programTitle')}</Label>
+                  <p className="text-text-primary font-medium">{courseTime.programTitle || '-'}</p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-text-secondary">{getText('courseId')}</Label>
-                    <p className="text-text-primary">{courseTime.cmCourseId}</p>
+                    <p className="text-text-primary">{courseTime.cmCourseId || '-'}</p>
                   </div>
                   <div>
                     <Label className="text-text-secondary">{getText('courseTitle')}</Label>
@@ -455,7 +492,8 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
 
             {/* 진행 정보 */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">
+              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <Play size={18} className="text-text-secondary" />
                 {getText('deliveryInfo')}
               </h2>
               <div className="space-y-4">
@@ -523,27 +561,29 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
 
             {/* 기간 정보 */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">
+              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <Calendar size={18} className="text-text-secondary" />
                 {getText('periodInfo')}
               </h2>
               <div className="space-y-4">
                 <div>
-                  <Label className="text-text-secondary flex items-center gap-1">
-                    <Calendar size={14} />
-                    {getText('enrollmentPeriod')}
-                  </Label>
+                  <Label className="text-text-secondary">{getText('enrollmentPeriod')}</Label>
                   <p className="text-text-primary">
-                    {formatDate(courseTime.enrollStartDate)} ~{' '}
-                    {formatDate(courseTime.enrollEndDate)}
+                    {formatDate(courseTime.enrollStartDate)} ~ {formatDate(courseTime.enrollEndDate)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-text-secondary flex items-center gap-1">
-                    <Clock size={14} />
-                    {getText('learningPeriod')}
-                  </Label>
+                  <Label className="text-text-secondary">{getText('learningPeriod')}</Label>
                   <p className="text-text-primary">
                     {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate)}
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-border">
+                  <Label className="text-text-secondary">{getText('allowLateEnrollment')}</Label>
+                  <p className="text-text-primary">
+                    <Badge variant={courseTime.allowLateEnrollment ? 'success' : 'secondary'}>
+                      {courseTime.allowLateEnrollment ? getText('allowLateEnrollmentYes') : getText('allowLateEnrollmentNo')}
+                    </Badge>
                   </p>
                 </div>
               </div>
@@ -551,15 +591,13 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
 
             {/* 정원 및 수강 */}
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">
+              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <Users size={18} className="text-text-secondary" />
                 {getText('capacityInfo')}
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-text-secondary flex items-center gap-1">
-                    <Users size={14} />
-                    {getText('capacity')}
-                  </Label>
+                  <Label className="text-text-secondary">{getText('capacity')}</Label>
                   {isEditing ? (
                     <Input
                       type="number"
@@ -591,7 +629,10 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                   </p>
                 </div>
                 <div>
-                  <Label className="text-text-secondary">{getText('price')}</Label>
+                  <Label className="text-text-secondary flex items-center gap-1">
+                    <DollarSign size={14} />
+                    {getText('price')}
+                  </Label>
                   {isEditing ? (
                     <Input
                       type="number"
@@ -616,7 +657,8 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
             {/* 강사 정보 */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-text-primary">
+                <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                  <User size={18} className="text-text-secondary" />
                   {getText('instructors')}
                 </h2>
                 {courseTime.status === 'DRAFT' && (

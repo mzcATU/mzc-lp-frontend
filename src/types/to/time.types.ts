@@ -53,6 +53,7 @@ export interface CourseTimeResponse {
   allowLateEnrollment: boolean;
   createdAt: string;
   instructors: CourseTimeInstructor[];
+  programTitle: string | null; // 프로그램명
 }
 
 /** 강사 정보 (상세 조회용) */
@@ -100,6 +101,7 @@ export interface CreateCourseTimeRequest {
   cmCourseId?: number; // deprecated
   cmCourseVersionId?: number; // deprecated
   title: string;
+  description?: string; // 차수 설명
   deliveryType: DeliveryType;
   enrollStartDate: string; // LocalDate (YYYY-MM-DD)
   enrollEndDate: string; // LocalDate (YYYY-MM-DD)

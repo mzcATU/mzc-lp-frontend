@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Plus,
@@ -16,6 +17,7 @@ import {
   Eye,
   MoreHorizontal,
   Play,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -70,17 +72,21 @@ const t = {
   next: { ko: '다음', en: 'Next' },
   timeCount: { ko: '개의 차수', en: ' course times' },
   columnTitle: { ko: '차수명', en: 'Title' },
+  columnProgram: { ko: '프로그램', en: 'Program' },
   columnStatus: { ko: '상태', en: 'Status' },
   columnDelivery: { ko: '진행 방식', en: 'Delivery' },
   columnPeriod: { ko: '학습 기간', en: 'Period' },
   columnCapacity: { ko: '정원', en: 'Capacity' },
   columnActions: { ko: '액션', en: 'Actions' },
   unlimited: { ko: '무제한', en: 'Unlimited' },
+  alwaysOpen: { ko: '상시모집', en: 'Always Open' },
   view: { ko: '상세보기', en: 'View' },
   clone: { ko: '복제', en: 'Clone' },
   delete: { ko: '삭제', en: 'Delete' },
   openRecruiting: { ko: '모집 시작', en: 'Start Recruiting' },
   openError: { ko: '모집 시작에 실패했습니다.', en: 'Failed to start recruiting.' },
+  deleteError: { ko: '삭제에 실패했습니다.', en: 'Failed to delete.' },
+  deleteSuccess: { ko: '삭제되었습니다.', en: 'Deleted successfully.' },
 };
 
 // 백엔드 에러 코드 → 사용자 친화적 메시지 매핑
@@ -186,8 +192,10 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
     if (!confirm(getText('confirmDelete'))) return;
     try {
       await deleteTime.mutateAsync(id);
+      toast.success(getText('deleteSuccess'));
     } catch (err) {
       console.error('Delete failed:', err);
+      toast.error(getText('deleteError'));
     }
   };
 
@@ -213,7 +221,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
       await openTime.mutateAsync(id);
     } catch (err) {
       console.error('Open failed:', err);
-      alert(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -273,8 +281,12 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
     );
   };
 
-  const formatDate = (dateStr: string | null | undefined) => {
+  const formatDate = (dateStr: string | null | undefined, isEndDate = false) => {
     if (!dateStr) return '-';
+    // 상시모집 날짜인 경우
+    if (dateStr === '9999-12-31' && isEndDate) {
+      return getText('alwaysOpen');
+    }
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return '-';
     return date.toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -298,13 +310,27 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
           <DataTableColumnHeader column={column} title={getText('columnTitle')} />
         ),
         cell: ({ row }) => (
-          <div className="max-w-md">
+          <div className="max-w-xs">
             <p className="text-sm font-medium text-text-primary truncate">
               {row.original.title}
             </p>
             <p className="text-xs text-text-secondary mt-0.5">
               ID: {row.original.id}
             </p>
+          </div>
+        ),
+      },
+      {
+        id: 'program',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={getText('columnProgram')} />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5 max-w-xs">
+            <BookOpen size={14} className="text-text-secondary flex-shrink-0" />
+            <span className="text-sm text-text-secondary truncate">
+              {row.original.programTitle || '-'}
+            </span>
           </div>
         ),
       },
@@ -336,7 +362,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
         cell: ({ row }) => (
           <div className="text-sm text-text-secondary">
             <p>{formatDate(row.original.classStartDate)}</p>
-            <p className="text-xs">~ {formatDate(row.original.classEndDate)}</p>
+            <p className="text-xs">~ {formatDate(row.original.classEndDate, true)}</p>
           </div>
         ),
       },
