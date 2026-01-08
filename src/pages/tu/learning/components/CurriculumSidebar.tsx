@@ -261,14 +261,14 @@ export function CurriculumSidebar({
     const flatItems: { seq: number; itemId: number; item: SnapshotItemResponse }[] = [];
     let seq = 1;
 
-    // 재귀적으로 아이템 평탄화
+    // 재귀적으로 아이템 평탄화 (폴더 포함)
     const flattenItems = (itemList: SnapshotItemResponse[]) => {
       itemList.forEach((item) => {
         itemsMap.set(item.itemId, item);
-        // 폴더가 아니고 콘텐츠가 있는 아이템만 추가
-        if (!item.isFolder && item.snapshotLearningObject?.contentId) {
+        // 폴더이거나 콘텐츠가 있는 아이템 추가
+        if (item.isFolder || item.snapshotLearningObject?.contentId) {
           flatItems.push({
-            seq: seq++,
+            seq: item.isFolder ? 0 : seq++, // 폴더는 seq 0
             itemId: item.itemId,
             item: item,
           });
