@@ -438,7 +438,24 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 <ArrowRight size={18} />
               </Button>
             ) : (
-              <Button onClick={handlePublish} disabled={isPublishing}>
+              <Button
+                onClick={handlePublish}
+                disabled={
+                  isPublishing ||
+                  !formData.title ||
+                  !formData.categoryId ||
+                  formData.curriculumItems.length === 0
+                }
+                title={
+                  !formData.title
+                    ? '강의명을 입력해주세요'
+                    : !formData.categoryId
+                      ? '카테고리를 선택해주세요'
+                      : formData.curriculumItems.length === 0
+                        ? '최소 1개의 차시가 필요합니다'
+                        : undefined
+                }
+              >
                 {isPublishing ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
