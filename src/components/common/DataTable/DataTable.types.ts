@@ -43,7 +43,7 @@ export interface DataTableProps<TData, TValue> {
   /** 서버사이드 정렬 활성화 */
   manualSorting?: boolean;
   /** 서버사이드 정렬 시 정렬 상태 변경 핸들러 */
-  onSortingChange?: (sorting: SortingState[]) => void;
+  onSortingChange?: (updaterOrValue: SortingState[] | ((old: SortingState[]) => SortingState[])) => void;
   /** 현재 정렬 상태 (서버사이드 정렬 시) */
   sorting?: SortingState[];
 }
