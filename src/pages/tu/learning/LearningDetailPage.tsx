@@ -67,6 +67,7 @@ interface CurriculumDisplayItem {
   itemName: string; // 표시용 이름 (displayName 또는 itemName)
   itemType: string | null;
   duration: number | null;
+  pageCount: number | null;
   isFolder: boolean;
   seq: number;
   isCompleted: boolean;
@@ -106,7 +107,8 @@ function CurriculumListItem({ item, isDark, onClick }: CurriculumListItemProps) 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return null;
     const mins = Math.floor(seconds / 60);
-    return `${mins}분`;
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -138,9 +140,10 @@ function CurriculumListItem({ item, isDark, onClick }: CurriculumListItemProps) 
         <h4 className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {item.itemName}
         </h4>
-        {item.duration && (
+        {(item.duration || item.pageCount) && (
           <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            {formatDuration(item.duration)}
+            {item.duration && formatDuration(item.duration)}
+            {item.pageCount && `${item.pageCount}p`}
           </p>
         )}
       </div>
@@ -240,8 +243,9 @@ export function LearningDetailPage() {
           itemName: displayName,
           itemType: item.itemType,
           duration: item.snapshotLearningObject?.duration ?? null,
+          pageCount: item.snapshotLearningObject?.pageCount ?? null,
           isFolder: item.isFolder,
-          seq: seq++,
+          seq: item.isFolder ? 0 : seq++,
           isCompleted: progressMap.get(item.itemId) ?? false,
         });
         if (item.children && item.children.length > 0) {
