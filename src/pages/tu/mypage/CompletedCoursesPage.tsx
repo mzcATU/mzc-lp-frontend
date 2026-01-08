@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   CheckCircle,
   BookOpen,
@@ -141,6 +142,7 @@ export function CompletedCoursesPage() {
   const { language } = useLanguageStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
 
   const [page, setPage] = useState(0);
@@ -171,7 +173,7 @@ export function CompletedCoursesPage() {
   const issueMutation = useIssueCertificate();
 
   const handleCourseClick = (enrollmentId: number) => {
-    navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
+    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
   };
 
   const handleViewCertificate = (enrollmentId: number) => {
@@ -289,7 +291,7 @@ export function CompletedCoursesPage() {
                 ? '강의를 완료하면 여기에 표시됩니다.'
                 : 'Completed courses will appear here.'}
             </p>
-            <Button variant="brand" onClick={() => navigate('/tu/b2c/mypage/learning')}>
+            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
               {language === 'ko' ? '학습 중인 강의 보기' : 'View Current Courses'}
             </Button>
           </div>

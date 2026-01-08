@@ -36,6 +36,7 @@ import {
 } from '@/components/domain/tu/content';
 import { FolderManagementPanel, FolderSelectModal } from '@/components/domain/tu/folder';
 import type { ContentType, ContentStatus, ContentListResponse, ContentFilterParams, ContentFolderTreeNode } from '@/types/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 // 폴더 트리에서 ID로 폴더 찾기
 function findFolderById(folders: ContentFolderTreeNode[], id: number): ContentFolderTreeNode | null {
@@ -103,6 +104,7 @@ const t = {
 
 export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ContentType | 'all'>('all');
@@ -406,7 +408,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => navigate('/tu/teaching/content/create')}>
+              <Button onClick={() => navigate(prefixPath('/tu/teaching/content/create'))}>
                 <Plus size={20} />
                 <span>{getText('createContent')}</span>
               </Button>
@@ -598,9 +600,9 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
                   content={content}
                   labels={cardLabels}
                   onPreview={() => handlePreview(content)}
-                  onEdit={() => navigate(`/tu/teaching/content/${content.id}/edit`)}
+                  onEdit={() => navigate(prefixPath(`/tu/teaching/content/${content.id}/edit`))}
                   onDelete={() => handleDelete(content.id)}
-                  onNavigateDetail={() => navigate(`/tu/teaching/content/${content.id}`)}
+                  onNavigateDetail={() => navigate(prefixPath(`/tu/teaching/content/${content.id}`))}
                   isDeleting={deleteContent.isPending}
                 />
               ))}
@@ -614,7 +616,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               data={contents}
               showColumnToggle={false}
               showPagination={false}
-              onRowClick={(item) => navigate(`/tu/teaching/content/${item.id}`)}
+              onRowClick={(item) => navigate(prefixPath(`/tu/teaching/content/${item.id}`))}
               rowClassName={(item) => item.status === 'ARCHIVED' ? 'opacity-60' : ''}
               labels={{
                 noResults: getText('noResults'),

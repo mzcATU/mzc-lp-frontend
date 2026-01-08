@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -84,6 +85,7 @@ export function LearningPlayerPage() {
   const { enrollmentId, itemId } = useParams<{ enrollmentId: string; itemId?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -391,18 +393,18 @@ export function LearningPlayerPage() {
 
     // URL 업데이트
     const basePath = isDemoMode ? '/tu/b2c/mypage/learning/demo/player' : `/tu/b2c/mypage/learning/${enrollmentId}/player`;
-    navigate(`${basePath}/${itemId}`, { replace: true });
+    navigate(prefixPath(`${basePath}/${itemId}`), { replace: true });
   }, [enrollmentId, navigate, progressRecords, saveProgress, isDemoMode]);
 
   // 뒤로가기
   const handleBack = useCallback(() => {
     saveProgress();
     if (isDemoMode) {
-      navigate('/tu/b2c/mypage/learning');
+      navigate(prefixPath('/tu/b2c/mypage/learning'));
     } else {
-      navigate(`/tu/b2c/mypage/learning/${enrollmentId}`);
+      navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
     }
-  }, [enrollmentId, navigate, saveProgress, isDemoMode]);
+  }, [enrollmentId, navigate, saveProgress, isDemoMode, prefixPath]);
 
   // 이전 아이템으로 이동
   const handlePrevious = useCallback(() => {
@@ -433,7 +435,7 @@ export function LearningPlayerPage() {
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate('/tu/b2c/mypage/learning')}>
+        <Button onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
           {t.learning.backToLearning}
         </Button>
       </div>

@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { useAuth } from '@/hooks/common/auth';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
 import { useAuthStore } from '@/store/common/authStore';
@@ -55,6 +56,7 @@ export function MyTeachingPage() {
   const { theme } = useThemeStore();
   const { user } = useAuth();
   const { t, language } = useTranslation();
+  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
 
   // 상태 라벨 (다국어)
@@ -117,7 +119,7 @@ export function MyTeachingPage() {
     // 이미 DESIGNER인 경우 바로 이동
     if (isDesigner) {
       setShowRoleDialog(false);
-      navigate('/tu/teaching/courses/create');
+      navigate(prefixPath('/tu/teaching/courses/create'));
       return;
     }
 
@@ -141,7 +143,7 @@ export function MyTeachingPage() {
       setShowRoleDialog(false);
 
       // 권한 부여 후 강의 개설 페이지로 이동
-      navigate('/tu/teaching/courses/create');
+      navigate(prefixPath('/tu/teaching/courses/create'));
     } catch (error) {
       // 409 Conflict = 이미 DESIGNER 역할을 가지고 있음
       const axiosError = error as { response?: { status?: number } };
@@ -159,7 +161,7 @@ export function MyTeachingPage() {
 
         toast.success('이미 강의 개설 권한이 있습니다.');
         setShowRoleDialog(false);
-        navigate('/tu/teaching/courses/create');
+        navigate(prefixPath('/tu/teaching/courses/create'));
       } else {
         toast.error('권한 부여에 실패했습니다. 다시 시도해주세요.');
       }
@@ -184,11 +186,11 @@ export function MyTeachingPage() {
   };
 
   const handleViewCourse = (courseId: string) => {
-    navigate(`/tu/teaching/courses/${courseId}`);
+    navigate(prefixPath(`/tu/teaching/courses/${courseId}`));
   };
 
   const handleEditCourse = (courseId: string) => {
-    navigate(`/tu/teaching/courses/${courseId}/edit`);
+    navigate(prefixPath(`/tu/teaching/courses/${courseId}/edit`));
   };
 
   if (isLoading) {

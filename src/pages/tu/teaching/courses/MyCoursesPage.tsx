@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit, AlertTriangle } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
@@ -72,6 +73,7 @@ const t = {
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
@@ -203,7 +205,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
           <h1 className="text-text-primary mb-2">{getText('title')}</h1>
           <p className="text-text-secondary m-0">{getText('subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/tu/teaching/courses/create')}>
+        <Button onClick={() => navigate(prefixPath('/tu/teaching/courses/create'))}>
           <Plus size={20} />
           <span>{getText('createCourse')}</span>
         </Button>
@@ -337,7 +339,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                         <Button
                           size="sm"
                           className="flex-1"
-                          onClick={() => navigate(`/tu/teaching/courses/${course.id}`)}
+                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
                         >
                           {getText('manageCourse')}
                         </Button>
@@ -345,7 +347,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                           size="sm"
                           variant="ghost"
                           className="flex-1 border border-border"
-                          onClick={() => navigate(`/tu/teaching/courses/${course.id}/apply`)}
+                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}/apply`))}
                         >
                           <Send size={14} />
                           {getText('applyProgram')}
@@ -356,7 +358,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                         size="sm"
                         variant="ghost"
                         className="flex-1 border border-border"
-                        onClick={() => navigate(`/tu/teaching/courses/create?courseId=${course.id}`)}
+                        onClick={() => navigate(prefixPath(`/tu/teaching/courses/create?courseId=${course.id}`))}
                       >
                         <Edit size={14} />
                         {getText('continueEditing')}
@@ -376,7 +378,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
           <Award size={64} className="text-text-secondary mb-4 opacity-30 mx-auto" />
           <h3 className="text-text-primary mb-2">{getText('noCourses')}</h3>
           <p className="text-text-secondary mb-6">{getText('noCoursesDesc')}</p>
-          <Button onClick={() => navigate('/tu/teaching/courses/create')}>
+          <Button onClick={() => navigate(prefixPath('/tu/teaching/courses/create'))}>
             {getText('createNewCourse')}
           </Button>
         </div>

@@ -111,6 +111,8 @@ export function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isBulkCreateDialogOpen, setIsBulkCreateDialogOpen] = useState(false);
@@ -121,13 +123,15 @@ export function UsersPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
 
-  // API Hooks
+  // API Hooks - 정렬 파라미터 추가
   const { data: usersData, isLoading, isError } = useUsers({
     search: searchQuery || undefined,
     status: statusFilter !== 'all' ? statusFilter as UserStatus : undefined,
     systemRole: roleFilter !== 'all' ? roleFilter as SystemRole : undefined,
     page,
     size: 10,
+    sortBy,
+    sortDirection,
   });
 
   const updateMutation = useUpdateUser();
@@ -611,6 +615,18 @@ export function UsersPage() {
         columns={columns}
         data={users}
         showColumnToggle={false}
+        manualSorting={true}
+        sorting={sortBy ? [{ id: sortBy, desc: sortDirection === 'desc' }] : []}
+        onSortingChange={(sorting) => {
+          if (sorting.length > 0) {
+            setSortBy(sorting[0].id);
+            setSortDirection(sorting[0].desc ? 'desc' : 'asc');
+          } else {
+            setSortBy(undefined);
+            setSortDirection('desc');
+          }
+          setPage(0); // 정렬 변경 시 첫 페이지로 이동
+        }}
         labels={{
           noResults: '사용자가 없습니다.',
           rowsSelected: '{selected}개 선택됨',
