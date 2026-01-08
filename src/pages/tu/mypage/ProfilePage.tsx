@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield, Info, Building2, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
@@ -31,6 +32,7 @@ import {
   useUploadProfileImage,
   useWithdraw,
 } from '@/hooks/common';
+import { userService } from '@/services/common/userService';
 
 export function ProfilePage() {
   const { theme } = useThemeStore();
@@ -38,6 +40,10 @@ export function ProfilePage() {
   const { language } = useLanguageStore();
   const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
+
+  // 프로필 미완성 상태로 리다이렉트 된 경우 (단체 계정 생성 사용자)
+  const profileIncomplete = location.state?.profileIncomplete === true;
 
   // API Hooks
   const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
@@ -47,7 +53,7 @@ export function ProfilePage() {
   const withdrawMutation = useWithdraw();
 
   // Local State
-  const [profileData, setProfileData] = useState({ name: '' });
+  const [profileData, setProfileData] = useState({ name: '', department: '', position: '' });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -64,7 +70,11 @@ export function ProfilePage() {
   // Sync profile data from API
   useEffect(() => {
     if (profile) {
-      setProfileData({ name: profile.name });
+      setProfileData({
+        name: profile.name,
+        department: profile.department || '',
+        position: profile.position || '',
+      });
       if (profile.profileImageUrl) {
         const imageUrl = profile.profileImageUrl.startsWith('http')
           ? profile.profileImageUrl
@@ -73,6 +83,31 @@ export function ProfilePage() {
       }
     }
   }, [profile, apiBaseUrl]);
+
+  // Fetch course roles on mount
+  useEffect(() => {
+    const fetchCourseRoles = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        console.log('CourseRoles API response:', roles);
+
+        if (Array.isArray(roles) && roles.length > 0) {
+          // OWNER > DESIGNER 우선순위로 체크
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+
+          if (hasOwner) {
+            setDesignAuthStatus('OWNER');
+          } else if (hasDesigner) {
+            setDesignAuthStatus('DESIGNER');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      }
+    };
+    fetchCourseRoles();
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,7 +145,11 @@ export function ProfilePage() {
     }
 
     try {
-      await updateProfileMutation.mutateAsync({ name: profileData.name });
+      await updateProfileMutation.mutateAsync({
+        name: profileData.name,
+        department: profileData.department || undefined,
+        position: profileData.position || undefined,
+      });
       toast.success('프로필 정보가 저장되었습니다.');
     } catch {
       toast.error('프로필 저장에 실패했습니다.');
@@ -143,13 +182,25 @@ export function ProfilePage() {
     }
   };
 
-  const handleRequestDesignAuth = () => {
+  const handleRequestDesignAuth = async () => {
     setIsRequestPending(true);
-    setTimeout(() => {
+    try {
+      await userService.applyDesignerRole();
       setDesignAuthStatus('DESIGNER');
+      toast.success('강의 개설 권한이 부여되었습니다.');
+    } catch (error) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
+        // 이미 권한이 있음
+        setDesignAuthStatus('DESIGNER');
+        toast.info('이미 강의 개설 권한이 있습니다.');
+      } else {
+        console.error('Failed to apply designer role:', error);
+        toast.error('권한 신청에 실패했습니다.');
+      }
+    } finally {
       setIsRequestPending(false);
-      toast.success('권한이 승인되었습니다.');
-    }, 1500);
+    }
   };
 
   const handleWithdraw = async () => {
@@ -189,15 +240,29 @@ export function ProfilePage() {
 
   if (isLoadingProfile) {
     return (
-      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
       </div>
     );
   }
 
   return (
-    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-3xl mx-auto">
+        {/* 프로필 미완성 안내 메시지 */}
+        {profileIncomplete && (
+          <Alert className={`mb-6 ${isDark ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
+            <Info className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+            <AlertDescription className={isDark ? 'text-blue-400' : 'text-blue-700'}>
+              <span className="font-medium">프로필 정보를 완성해주세요.</span>
+              <br />
+              <span className="text-sm">
+                단체 계정으로 생성된 계정입니다. 원활한 서비스 이용을 위해 이름 등 프로필 정보를 입력해주세요.
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -273,6 +338,34 @@ export function ProfilePage() {
                 onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
                 className={inputClass}
               />
+            </div>
+
+            {/* Department & Position */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+              <div>
+                <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <Building2 className="w-4 h-4" />
+                  부서
+                </Label>
+                <Input
+                  value={profileData.department}
+                  onChange={(e) => setProfileData((prev) => ({ ...prev, department: e.target.value }))}
+                  placeholder="예: 개발팀, 회계팀"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <Briefcase className="w-4 h-4" />
+                  직급
+                </Label>
+                <Input
+                  value={profileData.position}
+                  onChange={(e) => setProfileData((prev) => ({ ...prev, position: e.target.value }))}
+                  placeholder="예: 대리, 과장, 팀장"
+                  className={inputClass}
+                />
+              </div>
             </div>
 
             {/* Email (Read-only) */}

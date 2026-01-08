@@ -26,7 +26,7 @@ interface PageResponse<T> {
 // 프로그램 필터 파라미터
 export interface ProgramFilterParams {
   status?: ProgramStatus;
-  creatorId?: number;
+  createdBy?: number;
   page?: number;
   size?: number;
   sort?: string;
@@ -100,9 +100,10 @@ export const programService = {
   async getPendingPrograms(
     params?: Pick<ProgramFilterParams, 'page' | 'size' | 'sort'>
   ): Promise<PageResponse<PendingProgramResponse>> {
-    const { data } = await axiosInstance.get<
-      PageResponse<PendingProgramResponse>
-    >(API_ENDPOINTS.PROGRAMS.PENDING, { params });
+    const { data } = await axiosInstance.get<PageResponse<PendingProgramResponse>>(
+      API_ENDPOINTS.PROGRAMS.PENDING,
+      { params }
+    );
     return data;
   },
 

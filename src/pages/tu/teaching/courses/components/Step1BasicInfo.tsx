@@ -2,7 +2,7 @@
  * Step 1: 기본 정보 입력
  * 담당: 코스 테이블 관련 필드
  */
-import { Globe, Plus, X } from 'lucide-react';
+import { Globe, Plus, X, ImageIcon } from 'lucide-react';
 import {
   Button,
   Input,
@@ -17,9 +17,9 @@ import {
   Alert,
   AlertDescription,
 } from '@/components/common';
-import type { CourseFormData, LanguageVersion, CourseLevel } from '@/types';
+import type { CourseFormData, LanguageVersion, CourseLevel, CourseType } from '@/types';
 import type { CategoryResponse } from '@/types/common';
-import { translations, levelOptions, type TranslationKey } from './courseCreate.constants';
+import { translations, levelOptions, typeOptions, type TranslationKey } from './courseCreate.constants';
 
 interface Step1BasicInfoProps {
   language: 'ko' | 'en';
@@ -70,12 +70,15 @@ export function Step1BasicInfo({
   return (
     <div className="flex flex-col gap-6">
       <div className="space-y-2">
-        <Label htmlFor="title">{getText('courseName')}</Label>
+        <Label htmlFor="title">
+          {getText('courseName')} <span className="text-status-error">*</span>
+        </Label>
         <Input
           id="title"
           value={formData.title}
           onChange={(e) => onFormDataChange({ title: e.target.value })}
           placeholder={getText('courseNamePlaceholder')}
+          required
         />
       </div>
 
@@ -89,7 +92,36 @@ export function Step1BasicInfo({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* 썸네일 URL */}
+      <div className="space-y-2">
+        <Label htmlFor="thumbnailUrl" className="flex items-center gap-2">
+          <ImageIcon size={16} />
+          썸네일 이미지
+        </Label>
+        <Input
+          id="thumbnailUrl"
+          value={formData.thumbnailUrl || ''}
+          onChange={(e) => onFormDataChange({ thumbnailUrl: e.target.value })}
+          placeholder="이미지 URL을 입력하세요 (예: https://example.com/image.jpg)"
+        />
+        {formData.thumbnailUrl && (
+          <div className="mt-2 relative w-48 h-32 rounded-lg overflow-hidden border border-border">
+            <img
+              src={formData.thumbnailUrl}
+              alt="썸네일 미리보기"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        <p className="text-xs text-text-secondary">
+          권장 크기: 400x250px, 지원 형식: JPG, PNG, WebP
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <NativeSelect
           id="categoryId"
           label={getText('category')}
@@ -109,6 +141,14 @@ export function Step1BasicInfo({
           value={formData.level}
           onChange={(e) => onFormDataChange({ level: e.target.value as CourseLevel | '' })}
           options={levelOptions}
+        />
+
+        <NativeSelect
+          id="type"
+          label={getText('courseType')}
+          value={formData.type}
+          onChange={(e) => onFormDataChange({ type: e.target.value as CourseType | '' })}
+          options={typeOptions}
         />
       </div>
 

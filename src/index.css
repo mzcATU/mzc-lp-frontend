@@ -43,6 +43,9 @@
   --color-action-text: #FFFFFF;
   --color-action-delete: #F44336;
 
+  /* === Switch/Toggle === */
+  --switch-background: #D1D5DB;
+
   /* === Button - Neutral === */
   --color-btn-neutral: #2A2A2A;
   --color-btn-neutral-hover: #3D3D3D;
@@ -117,6 +120,19 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+
+  /* === TU Theme Colors === */
+  --tu-bg-light: #f9fafb;
+  --tu-bg-dark: #1e1e1e;
+
+  /* === Dynamic Landing Branding Variables (Updated by JavaScript) === */
+  --landing-primary-color: #6778ff;
+  --landing-secondary-color: #a855f7;
+  --landing-accent-color: #10B981;
+  --landing-gradient-from: #6778ff;
+  --landing-gradient-to: #a855f7;
+  --landing-heading-font: 'Pretendard', sans-serif;
+  --landing-body-font: 'Pretendard', sans-serif;
 }
 
 @layer base {
@@ -191,7 +207,7 @@
 }
 
 .gradient-text {
-  background: linear-gradient(90deg, #70f2a0, #6778ff, #6bc2f0, #70f2a0);
+  background: linear-gradient(90deg, var(--landing-accent-color, #70f2a0), var(--landing-primary-color, #6778ff), #6bc2f0, var(--landing-accent-color, #70f2a0));
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -200,7 +216,7 @@
 }
 
 .gradient-text-purple {
-  background: linear-gradient(90deg, #a855f7, #6366f1, #06b6d4, #a855f7);
+  background: linear-gradient(90deg, var(--landing-secondary-color, #a855f7), var(--landing-primary-color, #6366f1), #06b6d4, var(--landing-secondary-color, #a855f7));
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -217,31 +233,31 @@
 }
 
 .glass-dark {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Hover glow effect */
+/* Hover glow effect - Uses dynamic branding variables */
 .hover-glow {
   transition: all 0.3s ease;
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 30px rgba(103, 120, 255, 0.3);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--landing-primary-color, #6778ff) 30%, transparent);
 }
 
-/* Landing Button styles */
+/* Landing Button styles - Uses dynamic branding variables */
 .landing-btn-primary {
-  background: linear-gradient(135deg, #6778ff 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--landing-primary-color, #6778ff) 0%, var(--landing-secondary-color, #a855f7) 100%);
   transition: all 0.3s ease;
 }
 
 .landing-btn-primary:hover {
-  background: linear-gradient(135deg, #8b99ff 0%, #c084fc 100%);
+  background: linear-gradient(135deg, var(--landing-primary-hover, #8b99ff) 0%, var(--landing-secondary-hover, #c084fc) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(103, 120, 255, 0.4);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--landing-primary-color, #6778ff) 40%, transparent);
 }
 
 .landing-btn-outline {
@@ -260,8 +276,12 @@
 }
 
 .card-hover:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.landing-dark .card-hover:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 /* Animated background gradient */
@@ -275,7 +295,7 @@
 }
 
 .animated-bg {
-  background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0a0a0a);
+  background: linear-gradient(-45deg, #1a1a2e, #2a2a4e, #243358, #1a1a2e);
   background-size: 400% 400%;
   animation: bg-gradient 15s ease infinite;
 }
@@ -312,22 +332,22 @@
   --landing-header-bg: rgba(255, 255, 255, 0.9);
   --landing-card-bg: rgba(255, 255, 255, 1);
   --landing-card-border: rgba(0, 0, 0, 0.08);
-  --landing-footer-bg: #F4F4F4;
+  --landing-footer-bg: #fafafa;
 }
 
 /* Dark theme for landing */
 .landing-dark {
-  --landing-bg: #0a0a0a;
-  --landing-bg-secondary: #0f0f1a;
+  --landing-bg: #1e1e1e;
+  --landing-bg-secondary: #252525;
   --landing-bg-card: rgba(255, 255, 255, 0.05);
   --landing-text-primary: #FFFFFF;
   --landing-text-secondary: #D4D4D4;
   --landing-text-muted: #9E9E9E;
   --landing-border: rgba(255, 255, 255, 0.1);
-  --landing-header-bg: rgba(0, 0, 0, 0.6);
+  --landing-header-bg: rgba(30, 30, 30, 0.95);
   --landing-card-bg: rgba(255, 255, 255, 0.05);
   --landing-card-border: rgba(255, 255, 255, 0.1);
-  --landing-footer-bg: #000000;
+  --landing-footer-bg: #1e1e1e;
 }
 
 /* Landing page base styles using CSS variables */
@@ -606,7 +626,7 @@
 
 /* Header glass effect for themes */
 .landing-dark .glass-dark {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -664,13 +684,11 @@
 
 /* Footer theme support */
 .landing-dark .landing-footer-wrapper {
-  background: #000000;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--landing-footer-bg);
 }
 
 .landing-light .landing-footer-wrapper {
-  background: #F4F4F4;
-  border-top: 1px solid #E0E0E0;
+  background: var(--landing-footer-bg);
 }
 
 /* Card background and border utilities */
@@ -739,9 +757,9 @@
   color: #6778ff;
 }
 
-/* Hero section for light mode - medium gradient background */
+/* Hero section for light mode - lighter gradient background */
 .landing-light .animated-bg {
-  background: linear-gradient(135deg, #252542 0%, #3a3a70 50%, #252542 100%);
+  background: linear-gradient(135deg, #4a4a80 0%, #6060a0 50%, #4a4a80 100%);
 }
 
 .landing-light .animated-bg h2.text-white {
@@ -781,4 +799,30 @@
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* === Dark Mode Select/Option Styles === */
+.landing-dark select {
+  color-scheme: dark;
+  background-color: #2a2a2a;
+}
+
+.landing-dark select option {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.landing-dark select:focus {
+  outline: none;
+}
+
+/* Input/textarea in dark mode landing pages */
+.landing-dark input,
+.landing-dark textarea {
+  color-scheme: dark;
+}
+
+.landing-dark input::placeholder,
+.landing-dark textarea::placeholder {
+  color: #9E9E9E;
 }

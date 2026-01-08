@@ -14,6 +14,8 @@ import {
   Trash2,
   Copy,
   Eye,
+  MoreHorizontal,
+  Play,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -21,9 +23,12 @@ import {
   Badge,
   DataTable,
   DataTableColumnHeader,
-  IconStatCard,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/common';
-import { useTimes, useDeleteTime } from '@/hooks/to/useTimeQueries';
+import { useTimes, useDeleteTime, useOpenTime } from '@/hooks/to/useTimeQueries';
 import type {
   CourseTimeResponse,
   CourseTimeStatus,
@@ -61,7 +66,7 @@ const t = {
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   confirmDelete: { ko: '정말 삭제하시겠습니까?', en: 'Are you sure you want to delete?' },
-  prev: { ko: '이전', en: 'Prev' },
+  prev: { ko: '이전', en: 'Previous' },
   next: { ko: '다음', en: 'Next' },
   timeCount: { ko: '개의 차수', en: ' course times' },
   columnTitle: { ko: '차수명', en: 'Title' },
@@ -71,9 +76,24 @@ const t = {
   columnCapacity: { ko: '정원', en: 'Capacity' },
   columnActions: { ko: '액션', en: 'Actions' },
   unlimited: { ko: '무제한', en: 'Unlimited' },
-  view: { ko: '상세', en: 'View' },
+  view: { ko: '상세보기', en: 'View' },
   clone: { ko: '복제', en: 'Clone' },
   delete: { ko: '삭제', en: 'Delete' },
+  openRecruiting: { ko: '모집 시작', en: 'Start Recruiting' },
+  openError: { ko: '모집 시작에 실패했습니다.', en: 'Failed to start recruiting.' },
+};
+
+// 백엔드 에러 코드 → 사용자 친화적 메시지 매핑
+const ERROR_MESSAGES: Record<string, { ko: string; en: string }> = {
+  TS001: { ko: '차수를 찾을 수 없습니다.', en: 'Course time not found.' },
+  TS002: { ko: '유효하지 않은 상태 전환입니다.', en: 'Invalid status transition.' },
+  TS003: { ko: '정원이 초과되었습니다.', en: 'Capacity exceeded.' },
+  TS004: { ko: '유효하지 않은 기간입니다.', en: 'Invalid date range.' },
+  TS005: { ko: '오프라인/블렌디드 과정은 장소 정보가 필요합니다.', en: 'Location info required for offline/blended courses.' },
+  TS006: { ko: '현재 상태에서는 차수를 수정할 수 없습니다.', en: 'Course time is not modifiable in current status.' },
+  TS007: { ko: '진행 중인 과정에서는 메인 강사를 삭제할 수 없습니다.', en: 'Cannot delete main instructor while course is ongoing.' },
+  TS008: { ko: '모집을 시작하려면 메인 강사를 먼저 배정해야 합니다.', en: 'Main instructor must be assigned before starting recruitment.' },
+  TS009: { ko: '이 차수에 접근할 권한이 없습니다.', en: 'Not authorized to access this course time.' },
 };
 
 const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -83,6 +103,41 @@ const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'su
   CLOSED: 'warning',
   ARCHIVED: 'destructive',
 };
+
+// 아이콘 색상별 스타일 (디자인 토큰 기반)
+const iconColorStyles = {
+  blue: 'bg-badge-blue-bg text-badge-blue',
+  indigo: 'bg-badge-indigo-bg text-badge-indigo',
+  green: 'bg-badge-green-bg text-badge-green',
+  gray: 'bg-badge-gray-bg text-badge-gray',
+} as const;
+
+type IconColor = keyof typeof iconColorStyles;
+
+// 통계 카드 컴포넌트 (White Surface + Colored Icon)
+function StatCard({
+  icon,
+  label,
+  value,
+  iconColor
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  iconColor: IconColor;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-bg-default p-5 shadow-sm transition-all hover:shadow-md">
+      <div className={cn('flex h-12 w-12 items-center justify-center rounded-lg', iconColorStyles[iconColor])}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-text-secondary">{label}</p>
+        <p className="text-2xl font-bold text-text-primary">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPageProps>) {
   const navigate = useNavigate();
@@ -96,22 +151,27 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
   // API 파라미터 구성
   const params: CourseTimeFilterParams = {
     page,
-    size: 20,
+    size: 10,
+    sort: 'createdAt,desc', // 최신 생성순 정렬
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
 
   // React Query 훅 사용
   const { data, isLoading, error } = useTimes(params);
   const deleteTime = useDeleteTime();
+  const openTime = useOpenTime();
 
   const times = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
 
-  // 검색 필터링 (클라이언트 사이드)
+  // 최신 생성순 정렬 (ID 기준 내림차순) + 검색 필터링 (클라이언트 사이드)
   const filteredTimes = useMemo(() => {
-    if (!searchQuery) return times;
+    // ID 기준 내림차순 정렬 (ID가 높을수록 최신)
+    const sorted = [...times].sort((a, b) => b.id - a.id);
+
+    if (!searchQuery) return sorted;
     const query = searchQuery.toLowerCase();
-    return times.filter((time) => time.title.toLowerCase().includes(query));
+    return sorted.filter((time) => time.title.toLowerCase().includes(query));
   }, [times, searchQuery]);
 
   // 통계 계산
@@ -131,8 +191,93 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+  const getErrorMessage = (err: unknown): string => {
+    // Axios 에러 응답에서 에러 코드 추출
+    const errorResponse = (err as { response?: { data?: { error?: { code?: string; message?: string } } } })?.response?.data?.error;
+    const errorCode = errorResponse?.code;
+
+    if (errorCode && ERROR_MESSAGES[errorCode]) {
+      return language === 'ko' ? ERROR_MESSAGES[errorCode].ko : ERROR_MESSAGES[errorCode].en;
+    }
+
+    // 백엔드 메시지가 있으면 사용
+    if (errorResponse?.message) {
+      return errorResponse.message;
+    }
+
+    return getText('openError');
+  };
+
+  const handleOpen = async (id: number) => {
+    try {
+      await openTime.mutateAsync(id);
+    } catch (err) {
+      console.error('Open failed:', err);
+      alert(getErrorMessage(err));
+    }
+  };
+
+  // Primary Action 렌더링
+  const renderPrimaryAction = (item: CourseTimeResponse) => {
+    if (item.status === 'DRAFT') {
+      return (
+        <Button
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOpen(item.id);
+          }}
+          disabled={openTime.isPending}
+          className="h-8"
+        >
+          <Play size={14} />
+          {getText('openRecruiting')}
+        </Button>
+      );
+    }
+    return null;
+  };
+
+  // 더보기 메뉴 렌더링
+  const renderMoreMenu = (item: CourseTimeResponse) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-bg-secondary transition-colors"
+          >
+            <MoreHorizontal size={16} className="text-text-secondary" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuItem onClick={() => navigate(`/to/times/${item.id}`)}>
+            <Eye size={14} />
+            {getText('view')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate(`/to/times/${item.id}/clone`)}>
+            <Copy size={14} />
+            {getText('clone')}
+          </DropdownMenuItem>
+          {item.status === 'DRAFT' && (
+            <DropdownMenuItem
+              onClick={() => handleDelete(item.id)}
+              variant="destructive"
+            >
+              <Trash2 size={14} />
+              {getText('delete')}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -190,8 +335,8 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
         header: getText('columnPeriod'),
         cell: ({ row }) => (
           <div className="text-sm text-text-secondary">
-            <p>{formatDate(row.original.startDate)}</p>
-            <p className="text-xs">~ {formatDate(row.original.endDate)}</p>
+            <p>{formatDate(row.original.classStartDate)}</p>
+            <p className="text-xs">~ {formatDate(row.original.classEndDate)}</p>
           </div>
         ),
       },
@@ -209,44 +354,22 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
       },
       {
         id: 'actions',
-        header: () => <div className="text-right">{getText('columnActions')}</div>,
+        header: () => <span className="sr-only">{getText('columnActions')}</span>,
         cell: ({ row }) => {
           const item = row.original;
           return (
             <div
-              className="flex items-center justify-end gap-2"
+              className="flex items-center justify-end gap-1"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                onClick={() => navigate(`/to/times/${item.id}`)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
-                title={getText('view')}
-              >
-                <Eye size={16} />
-              </button>
-              <button
-                onClick={() => navigate(`/to/times/${item.id}/clone`)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
-                title={getText('clone')}
-              >
-                <Copy size={16} />
-              </button>
-              {item.status === 'DRAFT' && (
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  disabled={deleteTime.isPending}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm hover:bg-status-error/10 transition-colors"
-                  title={getText('delete')}
-                >
-                  <Trash2 size={16} className="text-status-error" />
-                </button>
-              )}
+              {renderPrimaryAction(item)}
+              {renderMoreMenu(item)}
             </div>
           );
         },
       },
     ],
-    [language, deleteTime.isPending, navigate]
+    [language, deleteTime.isPending, openTime.isPending, navigate]
   );
 
   if (error) {
@@ -342,25 +465,29 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
         <div className="p-6 px-8 pt-0">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <IconStatCard
+            <StatCard
               icon={<LayoutGrid size={20} />}
               label={getText('totalTimes')}
               value={timeStats.total}
+              iconColor="blue"
             />
-            <IconStatCard
+            <StatCard
               icon={<Users size={20} />}
               label={getText('recruitingTimes')}
               value={timeStats.recruiting}
+              iconColor="indigo"
             />
-            <IconStatCard
+            <StatCard
               icon={<Clock size={20} />}
               label={getText('ongoingTimes')}
               value={timeStats.ongoing}
+              iconColor="green"
             />
-            <IconStatCard
+            <StatCard
               icon={<Calendar size={20} />}
               label={getText('closedTimes')}
               value={timeStats.closed}
+              iconColor="gray"
             />
           </div>
 
@@ -403,37 +530,20 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
               columns={columns}
               data={filteredTimes}
               showColumnToggle={false}
-              showPagination={false}
+              showPagination={true}
+              manualPagination={true}
+              pageCount={data?.totalPages ?? 0}
+              pageIndex={page}
+              pageSize={10}
+              onPageChange={setPage}
               onRowClick={(item) => navigate(`/to/times/${item.id}`)}
               labels={{
                 noResults: getText('noResults'),
+                rowsPerPage: language === 'ko' ? '페이지당 행 수' : 'Rows per page',
+                pageOf: language === 'ko' ? '페이지 {current} / {total}' : 'Page {current} of {total}',
+                rowsSelected: '',
               }}
             />
-          )}
-
-          {/* Pagination */}
-          {data && data.totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {getText('prev')}
-              </Button>
-              <span className="px-4 py-2 text-sm text-text-secondary">
-                {page + 1} / {data.totalPages}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page >= data.totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {getText('next')}
-              </Button>
-            </div>
           )}
         </div>
       </div>

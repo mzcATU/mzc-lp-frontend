@@ -36,6 +36,7 @@ import {
 } from '@/components/domain/tu/content';
 import { FolderManagementPanel, FolderSelectModal } from '@/components/domain/tu/folder';
 import type { ContentType, ContentStatus, ContentListResponse, ContentFilterParams, ContentFolderTreeNode } from '@/types/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 // 폴더 트리에서 ID로 폴더 찾기
 function findFolderById(folders: ContentFolderTreeNode[], id: number): ContentFolderTreeNode | null {
@@ -82,6 +83,7 @@ const t = {
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   confirmDelete: { ko: '정말 삭제하시겠습니까?', en: 'Are you sure you want to delete?' },
+  deleteFailedInUse: { ko: '이 콘텐츠는 강의에 포함되어 있어 삭제할 수 없습니다.', en: 'This content cannot be deleted because it is included in a course.' },
   prev: { ko: '이전', en: 'Prev' },
   next: { ko: '다음', en: 'Next' },
   contentCount: { ko: '개의 콘텐츠', en: ' contents' },
@@ -91,7 +93,6 @@ const t = {
   columnType: { ko: '유형', en: 'Type' },
   columnDate: { ko: '등록일', en: 'Date' },
   columnFile: { ko: '파일', en: 'File' },
-  columnActions: { ko: '액션', en: 'Actions' },
   organizeManage: { ko: '분류 및 관리', en: 'Organize' },
   moveToFolder: { ko: '폴더로 이동', en: 'Move to Folder' },
   selectedCount: { ko: '{count}개 선택됨', en: '{count} selected' },
@@ -103,6 +104,7 @@ const t = {
 
 export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ContentType | 'all'>('all');
@@ -117,7 +119,8 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     contentId: number | null;
     contentType: ContentType | null;
     fileName: string | null;
-  }>({ isOpen: false, contentId: null, contentType: null, fileName: null });
+    downloadable: boolean;
+  }>({ isOpen: false, contentId: null, contentType: null, fileName: null, downloadable: true });
 
   // 폴더 관리 패널 상태
   const [isFolderPanelOpen, setIsFolderPanelOpen] = useState(false);
@@ -130,10 +133,10 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  // API 파라미터 구성
+  // API 파라미터 구성 - 카드뷰는 3x3=9개, 리스트뷰는 10개
   const params: ContentFilterParams = {
     page,
-    size: 12,
+    size: viewMode === 'grid' ? 9 : 10,
     ...(typeFilter !== 'all' && { contentType: typeFilter }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
     ...(searchQuery && { keyword: searchQuery }),
@@ -167,8 +170,15 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     if (!confirm(getText('confirmDelete'))) return;
     try {
       await deleteContent.mutateAsync(id);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Delete failed:', err);
+      // 강의에 포함된 콘텐츠 삭제 시도 시 에러 처리
+      const error = err as { response?: { data?: { error?: { code?: string } } } };
+      if (error.response?.data?.error?.code === 'CT010') {
+        alert(getText('deleteFailedInUse'));
+      } else {
+        alert(getText('error'));
+      }
     }
   };
 
@@ -194,11 +204,12 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       contentId: content.id,
       contentType: content.contentType,
       fileName: content.originalFileName,
+      downloadable: content.downloadable ?? true,
     });
   };
 
   const handleClosePreview = () => {
-    setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null });
+    setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null, downloadable: true });
   };
 
   // 콘텐츠 선택 핸들러
@@ -287,7 +298,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
         <DataTableColumnHeader column={column} title={getText('columnTitle')} />
       ),
       cell: ({ row }) => (
-        <p className="text-sm text-text-primary max-w-md truncate">
+        <p className="text-sm text-text-primary max-w-[200px] truncate overflow-hidden">
           {row.original.originalFileName}
         </p>
       ),
@@ -316,8 +327,8 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       id: 'file',
       header: getText('columnFile'),
       cell: ({ row }) => (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm text-text-primary truncate max-w-xs">
+        <div className="flex flex-col gap-1 max-w-[180px] overflow-hidden">
+          <p className="text-sm text-text-primary truncate">
             {row.original.originalFileName}
           </p>
           <p className="text-xs text-text-secondary">
@@ -328,7 +339,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     },
     {
       id: 'actions',
-      header: () => <div className="text-right">{getText('columnActions')}</div>,
+      header: () => null,
       cell: ({ row }) => {
         const item = row.original;
         return (
@@ -397,6 +408,10 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button onClick={() => navigate(prefixPath('/tu/teaching/content/create'))}>
+                <Plus size={20} />
+                <span>{getText('createContent')}</span>
+              </Button>
               <Button
                 variant="ghost"
                 className="border border-border"
@@ -404,10 +419,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               >
                 <FolderTree size={20} />
                 <span>{getText('organizeManage')}</span>
-              </Button>
-              <Button onClick={() => navigate('/tu/teaching/content/create')}>
-                <Plus size={20} />
-                <span>{getText('createContent')}</span>
               </Button>
             </div>
           </div>
@@ -589,9 +600,9 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
                   content={content}
                   labels={cardLabels}
                   onPreview={() => handlePreview(content)}
-                  onEdit={() => navigate(`/tu/teaching/content/${content.id}/edit`)}
+                  onEdit={() => navigate(prefixPath(`/tu/teaching/content/${content.id}/edit`))}
                   onDelete={() => handleDelete(content.id)}
-                  onNavigateDetail={() => navigate(`/tu/teaching/content/${content.id}`)}
+                  onNavigateDetail={() => navigate(prefixPath(`/tu/teaching/content/${content.id}`))}
                   isDeleting={deleteContent.isPending}
                 />
               ))}
@@ -605,7 +616,8 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               data={contents}
               showColumnToggle={false}
               showPagination={false}
-              onRowClick={(item) => navigate(`/tu/teaching/content/${item.id}`)}
+              onRowClick={(item) => navigate(prefixPath(`/tu/teaching/content/${item.id}`))}
+              rowClassName={(item) => item.status === 'ARCHIVED' ? 'opacity-60' : ''}
               labels={{
                 noResults: getText('noResults'),
               }}
@@ -646,6 +658,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
         contentId={previewModal.contentId}
         contentType={previewModal.contentType}
         fileName={previewModal.fileName ?? undefined}
+        downloadable={previewModal.downloadable}
       />
 
       {/* 폴더 관리 슬라이드 패널 */}

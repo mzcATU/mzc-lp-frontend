@@ -47,6 +47,7 @@ type TranslationKeys = {
     signup: string;
     darkMode: string;
     lightMode: string;
+    comingSoon: string;
   };
   // 마이페이지
   mypage: {
@@ -57,7 +58,11 @@ type TranslationKeys = {
     learningStatus: string;
     inProgress: string;
     completed: string;
+    completedDesc: string;
+    completedCourses: string;
+    completedComingSoon: string;
     pending: string;
+    dropped: string;
     total: string;
     recentLearning: string;
     viewAll: string;
@@ -66,6 +71,8 @@ type TranslationKeys = {
     myLearningDesc: string;
     certificates: string;
     certificatesDesc: string;
+    certificatesList: string;
+    certificatesComingSoon: string;
     profileSecurityDesc: string;
     notifications: string;
     notificationsDesc: string;
@@ -102,6 +109,29 @@ type TranslationKeys = {
     rejected: string;
     students: string;
     lastModified: string;
+    stats: string;
+    statsDesc: string;
+    statsOverview: string;
+    statsComingSoon: string;
+    courseDesignTitle: string;
+    navigateConfirm: string;
+    proceed: string;
+    // Owner Stats
+    totalPrograms: string;
+    totalCourseTimes: string;
+    totalStudents: string;
+    enrollmentStats: string;
+    totalEnrollments: string;
+    completed: string;
+    inProgress: string;
+    dropped: string;
+    failed: string;
+    averageCompletionRate: string;
+    completionRate: string;
+    programStats: string;
+    noProgramStats: string;
+    noProgramStatsDesc: string;
+    courseTimes: string;
   };
   // 프로필 및 보안
   profileSecurity: {
@@ -144,6 +174,9 @@ type TranslationKeys = {
     selectLanguage: string;
     korean: string;
     english: string;
+    notificationsDesc: string;
+    notificationSettings: string;
+    notificationsComingSoon: string;
   };
   // 랜딩 페이지
   landing: {
@@ -318,6 +351,7 @@ const ko: TranslationKeys = {
     signup: '회원가입',
     darkMode: '다크 모드',
     lightMode: '라이트 모드',
+    comingSoon: '개발 예정',
   },
   mypage: {
     title: '마이페이지',
@@ -326,8 +360,12 @@ const ko: TranslationKeys = {
     profileDescription: '프로필 정보를 수정하고 프로필 이미지를 변경하세요',
     learningStatus: '학습 현황',
     inProgress: '수강 중',
-    completed: '완료',
+    completed: '완료한 강의',
+    completedDesc: '완료한 강의 목록을 확인하세요',
+    completedCourses: '완료한 강의 목록',
+    completedComingSoon: '완료한 강의 기능은 현재 개발 중입니다. 곧 완료한 강의 목록과 수료증을 확인할 수 있습니다.',
     pending: '승인 대기',
+    dropped: '중도 포기',
     total: '전체',
     recentLearning: '최근 학습',
     viewAll: '전체보기',
@@ -336,6 +374,8 @@ const ko: TranslationKeys = {
     myLearningDesc: '수강 중인 강의를 확인하세요',
     certificates: '인증서',
     certificatesDesc: '취득한 인증서를 확인하세요',
+    certificatesList: '인증서 목록',
+    certificatesComingSoon: '인증서 기능은 현재 개발 중입니다. 곧 취득한 인증서를 확인하고 다운로드할 수 있습니다.',
     profileSecurityDesc: '프로필 정보 및 보안 설정',
     notifications: '알림 설정',
     notificationsDesc: '알림 설정을 관리하세요',
@@ -360,7 +400,7 @@ const ko: TranslationKeys = {
     courseNotice: '강의 개설 안내',
     courseNoticeDesc: '강의 개설 정보와 강의 내용의 적합성은 운영진의 판단하에 강의 개설 승인이 이루어집니다. 승인까지 영업일 기준 3~5일이 소요될 수 있습니다.',
     grantPermission: '강의 개설 권한 부여',
-    grantPermissionDesc: '강의를 개설하려면 강의 설계자(Designer) 권한이 필요합니다.',
+    grantPermissionDesc: '강의를 개설하려면 강의 설계자(Designer) 권한이 필요합니다. 강의 설계 / 개설 페이지로 이동하시겠습니까?',
     grantPermissionConfirm: '"확인"을 누르시면 자동으로 권한이 부여되며, 강의 개설 페이지로 이동합니다.',
     grantPermissionWarning: '주의사항: 강의 개설 정보와 강의 내용의 적합성은 운영진의 판단하에 강의 개설 승인이 이루어집니다. 부적절한 내용의 강의는 승인이 거부될 수 있습니다.',
     granting: '권한 부여 중...',
@@ -371,6 +411,29 @@ const ko: TranslationKeys = {
     rejected: '반려됨',
     students: '수강생',
     lastModified: '최종 수정',
+    stats: '내 강의 통계',
+    statsDesc: '내 강의의 수강생 및 학습 통계를 확인하세요',
+    statsOverview: '통계 개요',
+    statsComingSoon: '강의 통계 기능은 현재 개발 중입니다. 곧 수강생 현황, 학습 완료율 등 다양한 통계를 확인할 수 있습니다.',
+    courseDesignTitle: '강의 설계 / 개설',
+    navigateConfirm: '강의 설계 / 개설 페이지로 이동하시겠습니까?',
+    proceed: '이동',
+    // Owner Stats
+    totalPrograms: '총 프로그램',
+    totalCourseTimes: '총 차수',
+    totalStudents: '총 수강생',
+    enrollmentStats: '수강 현황',
+    totalEnrollments: '총 수강 신청',
+    completed: '수료 완료',
+    inProgress: '진행 중',
+    dropped: '중도 포기',
+    failed: '미수료',
+    averageCompletionRate: '평균 수료율',
+    completionRate: '수료율',
+    programStats: '프로그램별 통계',
+    noProgramStats: '프로그램 통계가 없습니다',
+    noProgramStatsDesc: '담당 프로그램이 없습니다. 프로그램에 강사로 배정되면 통계를 확인할 수 있습니다.',
+    courseTimes: '차수',
   },
   profileSecurity: {
     title: '프로필 및 보안',
@@ -411,6 +474,9 @@ const ko: TranslationKeys = {
     selectLanguage: '언어 선택',
     korean: '한국어',
     english: 'English',
+    notificationsDesc: '알림 수신 방법을 설정하세요',
+    notificationSettings: '알림 설정',
+    notificationsComingSoon: '알림 설정 기능은 현재 개발 중입니다. 곧 다양한 알림 옵션을 제공할 예정입니다.',
   },
   landing: {
     banner: 'MZC Learn Platform - 클라우드 교육의 새로운 시작',
@@ -573,6 +639,7 @@ const en: TranslationKeys = {
     signup: 'Sign up',
     darkMode: 'Dark Mode',
     lightMode: 'Light Mode',
+    comingSoon: 'Coming Soon',
   },
   mypage: {
     title: 'My Page',
@@ -581,8 +648,12 @@ const en: TranslationKeys = {
     profileDescription: 'Edit your profile information and change your profile image',
     learningStatus: 'Learning Status',
     inProgress: 'In Progress',
-    completed: 'Completed',
+    completed: 'Completed Courses',
+    completedDesc: 'View your completed courses',
+    completedCourses: 'Completed Courses List',
+    completedComingSoon: 'Completed courses feature is currently under development. You will soon be able to view your completed courses and certificates.',
     pending: 'Pending',
+    dropped: 'Dropped',
     total: 'Total',
     recentLearning: 'Recent Learning',
     viewAll: 'View All',
@@ -591,6 +662,8 @@ const en: TranslationKeys = {
     myLearningDesc: 'Check your enrolled courses',
     certificates: 'Certificates',
     certificatesDesc: 'View your earned certificates',
+    certificatesList: 'Certificates List',
+    certificatesComingSoon: 'Certificates feature is currently under development. You will soon be able to view and download your earned certificates.',
     profileSecurityDesc: 'Profile and security settings',
     notifications: 'Notifications',
     notificationsDesc: 'Manage your notification settings',
@@ -615,7 +688,7 @@ const en: TranslationKeys = {
     courseNotice: 'Course Creation Notice',
     courseNoticeDesc: 'Course creation approval is based on the appropriateness of course information and content as judged by the administrators. Approval may take 3-5 business days.',
     grantPermission: 'Grant Course Creation Permission',
-    grantPermissionDesc: 'You need Designer permission to create courses.',
+    grantPermissionDesc: 'You need Designer permission to create courses. Would you like to go to the course design / creation page?',
     grantPermissionConfirm: 'Click "Confirm" to automatically grant permission and navigate to the course creation page.',
     grantPermissionWarning: 'Note: Course creation approval is based on the appropriateness of course information and content. Courses with inappropriate content may be rejected.',
     granting: 'Granting permission...',
@@ -626,6 +699,29 @@ const en: TranslationKeys = {
     rejected: 'Rejected',
     students: 'Students',
     lastModified: 'Last Modified',
+    stats: 'Course Statistics',
+    statsDesc: 'View student and learning statistics for your courses',
+    statsOverview: 'Statistics Overview',
+    statsComingSoon: 'Course statistics feature is currently under development. You will soon be able to view student enrollment, completion rates, and other statistics.',
+    courseDesignTitle: 'Course Design / Creation',
+    navigateConfirm: 'Would you like to proceed to the course design / creation page?',
+    proceed: 'Proceed',
+    // Owner Stats
+    totalPrograms: 'Total Programs',
+    totalCourseTimes: 'Total Sessions',
+    totalStudents: 'Total Students',
+    enrollmentStats: 'Enrollment Stats',
+    totalEnrollments: 'Total Enrollments',
+    completed: 'Completed',
+    inProgress: 'In Progress',
+    dropped: 'Dropped',
+    failed: 'Failed',
+    averageCompletionRate: 'Avg. Completion Rate',
+    completionRate: 'Completion Rate',
+    programStats: 'Program Stats',
+    noProgramStats: 'No program statistics',
+    noProgramStatsDesc: 'No programs assigned. Statistics will be available once you are assigned as an instructor.',
+    courseTimes: 'Sessions',
   },
   profileSecurity: {
     title: 'Profile & Security',
@@ -666,6 +762,9 @@ const en: TranslationKeys = {
     selectLanguage: 'Select Language',
     korean: '한국어',
     english: 'English',
+    notificationsDesc: 'Configure how you receive notifications',
+    notificationSettings: 'Notification Settings',
+    notificationsComingSoon: 'Notification settings are currently under development. Various notification options will be available soon.',
   },
   landing: {
     banner: 'MZC Learn Platform - A New Beginning in Cloud Education',

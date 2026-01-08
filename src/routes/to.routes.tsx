@@ -12,7 +12,18 @@ import {
   CourseTimeCreatePage,
   CourseTimeDetailPage,
 } from '@/pages/to/time';
-import { DashboardPage, PlaceholderPage } from './pages';
+import {
+  ProgramListPage,
+  ProgramPendingPage,
+  ProgramDetailPage,
+} from '@/pages/to/program';
+import { InstructorAssignmentsPage } from '@/pages/to/instructor';
+import { UserManagementPage } from '@/pages/to/user';
+import { OperatorNoticesPage } from '@/pages/to/notices';
+import { DashboardPage } from '@/pages/to';
+import MemberPoolListPage from '@/pages/to/member-pool/MemberPoolListPage';
+import AutoEnrollmentRulesPage from '@/pages/to/auto-enrollment/AutoEnrollmentRulesPage';
+import { PlaceholderPage } from './pages';
 
 function TenantOperatorWrapper() {
   return (
@@ -25,26 +36,31 @@ function TenantOperatorWrapper() {
 }
 
 export const toRoutes = (
-  <Route path="/to" element={<TenantOperatorWrapper />}>
+  <Route path="/:subdomain/to" element={<TenantOperatorWrapper />}>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}
-    <Route path="courses" element={<PlaceholderPage title="과정 목록" />} />
-    <Route path="courses/create" element={<PlaceholderPage title="과정 생성" />} />
-    <Route path="courses/:id" element={<PlaceholderPage title="과정 상세" />} />
+    <Route path="courses" element={<ProgramListPage />} />
+    <Route path="courses/pending" element={<ProgramPendingPage />} />
+    <Route path="courses/:id" element={<ProgramDetailPage />} />
     {/* 교육 운영 관리 - 차수(CourseTime) */}
     <Route path="times" element={<CourseTimesPage />} />
     <Route path="times/create" element={<CourseTimeCreatePage />} />
     <Route path="times/:id" element={<CourseTimeDetailPage />} />
-    {/* 강사 배정 */}
-    <Route path="instructors" element={<PlaceholderPage title="강사 배정" />} />
+    {/* 강사 배정 관리 (배정 + 현황 통합) */}
+    <Route path="instructors" element={<InstructorAssignmentsPage />} />
     {/* 콘텐츠 관리 */}
     <Route path="content" element={<PlaceholderPage title="콘텐츠 풀" />} />
     <Route path="content/upload" element={<PlaceholderPage title="콘텐츠 업로드" />} />
     <Route path="learning-objects" element={<PlaceholderPage title="학습 객체 관리" />} />
-    {/* 수강 및 강사 정보 */}
-    <Route path="sis" element={<PlaceholderPage title="학생 수강 정보 확인" />} />
-    <Route path="iis" element={<PlaceholderPage title="강사 배정 정보 확인" />} />
+    {/* 사용자 관리 */}
+    <Route path="users" element={<UserManagementPage />} />
+    {/* 회원 풀 관리 */}
+    <Route path="member-pools" element={<MemberPoolListPage />} />
+    {/* 자동 입과 규칙 관리 */}
+    <Route path="auto-enrollment-rules" element={<AutoEnrollmentRulesPage />} />
+    {/* 공지사항 관리 */}
+    <Route path="notices" element={<OperatorNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

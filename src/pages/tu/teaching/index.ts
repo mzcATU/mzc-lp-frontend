@@ -1,3 +1,9 @@
-export { MyCoursesPage, CourseCreatePage, CourseDetailPage } from './courses';
+export { MyCoursesPage, CourseCreatePage, CourseEditPage, CourseDetailPage, CourseApplyPage } from './courses';
 export { MyContentPage, ContentCreatePage as TuContentCreatePage, ContentDetailPage } from './content';
-export { MyAssignmentsPage } from './assignments';
+export { MyAssignmentsPage, AssignmentDetailPage } from './assignments';
+export {
+  MyProgramsPage,
+  ProgramDetailPage as TuProgramDetailPage,
+  ProgramEditPage as TuProgramEditPage,
+} from './programs';
+export { RoadmapListPage, RoadmapCreatePage, TeachingRoadmapDetailPage } from './roadmaps';

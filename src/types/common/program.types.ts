@@ -42,6 +42,10 @@ export interface ProgramResponse {
   estimatedHours: number | null;
   status: ProgramStatus;
   creatorId: number;
+  creatorName: string | null;
+  ownerId: number | null;
+  ownerName: string | null;
+  ownerEmail: string | null;
   snapshotId: number | null;
   createdAt: string;
   updatedAt: string;
@@ -58,10 +62,15 @@ export interface ProgramDetailResponse {
   estimatedHours: number | null;
   status: ProgramStatus;
   creatorId: number;
+  creatorName: string | null;
+  ownerId: number | null;
+  ownerName: string | null;
+  ownerEmail: string | null;
   snapshotId: number | null;
   snapshotName: string | null;
   // 승인 정보
   approvedBy: number | null;
+  approvedByName: string | null;
   approvedAt: string | null;
   approvalComment: string | null;
   // 반려 정보
@@ -81,6 +90,7 @@ export interface PendingProgramResponse {
   level: ProgramLevel | null;
   type: ProgramType | null;
   creatorId: number;
+  creatorName: string | null;
   submittedAt: string;
   snapshotId: number | null;
 }

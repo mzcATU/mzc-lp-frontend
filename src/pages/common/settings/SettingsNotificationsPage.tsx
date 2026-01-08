@@ -1,17 +1,10 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Construction } from 'lucide-react';
+import { Bell, Construction } from 'lucide-react';
+import { useTranslation } from '@/store/common/languageStore';
 import { designTokens } from '@/styles/admin-design-tokens';
-import { Button, EmptyState } from '@/components/common';
+import { Card, CardHeader, CardTitle, CardContent, EmptyState } from '@/components/common';
 
 export function SettingsNotificationsPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const basePath = location.pathname.split('/settings')[0];
-
-  const handleBack = () => {
-    navigate(`${basePath}/settings`);
-  };
+  const { t } = useTranslation();
 
   return (
     <div
@@ -19,19 +12,11 @@ export function SettingsNotificationsPage() {
         padding: '40px',
         backgroundColor: designTokens.bg.app_default,
         minHeight: '100%',
+        overflowY: 'auto',
       }}
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Header with Back Button */}
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>설정으로 돌아가기</span>
-        </Button>
-
+        {/* Header */}
         <h1
           style={{
             color: designTokens.text.primary,
@@ -40,19 +25,32 @@ export function SettingsNotificationsPage() {
             marginBottom: '8px',
           }}
         >
-          알림
+          {t.mypage.notifications}
         </h1>
         <p style={{ color: designTokens.text.secondary, marginBottom: '32px' }}>
-          알림 설정을 관리하세요
+          {t.settings.notificationsDesc}
         </p>
 
-        {/* Under Development Placeholder */}
-        <EmptyState
-          icon={Construction}
-          title="개발 예정"
-          description="알림 설정 기능은 현재 개발 중입니다. 곧 다양한 알림 옵션을 제공할 예정입니다."
-          className="border-2 border-dashed rounded-lg"
-        />
+        {/* Notifications Card */}
+        <Card>
+          <CardHeader className="border-b px-6 py-4">
+            <div className="flex items-center gap-3">
+              <Bell className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
+              <CardTitle className="text-lg font-medium">
+                {t.settings.notificationSettings}
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="px-6 py-6">
+            {/* Under Development Placeholder */}
+            <EmptyState
+              icon={Construction}
+              title={t.common.comingSoon}
+              description={t.settings.notificationsComingSoon}
+              className="border-2 border-dashed rounded-lg border-border"
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

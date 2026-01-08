@@ -13,6 +13,9 @@ export type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 /** 강의 유형 */
 export type CourseType = 'ONLINE' | 'OFFLINE' | 'BLENDED';
 
+/** 강의 발행 상태 (API용, UI용 CourseStatus와 구분) */
+export type CoursePublishStatus = 'DRAFT' | 'PUBLISHED';
+
 // ============================================
 // Response Types
 // ============================================
@@ -25,6 +28,8 @@ export interface CourseResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
+  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
+  status: CoursePublishStatus;
   estimatedHours: number | null;
   categoryId: number | null;
   startDate: string | null;
@@ -32,6 +37,10 @@ export interface CourseResponse {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  /** 완성 여부 (title, description, categoryId, items 1개 이상) */
+  isComplete: boolean;
+  /** 커리큘럼 아이템 개수 */
+  itemCount: number;
 }
 
 /** 강의 아이템 응답 (CourseDetailResponse에서 사용) */
@@ -42,6 +51,8 @@ export interface CourseItemResponse {
   parentId: number | null;
   learningObjectId: number | null;
   isFolder: boolean;
+  displayName: string | null;
+  description: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +64,8 @@ export interface CourseItemHierarchyResponse {
   depth: number;
   learningObjectId: number | null;
   isFolder: boolean;
+  displayName: string | null;
+  description: string | null;
   children: CourseItemHierarchyResponse[];
 }
 
@@ -64,6 +77,8 @@ export interface CourseDetailResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
+  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
+  status: CoursePublishStatus;
   estimatedHours: number | null;
   categoryId: number | null;
   startDate: string | null;
@@ -71,6 +86,8 @@ export interface CourseDetailResponse {
   tags: string[];
   items: CourseItemResponse[];
   itemCount: number;
+  /** 완성 여부 (title, description, categoryId, items 1개 이상) */
+  isComplete: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -105,6 +122,7 @@ export interface UpdateCourseRequest {
   startDate?: string;
   endDate?: string;
   tags?: string[];
+  status?: CoursePublishStatus;
 }
 
 // ============================================
@@ -115,7 +133,9 @@ export interface UpdateCourseRequest {
 export interface CreateItemRequest {
   itemName: string;
   parentId?: number | null;
-  learningObjectId: number;
+  contentId: number;
+  displayName?: string;
+  description?: string;
 }
 
 /** 폴더 생성 요청 */
@@ -141,6 +161,12 @@ export interface UpdateLearningObjectRequest {
   learningObjectId: number;
 }
 
+/** 표시 정보 변경 요청 */
+export interface UpdateDisplayInfoRequest {
+  displayName?: string;
+  description?: string;
+}
+
 // ============================================
 // Utility Types
 // ============================================
@@ -157,4 +183,10 @@ export const COURSE_TYPE_LABELS: Record<CourseType, string> = {
   ONLINE: '온라인',
   OFFLINE: '오프라인',
   BLENDED: '블렌디드',
+};
+
+/** CoursePublishStatus 라벨 맵 */
+export const COURSE_PUBLISH_STATUS_LABELS: Record<CoursePublishStatus, string> = {
+  DRAFT: '임시저장',
+  PUBLISHED: '발행됨',
 };

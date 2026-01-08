@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   Search,
   Filter,
@@ -12,7 +13,6 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react';
-import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
   Badge,
@@ -28,6 +28,7 @@ import {
 } from '@/components/common';
 import { useMyEnrollments } from '@/hooks/tu';
 import { useTranslation } from '@/store/common/languageStore';
+import { useThemeStore } from '@/store/common/themeStore';
 import type { Enrollment, EnrollmentStatus, EnrollmentFilterParams } from '@/services/tu/enrollmentService';
 
 type StatusFilter = EnrollmentStatus | 'all';
@@ -48,21 +49,29 @@ const statusIcons: Record<EnrollmentStatus, React.ReactNode> = {
   COMPLETED: <CheckCircle className="w-4 h-4" />,
 };
 
-function ProgressBar({ progress }: { progress: number }) {
+function ProgressBar({ progress, isDark }: { progress: number; isDark: boolean }) {
   return (
-    <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: designTokens.bg.secondary }}>
+    <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-gray-200'}`}>
       <div
         className="h-full rounded-full transition-all"
         style={{
           width: `${progress}%`,
-          backgroundColor: progress === 100 ? designTokens.status.success_text : designTokens.button.brand_default,
+          backgroundColor: progress === 100 ? '#22c55e' : '#6778ff',
         }}
       />
     </div>
   );
 }
 
-function EnrollmentCard({ enrollment, onClick, t }: { enrollment: Enrollment; onClick: () => void; t: ReturnType<typeof useTranslation>['t'] }) {
+interface EnrollmentCardProps {
+  enrollment: Enrollment;
+  onClick: () => void;
+  onContinueLearning: () => void;
+  t: ReturnType<typeof useTranslation>['t'];
+  isDark: boolean;
+}
+
+function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: EnrollmentCardProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
@@ -78,9 +87,10 @@ function EnrollmentCard({ enrollment, onClick, t }: { enrollment: Enrollment; on
 
   return (
     <Card
-      className="cursor-pointer transition-all hover:shadow-md"
+      className={`cursor-pointer transition-all hover:shadow-md ${
+        isDark ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-gray-200'
+      }`}
       onClick={onClick}
-      style={{ backgroundColor: designTokens.bg.default }}
     >
       <CardContent className="p-5">
         {/* Header: Status Badge */}
@@ -92,34 +102,28 @@ function EnrollmentCard({ enrollment, onClick, t }: { enrollment: Enrollment; on
         </div>
 
         {/* Program Title */}
-        <h3
-          className="font-semibold text-base mb-2 line-clamp-2"
-          style={{ color: designTokens.text.primary }}
-        >
+        <h3 className={`font-semibold text-base mb-2 line-clamp-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {enrollment.programTitle}
         </h3>
 
         {/* Course Time Name */}
-        <p
-          className="text-sm mb-3"
-          style={{ color: designTokens.text.secondary }}
-        >
+        <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           {enrollment.courseTimeName}
         </p>
 
         {/* Progress Bar (only for APPROVED status) */}
         {enrollment.status === 'APPROVED' && enrollment.progress !== undefined && (
           <div className="mb-3">
-            <div className="flex items-center justify-between text-xs mb-1" style={{ color: designTokens.text.secondary }}>
+            <div className={`flex items-center justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               <span>{t.learning.progress}</span>
-              <span style={{ color: designTokens.text.primary, fontWeight: 500 }}>{enrollment.progress}%</span>
+              <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{enrollment.progress}%</span>
             </div>
-            <ProgressBar progress={enrollment.progress} />
+            <ProgressBar progress={enrollment.progress} isDark={isDark} />
           </div>
         )}
 
         {/* Date Info */}
-        <div className="flex items-center gap-2 text-xs" style={{ color: designTokens.text.secondary }}>
+        <div className={`flex items-center gap-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           <Clock className="w-3.5 h-3.5" />
           <span>{formatDate(enrollment.startDate)} ~ {formatDate(enrollment.endDate)}</span>
         </div>
@@ -127,11 +131,12 @@ function EnrollmentCard({ enrollment, onClick, t }: { enrollment: Enrollment; on
         {/* Continue Learning Button (only for APPROVED) */}
         {enrollment.status === 'APPROVED' && (
           <Button
+            variant="brand"
             className="w-full mt-4"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onClick();
+              onContinueLearning();
             }}
           >
             <PlayCircle className="w-4 h-4 mr-2" />
@@ -145,6 +150,10 @@ function EnrollmentCard({ enrollment, onClick, t }: { enrollment: Enrollment; on
 
 export function MyLearningPage() {
   const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+  const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
@@ -153,17 +162,17 @@ export function MyLearningPage() {
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
   };
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
-  // API 파라미터
+  // API 파라미터 - "수강 중인 강의" 페이지이므로 APPROVED 상태만 조회
+  // 필터에서 다른 상태를 선택하면 해당 상태로 조회
   const params: EnrollmentFilterParams = {
     page,
     size: 12,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
+    status: statusFilter !== 'all' ? statusFilter : 'APPROVED',
   };
 
   const { data, isLoading, isError } = useMyEnrollments(params);
@@ -175,7 +184,11 @@ export function MyLearningPage() {
   ) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
-    navigate(`/mypage/learning/${enrollmentId}`);
+    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
+  };
+
+  const handleContinueLearning = (enrollmentId: number) => {
+    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}/player`));
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -184,38 +197,24 @@ export function MyLearningPage() {
   };
 
   return (
-    <div
-      style={{
-        padding: '40px',
-        backgroundColor: designTokens.bg.app_default,
-        minHeight: '100%',
-      }}
-    >
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2">
-            <h1
-              style={{
-                color: designTokens.text.primary,
-                fontSize: '28px',
-                fontWeight: 600,
-                marginBottom: '8px',
-              }}
-            >
+            <h1 className={`text-2xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               {t.learning.title}
             </h1>
             {/* 데모 버튼 (테스트용 - 숨김) */}
             <button
-              onClick={() => navigate('/mypage/learning/demo/player')}
-              className="opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded"
-              style={{ color: designTokens.text.placeholder }}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning/demo/player'))}
+              className={`opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
               title="Demo Mode"
             >
               [demo]
             </button>
           </div>
-          <p style={{ color: designTokens.text.secondary, fontSize: '14px' }}>
+          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
             {t.learning.description}
           </p>
         </div>
@@ -226,15 +225,14 @@ export function MyLearningPage() {
           <form onSubmit={handleSearch} className="flex-1 min-w-[280px] max-w-md">
             <div className="relative">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                style={{ color: designTokens.text.placeholder }}
+                className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
               />
               <Input
                 type="text"
                 placeholder={t.learning.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className={`pl-10 ${isDark ? 'bg-white/5 border-white/10 text-white placeholder:text-gray-500' : ''}`}
               />
             </div>
           </form>
@@ -243,7 +241,7 @@ export function MyLearningPage() {
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="gap-2"
+            className={`gap-2 ${isDark ? '!bg-transparent border-white/20 text-white hover:!bg-white/10' : ''}`}
           >
             <Filter className="w-4 h-4" />
             {t.learning.filter}
@@ -253,38 +251,34 @@ export function MyLearningPage() {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div
-            className="p-4 rounded-lg mb-6"
-            style={{ backgroundColor: designTokens.bg.default, border: `1px solid ${designTokens.bg.border}` }}
-          >
+          <div className={`p-4 rounded-lg mb-6 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
             <div className="flex flex-wrap items-center gap-4">
               <div>
-                <label
-                  className="block text-sm font-medium mb-2"
-                  style={{ color: designTokens.text.secondary }}
-                >
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   {t.learning.enrollmentStatus}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    variant={statusFilter === 'all' ? 'default' : 'outline'}
+                    variant={statusFilter === 'all' ? 'brand' : 'outline'}
                     size="sm"
                     onClick={() => {
                       setStatusFilter('all');
                       setPage(0);
                     }}
+                    className={statusFilter !== 'all' && isDark ? '!bg-transparent border-white/20 text-white hover:!bg-white/10' : ''}
                   >
                     {t.landing.all}
                   </Button>
                   {(['APPROVED', 'PENDING', 'COMPLETED', 'CANCELLED', 'REJECTED'] as EnrollmentStatus[]).map((status) => (
                     <Button
                       key={status}
-                      variant={statusFilter === status ? 'default' : 'outline'}
+                      variant={statusFilter === status ? 'brand' : 'outline'}
                       size="sm"
                       onClick={() => {
                         setStatusFilter(status);
                         setPage(0);
                       }}
+                      className={statusFilter !== status && isDark ? '!bg-transparent border-white/20 text-white hover:!bg-white/10' : ''}
                     >
                       {statusLabels[status]}
                     </Button>
@@ -297,22 +291,24 @@ export function MyLearningPage() {
 
         {/* Results Count */}
         {data && (
-          <p className="mb-4 text-sm" style={{ color: designTokens.text.secondary }}>
-            {t.learning.totalEnrollments} <span style={{ color: designTokens.text.primary, fontWeight: 600 }}>{filteredContent.length}</span> {t.learning.enrollments}
+          <p className={`mb-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            {t.learning.totalEnrollments}{' '}
+            <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{filteredContent.length}</span>{' '}
+            {t.learning.enrollments}
           </p>
         )}
 
         {/* Loading State */}
         {isLoading && (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.secondary }} />
+            <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
           </div>
         )}
 
         {/* Error State */}
         {isError && (
           <div className="text-center py-20">
-            <p style={{ color: designTokens.status.error_text }}>
+            <p className="text-red-500">
               {t.learning.loadError}
             </p>
           </div>
@@ -321,17 +317,14 @@ export function MyLearningPage() {
         {/* Empty State */}
         {data && filteredContent.length === 0 && (
           <div className="text-center py-20">
-            <BookOpen className="w-16 h-16 mx-auto mb-4" style={{ color: designTokens.text.placeholder }} />
-            <h3
-              className="text-lg font-medium mb-2"
-              style={{ color: designTokens.text.primary }}
-            >
+            <BookOpen className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+            <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               {t.learning.noEnrollments}
             </h3>
-            <p className="mb-4" style={{ color: designTokens.text.secondary }}>
+            <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               {t.learning.noEnrollmentsDesc}
             </p>
-            <Button onClick={() => navigate('/tu/catalog')}>
+            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2c/courses'))}>
               {t.learning.browseCourses}
             </Button>
           </div>
@@ -346,7 +339,9 @@ export function MyLearningPage() {
                   key={enrollment.id}
                   enrollment={enrollment}
                   onClick={() => handleEnrollmentClick(enrollment.id)}
+                  onContinueLearning={() => handleContinueLearning(enrollment.id)}
                   t={t}
+                  isDark={isDark}
                 />
               ))}
             </div>

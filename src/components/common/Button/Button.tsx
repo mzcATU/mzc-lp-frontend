@@ -10,9 +10,9 @@ export const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        outline: 'border border-border bg-white text-text-primary hover:bg-bg-secondary',
+        secondary: 'border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground text-text-primary',
         link: 'text-primary underline-offset-4 hover:underline',
         // 디자인 토큰 기반 버튼 variants
         neutral: 'bg-btn-neutral text-white hover:bg-btn-neutral-hover',

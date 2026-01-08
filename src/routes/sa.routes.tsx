@@ -7,8 +7,24 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import { DashboardPage, TenantsPage } from '@/pages/sa';
-import { PlaceholderPage } from './pages';
+import {
+  DashboardPage,
+  TenantsPage,
+  TenantDetailPage,
+  BillingPage,
+  TenantStatusPage,
+  DomainSettingsPage,
+  OperatorsPage,
+  BrandingSettingsPage,
+  EmailTemplatesPage,
+  NoticesPage,
+  NoticeDistributionPage,
+  UsagePage,
+  ActivityPage,
+  LogsPage,
+  SystemSettingsPage,
+  TenantDefaultsPage,
+} from '@/pages/sa';
 
 function SuperAdminWrapper() {
   return (
@@ -26,26 +42,27 @@ export const saRoutes = (
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 테넌트 관리 */}
     <Route path="tenants" element={<TenantsPage />} />
-    <Route path="tenants/billing" element={<PlaceholderPage title="요금제 및 라이선스 관리" />} />
-    <Route path="tenants/status" element={<PlaceholderPage title="전체 현황 조회" />} />
+    <Route path="tenants/:id" element={<TenantDetailPage />} />
+    <Route path="tenants/billing" element={<BillingPage />} />
+    <Route path="tenants/status" element={<TenantStatusPage />} />
     {/* 시스템 환경 관리 */}
-    <Route path="system/domain" element={<PlaceholderPage title="도메인 및 SSL 설정" />} />
-    <Route path="system/operators" element={<PlaceholderPage title="운영자 관리" />} />
-    <Route path="system/branding" element={<PlaceholderPage title="글로벌 브랜딩 설정" />} />
-    <Route path="system/email-templates" element={<PlaceholderPage title="이메일 템플릿 관리" />} />
+    <Route path="system/domain" element={<DomainSettingsPage />} />
+    <Route path="system/operators" element={<OperatorsPage />} />
+    <Route path="system/branding" element={<BrandingSettingsPage />} />
+    <Route path="system/email-templates" element={<EmailTemplatesPage />} />
     {/* 글로벌 공지 관리 */}
-    <Route path="notices" element={<PlaceholderPage title="공지사항 관리" />} />
-    <Route path="notices/distribution" element={<PlaceholderPage title="공지사항 배포 관리" />} />
+    <Route path="notices" element={<NoticesPage />} />
+    <Route path="notices/distribution" element={<NoticeDistributionPage />} />
     {/* 데이터 및 로그 분석 */}
-    <Route path="analytics/usage" element={<PlaceholderPage title="사용량 트렌드 및 통계" />} />
-    <Route path="analytics/activity" element={<PlaceholderPage title="활동 분석" />} />
-    <Route path="analytics/logs" element={<PlaceholderPage title="로그 관리" />} />
+    <Route path="analytics/usage" element={<UsagePage />} />
+    <Route path="analytics/activity" element={<ActivityPage />} />
+    <Route path="analytics/logs" element={<LogsPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />
     <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
     <Route path="settings/appearance" element={<SettingsAppearancePage />} />
-    <Route path="settings/system-settings" element={<PlaceholderPage title="시스템 설정" />} />
-    <Route path="settings/tenant-defaults" element={<PlaceholderPage title="테넌트 기본값" />} />
+    <Route path="settings/system-settings" element={<SystemSettingsPage />} />
+    <Route path="settings/tenant-defaults" element={<TenantDefaultsPage />} />
   </Route>
 );

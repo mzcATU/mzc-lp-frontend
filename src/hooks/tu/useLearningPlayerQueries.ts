@@ -6,11 +6,32 @@ import { useAuthStore } from '@/store/common/authStore';
 import { enrollmentService } from '@/services/tu/enrollmentService';
 import type { UpdateProgressRequest } from '@/types/tu';
 import { enrollmentKeys } from './useEnrollmentQueries';
+import { ownerStatsKeys } from './useOwnerStatsQueries';
+import { learningStatsKeys } from './useLearningStatsQueries';
 
 // Query Keys
 export const learningPlayerKeys = {
   all: ['learningPlayer'] as const,
   curriculum: (enrollmentId: number) => [...learningPlayerKeys.all, 'curriculum', enrollmentId] as const,
+  playerData: (enrollmentId: number) => [...learningPlayerKeys.all, 'playerData', enrollmentId] as const,
+};
+
+/**
+ * 학습 플레이어용 Enrollment 데이터 조회 훅
+ * - Enrollment + CourseTime + Program 정보를 조합하여 snapshotId까지 획득
+ */
+export const useEnrollmentForPlayer = (
+  enrollmentId: number,
+  options?: { enabled?: boolean }
+) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  return useQuery({
+    queryKey: learningPlayerKeys.playerData(enrollmentId),
+    queryFn: () => enrollmentService.getEnrollmentForPlayer(enrollmentId),
+    enabled: options?.enabled !== false && isAuthenticated && enrollmentId > 0,
+    staleTime: 1000 * 60 * 5, // 5분간 캐시
+  });
 };
 
 /**
@@ -61,6 +82,9 @@ export const useMarkItemComplete = () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.detail(enrollmentId) });
       // 내 수강 목록도 갱신 (진도율 반영)
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.my() });
+      // 통계 갱신 (수료 상태 변경 가능)
+      queryClient.invalidateQueries({ queryKey: ownerStatsKeys.all });
+      queryClient.invalidateQueries({ queryKey: learningStatsKeys.all });
     },
   });
 };

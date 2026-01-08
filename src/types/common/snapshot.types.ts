@@ -23,6 +23,10 @@ export interface SnapshotLearningObjectResponse {
   duration: number | null;
   thumbnailUrl: string | null;
   resolution: string | null;
+  externalUrl: string | null;
+  description: string | null;
+  downloadable: boolean | null;
+  pageCount: number | null;
   isCustomized: boolean;
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -12,13 +12,14 @@ import {
   Edit,
   MoreHorizontal,
   Loader2,
-  Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { useAuth } from '@/hooks/common/auth';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { userService } from '@/services/common/userService';
+import { authService } from '@/services/common/authService';
 import { useAuthStore } from '@/store/common/authStore';
 import { courseService } from '@/services/common/courseService';
 import {
@@ -54,7 +55,8 @@ export function MyTeachingPage() {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
 
   // 상태 라벨 (다국어)
@@ -67,33 +69,71 @@ export function MyTeachingPage() {
 
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
+  // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
+  const [isCheckingRole, setIsCheckingRole] = useState(true);
 
-  // 사용자가 DESIGNER 역할을 가지고 있는지 확인
-  const isDesigner = user?.role === 'DESIGNER' || user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN';
+  // CourseRole API로 역할 확인
+  useEffect(() => {
+    const checkCourseRole = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        if (Array.isArray(roles) && roles.length > 0) {
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+
+          if (hasOwner) {
+            setCourseRoleStatus('OWNER');
+          } else if (hasDesigner) {
+            setCourseRoleStatus('DESIGNER');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      } finally {
+        setIsCheckingRole(false);
+      }
+    };
+    checkCourseRole();
+  }, []);
+
+  // 사용자가 DESIGNER 이상의 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
+  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || courseRoleStatus !== 'USER';
 
   // 내 강의 목록 조회
-  const { data: coursesData, isLoading } = useQuery({
+  const { data: coursesData, isLoading: isLoadingCourses } = useQuery({
     queryKey: ['myCourses'],
     queryFn: () => courseService.getMyCourses(),
-    enabled: isDesigner,
+    enabled: !isCheckingRole && isDesigner,
   });
+
+  const isLoading = isCheckingRole || isLoadingCourses;
   const courses = coursesData?.content || [];
 
   const handleCreateCourse = () => {
-    if (isDesigner) {
-      // 이미 DESIGNER 역할이 있으면 바로 강의 개설 페이지로 이동
-      navigate('/tu/teaching/courses/create');
-    } else {
-      // DESIGNER 역할이 없으면 권한 부여 다이얼로그 표시
-      setShowRoleDialog(true);
-    }
+    // DESIGNER 역할 여부와 관계없이 항상 확인 다이얼로그 표시
+    setShowRoleDialog(true);
   };
 
   const handleGrantDesignerRole = async () => {
+    // 이미 DESIGNER인 경우 바로 이동
+    if (isDesigner) {
+      setShowRoleDialog(false);
+      navigate(prefixPath('/tu/teaching/courses/create'));
+      return;
+    }
+
     setIsGrantingRole(true);
     try {
       // DESIGNER 역할 부여 API 호출
       await userService.applyDesignerRole();
+
+      // 토큰 갱신 (CourseRole이 반영된 새 토큰 발급)
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (refreshToken) {
+        const tokenResponse = await authService.refresh(refreshToken);
+        useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+      }
 
       // 사용자 정보 다시 조회하여 역할 업데이트
       const updatedUser = await userService.getMe();
@@ -103,18 +143,25 @@ export function MyTeachingPage() {
       setShowRoleDialog(false);
 
       // 권한 부여 후 강의 개설 페이지로 이동
-      navigate('/tu/teaching/courses/create');
+      navigate(prefixPath('/tu/teaching/courses/create'));
     } catch (error) {
       // 409 Conflict = 이미 DESIGNER 역할을 가지고 있음
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 409) {
+        // 토큰 갱신 (이미 권한이 있어도 토큰에 반영 필요)
+        const refreshToken = useAuthStore.getState().refreshToken;
+        if (refreshToken) {
+          const tokenResponse = await authService.refresh(refreshToken);
+          useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+        }
+
         // 이미 권한이 있으므로 사용자 정보 업데이트 후 진행
         const updatedUser = await userService.getMe();
         useAuthStore.getState().updateUser({ role: updatedUser.role });
 
         toast.success('이미 강의 개설 권한이 있습니다.');
         setShowRoleDialog(false);
-        navigate('/tu/teaching/courses/create');
+        navigate(prefixPath('/tu/teaching/courses/create'));
       } else {
         toast.error('권한 부여에 실패했습니다. 다시 시도해주세요.');
       }
@@ -123,24 +170,39 @@ export function MyTeachingPage() {
     }
   };
 
+  // 다이얼로그 설명 텍스트
+  const getDialogDescription = () => {
+    if (courseRoleStatus === 'OWNER') {
+      return language === 'ko'
+        ? '이미 강의 소유자입니다. 새 강의를 만드시겠습니까?'
+        : 'You are already a course owner. Would you like to create a new course?';
+    }
+    if (courseRoleStatus === 'DESIGNER') {
+      return language === 'ko'
+        ? '이미 강의 개설 권한이 있습니다. 강의 설계 페이지로 이동하시겠습니까?'
+        : 'You already have course creation permission. Would you like to go to the course design page?';
+    }
+    return t.teaching.grantPermissionDesc;
+  };
+
   const handleViewCourse = (courseId: string) => {
-    navigate(`/tu/teaching/courses/${courseId}`);
+    navigate(prefixPath(`/tu/teaching/courses/${courseId}`));
   };
 
   const handleEditCourse = (courseId: string) => {
-    navigate(`/tu/teaching/courses/${courseId}/edit`);
+    navigate(prefixPath(`/tu/teaching/courses/${courseId}/edit`));
   };
 
   if (isLoading) {
     return (
-      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+      <div className={`flex items-center justify-center min-h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
       </div>
     );
   }
 
   return (
-    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-5xl mx-auto">
         {/* 헤더 */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -256,7 +318,7 @@ export function MyTeachingPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewCourse(String(course.courseId))}
-                          className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                          className={isDark ? '!bg-transparent !border-white/20 !text-white hover:!bg-white/10' : ''}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           {t.common.view}
@@ -265,7 +327,7 @@ export function MyTeachingPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditCourse(String(course.courseId))}
-                          className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                          className={isDark ? '!bg-transparent !border-white/20 !text-white hover:!bg-white/10' : ''}
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           {t.common.edit}
@@ -273,7 +335,7 @@ export function MyTeachingPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={isDark ? 'text-gray-400 hover:text-white' : ''}
+                          className={isDark ? '!text-gray-400 hover:!text-white hover:!bg-white/10' : ''}
                         >
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
@@ -287,36 +349,22 @@ export function MyTeachingPage() {
         )}
       </div>
 
-      {/* DESIGNER 역할 부여 다이얼로그 */}
+      {/* 강의 개설 확인 다이얼로그 */}
       <AlertDialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className={isDark ? 'bg-[#2a2a2a] border-white/10' : ''}>
           <AlertDialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-blue-600" />
-              </div>
-              <AlertDialogTitle>{t.teaching.grantPermission}</AlertDialogTitle>
-            </div>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-muted-foreground text-sm">
-                <p>
-                  {t.teaching.grantPermissionDesc.split('Designer')[0]}
-                  <strong>{t.teaching.designer}</strong>
-                  {t.teaching.grantPermissionDesc.split('Designer')[1] || ''}
-                </p>
-                <p>
-                  {t.teaching.grantPermissionConfirm}
-                </p>
-                <div className="mt-4 p-3 rounded-lg bg-orange-50 border border-orange-200">
-                  <p className="text-sm text-orange-800">
-                    {t.teaching.grantPermissionWarning}
-                  </p>
-                </div>
-              </div>
+            <AlertDialogTitle className={isDark ? 'text-white' : ''}>{t.teaching.courseDesignTitle}</AlertDialogTitle>
+            <AlertDialogDescription className={isDark ? 'text-gray-300' : ''}>
+              {getDialogDescription()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isGrantingRole}>{t.common.cancel}</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={isGrantingRole}
+              className={isDark ? 'bg-transparent border-white/20 text-gray-200 hover:bg-white/10 hover:text-white' : ''}
+            >
+              {t.common.cancel}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleGrantDesignerRole}
               disabled={isGrantingRole}
@@ -327,7 +375,7 @@ export function MyTeachingPage() {
                   {t.teaching.granting}
                 </>
               ) : (
-                t.common.confirm
+                t.teaching.proceed
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

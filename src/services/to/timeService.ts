@@ -30,37 +30,37 @@ export const timeService = {
 
   /** 차수 생성 */
   async createTime(request: CreateCourseTimeRequest): Promise<CourseTimeResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseTimeResponse }>(
+    const { data } = await axiosInstance.post<CourseTimeResponse>(
       API_ENDPOINTS.TIMES.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 차수 목록 조회 */
   async getTimes(params?: CourseTimeFilterParams): Promise<PageResponse<CourseTimeResponse>> {
-    const { data } = await axiosInstance.get<{ data: PageResponse<CourseTimeResponse> }>(
+    const response = await axiosInstance.get<PageResponse<CourseTimeResponse>>(
       API_ENDPOINTS.TIMES.BASE,
       { params }
     );
-    return data.data;
+    return response.data;
   },
 
   /** 차수 상세 조회 */
   async getTime(id: number): Promise<CourseTimeDetailResponse> {
-    const { data } = await axiosInstance.get<{ data: CourseTimeDetailResponse }>(
+    const { data } = await axiosInstance.get<CourseTimeDetailResponse>(
       API_ENDPOINTS.TIMES.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 차수 수정 */
   async updateTime(id: number, request: UpdateCourseTimeRequest): Promise<CourseTimeResponse> {
-    const { data } = await axiosInstance.patch<{ data: CourseTimeResponse }>(
+    const { data } = await axiosInstance.patch<CourseTimeResponse>(
       API_ENDPOINTS.TIMES.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 차수 삭제 */
@@ -70,11 +70,11 @@ export const timeService = {
 
   /** 차수 복제 */
   async cloneTime(id: number, request: CloneCourseTimeRequest): Promise<CourseTimeResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseTimeResponse }>(
+    const { data } = await axiosInstance.post<CourseTimeResponse>(
       API_ENDPOINTS.TIMES.CLONE(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -83,34 +83,34 @@ export const timeService = {
 
   /** 모집 개시 (DRAFT → RECRUITING) */
   async openTime(id: number): Promise<CourseTimeResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseTimeResponse }>(
+    const { data } = await axiosInstance.post<CourseTimeResponse>(
       API_ENDPOINTS.TIMES.OPEN(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 수업 시작 (RECRUITING → ONGOING) */
   async startTime(id: number): Promise<CourseTimeResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseTimeResponse }>(
+    const { data } = await axiosInstance.post<CourseTimeResponse>(
       API_ENDPOINTS.TIMES.START(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 수업 종료 (ONGOING → CLOSED) */
   async closeTime(id: number): Promise<CourseTimeResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseTimeResponse }>(
+    const { data } = await axiosInstance.post<CourseTimeResponse>(
       API_ENDPOINTS.TIMES.CLOSE(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 보관 처리 (CLOSED → ARCHIVED) */
   async archiveTime(id: number): Promise<CourseTimeResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseTimeResponse }>(
+    const { data } = await axiosInstance.post<CourseTimeResponse>(
       API_ENDPOINTS.TIMES.ARCHIVE(id)
     );
-    return data.data;
+    return data;
   },
 
   // ============================================
@@ -119,17 +119,17 @@ export const timeService = {
 
   /** 정원 정보 조회 */
   async getCapacity(id: number): Promise<CapacityResponse> {
-    const { data } = await axiosInstance.get<{ data: CapacityResponse }>(
+    const { data } = await axiosInstance.get<CapacityResponse>(
       API_ENDPOINTS.TIMES.CAPACITY(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 가격 정보 조회 */
   async getPrice(id: number): Promise<PriceResponse> {
-    const { data } = await axiosInstance.get<{ data: PriceResponse }>(
+    const { data } = await axiosInstance.get<PriceResponse>(
       API_ENDPOINTS.TIMES.PRICE(id)
     );
-    return data.data;
+    return data;
   },
 };

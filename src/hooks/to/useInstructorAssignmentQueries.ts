@@ -18,8 +18,11 @@ import type {
 
 export const instructorAssignmentKeys = {
   all: ['instructorAssignments'] as const,
+  lists: () => [...instructorAssignmentKeys.all, 'list'] as const,
+  list: (params?: InstructorAssignmentFilterParams) =>
+    [...instructorAssignmentKeys.lists(), params] as const,
   byTime: (timeId: number) => [...instructorAssignmentKeys.all, 'time', timeId] as const,
-  list: (timeId: number, params?: InstructorAssignmentFilterParams) =>
+  timeList: (timeId: number, params?: InstructorAssignmentFilterParams) =>
     [...instructorAssignmentKeys.byTime(timeId), params] as const,
 };
 
@@ -27,13 +30,21 @@ export const instructorAssignmentKeys = {
 // Query Hooks
 // ============================================
 
+/** 전체 강사 배정 목록 조회 (TO 전용) */
+export const useInstructorAssignments = (params?: InstructorAssignmentFilterParams) => {
+  return useQuery({
+    queryKey: instructorAssignmentKeys.list(params),
+    queryFn: () => instructorAssignmentService.getAssignments(params),
+  });
+};
+
 /** 차수별 강사 목록 조회 */
 export const useTimeInstructors = (
   timeId: number,
   params?: InstructorAssignmentFilterParams
 ) => {
   return useQuery({
-    queryKey: instructorAssignmentKeys.list(timeId, params),
+    queryKey: instructorAssignmentKeys.timeList(timeId, params),
     queryFn: () => instructorAssignmentService.getInstructors(timeId, params),
     enabled: !!timeId,
   });
@@ -56,12 +67,21 @@ export const useAssignInstructor = () => {
       request: AssignInstructorRequest;
     }) => instructorAssignmentService.assignInstructor(timeId, request),
     onSuccess: (_, variables) => {
+      // 차수별 강사 목록 갱신
       queryClient.invalidateQueries({
         queryKey: instructorAssignmentKeys.byTime(variables.timeId),
+      });
+      // 전체 배정 목록 갱신 (params 관계없이 모든 list 쿼리)
+      queryClient.invalidateQueries({
+        queryKey: instructorAssignmentKeys.lists(),
       });
       // CourseTimeDetailResponse.instructors 필드 갱신
       queryClient.invalidateQueries({
         queryKey: timeKeys.detail(variables.timeId),
+      });
+      // 차수 목록도 갱신 (instructors 필드 포함)
+      queryClient.invalidateQueries({
+        queryKey: timeKeys.lists(),
       });
     },
   });

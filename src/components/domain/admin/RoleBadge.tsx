@@ -3,11 +3,11 @@ import { Badge } from '@/components/common/Badge';
 // 배지 variant 타입
 type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'error' | 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'indigo' | 'purple' | 'gray';
 
-// 시스템 역할
-export type SystemRole = 'SUPER_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'USER';
+// 시스템 역할 (백엔드 TenantRole enum과 동기화)
+export type SystemRole = 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'DESIGNER' | 'INSTRUCTOR' | 'USER';
 
-// 강의 역할
-export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR' | 'TUTOR' | 'VIEWER';
+// 강의 역할 (백엔드 CourseRole enum과 동기화)
+export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR';
 
 interface RoleBadgeProps {
   role: SystemRole | CourseRole;
@@ -18,9 +18,11 @@ const systemRoleConfig: Record<
   SystemRole,
   { label: { ko: string; en: string }; variant: BadgeVariant }
 > = {
-  SUPER_ADMIN: { label: { ko: '슈퍼 관리자', en: 'Super Admin' }, variant: 'purple' },
+  SYSTEM_ADMIN: { label: { ko: '시스템 관리자', en: 'System Admin' }, variant: 'purple' },
   TENANT_ADMIN: { label: { ko: '테넌트 관리자', en: 'Tenant Admin' }, variant: 'indigo' },
   OPERATOR: { label: { ko: '운영자', en: 'Operator' }, variant: 'blue' },
+  DESIGNER: { label: { ko: '강의 개설자', en: 'Designer' }, variant: 'orange' },
+  INSTRUCTOR: { label: { ko: '강사', en: 'Instructor' }, variant: 'green' },
   USER: { label: { ko: '사용자', en: 'User' }, variant: 'gray' },
 };
 
@@ -31,8 +33,6 @@ const courseRoleConfig: Record<
   DESIGNER: { label: { ko: '설계자', en: 'Designer' }, variant: 'orange' },
   OWNER: { label: { ko: '소유자', en: 'Owner' }, variant: 'green' },
   INSTRUCTOR: { label: { ko: '강사', en: 'Instructor' }, variant: 'blue' },
-  TUTOR: { label: { ko: '튜터', en: 'Tutor' }, variant: 'indigo' },
-  VIEWER: { label: { ko: '열람자', en: 'Viewer' }, variant: 'gray' },
 };
 
 export function RoleBadge({ role, className }: RoleBadgeProps) {

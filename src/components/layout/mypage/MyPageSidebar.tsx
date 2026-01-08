@@ -1,10 +1,24 @@
-import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
+import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
+import { userService } from '@/services/common/userService';
+import { authService } from '@/services/common/authService';
+import { cn } from '@/utils/cn';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/common';
 import type { MenuItem } from '@/types';
 
 interface MyPageSidebarProps {
@@ -15,14 +29,121 @@ interface MyPageSidebarProps {
   language?: 'ko' | 'en';
 }
 
+type ViewMode = 'instructor' | 'learner';
+
 export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
+  const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
+  const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
+  const [isGrantingRole, setIsGrantingRole] = useState(false);
+  // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
+
+  // CourseRole API로 역할 확인
+  useEffect(() => {
+    const checkCourseRole = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        if (Array.isArray(roles) && roles.length > 0) {
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+
+          if (hasOwner) {
+            setCourseRoleStatus('OWNER');
+          } else if (hasDesigner) {
+            setCourseRoleStatus('DESIGNER');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      }
+    };
+    checkCourseRole();
+  }, []);
+
+  // 사용자가 DESIGNER 이상의 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
+  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || courseRoleStatus !== 'USER';
+
+  // 강의 개설하기 클릭 핸들러
+  const handleCreateCourseClick = () => {
+    setShowCreateCourseDialog(true);
+  };
+
+  const handleCreateCourseConfirm = async () => {
+    // 이미 DESIGNER인 경우 바로 이동
+    if (isDesigner) {
+      setShowCreateCourseDialog(false);
+      onMenuItemClick?.('create-course');
+      return;
+    }
+
+    setIsGrantingRole(true);
+    try {
+      // DESIGNER 역할 부여 API 호출
+      await userService.applyDesignerRole();
+
+      // 토큰 갱신 (CourseRole이 반영된 새 토큰 발급)
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (refreshToken) {
+        const tokenResponse = await authService.refresh(refreshToken);
+        useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+      }
+
+      // 사용자 정보 다시 조회하여 역할 업데이트
+      const updatedUser = await userService.getMe();
+      updateUser({ role: updatedUser.role });
+
+      toast.success(language === 'ko' ? '강의 디자인 권한이 부여되었습니다.' : 'Designer permission granted.');
+      setShowCreateCourseDialog(false);
+      onMenuItemClick?.('create-course');
+    } catch (error) {
+      // 409 Conflict = 이미 DESIGNER 역할을 가지고 있음
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
+        // 토큰 갱신 (이미 권한이 있어도 토큰에 반영 필요)
+        const refreshToken = useAuthStore.getState().refreshToken;
+        if (refreshToken) {
+          const tokenResponse = await authService.refresh(refreshToken);
+          useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+        }
+
+        const updatedUser = await userService.getMe();
+        updateUser({ role: updatedUser.role });
+
+        toast.success(language === 'ko' ? '이미 강의 디자인 권한이 있습니다.' : 'You already have designer permission.');
+        setShowCreateCourseDialog(false);
+        onMenuItemClick?.('create-course');
+      } else {
+        toast.error(language === 'ko' ? '권한 부여에 실패했습니다.' : 'Failed to grant permission.');
+      }
+    } finally {
+      setIsGrantingRole(false);
+    }
+  };
+
+  // 강의 디자인 다이얼로그 설명 텍스트
+  const getCreateCourseDialogDescription = () => {
+    if (courseRoleStatus === 'OWNER') {
+      return language === 'ko'
+        ? '이미 강의 소유자입니다. 새 강의를 디자인하시겠습니까?'
+        : 'You are already a course owner. Would you like to design a new course?';
+    }
+    if (courseRoleStatus === 'DESIGNER') {
+      return language === 'ko'
+        ? '이미 강의 디자인 권한이 있습니다. 강의 디자인 페이지로 이동하시겠습니까?'
+        : 'You already have course design permission. Would you like to go to the course design page?';
+    }
+    return language === 'ko'
+      ? '강의 디자인을 위해 디자이너 권한이 부여됩니다. 강의 디자인 페이지로 이동하시겠습니까?'
+      : 'Designer permission will be granted for course design. Would you like to proceed to the course design page?';
+  };
 
   // 현재 유저 롤로 subItem 필터링
   const filterSubItemsByRole = (subItems?: MenuItem['subItems']) => {
@@ -93,9 +214,10 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                 <button
                   key={subItem.id}
                   onClick={() => {
-                    // 강의 개설하기 클릭 시 DESIGNER role 부여
+                    // 강의 개설하기 클릭 시 확인 다이얼로그 표시
                     if (subItem.id === 'create-course') {
-                      updateUser({ role: 'DESIGNER' });
+                      handleCreateCourseClick();
+                      return;
                     }
                     subItem.path && onMenuItemClick?.(subItem.id);
                   }}
@@ -123,7 +245,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   return (
     <aside
       className={`w-72 flex-shrink-0 p-4 ${
-        isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'
+        isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'
       }`}
     >
       {/* 카드형 사이드바 */}
@@ -134,6 +256,67 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
+        {/* 모드 스위처 (디자이너 권한이 있는 경우에만 표시) */}
+        {isDesigner && (
+          <>
+            <div
+              className="relative rounded-lg p-1 mb-3"
+              style={{
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              }}
+            >
+              <div className="flex gap-1">
+                <button
+                  onClick={() => {
+                    setCurrentMode('instructor');
+                    navigate('/tu/dashboard');
+                  }}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
+                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
+                  )}
+                  style={{
+                    backgroundColor: currentMode === 'instructor'
+                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
+                      : 'transparent',
+                    color: currentMode === 'instructor'
+                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
+                      : (isDark ? '#9E9E9E' : '#666666'),
+                  }}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
+                </button>
+                <button
+                  onClick={() => setCurrentMode('learner')}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
+                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
+                  )}
+                  style={{
+                    backgroundColor: currentMode === 'learner'
+                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
+                      : 'transparent',
+                    color: currentMode === 'learner'
+                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
+                      : (isDark ? '#9E9E9E' : '#666666'),
+                  }}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  <span>{language === 'ko' ? '학습자' : 'Learner'}</span>
+                </button>
+              </div>
+            </div>
+            {/* 구분선 */}
+            <div
+              className="mb-3"
+              style={{
+                borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb'}`,
+              }}
+            />
+          </>
+        )}
+
         {/* 메뉴 리스트 */}
         <nav className="space-y-1 flex-1">
           {myPageMenuData.map(renderMenuItem)}
@@ -196,6 +379,38 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
           </button>
         </div>
       </div>
+
+      {/* 강의 디자인 확인 다이얼로그 */}
+      <AlertDialog open={showCreateCourseDialog} onOpenChange={setShowCreateCourseDialog}>
+        <AlertDialogContent className={isDark ? 'bg-[#2a2a2a] border-white/10' : ''}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className={isDark ? 'text-white' : ''}>
+              {language === 'ko' ? '강의 디자인' : 'Course Design'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className={isDark ? 'text-gray-300' : ''}>
+              {getCreateCourseDialogDescription()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isGrantingRole}
+              className={isDark ? 'bg-transparent border-white/20 text-gray-200 hover:bg-white/10 hover:text-white' : ''}
+            >
+              {language === 'ko' ? '취소' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleCreateCourseConfirm} disabled={isGrantingRole}>
+              {isGrantingRole ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {language === 'ko' ? '처리 중...' : 'Processing...'}
+                </>
+              ) : (
+                language === 'ko' ? '이동' : 'Proceed'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

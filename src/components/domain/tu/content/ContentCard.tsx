@@ -83,9 +83,10 @@ export const ContentCard = ({
   const isArchived = content.status === 'ARCHIVED';
 
   // 썸네일 URL 결정: prop > customThumbnailPath > thumbnailPath
+  const staticBaseUrl = import.meta.env.VITE_STATIC_BASE_URL || '';
   const resolvedThumbnailUrl = thumbnailUrl
-    || (content.customThumbnailPath ? `${import.meta.env.VITE_API_BASE_URL || ''}${content.customThumbnailPath}` : null)
-    || (content.thumbnailPath ? `${import.meta.env.VITE_API_BASE_URL || ''}${content.thumbnailPath}` : null);
+    || (content.customThumbnailPath ? `${staticBaseUrl}${content.customThumbnailPath}` : null)
+    || (content.thumbnailPath ? `${staticBaseUrl}${content.thumbnailPath}` : null);
 
   return (
     <div

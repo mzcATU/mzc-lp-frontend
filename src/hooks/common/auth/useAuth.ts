@@ -23,7 +23,11 @@ export const useLogin = () => {
     mutationFn: async (request: LoginRequest) => {
       const tokenResponse = await authService.login(request);
       // 로그인 후 사용자 정보 조회를 위해 임시로 토큰 저장
-      useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
+      useAuthStore.getState().setTokens(
+        tokenResponse.accessToken,
+        tokenResponse.refreshToken,
+        tokenResponse.expiresIn
+      );
       const userDetail = await userService.getMe();
       return { tokenResponse, userDetail };
     },
@@ -34,20 +38,32 @@ export const useLogin = () => {
         name: userDetail.name,
         role: userDetail.role,
         tenantId: userDetail.tenantId,
+        tenantSubdomain: userDetail.tenantSubdomain,
       };
 
-      setAuth(user, tokenResponse.accessToken, tokenResponse.refreshToken);
+      setAuth(user, tokenResponse.accessToken, tokenResponse.refreshToken, tokenResponse.expiresIn);
       toast.success(`${user.name}님, 환영합니다!`);
 
-      // 역할별 리다이렉트
-      const redirectPath: Record<string, string> = {
+      // 역할별 리다이렉트 경로
+      const roleBasePath: Record<string, string> = {
         SYSTEM_ADMIN: '/sa',
         TENANT_ADMIN: '/ta',
         OPERATOR: '/to',
         DESIGNER: '/tu/teaching',
-        USER: '/tu',
+        USER: '/tu/b2c',
       };
-      navigate(redirectPath[user.role] || '/');
+      const basePath = roleBasePath[user.role] || '/tu/b2c';
+
+      // 테넌트 subdomain이 있으면 경로에 포함 (SA 제외, default는 생략)
+      let targetPath = basePath;
+      const subdomain = userDetail.tenantSubdomain;
+      const isDefaultSubdomain = !subdomain || subdomain === 'default' || subdomain === 'www';
+
+      if (!isDefaultSubdomain && user.role !== 'SYSTEM_ADMIN') {
+        targetPath = `/${subdomain}${basePath}`;
+      }
+
+      navigate(targetPath);
     },
     onError: (error: Error) => {
       toast.error('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');

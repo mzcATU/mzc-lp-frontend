@@ -1,242 +1,477 @@
-import { Users, BookOpen, TrendingUp, Clock } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Users, BookOpen, TrendingUp, GraduationCap, AlertCircle, UserPlus, FileText, CheckCircle } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import {
   AdminPageHeader,
   AdminStatsCard,
   AdminStatsGrid,
-  StatusBadge,
-  RoleBadge,
 } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Card';
 import { Progress } from '@/components/common/Progress';
-import type { UserStatus, SystemRole } from '@/components/domain/admin';
+import { Skeleton } from '@/components/common/Skeleton';
+import { NoDataEmpty } from '@/components/common/EmptyState';
+import { useTaKpiDashboard } from '@/hooks/ta';
 
-// Mock 데이터 (추후 API 연동)
-const mockStats = {
-  users: {
-    total: 450,
-    active: 380,
-    inactive: 50,
-    pending: 20,
-  },
-  courses: {
-    total: 32,
-    active: 28,
-    draft: 4,
-  },
-  learning: {
-    completionRate: 72,
-    averageProgress: 65,
-    activeLearnersToday: 124,
-  },
-  activity: {
-    dailyActiveUsers: 156,
-    weeklyActiveUsers: 342,
-    monthlyActiveUsers: 410,
-  },
-};
+type DateRange = '7d' | '30d' | 'all';
 
-const mockRecentUsers: {
-  id: number;
-  name: string;
-  email: string;
-  status: UserStatus;
-  role: SystemRole;
-  joinedAt: string;
-}[] = [
-  { id: 1, name: '김민수', email: 'minsu.kim@company.com', status: 'ACTIVE', role: 'USER', joinedAt: '2025-12-28' },
-  { id: 2, name: '이영희', email: 'younghee.lee@company.com', status: 'ACTIVE', role: 'OPERATOR', joinedAt: '2025-12-27' },
-  { id: 3, name: '박철수', email: 'cheolsu.park@company.com', status: 'PENDING', role: 'USER', joinedAt: '2025-12-26' },
-  { id: 4, name: '정수진', email: 'sujin.jung@company.com', status: 'ACTIVE', role: 'USER', joinedAt: '2025-12-25' },
-  { id: 5, name: '최동현', email: 'donghyun.choi@company.com', status: 'INACTIVE', role: 'USER', joinedAt: '2025-12-24' },
-];
-
-const mockPopularCourses = [
-  { id: 1, title: 'AWS 기초 마스터', enrollments: 156, completionRate: 78 },
-  { id: 2, title: 'React 실전 프로젝트', enrollments: 142, completionRate: 65 },
-  { id: 3, title: 'Python 데이터 분석', enrollments: 128, completionRate: 82 },
-  { id: 4, title: 'Docker & Kubernetes', enrollments: 98, completionRate: 54 },
-  { id: 5, title: 'TypeScript 완벽 가이드', enrollments: 87, completionRate: 71 },
+const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
+  { value: 'all', label: '전체' },
+  { value: '7d', label: '최근 7일' },
+  { value: '30d', label: '이번 달' },
 ];
 
 export function DashboardPage() {
+  const { data, isLoading, error } = useTaKpiDashboard();
+  const [dateRange, setDateRange] = useState<DateRange>('all');
+
+  // 선택된 기간 라벨 가져오기
+  const selectedRangeLabel = DATE_RANGE_OPTIONS.find((opt) => opt.value === dateRange)?.label ?? '';
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <AdminPageHeader
+          title="대시보드"
+          description="테넌트 현황을 한눈에 확인합니다"
+        />
+        <Card className="mt-6">
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center text-center">
+              <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+              <p className="text-lg font-medium text-text-primary">데이터를 불러올 수 없습니다</p>
+              <p className="text-sm text-text-secondary mt-1">잠시 후 다시 시도해주세요</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const userStats = data?.userStats ?? { total: 0, active: 0, inactive: 0, suspended: 0, withdrawn: 0, newThisMonth: 0 };
+  const programStats = data?.programStats ?? { total: 0, draft: 0, pending: 0, approved: 0, rejected: 0, closed: 0 };
+  const enrollmentStats = data?.enrollmentStats ?? { totalEnrollments: 0, byStatus: { enrolled: 0, completed: 0, dropped: 0, failed: 0 }, completionRate: 0 };
+  const monthlyTrend = data?.monthlyTrend ?? [];
+
+  // 1~12월 전체 X축 데이터 생성 (미래 데이터는 null로 처리)
+  const fullYearChartData = useMemo(() => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+
+    // 1~12월 기본 데이터 생성
+    const fullYearData = Array.from({ length: 12 }, (_, i) => {
+      const month = i + 1;
+      const monthKey = `${currentYear}-${String(month).padStart(2, '0')}`;
+
+      // 기존 데이터에서 해당 월 찾기
+      const existingData = monthlyTrend.find((item) => item.month === monthKey);
+
+      // 미래 데이터는 null, 과거/현재는 데이터 또는 0
+      if (month > currentMonth) {
+        return {
+          month: monthKey,
+          enrollments: null,
+          completions: null,
+        };
+      }
+
+      return {
+        month: monthKey,
+        enrollments: existingData?.enrollments ?? 0,
+        completions: existingData?.completions ?? 0,
+      };
+    });
+
+    return fullYearData;
+  }, [monthlyTrend]);
+
+  // 선택한 기간에 따라 월별 트렌드 필터링 + 가짜 시작점 추가
+  const filteredMonthlyTrend = useMemo(() => {
+    let baseData: typeof fullYearChartData;
+
+    if (dateRange === 'all') {
+      baseData = fullYearChartData;
+    } else {
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth(); // 0-11
+
+      if (dateRange === '7d') {
+        // 이번 달만
+        baseData = fullYearChartData.slice(currentMonth, currentMonth + 1);
+      } else {
+        // 30d: 최근 6개월
+        const startMonth = Math.max(0, currentMonth - 5);
+        baseData = fullYearChartData.slice(startMonth, currentMonth + 1);
+      }
+    }
+
+    // 실제 데이터가 있는 포인트 개수 확인 (null이 아닌 데이터)
+    const validDataPoints = baseData.filter(
+      (item) => item.enrollments !== null || item.completions !== null
+    ).length;
+
+    // 데이터 포인트가 1개일 때: 가짜 시작점 추가 (바닥에서 올라가는 삼각형 효과)
+    if (validDataPoints === 1 && baseData.length > 0) {
+      const firstDataIndex = baseData.findIndex(
+        (item) => item.enrollments !== null || item.completions !== null
+      );
+
+      if (firstDataIndex > 0) {
+        // 앞에 데이터가 있으면 이전 월을 0으로 설정
+        const newData = [...baseData];
+        const prevMonth = newData[firstDataIndex - 1];
+        newData[firstDataIndex - 1] = {
+          ...prevMonth,
+          enrollments: 0,
+          completions: 0,
+        };
+        return newData;
+      } else {
+        // 첫 번째 월이 데이터 포인트면 앞에 가짜 시작점 추가
+        const currentYear = new Date().getFullYear();
+        const dummyStart = {
+          month: `${currentYear}-00`, // 가상의 0월 (표시 안 됨)
+          enrollments: 0,
+          completions: 0,
+        };
+        return [dummyStart, ...baseData];
+      }
+    }
+
+    return baseData;
+  }, [fullYearChartData, dateRange]);
+
   return (
     <div className="p-6">
       <AdminPageHeader
         title="대시보드"
-        description="테넌트 현황을 한눈에 확인합니다"
+        description={`테넌트 현황을 한눈에 확인합니다 • ${selectedRangeLabel} 기준`}
+        actions={
+          <div className="flex gap-1">
+            {DATE_RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setDateRange(option.value)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  dateRange === option.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        }
       />
 
       {/* Stats Grid */}
       <AdminStatsGrid columns={4} className="mb-6">
-        <AdminStatsCard
-          title="전체 사용자"
-          value={mockStats.users.total}
-          subtitle={`활성 ${mockStats.users.active}명`}
-          icon={Users}
-          variant="primary"
-          trend={{ value: 15, label: '지난 달 대비' }}
-        />
-        <AdminStatsCard
-          title="전체 강좌"
-          value={mockStats.courses.total}
-          subtitle={`활성 ${mockStats.courses.active}개`}
-          icon={BookOpen}
-          variant="success"
-          trend={{ value: 8, label: '지난 달 대비' }}
-        />
-        <AdminStatsCard
-          title="평균 완료율"
-          value={`${mockStats.learning.completionRate}%`}
-          subtitle="전체 강좌 기준"
-          icon={TrendingUp}
-          variant="warning"
-          trend={{ value: 5, label: '지난 달 대비' }}
-        />
-        <AdminStatsCard
-          title="오늘 활성 학습자"
-          value={mockStats.learning.activeLearnersToday}
-          subtitle="현재 학습 중"
-          icon={Clock}
-          variant="default"
-        />
+        {isLoading ? (
+          <>
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+          </>
+        ) : (
+          <>
+            <AdminStatsCard
+              title="전체 사용자"
+              value={userStats.total.toLocaleString()}
+              subtitle={`활성 ${userStats.active.toLocaleString()}명`}
+              icon={Users}
+              variant="primary"
+            />
+            <AdminStatsCard
+              title="이번 달 신규"
+              value={userStats.newThisMonth.toLocaleString()}
+              subtitle="신규 가입자"
+              icon={UserPlus}
+              variant="success"
+            />
+            <AdminStatsCard
+              title="전체 프로그램"
+              value={programStats.total.toLocaleString()}
+              subtitle={`승인 ${programStats.approved}개`}
+              icon={BookOpen}
+              variant="warning"
+            />
+            <AdminStatsCard
+              title="수강 완료율"
+              value={`${enrollmentStats.completionRate}%`}
+              subtitle={`전체 ${enrollmentStats.totalEnrollments.toLocaleString()}건`}
+              icon={GraduationCap}
+              variant="default"
+            />
+          </>
+        )}
       </AdminStatsGrid>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* 사용자 현황 */}
         <Card>
           <CardHeader>
             <CardTitle>사용자 현황</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">활성</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.users.active / mockStats.users.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.users.active}명</span>
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">활성</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.active / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.active.toLocaleString()}명</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">비활성</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.inactive / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.inactive.toLocaleString()}명</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">정지</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.suspended / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.suspended.toLocaleString()}명</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">탈퇴</span>
+                  <div className="flex items-center gap-2">
+                    <Progress value={userStats.total > 0 ? (userStats.withdrawn / userStats.total) * 100 : 0} className="w-32" />
+                    <span className="text-sm font-medium w-16">{userStats.withdrawn.toLocaleString()}명</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">비활성</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.users.inactive / mockStats.users.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.users.inactive}명</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">대기</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.users.pending / mockStats.users.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.users.pending}명</span>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* 학습 활동 */}
+        {/* 프로그램 현황 */}
         <Card>
           <CardHeader>
-            <CardTitle>학습 활동</CardTitle>
+            <CardTitle>프로그램 현황</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">일간 활성 사용자</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.activity.dailyActiveUsers / mockStats.users.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.activity.dailyActiveUsers}명</span>
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-text-secondary" />
+                    <span className="text-sm">작성중</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.draft}개</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-warning" />
+                    <span className="text-sm">검토 대기</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.pending}개</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-sm">승인됨</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.approved}개</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <span className="text-sm">반려됨</span>
+                  </div>
+                  <span className="text-sm font-medium">{programStats.rejected}개</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">주간 활성 사용자</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.activity.weeklyActiveUsers / mockStats.users.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.activity.weeklyActiveUsers}명</span>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 수강 현황 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>수강 현황</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+                <Skeleton className="h-6" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">수강 중</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.enrolled / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.enrolled.toLocaleString()}건</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">수료</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.completed / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.completed.toLocaleString()}건</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">중도 포기</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.dropped / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.dropped.toLocaleString()}건</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">미수료</span>
+                  <div className="flex items-center gap-2">
+                    <Progress
+                      value={enrollmentStats.totalEnrollments > 0 ? (enrollmentStats.byStatus.failed / enrollmentStats.totalEnrollments) * 100 : 0}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium w-16">{enrollmentStats.byStatus.failed.toLocaleString()}건</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">월간 활성 사용자</span>
-                <div className="flex items-center gap-2">
-                  <Progress value={(mockStats.activity.monthlyActiveUsers / mockStats.users.total) * 100} className="w-32" />
-                  <span className="text-sm font-medium w-12">{mockStats.activity.monthlyActiveUsers}명</span>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* 인기 강좌 */}
+        {/* 월별 수강 추이 차트 */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>인기 강좌</CardTitle>
-            <a href="/ta/courses" className="text-sm text-brand-primary hover:underline">
-              전체 보기
-            </a>
+          <CardHeader>
+            <CardTitle>월별 수강 추이</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {mockPopularCourses.map((course, index) => (
-                <div key={course.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-medium flex items-center justify-center">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <p className="font-medium text-sm">{course.title}</p>
-                      <p className="text-xs text-text-secondary">수강생 {course.enrollments}명</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{course.completionRate}%</p>
-                    <p className="text-xs text-text-secondary">완료율</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 최근 가입 사용자 */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>최근 가입 사용자</CardTitle>
-            <a href="/ta/users" className="text-sm text-brand-primary hover:underline">
-              전체 보기
-            </a>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-2 text-sm font-medium text-text-secondary">이름</th>
-                    <th className="text-left py-2 px-2 text-sm font-medium text-text-secondary">상태</th>
-                    <th className="text-left py-2 px-2 text-sm font-medium text-text-secondary">역할</th>
-                    <th className="text-left py-2 px-2 text-sm font-medium text-text-secondary">가입일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockRecentUsers.map((user) => (
-                    <tr key={user.id} className="border-b last:border-b-0 hover:bg-bg-secondary">
-                      <td className="py-2 px-2">
-                        <div>
-                          <p className="font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-text-secondary">{user.email}</p>
-                        </div>
-                      </td>
-                      <td className="py-2 px-2">
-                        <StatusBadge status={user.status} />
-                      </td>
-                      <td className="py-2 px-2">
-                        <RoleBadge role={user.role} />
-                      </td>
-                      <td className="py-2 px-2 text-sm text-text-secondary">{user.joinedAt}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-64" />
+            ) : filteredMonthlyTrend.length === 0 ? (
+              <NoDataEmpty
+                title="데이터가 없습니다"
+                description="선택한 기간에 수강 데이터가 없습니다."
+                className="h-64"
+              />
+            ) : (
+              <div className="w-full" style={{ minHeight: 256 }}>
+                <ResponsiveContainer width="100%" height={256}>
+                  <AreaChart
+                    data={filteredMonthlyTrend}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <defs>
+                      {/* 수강 신청: indigo (브랜드 컬러) - 낮은 투명도 */}
+                      <linearGradient id="enrollmentGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#4C2D9A" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="#4C2D9A" stopOpacity={0.02} />
+                      </linearGradient>
+                      {/* 수료: green (성공 컬러) - 낮은 투명도 */}
+                      <linearGradient id="completionGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3D7A4A" stopOpacity={0.15} />
+                        <stop offset="100%" stopColor="#3D7A4A" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                      tickFormatter={(value) => {
+                        const [, month] = value.split('-');
+                        const monthNum = parseInt(month);
+                        // 가짜 0월은 표시하지 않음
+                        if (monthNum === 0) return '';
+                        return `${monthNum}월`;
+                      }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                      }}
+                      labelFormatter={(value) => {
+                        const [year, month] = value.split('-');
+                        const monthNum = parseInt(month);
+                        // 가짜 0월은 "시작점"으로 표시
+                        if (monthNum === 0) return '시작점';
+                        return `${year}년 ${monthNum}월`;
+                      }}
+                      formatter={(value, name) => {
+                        if (value === null) return ['데이터 없음', name];
+                        return [value, name];
+                      }}
+                    />
+                    <Legend />
+                    {/* 수강 신청을 먼저 그려서 뒤에 배치 (값이 보통 더 큼) */}
+                    <Area
+                      type="monotone"
+                      dataKey="enrollments"
+                      name="수강 신청"
+                      stroke="#4C2D9A"
+                      strokeWidth={3}
+                      fill="url(#enrollmentGradient)"
+                      connectNulls={false}
+                      dot={{ fill: '#4C2D9A', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 2 }}
+                    />
+                    {/* 수료를 나중에 그려서 앞에 배치 */}
+                    <Area
+                      type="monotone"
+                      dataKey="completions"
+                      name="수료"
+                      stroke="#3D7A4A"
+                      strokeWidth={3}
+                      fill="url(#completionGradient)"
+                      connectNulls={false}
+                      dot={{ fill: '#3D7A4A', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SuperAdminSidebar } from './SuperAdminSidebar';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { superAdminMenuData } from '@/config/sidebar-menus';
-import { useUIStore } from '@/store/common/uiStore';
+import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
 
 interface SuperAdminLayoutProps {
   children: ReactNode;
@@ -11,7 +11,8 @@ interface SuperAdminLayoutProps {
 
 export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const navigate = useNavigate();
-  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
+  const { isSidebarExpanded, language, toggleSidebar } = useUIStore();
+  const isDarkMode = useIsDarkMode();
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items

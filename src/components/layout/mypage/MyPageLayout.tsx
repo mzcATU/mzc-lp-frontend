@@ -1,10 +1,9 @@
 import { type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MyPageSidebar } from './MyPageSidebar';
 import { LandingHeader, LandingFooter } from '@/components/landing';
 import { myPageMenuData } from '@/config/sidebar-menus';
-import { useUIStore } from '@/store/common/uiStore';
-import { useThemeStore } from '@/store/common/themeStore';
+import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
 
 interface MyPageLayoutProps {
   children: ReactNode;
@@ -12,15 +11,23 @@ interface MyPageLayoutProps {
 
 export function MyPageLayout({ children }: MyPageLayoutProps) {
   const navigate = useNavigate();
-  const { isSidebarExpanded, isDarkMode, language, toggleSidebar } = useUIStore();
-  const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  const { subdomain } = useParams<{ subdomain: string }>();
+  const { isSidebarExpanded, language, toggleSidebar } = useUIStore();
+  const isDarkMode = useIsDarkMode();
+
+  // 서브도메인이 있으면 경로에 프리픽스 추가
+  const prefixPath = (path: string) => {
+    if (subdomain) {
+      return `/${subdomain}${path}`;
+    }
+    return path;
+  };
 
   const handleMenuItemClick = (itemId: string) => {
     // Check top-level menu items
     const menuItem = myPageMenuData.find((item) => item.id === itemId);
     if (menuItem?.path) {
-      navigate(menuItem.path);
+      navigate(prefixPath(menuItem.path));
       return;
     }
 
@@ -28,14 +35,14 @@ export function MyPageLayout({ children }: MyPageLayoutProps) {
     for (const item of myPageMenuData) {
       const subItem = item.subItems?.find((sub) => sub.id === itemId);
       if (subItem?.path) {
-        navigate(subItem.path);
+        navigate(prefixPath(subItem.path));
         return;
       }
     }
   };
 
   return (
-    <div className={`flex flex-col min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`flex flex-col min-h-screen ${isDarkMode ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
       {/* 상단 헤더 */}
       <LandingHeader />
 

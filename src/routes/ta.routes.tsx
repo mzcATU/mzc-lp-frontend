@@ -7,8 +7,31 @@ import {
   SettingsNotificationsPage,
   SettingsAppearancePage,
 } from '@/pages/common';
-import { DashboardPage, UsersPage } from '@/pages/ta';
-import { PlaceholderPage } from './pages';
+import {
+  DashboardPage,
+  UsersPage,
+  UserDetailPage,
+  GroupsPage,
+  PermissionsPage,
+  DomainSettingsPage,
+  BillingPage,
+  LayoutSettingsPage,
+  DesignSettingsPage,
+  NavigationSettingsPage,
+  RealtimePage,
+  ExportPage,
+  LogsPage,
+  TenantSettingsPage,
+  UserManagementSettingsPage,
+  FeatureSettingsPage,
+  TenantCategoryPage,
+  TenantNoticesPage,
+} from '@/pages/ta';
+import { BannerManagementPage } from '@/pages/ta/branding/BannerManagementPage';
+import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
+import { AutoEnrollmentRulesPage } from '@/pages/ta/automation/AutoEnrollmentRulesPage';
+import { MemberPoolPage } from '@/pages/ta/automation/MemberPoolPage';
+import { DepartmentManagementPage } from '@/pages/ta/users/DepartmentManagementPage';
 
 function TenantAdminWrapper() {
   return (
@@ -20,32 +43,57 @@ function TenantAdminWrapper() {
   );
 }
 
-export const taRoutes = (
-  <Route path="/ta" element={<TenantAdminWrapper />}>
+// TA 하위 라우트
+const taChildRoutes = (
+  <>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
-    <Route path="system/domain" element={<PlaceholderPage title="도메인 및 SSL 설정" />} />
-    <Route path="system/billing" element={<PlaceholderPage title="요금제 및 라이선스 관리" />} />
+    <Route path="system/domain" element={<DomainSettingsPage />} />
+    <Route path="system/billing" element={<BillingPage />} />
     {/* 디자인 및 정책 */}
-    <Route path="branding/layout" element={<PlaceholderPage title="레이아웃/UI 설정" />} />
-    <Route path="branding/design" element={<PlaceholderPage title="브랜딩 관리" />} />
-    <Route path="branding/navigation" element={<PlaceholderPage title="네비게이션 구성 관리" />} />
+    <Route path="branding/layout" element={<LayoutSettingsPage />} />
+    <Route path="branding/design" element={<DesignSettingsPage />} />
+    <Route path="branding/navigation" element={<NavigationSettingsPage />} />
+    <Route path="branding/banners" element={<BannerManagementPage />} />
     {/* 사용자 및 권한 */}
     <Route path="users" element={<UsersPage />} />
-    <Route path="users/operators" element={<PlaceholderPage title="운영자 관리" />} />
-    <Route path="users/groups" element={<PlaceholderPage title="사용자 그룹 및 역할 관리" />} />
-    <Route path="users/permissions" element={<PlaceholderPage title="접근 권한 설정" />} />
+    <Route path="users/:id" element={<UserDetailPage />} />
+    <Route path="users/groups" element={<GroupsPage />} />
+    <Route path="users/permissions" element={<PermissionsPage />} />
+    <Route path="users/employees" element={<EmployeeListPage />} />
+    <Route path="users/departments" element={<DepartmentManagementPage />} />
+    {/* 자동화 */}
+    <Route path="automation/rules" element={<AutoEnrollmentRulesPage />} />
+    <Route path="automation/pools" element={<MemberPoolPage />} />
     {/* 데이터 및 통계 */}
-    <Route path="analytics/realtime" element={<PlaceholderPage title="실시간 데이터 현황" />} />
-    <Route path="analytics/export" element={<PlaceholderPage title="통계 조회 및 내보내기" />} />
-    <Route path="analytics/logs" element={<PlaceholderPage title="이력 분석 및 로그 관리" />} />
+    <Route path="analytics/realtime" element={<RealtimePage />} />
+    <Route path="analytics/export" element={<ExportPage />} />
+    <Route path="analytics/logs" element={<LogsPage />} />
+    {/* 기능 설정 */}
+    <Route path="features" element={<FeatureSettingsPage />} />
+    <Route path="features/categories" element={<TenantCategoryPage />} />
+    {/* 공지사항 관리 */}
+    <Route path="notices" element={<TenantNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />
     <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
     <Route path="settings/appearance" element={<SettingsAppearancePage />} />
-    <Route path="settings/tenant-settings" element={<PlaceholderPage title="테넌트 설정" />} />
-    <Route path="settings/user-management" element={<PlaceholderPage title="사용자 관리 설정" />} />
-  </Route>
+    <Route path="settings/tenant-settings" element={<TenantSettingsPage />} />
+    <Route path="settings/user-management" element={<UserManagementSettingsPage />} />
+  </>
+);
+
+export const taRoutes = (
+  <>
+    {/* 기본 테넌트용 (subdomain 없음) */}
+    <Route path="/ta" element={<TenantAdminWrapper />}>
+      {taChildRoutes}
+    </Route>
+    {/* 특정 테넌트용 (subdomain 있음) */}
+    <Route path="/:subdomain/ta" element={<TenantAdminWrapper />}>
+      {taChildRoutes}
+    </Route>
+  </>
 );

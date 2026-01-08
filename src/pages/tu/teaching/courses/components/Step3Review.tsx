@@ -3,7 +3,6 @@
  * 담당: 최종 검토 화면
  */
 import {
-  Upload,
   Plus,
   Pencil,
   CheckCircle2,
@@ -13,11 +12,105 @@ import {
   Tag,
   Globe,
   FileText,
+  Folder,
+  File,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Button, Label, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse } from '@/types/common';
+import type { CurriculumItem } from '@/types/tu';
+import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
 import { translations, levelOptions, type TranslationKey } from './courseCreate.constants';
+
+/** 커리큘럼 아이템 수 계산 (폴더/콘텐츠 분리) */
+function countCurriculumItems(items: CurriculumItem[]): { folders: number; contents: number } {
+  let folders = 0;
+  let contents = 0;
+  for (const item of items) {
+    if (isCurriculumFolder(item)) {
+      folders++;
+      const childCounts = countCurriculumItems(item.children);
+      folders += childCounts.folders;
+      contents += childCounts.contents;
+    } else {
+      contents++;
+    }
+  }
+  return { folders, contents };
+}
+
+/** 트리 아이템 렌더링 컴포넌트 */
+function CurriculumTreeItem({
+  item,
+  depth = 0,
+  expandedIds,
+  onToggle,
+}: {
+  item: CurriculumItem;
+  depth?: number;
+  expandedIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const isFolder = isCurriculumFolder(item);
+  const isContent = isCurriculumContent(item);
+  const isExpanded = expandedIds.has(item.id);
+
+  return (
+    <div>
+      <div
+        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-bg-secondary"
+        style={{ paddingLeft: `${depth * 16 + 8}px` }}
+      >
+        {isFolder ? (
+          <button
+            type="button"
+            onClick={() => onToggle(item.id)}
+            className="p-0.5 hover:bg-bg-secondary rounded"
+          >
+            {isExpanded ? (
+              <ChevronDown size={14} className="text-text-secondary" />
+            ) : (
+              <ChevronRight size={14} className="text-text-secondary" />
+            )}
+          </button>
+        ) : (
+          <span className="w-5" />
+        )}
+        {isFolder ? (
+          <Folder size={16} className="text-yellow-500 shrink-0" />
+        ) : (
+          <File size={16} className="text-blue-500 shrink-0" />
+        )}
+        <span className="text-text-primary text-sm truncate">
+          {isContent && item.displayName ? (
+            <>
+              {item.displayName}
+              <span className="text-text-placeholder ml-1 text-xs">({item.originalFileName})</span>
+            </>
+          ) : (
+            item.name
+          )}
+        </span>
+      </div>
+      {isFolder && isExpanded && item.children.length > 0 && (
+        <div>
+          {item.children.map((child) => (
+            <CurriculumTreeItem
+              key={child.id}
+              item={child}
+              depth={depth + 1}
+              expandedIds={expandedIds}
+              onToggle={onToggle}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Step3ReviewProps {
   language: 'ko' | 'en';
@@ -35,11 +128,41 @@ export function Step3Review({
   const getText = (key: TranslationKey) =>
     language === 'ko' ? translations[key].ko : translations[key].en;
 
+  // 폴더 확장 상태 관리 (기본: 모두 확장)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
+    const ids = new Set<string>();
+    const collectFolderIds = (items: CurriculumItem[]) => {
+      for (const item of items) {
+        if (isCurriculumFolder(item)) {
+          ids.add(item.id);
+          collectFolderIds(item.children);
+        }
+      }
+    };
+    collectFolderIds(formData.curriculumItems);
+    return ids;
+  });
+
+  const handleToggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // 커리큘럼 아이템 수
+  const itemCounts = countCurriculumItems(formData.curriculumItems);
+
   // 경고 메시지 계산
   const warnings: string[] = [];
   if (!formData.title) warnings.push(getText('warningCourse'));
   if (!formData.categoryId) warnings.push(getText('warningCategory'));
-  if (formData.lessons.length === 0) warnings.push(getText('warningLesson'));
+  if (formData.curriculumItems.length === 0) warnings.push(getText('warningLesson'));
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,7 +174,7 @@ export function Step3Review({
 
       {/* 경고 메시지 또는 완료 메시지 */}
       {warnings.length > 0 ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" style={{ backgroundColor: '#fd9a9a' }}>
           <AlertTriangle size={16} />
           <AlertDescription>
             <strong>{getText('warningTitle')}</strong>
@@ -66,8 +189,8 @@ export function Step3Review({
         <Alert variant="info">
           <CheckCircle2 size={16} />
           <AlertDescription>
-            <strong>{getText('readyToSubmit')}</strong>
-            <p className="mt-1 mb-0">{getText('readyToSubmitDesc')}</p>
+            <strong>{getText('readyToPublish')}</strong>
+            <p className="mt-1 mb-0">{getText('readyToPublishDesc')}</p>
           </AlertDescription>
         </Alert>
       )}
@@ -206,10 +329,9 @@ export function Step3Review({
             <div className="flex items-center gap-3">
               <FileText size={20} className="text-action-primary" />
               <h3 className="text-text-primary m-0 text-base font-medium">{getText('curriculum')}</h3>
-              {formData.lessons.length > 0 && (
+              {formData.curriculumItems.length > 0 && (
                 <span className="text-text-secondary text-sm">
-                  ({getText('totalLessons')}: {formData.lessons.length}, {getText('totalContents')}:{' '}
-                  {formData.lessons.reduce((acc, lesson) => acc + lesson.contents.length, 0)})
+                  ({language === 'ko' ? '폴더' : 'Folders'}: {itemCounts.folders}, {getText('totalContents')}: {itemCounts.contents})
                 </span>
               )}
             </div>
@@ -220,33 +342,15 @@ export function Step3Review({
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          {formData.lessons.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {formData.lessons.map((lesson) => (
-                <div key={lesson.id} className="p-4 bg-bg-secondary rounded-lg flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-md bg-btn-neutral text-white flex items-center justify-center font-medium text-sm shrink-0">
-                    {lesson.order}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-primary font-medium m-0">
-                      {lesson.title || `${getText('lessonNumber')} ${lesson.order}`}
-                    </p>
-                    {lesson.description && (
-                      <p className="text-text-secondary text-sm mt-1 mb-0 line-clamp-2">
-                        {lesson.description}
-                      </p>
-                    )}
-                    {lesson.contents.length > 0 && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <Upload size={14} className="text-text-tertiary" />
-                        <span className="text-text-secondary text-sm">
-                          {lesson.contents.length}
-                          {getText('contentsCount')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          {formData.curriculumItems.length > 0 ? (
+            <div className="border border-border rounded-lg p-2 max-h-80 overflow-auto">
+              {formData.curriculumItems.map((item) => (
+                <CurriculumTreeItem
+                  key={item.id}
+                  item={item}
+                  expandedIds={expandedIds}
+                  onToggle={handleToggleExpand}
+                />
               ))}
             </div>
           ) : (

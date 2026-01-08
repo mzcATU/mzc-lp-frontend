@@ -24,7 +24,7 @@ export function SettingsLanguagePage() {
     : 'bg-white border-gray-200 shadow-sm';
 
   return (
-    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">

@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  ArrowLeft,
   User,
   Mail,
   Calendar,
@@ -11,8 +10,11 @@ import {
   CheckCircle,
   Camera,
   Loader2,
+  Building2,
+  Briefcase,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
@@ -24,9 +26,6 @@ import {
   Badge,
   Alert,
   AlertDescription,
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
   Label,
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +49,8 @@ export function SettingsSecurityPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
+  const { language } = useLanguageStore();
 
   // API Hooks
   const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
@@ -61,6 +62,8 @@ export function SettingsSecurityPage() {
   // Local State
   const [profileData, setProfileData] = useState({
     name: '',
+    department: '',
+    position: '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -80,7 +83,11 @@ export function SettingsSecurityPage() {
   // Sync profile data from API
   useEffect(() => {
     if (profile) {
-      setProfileData({ name: profile.name });
+      setProfileData({
+        name: profile.name,
+        department: profile.department || '',
+        position: profile.position || '',
+      });
       if (profile.profileImageUrl) {
         // 상대 경로면 백엔드 URL 붙이기
         const imageUrl = profile.profileImageUrl.startsWith('http')
@@ -94,10 +101,8 @@ export function SettingsSecurityPage() {
   // Get base path from current location
   const basePath = location.pathname.split('/settings')[0];
   const isUserRole = basePath === '/tu';
-
-  const handleBack = () => {
-    navigate(`${basePath}/settings`);
-  };
+  // 어드민 역할 여부 (SA, TA, TO) - 부서/직급 입력 필드 표시용
+  const isAdminRole = basePath.endsWith('/sa') || basePath.endsWith('/ta') || basePath.endsWith('/to');
 
   const handleProfileSave = async () => {
     if (!profileData.name.trim()) {
@@ -106,10 +111,16 @@ export function SettingsSecurityPage() {
     }
 
     try {
-      await updateProfileMutation.mutateAsync({ name: profileData.name });
-      toast.success('프로필 정보가 저장되었습니다.');
+      // 현재 프로필 이미지 URL도 함께 전송하여 이미지가 사라지지 않도록 함
+      await updateProfileMutation.mutateAsync({
+        name: profileData.name,
+        profileImageUrl: profile?.profileImageUrl,
+        department: profileData.department || undefined,
+        position: profileData.position || undefined,
+      });
+      toast.success(language === 'ko' ? '프로필 정보가 저장되었습니다.' : 'Profile saved successfully.');
     } catch {
-      toast.error('프로필 저장에 실패했습니다.');
+      toast.error(language === 'ko' ? '프로필 저장에 실패했습니다.' : 'Failed to save profile.');
     }
   };
 
@@ -218,7 +229,7 @@ export function SettingsSecurityPage() {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+    return new Date(dateString).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -242,19 +253,10 @@ export function SettingsSecurityPage() {
         padding: '40px',
         backgroundColor: designTokens.bg.app_default,
         minHeight: '100%',
+        overflowY: 'auto',
       }}
     >
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Header with Back Button */}
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>설정으로 돌아가기</span>
-        </Button>
-
         <h1
           style={{
             color: designTokens.text.primary,
@@ -263,10 +265,10 @@ export function SettingsSecurityPage() {
             marginBottom: '8px',
           }}
         >
-          계정 및 보안
+          {t.profileSecurity.title}
         </h1>
         <p style={{ color: designTokens.text.secondary, marginBottom: '32px' }}>
-          계정 정보 및 보안 설정을 관리하세요
+          {t.profileSecurity.description}
         </p>
 
         {/* Profile Information Section */}
@@ -274,47 +276,54 @@ export function SettingsSecurityPage() {
           <CardHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-3">
               <Shield className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
-              <CardTitle className="text-lg font-medium">프로필 정보</CardTitle>
+              <CardTitle className="text-lg font-medium">
+                {t.profileSecurity.profileInfo}
+              </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
+          <CardContent className="px-6 py-6">
             {/* Profile Image */}
-            <div className="mb-5">
-              <Label className="mb-3 text-muted-foreground text-sm">프로필 이미지</Label>
+            <div className="mb-6">
+              <Label className="mb-3 text-sm" style={{ color: designTokens.text.secondary }}>
+                {t.profileSecurity.profileImage}
+              </Label>
               <div className="flex items-center gap-4 mt-3">
-                <Avatar className="w-20 h-20">
-                  {profileImagePreview ? (
-                    <AvatarImage src={profileImagePreview} alt="Profile" />
-                  ) : (
-                    <AvatarFallback>
-                      <User className="w-8 h-8" style={{ color: designTokens.text.placeholder }} />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                <div className="relative">
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden"
+                    style={{ backgroundColor: designTokens.badge.blue.bg }}
+                  >
+                    {profileImagePreview ? (
+                      <img src={profileImagePreview} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-10 h-10" style={{ color: designTokens.badge.blue.text }} />
+                    )}
+                  </div>
+                  <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="gap-2"
                     disabled={uploadImageMutation.isPending}
+                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform"
                   >
                     {uploadImageMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
                     ) : (
-                      <Camera className="w-4 h-4" />
+                      <Camera className="w-4 h-4 text-gray-600" />
                     )}
-                    이미지 변경
-                  </Button>
+                  </button>
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
-                    style={{ display: 'none' }}
+                    className="hidden"
                   />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    JPG, PNG (최대 5MB)
+                </div>
+                <div>
+                  <p className="text-sm" style={{ color: designTokens.text.primary }}>
+                    {t.profileSecurity.imageGuide}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: designTokens.text.secondary }}>
+                    {t.profileSecurity.imageClickGuide}
                   </p>
                 </div>
               </div>
@@ -322,8 +331,10 @@ export function SettingsSecurityPage() {
 
             {/* Name */}
             <div className="mb-5">
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
+                {t.profileSecurity.name}
+              </Label>
               <Input
-                label="이름"
                 value={profileData.name}
                 onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
               />
@@ -331,54 +342,82 @@ export function SettingsSecurityPage() {
 
             {/* Email (Read-only) */}
             <div className="mb-5">
-              <Label className="flex items-center gap-2 mb-2 text-muted-foreground text-sm">
+              <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
                 <Mail className="w-4 h-4" />
-                이메일
+                {t.profileSecurity.email}
               </Label>
               <input
                 type="email"
                 value={profile?.email || ''}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed"
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border"
                 style={{
-                  backgroundColor: designTokens.bg.secondary,
+                  backgroundColor: designTokens.bg.app_default,
+                  borderColor: designTokens.bg.border,
                   color: designTokens.text.secondary,
-                  border: `1px solid ${designTokens.bg.border}`,
                 }}
               />
             </div>
 
             {/* Join Date (Read-only) */}
-            <div className="mb-6">
-              <Label className="flex items-center gap-2 mb-2 text-muted-foreground text-sm">
+            <div className="mb-5">
+              <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
                 <Calendar className="w-4 h-4" />
-                가입일
+                {t.profileSecurity.joinDate}
               </Label>
               <input
                 type="text"
                 value={formatDate(profile?.createdAt)}
                 readOnly
-                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed"
+                className="w-full px-3 py-2.5 rounded-md text-sm cursor-not-allowed border"
                 style={{
-                  backgroundColor: designTokens.bg.secondary,
+                  backgroundColor: designTokens.bg.app_default,
+                  borderColor: designTokens.bg.border,
                   color: designTokens.text.secondary,
-                  border: `1px solid ${designTokens.bg.border}`,
                 }}
               />
             </div>
 
+            {/* Department & Position (Admin Only) */}
+            {isAdminRole && (
+              <>
+                {/* Department */}
+                <div className="mb-5">
+                  <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
+                    <Building2 className="w-4 h-4" />
+                    {language === 'ko' ? '부서' : 'Department'}
+                  </Label>
+                  <Input
+                    value={profileData.department}
+                    onChange={(e) => setProfileData((prev) => ({ ...prev, department: e.target.value }))}
+                    placeholder={language === 'ko' ? '예: 개발팀, 기획팀, 인사팀' : 'e.g., Engineering, Planning, HR'}
+                  />
+                </div>
+
+                {/* Position */}
+                <div className="mb-6">
+                  <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
+                    <Briefcase className="w-4 h-4" />
+                    {language === 'ko' ? '직급' : 'Position'}
+                  </Label>
+                  <Input
+                    value={profileData.position}
+                    onChange={(e) => setProfileData((prev) => ({ ...prev, position: e.target.value }))}
+                    placeholder={language === 'ko' ? '예: 사원, 대리, 과장, 팀장' : 'e.g., Staff, Manager, Director'}
+                  />
+                </div>
+              </>
+            )}
+
             {/* Save Button */}
-            <Button
-              onClick={handleProfileSave}
-              disabled={updateProfileMutation.isPending}
-            >
+            <Button onClick={handleProfileSave} disabled={updateProfileMutation.isPending}>
               {updateProfileMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  저장 중...
+                  {t.profileSecurity.processing}
                 </>
               ) : (
-                '저장'
+                t.common.save
               )}
             </Button>
           </CardContent>
@@ -389,13 +428,17 @@ export function SettingsSecurityPage() {
           <CardHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-3">
               <Lock className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
-              <CardTitle className="text-lg font-medium">비밀번호 변경</CardTitle>
+              <CardTitle className="text-lg font-medium">
+                {t.profileSecurity.passwordChange}
+              </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
+          <CardContent className="px-6 py-6">
             <div className="mb-5">
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
+                {t.profileSecurity.currentPassword}
+              </Label>
               <Input
-                label="현재 비밀번호"
                 type="password"
                 value={passwordData.currentPassword}
                 onChange={(e) =>
@@ -405,20 +448,26 @@ export function SettingsSecurityPage() {
             </div>
 
             <div className="mb-5">
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
+                {t.profileSecurity.newPassword}
+              </Label>
               <Input
-                label="새 비밀번호"
                 type="password"
                 value={passwordData.newPassword}
                 onChange={(e) =>
                   setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))
                 }
               />
-              <p className="text-xs text-muted-foreground mt-1.5">최소 8자 이상 입력해주세요</p>
+              <p className="text-xs mt-1.5" style={{ color: designTokens.text.secondary }}>
+                {t.profileSecurity.passwordMinLength}
+              </p>
             </div>
 
             <div className="mb-6">
+              <Label className="mb-2 block text-sm" style={{ color: designTokens.text.secondary }}>
+                {t.profileSecurity.confirmPassword}
+              </Label>
               <Input
-                label="새 비밀번호 확인"
                 type="password"
                 value={passwordData.confirmPassword}
                 onChange={(e) =>
@@ -427,17 +476,14 @@ export function SettingsSecurityPage() {
               />
             </div>
 
-            <Button
-              onClick={handlePasswordChange}
-              disabled={changePasswordMutation.isPending}
-            >
+            <Button onClick={handlePasswordChange} disabled={changePasswordMutation.isPending}>
               {changePasswordMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  변경 중...
+                  {t.profileSecurity.processing}
                 </>
               ) : (
-                '비밀번호 변경'
+                t.profileSecurity.changePassword
               )}
             </Button>
           </CardContent>
@@ -449,12 +495,16 @@ export function SettingsSecurityPage() {
             <CardHeader className="border-b px-6 py-4">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5" style={{ color: designTokens.text.secondary }} />
-                <CardTitle className="text-lg font-medium">강의 개설 권한</CardTitle>
+                <CardTitle className="text-lg font-medium">
+                  {t.profileSecurity.coursePermission}
+                </CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="px-6 pb-6">
+            <CardContent className="px-6 py-6">
               <div className="mb-5">
-                <Label className="mb-3 text-muted-foreground text-sm">현재 권한 상태</Label>
+                <Label className="mb-3 text-sm" style={{ color: designTokens.text.secondary }}>
+                  {t.profileSecurity.currentPermissionStatus}
+                </Label>
                 <div className="mt-3">
                   <Badge variant={getAuthBadgeVariant(designAuthStatus)} className="px-4 py-2 text-sm">
                     {getAuthLabel(designAuthStatus)}
@@ -464,20 +514,17 @@ export function SettingsSecurityPage() {
 
               {designAuthStatus === 'USER' && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                    강의를 개설하고 콘텐츠를 등록하려면 권한을 요청해주세요.
+                  <p className="text-sm mb-4 leading-relaxed" style={{ color: designTokens.text.secondary }}>
+                    {t.profileSecurity.permissionRequestDesc}
                   </p>
-                  <Button
-                    onClick={handleRequestDesignAuth}
-                    disabled={isRequestPending}
-                  >
+                  <Button onClick={handleRequestDesignAuth} disabled={isRequestPending}>
                     {isRequestPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        요청 중...
+                        {language === 'ko' ? '요청 중...' : 'Requesting...'}
                       </>
                     ) : (
-                      '강의 개설 권한 요청'
+                      t.profileSecurity.requestPermission
                     )}
                   </Button>
                 </div>
@@ -487,13 +534,13 @@ export function SettingsSecurityPage() {
                 <Alert
                   className="flex items-center gap-3"
                   style={{
-                    backgroundColor: designTokens.status.success_background,
-                    borderColor: designTokens.status.success_text,
+                    backgroundColor: designTokens.badge.green.bg,
+                    borderColor: designTokens.badge.green.text,
                   }}
                 >
-                  <CheckCircle className="w-5 h-5" style={{ color: designTokens.status.success_text }} />
-                  <AlertDescription style={{ color: designTokens.status.success_text }}>
-                    강의 개설 및 콘텐츠 등록 권한이 활성화되었습니다.
+                  <CheckCircle className="w-5 h-5" style={{ color: designTokens.badge.green.text }} />
+                  <AlertDescription style={{ color: designTokens.badge.green.text }}>
+                    {t.profileSecurity.permissionEnabled}
                   </AlertDescription>
                 </Alert>
               )}
@@ -506,19 +553,21 @@ export function SettingsSecurityPage() {
           <CardHeader className="border-b px-6 py-4">
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5" style={{ color: designTokens.badge.orange.text }} />
-              <CardTitle className="text-lg font-medium">계정 관리</CardTitle>
+              <CardTitle className="text-lg font-medium">
+                {t.profileSecurity.accountManagement}
+              </CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="px-6 pb-6">
+          <CardContent className="px-6 py-6">
             <Alert
               className="mb-4"
               style={{
-                backgroundColor: designTokens.status.warning_background,
-                borderColor: designTokens.status.warning_text,
+                backgroundColor: designTokens.badge.orange.bg,
+                borderColor: designTokens.badge.orange.text,
               }}
             >
-              <AlertDescription style={{ color: designTokens.status.warning_text }}>
-                계정을 삭제하면 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.
+              <AlertDescription style={{ color: designTokens.badge.orange.text }}>
+                {t.profileSecurity.accountDeleteWarning}
               </AlertDescription>
             </Alert>
 
@@ -526,43 +575,35 @@ export function SettingsSecurityPage() {
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  style={{
-                    color: designTokens.status.error_text,
-                    borderColor: designTokens.status.error_text,
-                  }}
-                  className="hover:bg-red-50"
+                  className="text-red-500 border-red-500 hover:bg-red-50"
                 >
-                  회원 탈퇴
+                  {t.profileSecurity.withdraw}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>회원 탈퇴</AlertDialogTitle>
+                  <AlertDialogTitle>{t.profileSecurity.withdraw}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며,
-                    모든 데이터가 영구적으로 삭제됩니다.
+                    {t.profileSecurity.withdrawDesc}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="py-4">
                   <Input
-                    label="비밀번호 확인"
+                    label={t.profileSecurity.currentPassword}
                     type="password"
                     value={withdrawPassword}
                     onChange={(e) => setWithdrawPassword(e.target.value)}
-                    placeholder="현재 비밀번호를 입력하세요"
+                    placeholder={language === 'ko' ? '현재 비밀번호를 입력하세요' : 'Enter current password'}
                   />
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleWithdraw}
-                    style={{
-                      backgroundColor: designTokens.status.error_text,
-                      color: 'white',
-                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white"
                     disabled={withdrawMutation.isPending || !withdrawPassword}
                   >
-                    {withdrawMutation.isPending ? '처리 중...' : '탈퇴하기'}
+                    {withdrawMutation.isPending ? t.profileSecurity.processing : t.profileSecurity.withdraw}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

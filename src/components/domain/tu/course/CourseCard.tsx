@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock } from 'lucide-react';
+import { Clock, Pencil } from 'lucide-react';
 import { Button, CategoryBadge } from '@/components/common';
+import { useSubdomainPath } from '@/hooks/common';
 import type { Course } from '@/types';
 
 export interface CourseCardLabels {
@@ -8,28 +10,42 @@ export interface CourseCardLabels {
   courseCompletion: string;
   lessons: string;
   manageCourse: string;
+  editCourse?: string;
 }
 
 interface CourseCardProps {
   course: Course;
   labels: CourseCardLabels;
   onManage?: () => void;
+  onEdit?: () => void;
+  hideActions?: boolean;
+  /** 커스텀 액션 버튼 영역 (hideActions와 함께 사용) */
+  renderActions?: ReactNode;
 }
 
 /**
  * 강의 카드 컴포넌트
  * - 썸네일, 카테고리 배지, 제목, 수강생 수
  * - 콘텐츠 완성도 진행 바
- * - 마지막 접근 시간, 관리 버튼
+ * - 마지막 접근 시간, 관리/수정 버튼
  */
-export const CourseCard = ({ course, labels, onManage }: Readonly<CourseCardProps>) => {
+export const CourseCard = ({ course, labels, onManage, onEdit, hideActions = false, renderActions }: Readonly<CourseCardProps>) => {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   const handleManage = () => {
     if (onManage) {
       onManage();
     } else {
-      navigate(`/tu/teaching/courses/${course.id}`);
+      navigate(prefixPath(`/tu/teaching/courses/${course.id}`));
+    }
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit();
+    } else {
+      navigate(prefixPath(`/tu/teaching/courses/${course.id}/edit`));
     }
   };
 
@@ -74,10 +90,23 @@ export const CourseCard = ({ course, labels, onManage }: Readonly<CourseCardProp
           </div>
         </div>
 
-        {/* Action Button */}
-        <Button className="w-full mt-4" onClick={handleManage}>
-          {labels.manageCourse}
-        </Button>
+        {/* Action Buttons */}
+        {renderActions ? (
+          <div className="flex gap-2 mt-4">{renderActions}</div>
+        ) : (
+          !hideActions && (
+            <div className="flex gap-2 mt-4">
+              <Button className="flex-1" onClick={handleManage}>
+                {labels.manageCourse}
+              </Button>
+              {labels.editCourse && (
+                <Button variant="ghost" className="border border-border" onClick={handleEdit}>
+                  <Pencil size={16} />
+                </Button>
+              )}
+            </div>
+          )
+        )}
       </div>
     </div>
   );

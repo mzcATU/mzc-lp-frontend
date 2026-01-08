@@ -16,8 +16,12 @@ import {
   Save,
   X,
   UserPlus,
+  FileText,
+  GraduationCap,
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import { Button, Badge, Input, Label, NativeSelect, Card } from '@/components/common';
+import { EnrollmentTab } from '@/pages/to/enrollment';
 import {
   useTime,
   useUpdateTime,
@@ -92,8 +96,25 @@ const t = {
   updateSuccess: { ko: '수정되었습니다.', en: 'Updated successfully.' },
   updateError: { ko: '수정에 실패했습니다.', en: 'Failed to update.' },
   deleteSuccess: { ko: '삭제되었습니다.', en: 'Deleted successfully.' },
+  statusChangeError: { ko: '상태 변경에 실패했습니다.', en: 'Failed to change status.' },
   noDescription: { ko: '설명 없음', en: 'No description' },
   noLocation: { ko: '장소 미지정', en: 'No location' },
+  // Tabs
+  tabBasicInfo: { ko: '기본 정보', en: 'Basic Info' },
+  tabEnrollments: { ko: '수강생', en: 'Enrollments' },
+};
+
+// 백엔드 에러 코드 → 사용자 친화적 메시지 매핑
+const ERROR_MESSAGES: Record<string, { ko: string; en: string }> = {
+  TS001: { ko: '차수를 찾을 수 없습니다.', en: 'Course time not found.' },
+  TS002: { ko: '유효하지 않은 상태 전환입니다.', en: 'Invalid status transition.' },
+  TS003: { ko: '정원이 초과되었습니다.', en: 'Capacity exceeded.' },
+  TS004: { ko: '유효하지 않은 기간입니다.', en: 'Invalid date range.' },
+  TS005: { ko: '오프라인/블렌디드 과정은 장소 정보가 필요합니다.', en: 'Location info required for offline/blended courses.' },
+  TS006: { ko: '현재 상태에서는 차수를 수정할 수 없습니다.', en: 'Course time is not modifiable in current status.' },
+  TS007: { ko: '진행 중인 과정에서는 메인 강사를 삭제할 수 없습니다.', en: 'Cannot delete main instructor while course is ongoing.' },
+  TS008: { ko: '모집을 시작하려면 메인 강사를 먼저 배정해야 합니다.', en: 'Main instructor must be assigned before starting recruitment.' },
+  TS009: { ko: '이 차수에 접근할 권한이 없습니다.', en: 'Not authorized to access this course time.' },
 };
 
 const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -111,6 +132,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UpdateCourseTimeRequest>({});
+  const [activeTab, setActiveTab] = useState<'info' | 'enrollments'>('info');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -133,9 +155,10 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     });
   };
 
-  const formatPrice = (price: number | null) => {
-    if (price === null || price === 0) return getText('free');
-    return language === 'ko' ? `${price.toLocaleString()}원` : `$${price.toLocaleString()}`;
+  const formatPrice = (price: string | null, isFree: boolean) => {
+    if (isFree || price === null || price === '0') return getText('free');
+    const numPrice = parseFloat(price);
+    return language === 'ko' ? `${numPrice.toLocaleString()}원` : `$${numPrice.toLocaleString()}`;
   };
 
   const handleEdit = () => {
@@ -147,7 +170,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         enrollmentMethod: courseTime.enrollmentMethod,
         location: courseTime.location || '',
         capacity: courseTime.capacity,
-        price: courseTime.price,
+        price: courseTime.price ? parseFloat(courseTime.price) : null,
       });
       setIsEditing(true);
     }
@@ -180,6 +203,23 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     }
   };
 
+  const getErrorMessage = (err: unknown): string => {
+    // Axios 에러 응답에서 에러 코드 추출
+    const errorResponse = (err as { response?: { data?: { error?: { code?: string; message?: string } } } })?.response?.data?.error;
+    const errorCode = errorResponse?.code;
+
+    if (errorCode && ERROR_MESSAGES[errorCode]) {
+      return language === 'ko' ? ERROR_MESSAGES[errorCode].ko : ERROR_MESSAGES[errorCode].en;
+    }
+
+    // 백엔드 메시지가 있으면 사용
+    if (errorResponse?.message) {
+      return errorResponse.message;
+    }
+
+    return getText('statusChangeError');
+  };
+
   const handleStatusTransition = async () => {
     if (!courseTime || !confirm(getText('confirmStatusChange'))) return;
 
@@ -200,6 +240,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
       }
     } catch (err) {
       console.error('Status transition failed:', err);
+      alert(getErrorMessage(err));
     }
   };
 
@@ -313,11 +354,54 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-border bg-bg-app sticky top-[89px] z-10">
+        <div className="px-8">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={cn(
+                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
+                activeTab === 'info'
+                  ? 'text-text-primary'
+                  : 'text-text-secondary hover:text-text-primary'
+              )}
+            >
+              <FileText size={16} />
+              {getText('tabBasicInfo')}
+              {activeTab === 'info' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('enrollments')}
+              className={cn(
+                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
+                activeTab === 'enrollments'
+                  ? 'text-text-primary'
+                  : 'text-text-secondary hover:text-text-primary'
+              )}
+            >
+              <GraduationCap size={16} />
+              {getText('tabEnrollments')}
+              <Badge variant="secondary" className="ml-1">
+                {courseTime.currentEnrollment}
+              </Badge>
+              {activeTab === 'enrollments' && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8 max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 기본 정보 */}
+        {/* 기본 정보 탭 */}
+        {activeTab === 'info' && (
+          <div className="p-6 px-8 max-w-6xl">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 기본 정보 */}
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-text-primary mb-4">
                 {getText('basicInfo')}
@@ -356,16 +440,6 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                 {getText('programInfo')}
               </h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-text-secondary">{getText('programId')}</Label>
-                    <p className="text-text-primary">{courseTime.programId}</p>
-                  </div>
-                  <div>
-                    <Label className="text-text-secondary">{getText('programTitle')}</Label>
-                    <p className="text-text-primary">{courseTime.programTitle || '-'}</p>
-                  </div>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-text-secondary">{getText('courseId')}</Label>
@@ -459,8 +533,8 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     {getText('enrollmentPeriod')}
                   </Label>
                   <p className="text-text-primary">
-                    {formatDate(courseTime.enrollmentStartDate)} ~{' '}
-                    {formatDate(courseTime.enrollmentEndDate)}
+                    {formatDate(courseTime.enrollStartDate)} ~{' '}
+                    {formatDate(courseTime.enrollEndDate)}
                   </p>
                 </div>
                 <div>
@@ -469,7 +543,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     {getText('learningPeriod')}
                   </Label>
                   <p className="text-text-primary">
-                    {formatDate(courseTime.startDate)} ~ {formatDate(courseTime.endDate)}
+                    {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate)}
                   </p>
                 </div>
               </div>
@@ -532,7 +606,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     />
                   ) : (
                     <p className="text-text-primary text-xl font-semibold">
-                      {formatPrice(courseTime.price)}
+                      {formatPrice(courseTime.price, courseTime.isFree)}
                     </p>
                   )}
                 </div>
@@ -573,8 +647,20 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                 <p className="text-text-secondary text-center py-4">{getText('noInstructors')}</p>
               )}
             </Card>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* 수강생 탭 */}
+        {activeTab === 'enrollments' && (
+          <div className="p-6 px-8">
+            <EnrollmentTab
+              courseTimeId={timeId}
+              courseTimeTitle={courseTime.title}
+              language={language}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

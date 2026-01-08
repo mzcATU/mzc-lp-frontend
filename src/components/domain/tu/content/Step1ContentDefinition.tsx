@@ -18,6 +18,12 @@ const loTypeCards = [
     description: '동영상 콘텐츠를 업로드합니다',
   },
   {
+    type: 'image' as LOType,
+    icon: ImageIcon,
+    title: '이미지',
+    description: 'JPG, PNG 등 이미지를 업로드합니다',
+  },
+  {
     type: 'document' as LOType,
     icon: FileText,
     title: '문서',

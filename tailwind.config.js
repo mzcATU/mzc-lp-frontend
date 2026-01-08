@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -117,6 +118,13 @@ export default {
           'active-bg': 'var(--sidebar-light-active-bg)',
           'active-text': 'var(--sidebar-light-active-text)',
         },
+
+        // TU Theme Colors
+        'tu-bg-light': 'var(--tu-bg-light)',
+        'tu-bg-dark': 'var(--tu-bg-dark)',
+
+        // Switch/Toggle
+        'switch-background': 'var(--switch-background)',
       },
       borderRadius: {
         sm: 'var(--radius-sm)',

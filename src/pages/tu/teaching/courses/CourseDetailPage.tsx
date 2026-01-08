@@ -6,6 +6,7 @@ import {
   Trash2,
   Loader2,
   AlertCircle,
+  Send,
 } from 'lucide-react';
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
@@ -14,10 +15,10 @@ import {
   useCourseItemsHierarchy,
   useDeleteCourse,
 } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { categoryService } from '@/services/common';
 import { CourseInfoSection } from './components/CourseInfoSection';
 import { CourseCurriculumSection } from './components/CourseCurriculumSection';
-import { CourseEditModal } from './components/CourseEditModal';
 import type { CourseLevel, CourseType } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
 
@@ -51,10 +52,9 @@ const TYPE_LABELS: Record<CourseType, string> = {
 export function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const id = courseId ? parseInt(courseId, 10) : 0;
 
-  // 모달 상태
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
 
   // React Query hooks
@@ -82,7 +82,7 @@ export function CourseDetailPage() {
     try {
       await deleteCourseMutation.mutateAsync(id);
       alert('삭제되었습니다.');
-      navigate('/tu/teaching/courses');
+      navigate(prefixPath('/tu/teaching/courses'));
     } catch (err) {
       console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
@@ -111,7 +111,7 @@ export function CourseDetailPage() {
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/courses')}
+            onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
           >
             <ArrowLeft size={16} />
             목록으로
@@ -122,69 +122,74 @@ export function CourseDetailPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-bg-app">
-      {/* Header */}
-      <div className="border-b border-border bg-bg-default sticky top-0 z-10">
-        <div className="p-6 px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="border border-border"
-                onClick={() => navigate('/tu/teaching/courses')}
-              >
-                <ArrowLeft size={16} />
-                목록으로
-              </Button>
-              <div>
-                <h1 className="text-text-primary text-xl mb-1">{course.title}</h1>
-                <div className="flex items-center gap-2">
-                  {course.level && (
-                    <Badge variant={levelBadgeColor[course.level]}>
-                      {LEVEL_LABELS[course.level]}
-                    </Badge>
-                  )}
-                  {course.type && (
-                    <Badge variant={typeBadgeColor[course.type]}>
-                      {TYPE_LABELS[course.type]}
-                    </Badge>
-                  )}
-                  <span className="text-text-secondary text-sm">
-                    {course.itemCount}차시
-                  </span>
-                </div>
-              </div>
-            </div>
+    <div className="h-full overflow-auto bg-bg-app">
+      <div className="p-8">
+        {/* 뒤로가기 버튼 */}
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="border border-border"
+            onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
+          >
+            <ArrowLeft size={16} />
+            목록으로
+          </Button>
+        </div>
 
-            {/* Action Buttons */}
+        {/* Header Section - 목록 페이지와 동일한 스타일 */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-text-primary mb-2">{course.title}</h1>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="border border-border"
-                onClick={() => setIsEditModalOpen(true)}
-              >
-                <Edit2 size={16} />
-                수정
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteCourseMutation.isPending}
-              >
-                <Trash2 size={16} />
-                삭제
-              </Button>
+              {course.level && (
+                <Badge variant={levelBadgeColor[course.level]}>
+                  {LEVEL_LABELS[course.level]}
+                </Badge>
+              )}
+              {course.type && (
+                <Badge variant={typeBadgeColor[course.type]}>
+                  {TYPE_LABELS[course.type]}
+                </Badge>
+              )}
+              <span className="text-text-secondary text-sm">
+                {course.itemCount}차시
+              </span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8 max-w-5xl space-y-6">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/apply`))}
+            >
+              <Send size={16} />
+              프로그램 신청
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="border border-border"
+              onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/edit`))}
+            >
+              <Edit2 size={16} />
+              수정
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleteCourseMutation.isPending}
+            >
+              <Trash2 size={16} />
+              삭제
+            </Button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-6">
           {/* 기본 정보 섹션 */}
           <CourseInfoSection course={course} categories={categories} />
 
@@ -195,13 +200,6 @@ export function CourseDetailPage() {
           />
         </div>
       </div>
-
-      {/* 수정 모달 */}
-      <CourseEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        course={course}
-      />
     </div>
   );
 }

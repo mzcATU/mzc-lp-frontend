@@ -15,6 +15,7 @@ import type {
   MoveItemRequest,
   UpdateItemNameRequest,
   UpdateLearningObjectRequest,
+  UpdateDisplayInfoRequest,
 } from '@/types/common/course.types';
 
 // Spring Page 응답 타입
@@ -42,11 +43,11 @@ export const courseService = {
 
   /** 강의 생성 */
   async create(request: CreateCourseRequest): Promise<CourseResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseResponse }>(
+    const { data } = await axiosInstance.post<CourseResponse>(
       API_ENDPOINTS.COURSES.BASE,
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 강의 목록 조회 */
@@ -73,10 +74,10 @@ export const courseService = {
 
   /** 강의 상세 조회 */
   async getCourse(id: number): Promise<CourseDetailResponse> {
-    const { data } = await axiosInstance.get<{ data: CourseDetailResponse }>(
+    const { data } = await axiosInstance.get<CourseDetailResponse>(
       API_ENDPOINTS.COURSES.BY_ID(id)
     );
-    return data.data;
+    return data;
   },
 
   /** 강의 수정 */
@@ -84,16 +85,32 @@ export const courseService = {
     id: number,
     request: UpdateCourseRequest
   ): Promise<CourseResponse> {
-    const { data } = await axiosInstance.put<{ data: CourseResponse }>(
+    const { data } = await axiosInstance.put<CourseResponse>(
       API_ENDPOINTS.COURSES.BY_ID(id),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 강의 삭제 */
   async delete(id: number): Promise<void> {
     await axiosInstance.delete(API_ENDPOINTS.COURSES.BY_ID(id));
+  },
+
+  /** 강의 발행 */
+  async publish(id: number): Promise<CourseResponse> {
+    const { data } = await axiosInstance.post<CourseResponse>(
+      `${API_ENDPOINTS.COURSES.BY_ID(id)}/publish`
+    );
+    return data;
+  },
+
+  /** 강의 발행 취소 */
+  async unpublish(id: number): Promise<CourseResponse> {
+    const { data } = await axiosInstance.post<CourseResponse>(
+      `${API_ENDPOINTS.COURSES.BY_ID(id)}/unpublish`
+    );
+    return data;
   },
 
   // ============================================
@@ -117,21 +134,21 @@ export const courseService = {
     courseId: number,
     request: CreateFolderRequest
   ): Promise<CourseItemResponse> {
-    const { data } = await axiosInstance.post<{ data: CourseItemResponse }>(
+    const { data } = await axiosInstance.post<CourseItemResponse>(
       API_ENDPOINTS.COURSES.FOLDERS(courseId),
       request
     );
-    return data.data;
+    return data;
   },
 
   /** 계층 구조 조회 */
   async getItemsHierarchy(
     courseId: number
   ): Promise<CourseItemHierarchyResponse[]> {
-    const { data } = await axiosInstance.get<{ data: CourseItemHierarchyResponse[] }>(
+    const { data } = await axiosInstance.get<CourseItemHierarchyResponse[]>(
       API_ENDPOINTS.COURSES.ITEMS_HIERARCHY(courseId)
     );
-    return data.data;
+    return data;
   },
 
   /** 순서대로 차시 조회 */
@@ -185,5 +202,18 @@ export const courseService = {
     await axiosInstance.delete(
       API_ENDPOINTS.COURSES.ITEM_BY_ID(courseId, itemId)
     );
+  },
+
+  /** 표시 정보 변경 (displayName, description) */
+  async updateItemDisplayInfo(
+    courseId: number,
+    itemId: number,
+    request: UpdateDisplayInfoRequest
+  ): Promise<CourseItemResponse> {
+    const { data } = await axiosInstance.patch<CourseItemResponse>(
+      API_ENDPOINTS.COURSES.ITEM_DISPLAY_INFO(courseId, itemId),
+      request
+    );
+    return data;
   },
 };

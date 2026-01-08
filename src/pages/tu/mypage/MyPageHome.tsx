@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   User,
   BookOpen,
@@ -19,7 +20,8 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useUploadProfileImage } from '@/hooks/common';
-import { useMyEnrollments } from '@/hooks/tu';
+import { useMyEnrollments, useMyLearningStats } from '@/hooks/tu';
+import { userService } from '@/services/common/userService';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
 import { Button, Card, CardContent, Badge } from '@/components/common';
@@ -71,6 +73,7 @@ function QuickMenuItem({ icon, title, description, onClick, isDark }: QuickMenuI
 
 export function MyPageHome() {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { user } = useAuth();
   const { data: profile } = useMyProfile();
   const uploadImageMutation = useUploadProfileImage();
@@ -80,6 +83,8 @@ export function MyPageHome() {
   const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  // USER: 일반 회원, CAN_CREATE: 강의 개설 가능, DESIGNER: 강의 설계자, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'CAN_CREATE' | 'DESIGNER' | 'OWNER'>('USER');
 
   // 프로필 이미지 URL 생성
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -93,6 +98,40 @@ export function MyPageHome() {
       setProfileImagePreview(imageUrl);
     }
   }, [profile, apiBaseUrl]);
+
+  // Fetch course roles on mount
+  useEffect(() => {
+    const fetchCourseRoles = async () => {
+      try {
+        const roles = await userService.getMyCourseRoles();
+        console.log('MyPageHome - CourseRoles API response:', roles);
+
+        if (Array.isArray(roles) && roles.length > 0) {
+          // OWNER가 있으면 → 강의 소유자 (승인된 강의 있음)
+          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
+          // DESIGNER 중 programId가 있는 것 → 강의 설계자 (생성했지만 미승인)
+          const hasDesignerWithProgram = roles.some(
+            (r: { role: string; programId?: number | null }) => r.role === 'DESIGNER' && r.programId != null
+          );
+          // DESIGNER 중 programId가 없는 것 → 강의 개설 가능 (권한만 있음)
+          const hasDesignerOnly = roles.some(
+            (r: { role: string; programId?: number | null }) => r.role === 'DESIGNER' && r.programId == null
+          );
+
+          if (hasOwner) {
+            setCourseRoleStatus('OWNER');
+          } else if (hasDesignerWithProgram) {
+            setCourseRoleStatus('DESIGNER');
+          } else if (hasDesignerOnly) {
+            setCourseRoleStatus('CAN_CREATE');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch course roles:', error);
+      }
+    };
+    fetchCourseRoles();
+  }, []);
 
   // 상태 라벨 (다국어)
   const statusLabels: Record<EnrollmentStatus, string> = {
@@ -136,18 +175,21 @@ export function MyPageHome() {
     fileInputRef.current?.click();
   };
 
-  // 학습 현황 조회
+  // 학습 통계 API 조회
+  const { data: learningStats, isLoading: isLoadingStats } = useMyLearningStats();
+
+  // 최근 학습을 위한 enrollment 목록 조회 (수강 중인 강의만)
   const { data: enrollmentData, isLoading: isLoadingEnrollments } = useMyEnrollments({
     page: 0,
-    size: 100,
+    size: 3,
   });
 
-  // 통계 계산
+  // 통계 (API에서 가져온 데이터 사용, 없으면 기본값)
   const stats = {
-    inProgress: enrollmentData?.content.filter((e) => e.status === 'APPROVED').length ?? 0,
-    completed: enrollmentData?.content.filter((e) => e.status === 'COMPLETED').length ?? 0,
-    pending: enrollmentData?.content.filter((e) => e.status === 'PENDING').length ?? 0,
-    total: enrollmentData?.content.length ?? 0,
+    inProgress: learningStats?.overview.inProgress ?? 0,
+    completed: learningStats?.overview.completed ?? 0,
+    dropped: learningStats?.overview.dropped ?? 0,
+    total: learningStats?.overview.totalCourses ?? 0,
   };
 
   // 최근 학습 (수강 중인 강의 최대 3개)
@@ -156,14 +198,14 @@ export function MyPageHome() {
     .slice(0, 3) ?? [];
 
   return (
-    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-5xl mx-auto">
         {/* 프로필 섹션 */}
         <section className="mb-8">
           <div
             className={`rounded-2xl p-6 sm:p-8 ${
               isDark
-                ? 'bg-gradient-to-r from-[#1a1a2e] to-[#16162a] border border-white/10'
+                ? 'bg-[#1e1e1e] border border-white/10'
                 : 'bg-white shadow-sm border border-gray-200'
             }`}
           >
@@ -206,16 +248,29 @@ export function MyPageHome() {
                 <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   {user?.email}
                 </p>
-                <Badge variant="blue" className="text-xs">
-                  {user?.role === 'USER' ? t.mypage.generalMember : user?.role}
+                <Badge
+                  variant={
+                    courseRoleStatus === 'USER' ? 'gray' :
+                    courseRoleStatus === 'CAN_CREATE' ? 'blue' :
+                    courseRoleStatus === 'DESIGNER' ? 'indigo' : 'orange'
+                  }
+                  className="text-xs"
+                >
+                  {courseRoleStatus === 'USER'
+                    ? t.mypage.generalMember
+                    : courseRoleStatus === 'CAN_CREATE'
+                      ? (language === 'ko' ? '강의 개설 가능' : 'Can Create Course')
+                      : courseRoleStatus === 'DESIGNER'
+                        ? (language === 'ko' ? '강의 설계자' : 'Course Designer')
+                        : (language === 'ko' ? '강의 소유자' : 'Course Owner')}
                 </Badge>
               </div>
 
               {/* 프로필 수정 버튼 */}
               <Button
                 variant="outline"
-                onClick={() => navigate('/mypage/profile')}
-                className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
+                onClick={() => navigate(prefixPath('/tu/b2c/mypage/profile'))}
+                className={isDark ? 'border-white/30 text-white bg-white/10 hover:bg-white/20' : ''}
               >
                 {t.mypage.editProfile}
               </Button>
@@ -232,7 +287,7 @@ export function MyPageHome() {
             {[
               { label: t.mypage.inProgress, value: stats.inProgress, icon: <PlayCircle className="w-5 h-5" />, color: 'blue' },
               { label: t.mypage.completed, value: stats.completed, icon: <CheckCircle className="w-5 h-5" />, color: 'green' },
-              { label: t.mypage.pending, value: stats.pending, icon: <Clock className="w-5 h-5" />, color: 'orange' },
+              { label: t.mypage.dropped, value: stats.dropped, icon: <Clock className="w-5 h-5" />, color: 'orange' },
               { label: t.mypage.total, value: stats.total, icon: <TrendingUp className="w-5 h-5" />, color: 'purple' },
             ].map((stat) => (
               <div
@@ -262,7 +317,7 @@ export function MyPageHome() {
                   </span>
                 </div>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {isLoadingEnrollments ? '-' : stat.value}
+                  {isLoadingStats ? '-' : stat.value}
                 </p>
               </div>
             ))}
@@ -278,7 +333,7 @@ export function MyPageHome() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
               className={isDark ? 'text-gray-400 hover:text-white' : ''}
             >
               {t.mypage.viewAll}
@@ -300,7 +355,7 @@ export function MyPageHome() {
                       ? 'bg-white/5 border-white/10 hover:bg-white/10'
                       : 'bg-white hover:shadow-md'
                   }`}
-                  onClick={() => navigate(`/mypage/learning/${enrollment.id}`)}
+                  onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollment.id}`))}
                 >
                   <CardContent className="p-5">
                     <Badge variant={statusColors[enrollment.status]} className="text-xs mb-3">
@@ -362,7 +417,7 @@ export function MyPageHome() {
               <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {t.mypage.noEnrolledCoursesDesc}
               </p>
-              <Button onClick={() => navigate('/tu/catalog')}>{t.mypage.browseCourses}</Button>
+              <Button onClick={() => navigate(prefixPath('/tu/b2c/courses'))}>{t.mypage.browseCourses}</Button>
             </div>
           )}
         </section>
@@ -377,42 +432,42 @@ export function MyPageHome() {
               icon={<BookOpen className="w-5 h-5" />}
               title={t.mypage.myLearning}
               description={t.mypage.myLearningDesc}
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Award className="w-5 h-5" />}
               title={t.mypage.certificates}
               description={t.mypage.certificatesDesc}
-              onClick={() => navigate('/mypage/certifications')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/certificates'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Shield className="w-5 h-5" />}
               title={t.mypage.profileAndSecurity}
               description={t.mypage.profileSecurityDesc}
-              onClick={() => navigate('/mypage/profile')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/profile'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Bell className="w-5 h-5" />}
               title={t.mypage.notifications}
               description={t.mypage.notificationsDesc}
-              onClick={() => navigate('/mypage/notifications')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/notifications'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Globe className="w-5 h-5" />}
               title={t.mypage.languageRegion}
               description={t.mypage.languageRegionDesc}
-              onClick={() => navigate('/mypage/language')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/language'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<TrendingUp className="w-5 h-5" />}
               title={t.mypage.learningProgress}
               description={t.mypage.learningProgressDesc}
-              onClick={() => navigate('/tu/progress')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
               isDark={isDark}
             />
           </div>

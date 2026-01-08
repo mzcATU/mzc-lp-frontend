@@ -19,6 +19,7 @@ import { LandingHeader, LandingFooter } from '@/components/landing';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyEnrollments } from '@/hooks/tu';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { Button, Card, CardContent, Badge } from '@/components/common';
 import type { EnrollmentStatus } from '@/services/tu/enrollmentService';
 
@@ -78,6 +79,7 @@ export function MyPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { theme } = useThemeStore();
+  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
 
   // 학습 현황 조회
@@ -102,7 +104,7 @@ export function MyPage() {
   // 로그인하지 않은 경우
   if (!isAuthenticated || !user) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+      <div className={`min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <LandingHeader />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
@@ -122,7 +124,7 @@ export function MyPage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#0a0a14]' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <LandingHeader />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -157,7 +159,7 @@ export function MyPage() {
               {/* 설정 버튼 */}
               <Button
                 variant="outline"
-                onClick={() => navigate('/tu/settings')}
+                onClick={() => navigate(prefixPath('/tu/b2c/mypage/settings'))}
                 className={isDark ? 'border-white/20 text-white hover:bg-white/10' : ''}
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -222,7 +224,7 @@ export function MyPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
               className={isDark ? 'text-gray-400 hover:text-white' : ''}
             >
               전체보기
@@ -244,7 +246,7 @@ export function MyPage() {
                       ? 'bg-white/5 border-white/10 hover:bg-white/10'
                       : 'bg-white hover:shadow-md'
                   }`}
-                  onClick={() => navigate(`/mypage/learning/${enrollment.id}`)}
+                  onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollment.id}`))}
                 >
                   <CardContent className="p-5">
                     <Badge variant={statusColors[enrollment.status]} className="text-xs mb-3">
@@ -304,7 +306,7 @@ export function MyPage() {
               <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 새로운 강의를 찾아 학습을 시작해보세요
               </p>
-              <Button onClick={() => navigate('/tu/catalog')}>강의 둘러보기</Button>
+              <Button onClick={() => navigate(prefixPath('/tu/b2c/courses'))}>강의 둘러보기</Button>
             </div>
           )}
         </section>
@@ -319,42 +321,42 @@ export function MyPage() {
               icon={<BookOpen className="w-5 h-5" />}
               title="내 학습"
               description="수강 중인 강의를 확인하세요"
-              onClick={() => navigate('/mypage/learning')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Award className="w-5 h-5" />}
-              title="인증서"
-              description="취득한 인증서를 확인하세요"
-              onClick={() => navigate('/tu/certifications')}
+              title="수료증"
+              description="취득한 수료증을 확인하세요"
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/certificates'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Shield className="w-5 h-5" />}
               title="계정 및 보안"
               description="계정 정보 및 보안 설정"
-              onClick={() => navigate('/tu/settings/security')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/settings/security'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Bell className="w-5 h-5" />}
               title="알림 설정"
               description="알림 설정을 관리하세요"
-              onClick={() => navigate('/tu/settings/notifications')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/settings/notifications'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Globe className="w-5 h-5" />}
               title="언어 및 지역"
               description="언어 및 지역 설정을 변경하세요"
-              onClick={() => navigate('/tu/settings/language')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/settings/language'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<TrendingUp className="w-5 h-5" />}
               title="학습 진도"
               description="전체 학습 진도를 확인하세요"
-              onClick={() => navigate('/tu/progress')}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
               isDark={isDark}
             />
           </div>

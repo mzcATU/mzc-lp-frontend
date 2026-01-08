@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   ArrowLeft,
   BookOpen,
@@ -10,6 +11,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
@@ -133,6 +135,7 @@ function CourseTimeCard({
 export function CatalogDetailPage() {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { t } = useTranslation();
   const id = Number(programId);
 
@@ -147,15 +150,17 @@ export function CatalogDetailPage() {
   const enrollMutation = useEnroll();
 
   const handleBack = () => {
-    navigate('/tu/catalog');
+    navigate(prefixPath('/tu/b2c/courses'));
   };
 
   const handleEnroll = async (courseTimeId: number) => {
     try {
-      await enrollMutation.mutateAsync(courseTimeId);
-      alert(t.catalog.enrollSuccess);
+      const enrollment = await enrollMutation.mutateAsync(courseTimeId);
+      toast.success(t.catalog.enrollSuccess);
+      // 수강 신청 성공 후 학습 페이지로 이동
+      navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollment.id}`));
     } catch {
-      alert(t.catalog.enrollFail);
+      toast.error(t.catalog.enrollFail);
     }
   };
 

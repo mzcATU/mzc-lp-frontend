@@ -6,9 +6,10 @@ import { RadioOptionCard } from '@/components/common';
 interface Step3Props {
   data: LOData;
   onUpdate: (data: Partial<LOData>) => void;
+  isExternalLink?: boolean;
 }
 
-const completionOptions: { value: CompletionCriteria; label: string; description: string }[] = [
+const completionOptions: { value: CompletionCriteria; label: string; description: string; disabled?: boolean; disabledMessage?: string }[] = [
   {
     value: 'button-click',
     label: '완료 버튼 클릭',
@@ -18,20 +19,26 @@ const completionOptions: { value: CompletionCriteria; label: string; description
     value: '90-percent',
     label: '90% 시청 완료',
     description: '콘텐츠의 90% 이상을 시청하면 자동으로 완료 처리됩니다',
+    disabled: true,
+    disabledMessage: '추후 개발 예정',
   },
   {
     value: '100-percent',
     label: '100% 시청 완료',
     description: '콘텐츠를 끝까지 시청해야 완료 처리됩니다',
+    disabled: true,
+    disabledMessage: '추후 개발 예정',
   },
 ];
 
-const accessOptions: { value: AccessControl; icon: typeof Globe; label: string; description: string }[] = [
+const accessOptions: { value: AccessControl; icon: typeof Globe; label: string; description: string; disabled?: boolean; disabledMessage?: string }[] = [
   {
     value: 'public',
     icon: Globe,
     label: '전체 공개',
     description: '모든 테넌트와 사용자가 접근할 수 있습니다',
+    disabled: true,
+    disabledMessage: '추후 개발 예정',
   },
   {
     value: 'private',
@@ -41,7 +48,7 @@ const accessOptions: { value: AccessControl; icon: typeof Globe; label: string; 
   },
 ];
 
-export function Step3Settings({ data, onUpdate }: Readonly<Step3Props>) {
+export function Step3Settings({ data, onUpdate, isExternalLink = false }: Readonly<Step3Props>) {
   return (
     <div className="space-y-8">
       {/* 학습 정책 섹션 */}
@@ -51,54 +58,60 @@ export function Step3Settings({ data, onUpdate }: Readonly<Step3Props>) {
           <h2 className="text-text-primary font-medium text-lg">학습 정책</h2>
         </div>
 
-        {/* 다운로드 허용 */}
-        <div className="mb-6 pb-6 border-b border-border">
+        {/* 다운로드 허용 - 외부 링크일 때는 비활성화 */}
+        <div className={cn('mb-6 pb-6 border-b border-border', isExternalLink && 'opacity-50')}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-text-primary mb-1">다운로드 허용</p>
-              <p className="text-sm text-text-secondary">학습자가 콘텐츠를 다운로드할 수 있도록 허용합니다</p>
+              <p className="text-sm text-text-secondary">
+                {isExternalLink
+                  ? '외부 링크는 다운로드를 지원하지 않습니다'
+                  : '학습자가 콘텐츠를 다운로드할 수 있도록 허용합니다'}
+              </p>
             </div>
             <button
               type="button"
               role="switch"
               aria-checked={data.allowDownload}
-              onClick={() => onUpdate({ allowDownload: !data.allowDownload })}
+              onClick={() => !isExternalLink && onUpdate({ allowDownload: !data.allowDownload })}
+              disabled={isExternalLink}
               className={cn(
                 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                data.allowDownload ? 'bg-btn-neutral' : 'bg-border'
+                data.allowDownload && !isExternalLink ? 'bg-btn-neutral' : 'bg-border',
+                isExternalLink && 'cursor-not-allowed'
               )}
             >
               <span
                 className={cn(
                   'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                  data.allowDownload ? 'translate-x-6' : 'translate-x-1'
+                  data.allowDownload && !isExternalLink ? 'translate-x-6' : 'translate-x-1'
                 )}
               />
             </button>
           </div>
         </div>
 
-        {/* 워터마크 적용 */}
-        <div className="mb-6 pb-6 border-b border-border">
+        {/* 워터마크 적용 - 백엔드 미구현으로 비활성화 */}
+        <div className="mb-6 pb-6 border-b border-border opacity-50">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-text-primary mb-1">워터마크 적용</p>
-              <p className="text-sm text-text-secondary">콘텐츠에 학습자 정보를 워터마크로 표시합니다</p>
+              <p className="text-sm text-text-secondary">현재 지원되지 않는 기능입니다</p>
             </div>
             <button
               type="button"
               role="switch"
-              aria-checked={data.applyWatermark}
-              onClick={() => onUpdate({ applyWatermark: !data.applyWatermark })}
+              aria-checked={false}
+              disabled
               className={cn(
-                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                data.applyWatermark ? 'bg-btn-neutral' : 'bg-border'
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-not-allowed',
+                'bg-border'
               )}
             >
               <span
                 className={cn(
                   'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                  data.applyWatermark ? 'translate-x-6' : 'translate-x-1'
+                  'translate-x-1'
                 )}
               />
             </button>
@@ -121,6 +134,8 @@ export function Step3Settings({ data, onUpdate }: Readonly<Step3Props>) {
                 description={option.description}
                 isSelected={data.completionCriteria === option.value}
                 onChange={(value) => onUpdate({ completionCriteria: value as CompletionCriteria })}
+                disabled={option.disabled}
+                disabledMessage={option.disabledMessage}
               />
             ))}
           </div>
@@ -148,6 +163,8 @@ export function Step3Settings({ data, onUpdate }: Readonly<Step3Props>) {
               icon={option.icon}
               isSelected={data.accessControl === option.value}
               onChange={(value) => onUpdate({ accessControl: value as AccessControl })}
+              disabled={option.disabled}
+              disabledMessage={option.disabledMessage}
             />
           ))}
         </div>
