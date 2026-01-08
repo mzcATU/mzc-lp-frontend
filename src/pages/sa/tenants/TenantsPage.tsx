@@ -243,6 +243,8 @@ export function TenantsPage() {
   };
 
   const onSubmit = async (data: TenantFormData) => {
+    console.log('[TenantsPage] onSubmit called:', data);
+    console.log('[TenantsPage] selectedTenant:', selectedTenant);
     try {
       if (selectedTenant) {
         // 수정
@@ -251,6 +253,7 @@ export function TenantsPage() {
           status: data.status,
           plan: data.plan,
         };
+        console.log('[TenantsPage] updateData:', updateData);
         await updateMutation.mutateAsync({ id: selectedTenant.tenantId, request: updateData });
         toast.success('테넌트가 수정되었습니다.');
         setIsCreateDialogOpen(false);
@@ -276,7 +279,8 @@ export function TenantsPage() {
         });
       }
       reset();
-    } catch {
+    } catch (error) {
+      console.error('[TenantsPage] onSubmit error:', error);
       toast.error(selectedTenant ? '테넌트 수정에 실패했습니다.' : '테넌트 생성에 실패했습니다.');
     }
   };

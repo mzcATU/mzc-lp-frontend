@@ -7,6 +7,7 @@ import type {
   TenantDetail,
   TenantListResponse,
   TenantStats,
+  TenantUserStatsResponse,
   CreateTenantRequest,
   CreateTenantResponse,
   UpdateTenantDetailRequest,
@@ -77,6 +78,14 @@ export const tenantService = {
   async getStats(): Promise<TenantStats> {
     const { data } = await axiosInstance.get<TenantStats>(
       `${API_ENDPOINTS.TENANTS.BASE}/stats`
+    );
+    return data;
+  },
+
+  /** 테넌트별 사용자 수 통계 조회 */
+  async getUserStats(): Promise<TenantUserStatsResponse> {
+    const { data } = await axiosInstance.get<TenantUserStatsResponse>(
+      `${API_ENDPOINTS.TENANTS.BASE}/stats/users`
     );
     return data;
   },

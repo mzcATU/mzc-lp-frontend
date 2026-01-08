@@ -11,6 +11,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { usePopularInstructors, useCourseTimeCatalog } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
+import { useAuthStore } from '@/store/common/authStore';
 import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
 import type { InstructorSummary } from '@/types/tu';
 import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
@@ -143,6 +144,7 @@ export function LandingPage() {
   const isDark = theme === 'dark';
   const { branding } = useTenantBranding();
 
+  const { isAuthenticated } = useAuthStore();
   // 브랜딩 CSS 적용
   useBrandingApply(branding);
 
@@ -395,7 +397,7 @@ export function LandingPage() {
                 </p>
               </div>
               <Link
-                to="/tu/b2c/mypage/teaching"
+                to={isAuthenticated ? "/tu/b2c/mypage/teaching" : "/login"}
                 className="flex items-center gap-2 px-8 py-4 bg-white text-[#6778ff] font-semibold rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
               >
                 강사 시작하기
