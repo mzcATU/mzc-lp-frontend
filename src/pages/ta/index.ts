@@ -3,7 +3,7 @@ export { DashboardPage } from './dashboard';
 export { UsersPage, UserDetailPage, OperatorsPage, GroupsPage, PermissionsPage } from './users';
 
 // System
-export { DomainSettingsPage, BillingPage } from './system';
+export { DomainSettingsPage } from './system';
 
 // Branding
 export { LayoutSettingsPage, DesignSettingsPage, NavigationSettingsPage } from './branding';

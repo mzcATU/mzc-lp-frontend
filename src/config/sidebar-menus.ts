@@ -124,11 +124,10 @@ export const tenantAdminMenuData: MenuItem[] = [
   },
   {
     id: 'system-foundation',
-    label: { ko: '시스템 기반 관리', en: 'System Foundation & Licensing' },
+    label: { ko: '시스템 기반 관리', en: 'System Foundation' },
     icon: Server,
     subItems: [
       { id: 'domain-ssl', label: { ko: '도메인 및 SSL 설정', en: 'Domain & SSL Setup' }, icon: Globe, path: '/ta/system/domain' },
-      { id: 'license-billing', label: { ko: '요금제 및 라이선스 관리', en: 'License & Billing Mgmt' }, icon: CreditCard, path: '/ta/system/billing' },
     ],
   },
   {

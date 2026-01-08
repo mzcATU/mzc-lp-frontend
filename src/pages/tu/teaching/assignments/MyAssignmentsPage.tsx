@@ -58,30 +58,29 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
   }
 
   return (
-    <div className="h-full flex flex-col bg-bg-app">
+    <div className="p-8 bg-bg-app min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-bg-app">
-        <div className="p-6 px-8">
-          <div className="mb-6">
-            <h1 className="text-text-primary mb-1">{getText('title')}</h1>
-            <p className="text-text-secondary text-sm m-0">{getText('subtitle')}</p>
-          </div>
-
-          {/* 통계 카드 */}
-          {!isLoading && statistics && (
-            <AssignmentStatsCard
-              totalCount={statistics.totalCount}
-              mainCount={statistics.mainCount}
-              subCount={statistics.subCount}
-              language={language}
-            />
-          )}
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-text-primary mb-2">{getText('title')}</h1>
+          <p className="text-text-secondary m-0">{getText('subtitle')}</p>
         </div>
       </div>
 
+      {/* 통계 카드 */}
+      {!isLoading && statistics && (
+        <div className="mb-8">
+          <AssignmentStatsCard
+            totalCount={statistics.totalCount}
+            mainCount={statistics.mainCount}
+            subCount={statistics.subCount}
+            language={language}
+          />
+        </div>
+      )}
+
       {/* Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 px-8 pt-0">
+      <div>
           {/* 로딩 상태 */}
           {isLoading && (
             <div className="flex items-center justify-center py-12">
@@ -153,7 +152,6 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }

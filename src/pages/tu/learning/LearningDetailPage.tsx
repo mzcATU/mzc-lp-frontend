@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import {
-  ArrowLeft,
   PlayCircle,
   CheckCircle,
   Clock,
@@ -35,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  BackButton,
 } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { useEnrollmentForPlayer, useCancelEnrollment } from '@/hooks/tu';
@@ -333,14 +333,11 @@ export function LearningDetailPage() {
     <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
       <div className="max-w-[1200px] mx-auto">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          className={`mb-6 gap-2 ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : ''}`}
+        <BackButton
           onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.learning.backToLearning}
-        </Button>
+          label={t.learning.backToLearning}
+          className={`mb-6 ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : ''}`}
+        />
 
         {/* Header Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
