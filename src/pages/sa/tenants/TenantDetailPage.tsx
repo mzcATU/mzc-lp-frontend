@@ -422,9 +422,9 @@ export function TenantDetailPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ACTIVE">활성</SelectItem>
-                      <SelectItem value="INACTIVE">비활성</SelectItem>
                       <SelectItem value="SUSPENDED">정지</SelectItem>
                       <SelectItem value="PENDING">대기</SelectItem>
+                      <SelectItem value="TERMINATED">종료</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

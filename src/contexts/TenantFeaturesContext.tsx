@@ -57,19 +57,23 @@ export function TenantFeaturesProvider({ children }: { children: ReactNode }) {
   // SA 사용자인지 확인 (tenantId가 없는 인증된 사용자)
   const isSystemAdmin = isAuthenticated && !user?.tenantId;
 
+  // TODO: 백엔드 API가 준비될 때까지 API 호출 비활성화
+  // 현재 백엔드에서 /api/tenant/settings/features 엔드포인트가 403 반환
+  const enableFeatureApi = false;
+
   // 1. 인증된 사용자(tenantId 있음): tenantId 기반 기능 설정 조회
   const {
     data: authFeatures,
     isLoading: authLoading,
     error: authError,
-  } = useAuthenticatedFeatures(isAuthenticated && !!user?.tenantId);
+  } = useAuthenticatedFeatures(enableFeatureApi && isAuthenticated && !!user?.tenantId);
 
   // 2. 비로그인 사용자: 공개 API로 기능 설정 조회
   const {
     data: publicFeatures,
     isLoading: publicLoading,
     error: publicError,
-  } = usePublicFeatures(!isAuthenticated);
+  } = usePublicFeatures(enableFeatureApi && !isAuthenticated);
 
   // 기능 설정 결정 로직
   const { features, isLoading, error } = useMemo(() => {
