@@ -7,6 +7,8 @@ import axiosInstance from '@/services/common/api/axiosInstance';
 import type {
   CourseReview,
   CourseReviewListResponse,
+  CourseReviewListApiResponse,
+  CourseReviewApiResponse,
   CourseReviewStats,
   CreateReviewRequest,
   UpdateReviewRequest,
@@ -14,6 +16,32 @@ import type {
 } from '@/types/tu/courseReview.types';
 
 const getBaseUrl = (timeId: number) => `/times/${timeId}/reviews`;
+
+/** 백엔드 리뷰를 프론트엔드 형식으로 변환 */
+const mapReview = (review: CourseReviewApiResponse): CourseReview => ({
+  id: review.reviewId,
+  courseTimeId: review.courseTimeId,
+  author: {
+    id: review.userId,
+    name: review.userName,
+    profileImageUrl: review.userProfileImageUrl || null,
+  },
+  rating: review.rating,
+  content: review.content,
+  completionRate: review.completionRate || 0,
+  createdAt: review.createdAt,
+  updatedAt: review.updatedAt,
+  isMyReview: review.isMyReview || false,
+});
+
+/** 백엔드 리뷰 목록을 프론트엔드 형식으로 변환 */
+const mapReviewList = (response: CourseReviewListApiResponse): CourseReviewListResponse => ({
+  content: response.reviews.map(mapReview),
+  totalElements: response.totalElements,
+  totalPages: response.totalPages,
+  page: response.currentPage,
+  size: response.pageSize,
+});
 
 export const courseReviewService = {
   /**
@@ -37,8 +65,9 @@ export const courseReviewService = {
 
     const query = queryParams.toString();
     const url = query ? `${getBaseUrl(timeId)}?${query}` : getBaseUrl(timeId);
-    const response = await axiosInstance.get<CourseReviewListResponse>(url);
-    return response.data;
+    const response = await axiosInstance.get<CourseReviewListApiResponse>(url);
+    console.log('📝 Reviews API Response:', response.data);
+    return mapReviewList(response.data);
   },
 
   /**
@@ -56,10 +85,14 @@ export const courseReviewService = {
    */
   getMyReview: async (timeId: number): Promise<CourseReview | null> => {
     try {
-      const response = await axiosInstance.get<CourseReview>(
+      const response = await axiosInstance.get<CourseReviewApiResponse>(
         `${getBaseUrl(timeId)}/my`
       );
-      return response.data;
+      // 빈 객체나 reviewId가 없으면 null 반환
+      if (!response.data || !response.data.reviewId) {
+        return null;
+      }
+      return mapReview(response.data);
     } catch {
       // 리뷰가 없는 경우 null 반환
       return null;
@@ -73,11 +106,11 @@ export const courseReviewService = {
     timeId: number,
     data: CreateReviewRequest
   ): Promise<CourseReview> => {
-    const response = await axiosInstance.post<CourseReview>(
+    const response = await axiosInstance.post<CourseReviewApiResponse>(
       getBaseUrl(timeId),
       data
     );
-    return response.data;
+    return mapReview(response.data);
   },
 
   /**
@@ -88,11 +121,11 @@ export const courseReviewService = {
     reviewId: number,
     data: UpdateReviewRequest
   ): Promise<CourseReview> => {
-    const response = await axiosInstance.patch<CourseReview>(
+    const response = await axiosInstance.patch<CourseReviewApiResponse>(
       `${getBaseUrl(timeId)}/${reviewId}`,
       data
     );
-    return response.data;
+    return mapReview(response.data);
   },
 
   /**

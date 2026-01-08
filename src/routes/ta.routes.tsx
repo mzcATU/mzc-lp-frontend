@@ -25,6 +25,7 @@ import {
   UserManagementSettingsPage,
   FeatureSettingsPage,
   TenantCategoryPage,
+  TenantNoticesPage,
 } from '@/pages/ta';
 import { BannerManagementPage } from '@/pages/ta/branding/BannerManagementPage';
 import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
@@ -72,6 +73,8 @@ const taChildRoutes = (
     {/* 기능 설정 */}
     <Route path="features" element={<FeatureSettingsPage />} />
     <Route path="features/categories" element={<TenantCategoryPage />} />
+    {/* 공지사항 관리 */}
+    <Route path="notices" element={<TenantNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

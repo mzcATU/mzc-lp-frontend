@@ -2,7 +2,7 @@
  * 테넌트 관련 타입 정의
  */
 
-export type TenantStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'PENDING';
+export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING' | 'TERMINATED';
 export type TenantType = 'B2C' | 'B2B';
 export type PlanType = 'BASIC' | 'PRO' | 'ENTERPRISE';
 

@@ -106,4 +106,42 @@ export const userService = {
     );
     return data;
   },
+
+  /** 파일 기반 단체 계정 생성 (Excel/CSV) */
+  async fileBulkCreateUsers(
+    file: File,
+    options?: {
+      defaultPassword?: string;
+      role?: string;
+      autoLinkEmployees?: boolean;
+      sendWelcomeEmail?: boolean;
+    }
+  ): Promise<BulkCreateUsersResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (options?.defaultPassword) {
+      formData.append('defaultPassword', options.defaultPassword);
+    }
+    if (options?.role) {
+      formData.append('role', options.role);
+    }
+    if (options?.autoLinkEmployees !== undefined) {
+      formData.append('autoLinkEmployees', String(options.autoLinkEmployees));
+    }
+    if (options?.sendWelcomeEmail !== undefined) {
+      formData.append('sendWelcomeEmail', String(options.sendWelcomeEmail));
+    }
+
+    const { data } = await axiosInstance.post<BulkCreateUsersResponse>(
+      API_ENDPOINTS.USERS.BULK_FILE,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return data;
+  },
 };

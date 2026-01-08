@@ -96,6 +96,7 @@ export function LearningPlayerPage() {
   const [currentContentId, setCurrentContentId] = useState<number | null>(null);
   const [currentContentType, setCurrentContentType] = useState<PlayerContentType | null>(null);
   const [currentExternalUrl, setCurrentExternalUrl] = useState<string | null>(null);
+  const [currentDownloadable, setCurrentDownloadable] = useState<boolean>(true);
   const [playedPercent, setPlayedPercent] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -192,6 +193,7 @@ export function LearningPlayerPage() {
     contentId: number;
     contentType: PlayerContentType;
     externalUrl?: string | null;
+    downloadable?: boolean | null;
     seq: number;
   }
 
@@ -223,6 +225,7 @@ export function LearningPlayerPage() {
             contentId: item.snapshotLearningObject.contentId,
             contentType: mapItemTypeToContentType(item.itemType),
             externalUrl: item.snapshotLearningObject.externalUrl,
+            downloadable: item.snapshotLearningObject.downloadable,
             seq: seq++,
           });
         }
@@ -275,6 +278,7 @@ export function LearningPlayerPage() {
         setCurrentContentId(targetItem.contentId);
         setCurrentContentType(targetItem.contentType);
         setCurrentExternalUrl(targetItem.externalUrl || null);
+        setCurrentDownloadable(targetItem.downloadable ?? true);
       }
     }
   }, [orderedCurriculumItems, itemId]);
@@ -372,7 +376,7 @@ export function LearningPlayerPage() {
   }, [playedPercent, saveProgress]);
 
   // 아이템 선택 핸들러
-  const handleItemSelect = useCallback((itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null) => {
+  const handleItemSelect = useCallback((itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null, downloadable?: boolean | null) => {
     // 현재 진도 저장
     saveProgress();
 
@@ -381,6 +385,7 @@ export function LearningPlayerPage() {
     setCurrentContentId(contentId);
     setCurrentContentType(contentType);
     setCurrentExternalUrl(externalUrl || null);
+    setCurrentDownloadable(downloadable ?? true);
     setPlayedPercent(0);
     setIsCompleted(progressRecords.some((r) => r.itemId === itemId && r.completed));
 
@@ -402,13 +407,13 @@ export function LearningPlayerPage() {
   // 이전 아이템으로 이동
   const handlePrevious = useCallback(() => {
     if (!previousItem) return;
-    handleItemSelect(previousItem.itemId, previousItem.contentId, previousItem.contentType, previousItem.externalUrl);
+    handleItemSelect(previousItem.itemId, previousItem.contentId, previousItem.contentType, previousItem.externalUrl, previousItem.downloadable);
   }, [previousItem, handleItemSelect]);
 
   // 다음 아이템으로 이동
   const handleNext = useCallback(() => {
     if (!nextItem) return;
-    handleItemSelect(nextItem.itemId, nextItem.contentId, nextItem.contentType, nextItem.externalUrl);
+    handleItemSelect(nextItem.itemId, nextItem.contentId, nextItem.contentType, nextItem.externalUrl, nextItem.downloadable);
   }, [nextItem, handleItemSelect]);
 
   // 로딩 상태 (데모 모드에서는 스킵)
@@ -525,6 +530,7 @@ export function LearningPlayerPage() {
                   contentId={currentContentId}
                   contentType="DOCUMENT"
                   isLearnerMode={!isDemoMode}
+                  downloadable={currentDownloadable}
                 />
               </div>
             )}
@@ -536,6 +542,7 @@ export function LearningPlayerPage() {
                   contentId={currentContentId}
                   contentType="IMAGE"
                   isLearnerMode={!isDemoMode}
+                  downloadable={currentDownloadable}
                 />
               </div>
             )}

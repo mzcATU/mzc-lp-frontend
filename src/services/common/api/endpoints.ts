@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     COURSE_ROLES: (id: number) => `/users/${id}/course-roles`,
     COURSE_ROLE_BY_ID: (userId: number, roleId: number) => `/users/${userId}/course-roles/${roleId}`,
     BULK: '/users/bulk',
+    BULK_FILE: '/users/bulk/file',
     ENROLLMENTS: (id: number) => `/users/${id}/enrollments`,
     ENROLLMENT_STATS: (id: number) => `/users/${id}/enrollments/stats`,
     INSTRUCTOR_STATS: (id: number) => `/users/${id}/instructor-statistics`,
@@ -337,5 +338,60 @@ export const API_ENDPOINTS = {
     ISSUE: (enrollmentId: number) => `/enrollments/${enrollmentId}/certificate`,
     BY_ENROLLMENT: (enrollmentId: number) => `/enrollments/${enrollmentId}/certificate`,
     REISSUE: (id: number) => `/certificates/${id}/reissue`,
+  },
+
+  // Employees (임직원 관리) - TA
+  EMPLOYEES: {
+    BASE: '/employees',
+    SEARCH: '/employees/search',
+    BY_ID: (id: number) => `/employees/${id}`,
+    BY_DEPARTMENT: (departmentId: number) => `/employees/department/${departmentId}`,
+    BY_NUMBER: (employeeNumber: string) => `/employees/number/${employeeNumber}`,
+    STATUS: (id: number) => `/employees/${id}/status`,
+    LMS_ACCOUNT: (id: number) => `/employees/${id}/lms-account`,
+    HAS_LMS_ACCOUNT: (id: number) => `/employees/${id}/has-lms-account`,
+  },
+
+  // Departments (부서 관리) - TA
+  DEPARTMENTS: {
+    BASE: '/departments',
+    TREE: '/departments/tree',
+    ACTIVE: '/departments/active',
+    SEARCH: '/departments/search',
+    BY_ID: (id: number) => `/departments/${id}`,
+  },
+
+  // Member Pools (회원 풀) - TO 관리, TA 조회
+  MEMBER_POOLS: {
+    BASE: '/member-pools',
+    BY_ID: (id: number) => `/member-pools/${id}`,
+    ACTIVATE: (id: number) => `/member-pools/${id}/activate`,
+    DEACTIVATE: (id: number) => `/member-pools/${id}/deactivate`,
+    REORDER: '/member-pools/reorder',
+    MATCH_COUNT: (id: number) => `/member-pools/${id}/match-count`,
+  },
+
+  // Auto Enrollment Rules (자동 입과 규칙) - TO 관리, TA 조회
+  AUTO_ENROLLMENT_RULES: {
+    BASE: '/auto-enrollment-rules',
+    ACTIVE: '/auto-enrollment-rules/active',
+    BY_TRIGGER: (trigger: string) => `/auto-enrollment-rules/trigger/${trigger}`,
+    BY_ID: (id: number) => `/auto-enrollment-rules/${id}`,
+    ACTIVATE: (id: number) => `/auto-enrollment-rules/${id}/activate`,
+    DEACTIVATE: (id: number) => `/auto-enrollment-rules/${id}/deactivate`,
+    REORDER: '/auto-enrollment-rules/reorder',
+  },
+
+  // Tenant Notices (테넌트 공지) - TA/TO 관리, TU/TO 조회
+  TENANT_NOTICES: {
+    BASE: '/tenant/notices',
+    SEARCH: '/tenant/notices/search',
+    BY_ID: (id: number) => `/tenant/notices/${id}`,
+    PUBLISH: (id: number) => `/tenant/notices/${id}/publish`,
+    ARCHIVE: (id: number) => `/tenant/notices/${id}/archive`,
+    // TU/TO 조회용
+    TU_BASE: '/tu/notices',
+    TU_BY_ID: (id: number) => `/tu/notices/${id}`,
+    TU_COUNT: '/tu/notices/count',
   },
 } as const;

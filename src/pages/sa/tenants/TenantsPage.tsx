@@ -348,9 +348,9 @@ export function TenantsPage() {
           <SelectContent>
             <SelectItem value="all">전체 상태</SelectItem>
             <SelectItem value="ACTIVE">활성</SelectItem>
-            <SelectItem value="INACTIVE">비활성</SelectItem>
-            <SelectItem value="SUSPENDED">정지</SelectItem>
             <SelectItem value="PENDING">대기</SelectItem>
+            <SelectItem value="SUSPENDED">정지</SelectItem>
+            <SelectItem value="TERMINATED">종료</SelectItem>
           </SelectContent>
         </Select>
         <Select value={planFilter} onValueChange={setPlanFilter}>
@@ -460,9 +460,9 @@ export function TenantsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ACTIVE">활성</SelectItem>
-                      <SelectItem value="INACTIVE">비활성</SelectItem>
-                      <SelectItem value="SUSPENDED">정지</SelectItem>
                       <SelectItem value="PENDING">대기</SelectItem>
+                      <SelectItem value="SUSPENDED">정지</SelectItem>
+                      <SelectItem value="TERMINATED">종료</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
