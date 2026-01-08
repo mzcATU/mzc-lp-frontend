@@ -1,6 +1,7 @@
 import { Route, Outlet } from 'react-router-dom';
 import { TenantUserLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import { ProfileRequiredRoute } from '@/components/common/ProfileRequiredRoute';
 import {
   MyCoursesPage,
   MyContentPage,
@@ -25,9 +26,11 @@ import { PlaceholderPage } from './pages';
 function TenantUserWrapper() {
   return (
     <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'OPERATOR', 'TENANT_ADMIN']}>
-      <TenantUserLayout>
-        <Outlet />
-      </TenantUserLayout>
+      <ProfileRequiredRoute>
+        <TenantUserLayout>
+          <Outlet />
+        </TenantUserLayout>
+      </ProfileRequiredRoute>
     </ProtectedRoute>
   );
 }

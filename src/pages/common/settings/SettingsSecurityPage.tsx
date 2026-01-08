@@ -10,6 +10,8 @@ import {
   CheckCircle,
   Camera,
   Loader2,
+  Building2,
+  Briefcase,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
@@ -60,6 +62,8 @@ export function SettingsSecurityPage() {
   // Local State
   const [profileData, setProfileData] = useState({
     name: '',
+    department: '',
+    position: '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -79,7 +83,11 @@ export function SettingsSecurityPage() {
   // Sync profile data from API
   useEffect(() => {
     if (profile) {
-      setProfileData({ name: profile.name });
+      setProfileData({
+        name: profile.name,
+        department: profile.department || '',
+        position: profile.position || '',
+      });
       if (profile.profileImageUrl) {
         // 상대 경로면 백엔드 URL 붙이기
         const imageUrl = profile.profileImageUrl.startsWith('http')
@@ -93,6 +101,8 @@ export function SettingsSecurityPage() {
   // Get base path from current location
   const basePath = location.pathname.split('/settings')[0];
   const isUserRole = basePath === '/tu';
+  // 어드민 역할 여부 (SA, TA, TO) - 부서/직급 입력 필드 표시용
+  const isAdminRole = basePath.endsWith('/sa') || basePath.endsWith('/ta') || basePath.endsWith('/to');
 
   const handleProfileSave = async () => {
     if (!profileData.name.trim()) {
@@ -105,10 +115,12 @@ export function SettingsSecurityPage() {
       await updateProfileMutation.mutateAsync({
         name: profileData.name,
         profileImageUrl: profile?.profileImageUrl,
+        department: profileData.department || undefined,
+        position: profileData.position || undefined,
       });
-      toast.success('프로필 정보가 저장되었습니다.');
+      toast.success(language === 'ko' ? '프로필 정보가 저장되었습니다.' : 'Profile saved successfully.');
     } catch {
-      toast.error('프로필 저장에 실패했습니다.');
+      toast.error(language === 'ko' ? '프로필 저장에 실패했습니다.' : 'Failed to save profile.');
     }
   };
 
@@ -348,7 +360,7 @@ export function SettingsSecurityPage() {
             </div>
 
             {/* Join Date (Read-only) */}
-            <div className="mb-6">
+            <div className="mb-5">
               <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
                 <Calendar className="w-4 h-4" />
                 {t.profileSecurity.joinDate}
@@ -365,6 +377,37 @@ export function SettingsSecurityPage() {
                 }}
               />
             </div>
+
+            {/* Department & Position (Admin Only) */}
+            {isAdminRole && (
+              <>
+                {/* Department */}
+                <div className="mb-5">
+                  <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
+                    <Building2 className="w-4 h-4" />
+                    {language === 'ko' ? '부서' : 'Department'}
+                  </Label>
+                  <Input
+                    value={profileData.department}
+                    onChange={(e) => setProfileData((prev) => ({ ...prev, department: e.target.value }))}
+                    placeholder={language === 'ko' ? '예: 개발팀, 기획팀, 인사팀' : 'e.g., Engineering, Planning, HR'}
+                  />
+                </div>
+
+                {/* Position */}
+                <div className="mb-6">
+                  <Label className="flex items-center gap-2 mb-2 text-sm" style={{ color: designTokens.text.secondary }}>
+                    <Briefcase className="w-4 h-4" />
+                    {language === 'ko' ? '직급' : 'Position'}
+                  </Label>
+                  <Input
+                    value={profileData.position}
+                    onChange={(e) => setProfileData((prev) => ({ ...prev, position: e.target.value }))}
+                    placeholder={language === 'ko' ? '예: 사원, 대리, 과장, 팀장' : 'e.g., Staff, Manager, Director'}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Save Button */}
             <Button onClick={handleProfileSave} disabled={updateProfileMutation.isPending}>

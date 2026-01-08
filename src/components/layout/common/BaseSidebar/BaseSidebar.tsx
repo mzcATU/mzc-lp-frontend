@@ -1,17 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ChevronDown,
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
   GraduationCap,
+  LogOut,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
+import { useAuthStore } from '@/store/common/authStore';
+import { authService } from '@/services/common/authService';
 
 // 역할 타입
 type RoleType = 'sa' | 'ta' | 'to' | 'tu';
@@ -29,11 +34,47 @@ export function BaseSidebar({
   roleType = 'tu',
 }: BaseSidebarProps & { showModeSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // 인증 스토어
+  const { refreshToken, logout } = useAuthStore();
 
   // 테넌트 브랜딩 (SA 제외)
   const { branding } = useTenantBranding();
+
+  // 어드민 역할 여부 (SA, TA, TO)
+  const isAdminRole = roleType === 'sa' || roleType === 'ta' || roleType === 'to';
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      // 서버에 로그아웃 요청 (refreshToken이 있는 경우)
+      if (refreshToken) {
+        await authService.logout(refreshToken);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // 로컬 상태 정리
+      logout();
+      queryClient.clear();
+      toast.success(language === 'ko' ? '로그아웃되었습니다.' : 'Logged out successfully.');
+
+      // 어드민 역할은 어드민 로그인 페이지로, 그 외는 일반 로그인 페이지로
+      if (isAdminRole) {
+        navigate('/admin/login');
+      } else {
+        navigate('/login');
+      }
+      setIsLoggingOut(false);
+    }
+  };
 
   // SA는 플랫폼 기본 로고, 나머지는 테넌트 브랜딩
   const isSuperAdmin = roleType === 'sa';
@@ -390,11 +431,50 @@ export function BaseSidebar({
 
         {/* Divider before footer */}
         <div
-          className="mt-4 pt-4"
+          className="mt-4 pt-4 space-y-1"
           style={{
             borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : colors.border}`,
           }}
         >
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+            style={{
+              width: isExpanded ? '100%' : '44px',
+              height: '44px',
+              padding: isExpanded ? '0 16px' : '0',
+              justifyContent: 'center',
+              color: colors.textPrimary,
+              margin: isExpanded ? '0' : '0 auto',
+              opacity: isLoggingOut ? 0.5 : 1,
+              cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              if (!isLoggingOut) {
+                e.currentTarget.style.backgroundColor = colors.hover;
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            title={language === 'ko' ? '로그아웃' : 'Logout'}
+          >
+            <LogOut
+              className="w-5 h-5 flex-shrink-0"
+              style={{ color: colors.textSecondary }}
+            />
+            {isExpanded && (
+              <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
+                {isLoggingOut
+                  ? (language === 'ko' ? '로그아웃 중...' : 'Logging out...')
+                  : (language === 'ko' ? '로그아웃' : 'Logout')
+                }
+              </span>
+            )}
+          </button>
+
           {/* Collapse Toggle */}
           <button
             onClick={onToggle}

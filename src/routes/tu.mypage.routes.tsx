@@ -1,6 +1,7 @@
 import { Route, Outlet } from 'react-router-dom';
 import { MyPageLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
+import { ProfileRequiredRoute } from '@/components/common/ProfileRequiredRoute';
 import {
   MyPageHome,
   ProfilePage,
@@ -25,9 +26,11 @@ import {
 function MyPageWrapper() {
   return (
     <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'OPERATOR', 'TENANT_ADMIN']}>
-      <MyPageLayout>
-        <Outlet />
-      </MyPageLayout>
+      <ProfileRequiredRoute>
+        <MyPageLayout>
+          <Outlet />
+        </MyPageLayout>
+      </ProfileRequiredRoute>
     </ProtectedRoute>
   );
 }
@@ -36,7 +39,9 @@ function MyPageWrapper() {
 function PlayerWrapper() {
   return (
     <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'OPERATOR', 'TENANT_ADMIN']}>
-      <Outlet />
+      <ProfileRequiredRoute>
+        <Outlet />
+      </ProfileRequiredRoute>
     </ProtectedRoute>
   );
 }

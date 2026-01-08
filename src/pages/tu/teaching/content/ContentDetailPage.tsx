@@ -37,6 +37,7 @@ import {
   useContentVersions,
   useRestoreVersion,
 } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { contentService } from '@/services/tu';
 import { ContentPreviewModal } from '@/components/domain/tu/content';
 import type { ContentType, ContentVersionResponse } from '@/types/tu';
@@ -162,6 +163,7 @@ interface ContentDetailPageProps {
 export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const contentId = id ? parseInt(id, 10) : 0;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -287,7 +289,7 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
     try {
       await deleteContent.mutateAsync(contentId);
       alert(getText('deleteSuccess'));
-      navigate('/tu/teaching/content');
+      navigate(prefixPath('/tu/teaching/content'));
     } catch (err: unknown) {
       console.error('Delete failed:', err);
       // 강의에 포함된 콘텐츠 삭제 시도 시 에러 처리
@@ -342,7 +344,7 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/content')}
+            onClick={() => navigate(prefixPath('/tu/teaching/content'))}
           >
             <ArrowLeft size={16} />
             {getText('backToList')}
@@ -367,7 +369,7 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
                 variant="ghost"
                 size="sm"
                 className="border border-border"
-                onClick={() => navigate('/tu/teaching/content')}
+                onClick={() => navigate(prefixPath('/tu/teaching/content'))}
               >
                 <ArrowLeft size={16} />
                 {getText('backToList')}

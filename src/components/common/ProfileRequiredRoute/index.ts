@@ -1,0 +1,1 @@
+export { ProfileRequiredRoute } from './ProfileRequiredRoute';
