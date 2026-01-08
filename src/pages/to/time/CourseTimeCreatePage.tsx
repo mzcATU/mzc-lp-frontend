@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info, UserPlus, X, Users } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
   Button,
@@ -17,6 +17,8 @@ import {
 } from '@/components/common';
 import { useCreateTime } from '@/hooks/to/useTimeQueries';
 import { useApprovedPrograms } from '@/hooks/to/useProgramQueries';
+import { useUsers } from '@/hooks/to/useUserQueries';
+import { instructorAssignmentService } from '@/services/to/instructorAssignmentService';
 import type {
   CreateCourseTimeRequest,
   DeliveryType,
@@ -25,6 +27,8 @@ import type {
 import { DELIVERY_TYPE_LABELS, ENROLLMENT_METHOD_LABELS } from '@/types/to/time.types';
 import { PROGRAM_LEVEL_LABELS, PROGRAM_TYPE_LABELS } from '@/types/common/program.types';
 import type { ProgramResponse } from '@/types/common/program.types';
+import type { InstructorRole } from '@/types/tu/instructorAssignment.types';
+import { INSTRUCTOR_ROLE_LABELS } from '@/types/tu/instructorAssignment.types';
 
 interface CourseTimeCreatePageProps {
   language?: 'ko' | 'en';
@@ -39,8 +43,8 @@ const t = {
   saving: { ko: '저장 중...', en: 'Saving...' },
   // Steps
   step1: { ko: '기본 정보', en: 'Basic Info' },
-  step2: { ko: '기간 설정', en: 'Period' },
-  step3: { ko: '정원 및 가격', en: 'Capacity & Price' },
+  step2: { ko: '일정 및 모집', en: 'Schedule' },
+  step3: { ko: '운영 설정', en: 'Settings' },
   // Step 1 - Basic Info
   selectProgram: { ko: '교육 과정 선택', en: 'Select Course' },
   selectProgramPlaceholder: { ko: '교육 과정을 선택하세요', en: 'Select a course' },
@@ -90,19 +94,44 @@ const t = {
   classStartBeforeEnrollEnd: { ko: '학습 시작일은 모집 종료일 이후여야 합니다.', en: 'Class start date must be after enrollment end date.' },
   createSuccess: { ko: '차수가 생성되었습니다.', en: 'Course time created successfully.' },
   createError: { ko: '차수 생성에 실패했습니다.', en: 'Failed to create course time.' },
+  // Step 4 - Instructor Assignment
+  step4: { ko: '강사 배정', en: 'Instructor' },
+  instructorAssignment: { ko: '강사 배정', en: 'Instructor Assignment' },
+  instructorAssignmentHint: { ko: '차수에 배정할 강사를 선택하세요.', en: 'Select instructors to assign to this course time.' },
+  selectInstructor: { ko: '강사 선택', en: 'Select Instructor' },
+  selectInstructorPlaceholder: { ko: '강사를 검색하세요', en: 'Search for instructor' },
+  instructorRole: { ko: '역할', en: 'Role' },
+  addInstructor: { ko: '강사 추가', en: 'Add Instructor' },
+  assignedInstructors: { ko: '배정된 강사', en: 'Assigned Instructors' },
+  noInstructorsAssigned: { ko: '배정된 강사가 없습니다.', en: 'No instructors assigned.' },
+  mainInstructor: { ko: '주강사', en: 'Main Instructor' },
+  subInstructor: { ko: '보조강사', en: 'Sub Instructor' },
+  assistant: { ko: '조교', en: 'Assistant' },
+  useOwnerAsInstructor: { ko: '프로그램 담당자를 주강사로 배정', en: 'Assign program owner as main instructor' },
+  instructorAssignmentOptional: { ko: '(선택사항)', en: '(Optional)' },
   // Error messages
   errorInstructorConflict: { ko: '강사 일정 충돌', en: 'Instructor Schedule Conflict' },
   errorConflictingTimes: { ko: '충돌하는 차수', en: 'Conflicting course times' },
   errorEnrollEndBeforeClassStart: { ko: '모집 종료일은 학습 시작일 이전이어야 합니다.', en: 'Enrollment end date must be before class start date.' },
   errorValidation: { ko: '입력값을 확인해주세요.', en: 'Please check your input.' },
+  errorInstructorAssignment: { ko: '강사 배정에 실패했습니다.', en: 'Failed to assign instructor.' },
 };
+
+// 강사 배정 정보 타입
+interface InstructorAssignment {
+  userId: number;
+  userName: string;
+  userEmail: string;
+  role: InstructorRole;
+}
 
 export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCreatePageProps>) {
   const navigate = useNavigate();
   const createTime = useCreateTime();
   const { data: approvedProgramsData, isLoading: isLoadingPrograms } = useApprovedPrograms();
+  const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'DESIGNER', size: 100 });
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 3;
+  const totalSteps = 4;
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -110,6 +139,11 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const approvedPrograms = useMemo(() => {
     return approvedProgramsData?.content ?? [];
   }, [approvedProgramsData]);
+
+  // DESIGNER 역할 사용자 목록 (강사 후보)
+  const availableInstructors = useMemo(() => {
+    return usersData?.content ?? [];
+  }, [usersData]);
 
   // 선택된 프로그램 정보
   const [selectedProgram, setSelectedProgram] = useState<ProgramResponse | null>(null);
@@ -142,6 +176,12 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const [conflictInfo, setConflictInfo] = useState<{
     conflicts: Array<{ conflictingTimeTitle: string; classStartDate: string; classEndDate: string }>;
   } | null>(null);
+
+  // 강사 배정 상태
+  const [assignedInstructors, setAssignedInstructors] = useState<InstructorAssignment[]>([]);
+  const [selectedInstructorId, setSelectedInstructorId] = useState<string>('');
+  const [selectedInstructorRole, setSelectedInstructorRole] = useState<InstructorRole>('MAIN');
+  const [useOwnerAsInstructor, setUseOwnerAsInstructor] = useState(true);
 
   const validateStep = (step: number): boolean => {
     const newErrors: Partial<Record<keyof CreateCourseTimeRequest, string>> = {};
@@ -260,7 +300,32 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       };
 
       console.log('[CourseTimeCreatePage] request:', request);
-      await createTime.mutateAsync(request);
+      const createdTime = await createTime.mutateAsync(request);
+
+      // 강사 배정 처리
+      if (assignedInstructors.length > 0 && createdTime?.id) {
+        const assignmentPromises = assignedInstructors.map((instructor) =>
+          instructorAssignmentService.assignInstructor(createdTime.id, {
+            userId: instructor.userId,
+            role: instructor.role,
+          })
+        );
+
+        try {
+          await Promise.all(assignmentPromises);
+        } catch (assignErr) {
+          console.error('Instructor assignment failed:', assignErr);
+          // 차수는 생성됐지만 강사 배정 실패
+          toast.warning(
+            language === 'ko'
+              ? '차수가 생성되었으나 일부 강사 배정에 실패했습니다.'
+              : 'Course time created but some instructor assignments failed.'
+          );
+          navigate('/to/times');
+          return;
+        }
+      }
+
       toast.success(getText('createSuccess'));
       navigate('/to/times');
     } catch (err: unknown) {
@@ -308,7 +373,72 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
   };
 
-  const stepLabels = [getText('step1'), getText('step2'), getText('step3')];
+  // 강사 추가 핸들러
+  const handleAddInstructor = () => {
+    if (!selectedInstructorId) return;
+
+    const instructor = availableInstructors.find((u) => u.id === parseInt(selectedInstructorId));
+    if (!instructor) return;
+
+    // 이미 추가된 강사인지 확인
+    if (assignedInstructors.some((i) => i.userId === instructor.id)) {
+      toast.error(language === 'ko' ? '이미 추가된 강사입니다.' : 'Instructor already added.');
+      return;
+    }
+
+    // MAIN 역할은 1명만 가능
+    if (selectedInstructorRole === 'MAIN' && assignedInstructors.some((i) => i.role === 'MAIN')) {
+      toast.error(language === 'ko' ? '주강사는 1명만 배정할 수 있습니다.' : 'Only one main instructor allowed.');
+      return;
+    }
+
+    setAssignedInstructors((prev) => [
+      ...prev,
+      {
+        userId: instructor.id,
+        userName: instructor.name,
+        userEmail: instructor.email,
+        role: selectedInstructorRole,
+      },
+    ]);
+    setSelectedInstructorId('');
+    // MAIN이 추가되면 다음 추가는 SUB로 기본 설정
+    if (selectedInstructorRole === 'MAIN') {
+      setSelectedInstructorRole('SUB');
+    }
+  };
+
+  // 강사 제거 핸들러
+  const handleRemoveInstructor = (userId: number) => {
+    setAssignedInstructors((prev) => prev.filter((i) => i.userId !== userId));
+  };
+
+  // Owner를 주강사로 자동 추가
+  const handleUseOwnerToggle = (checked: boolean) => {
+    setUseOwnerAsInstructor(checked);
+    if (checked && selectedProgram?.ownerId) {
+      // Owner가 이미 목록에 있는지 확인
+      const ownerExists = assignedInstructors.some((i) => i.userId === selectedProgram.ownerId);
+      if (!ownerExists) {
+        // MAIN이 이미 있으면 제거
+        const withoutMain = assignedInstructors.filter((i) => i.role !== 'MAIN');
+        setAssignedInstructors([
+          ...withoutMain,
+          {
+            userId: selectedProgram.ownerId,
+            userName: selectedProgram.ownerName || '',
+            userEmail: selectedProgram.ownerEmail || '',
+            role: 'MAIN',
+          },
+        ]);
+      }
+    } else if (!checked && selectedProgram?.ownerId) {
+      // Owner 제거
+      setAssignedInstructors((prev) => prev.filter((i) => i.userId !== selectedProgram.ownerId));
+    }
+  };
+
+  const stepLabels = [getText('step1'), getText('step2'), getText('step3'), getText('step4')];
 
   return (
     <div className="bg-bg-app min-h-screen">
@@ -326,7 +456,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       <div className="bg-bg-default border-b border-border px-6 py-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2">
-            {[1, 2, 3].map((step) => (
+            {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex-1 flex items-center gap-2">
                 <div
                   className={cn(
@@ -345,7 +475,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 >
                   {stepLabels[step - 1]}
                 </span>
-                {step < 3 && (
+                {step < 4 && (
                   <div
                     className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-neutral' : 'bg-border')}
                   />
@@ -495,67 +625,35 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   rows={3}
                 />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="deliveryType">{getText('deliveryType')}</Label>
-                  <Select
-                    value={formData.deliveryType}
-                    onValueChange={(value) => handleInputChange('deliveryType', value as DeliveryType)}
-                  >
-                    <SelectTrigger id="deliveryType">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(DELIVERY_TYPE_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="enrollmentMethod">{getText('enrollmentMethod')}</Label>
-                  <Select
-                    value={formData.enrollmentMethod}
-                    onValueChange={(value) => handleInputChange('enrollmentMethod', value as EnrollmentMethod)}
-                  >
-                    <SelectTrigger id="enrollmentMethod">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(ENROLLMENT_METHOD_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
-                <div className="space-y-2">
-                  <Label htmlFor="locationInfo">{getText('location')}</Label>
-                  <Input
-                    id="locationInfo"
-                    type="text"
-                    placeholder={getText('locationPlaceholder')}
-                    value={formData.locationInfo || ''}
-                    onChange={(e) => handleInputChange('locationInfo', e.target.value)}
-                  />
-                </div>
-              )}
             </div>
           )}
 
-          {/* Step 2: 기간 설정 */}
+          {/* Step 2: 일정 및 모집 */}
           {currentStep === 2 && (
             <div className="flex flex-col gap-8">
-              {/* 상시모집 옵션 */}
-              <div className="bg-bg-subtle rounded-lg p-4 border border-border">
-                <div className="flex items-center justify-between">
+              {/* 수강 신청 방식 */}
+              <div className="space-y-2">
+                <Label htmlFor="enrollmentMethod">{getText('enrollmentMethod')}</Label>
+                <Select
+                  value={formData.enrollmentMethod}
+                  onValueChange={(value) => handleInputChange('enrollmentMethod', value as EnrollmentMethod)}
+                >
+                  <SelectTrigger id="enrollmentMethod" className="w-full md:w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ENROLLMENT_METHOD_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 상시모집 & 중간합류 옵션 */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 bg-bg-subtle rounded-lg p-4 border border-border">
                   <div className="flex items-center gap-3">
                     <Switch
                       checked={isAlwaysOpen}
@@ -564,6 +662,18 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     <div>
                       <span className="font-medium text-text-primary">{getText('alwaysOpen')}</span>
                       <p className="text-sm text-text-secondary mt-0.5">{getText('alwaysOpenHint')}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 bg-bg-subtle rounded-lg p-4 border border-border">
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={formData.allowLateEnrollment ?? false}
+                      onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
+                    />
+                    <div>
+                      <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
+                      <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
                     </div>
                   </div>
                 </div>
@@ -687,9 +797,45 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
             </div>
           )}
 
-          {/* Step 3: 정원 및 가격 */}
+          {/* Step 3: 운영 설정 */}
           {currentStep === 3 && (
             <div className="flex flex-col gap-6">
+              {/* 진행 방식 & 장소 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="deliveryType">{getText('deliveryType')}</Label>
+                  <Select
+                    value={formData.deliveryType}
+                    onValueChange={(value) => handleInputChange('deliveryType', value as DeliveryType)}
+                  >
+                    <SelectTrigger id="deliveryType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(DELIVERY_TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="locationInfo">{getText('location')}</Label>
+                    <Input
+                      id="locationInfo"
+                      type="text"
+                      placeholder={getText('locationPlaceholder')}
+                      value={formData.locationInfo || ''}
+                      onChange={(e) => handleInputChange('locationInfo', e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 정원 & 가격 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="capacity">{getText('capacity')}</Label>
@@ -720,36 +866,186 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="minProgressForCompletion">{getText('minProgress')} *</Label>
-                  <Input
-                    id="minProgressForCompletion"
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder={getText('minProgressPlaceholder')}
-                    value={formData.minProgressForCompletion}
-                    onChange={(e) =>
-                      handleInputChange('minProgressForCompletion', parseInt(e.target.value) || 0)
-                    }
-                  />
-                  <p className="text-sm text-text-secondary">{getText('minProgressHint')}</p>
-                </div>
+              {/* 수료 기준 */}
+              <div className="space-y-2 md:w-1/2">
+                <Label htmlFor="minProgressForCompletion">{getText('minProgress')} *</Label>
+                <Input
+                  id="minProgressForCompletion"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder={getText('minProgressPlaceholder')}
+                  value={formData.minProgressForCompletion}
+                  onChange={(e) =>
+                    handleInputChange('minProgressForCompletion', parseInt(e.target.value) || 0)
+                  }
+                />
+                <p className="text-sm text-text-secondary">{getText('minProgressHint')}</p>
+              </div>
+            </div>
+          )}
 
-                {/* 중간 합류 허용 옵션 */}
-                <div className="bg-bg-subtle rounded-lg p-4 border border-border flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={formData.allowLateEnrollment ?? false}
-                      onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
-                    />
-                    <div>
-                      <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
-                      <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
+          {/* Step 4: 강사 배정 */}
+          {currentStep === 4 && (
+            <div className="flex flex-col gap-6">
+              {/* 헤더 */}
+              <div className="flex items-center gap-2">
+                <Users size={20} className="text-text-secondary" />
+                <h3 className="font-medium text-text-primary m-0">
+                  {getText('instructorAssignment')} {getText('instructorAssignmentOptional')}
+                </h3>
+              </div>
+              <p className="text-sm text-text-secondary -mt-4 ml-7">
+                {getText('instructorAssignmentHint')}
+              </p>
+
+              {/* Owner를 주강사로 배정 옵션 */}
+              {selectedProgram?.ownerId && (
+                <div className="bg-bg-subtle rounded-lg p-4 border border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={useOwnerAsInstructor}
+                        onCheckedChange={handleUseOwnerToggle}
+                      />
+                      <div>
+                        <span className="font-medium text-text-primary">{getText('useOwnerAsInstructor')}</span>
+                        <p className="text-sm text-text-secondary mt-0.5">
+                          {selectedProgram.ownerName} ({selectedProgram.ownerEmail})
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* 강사 추가 섹션 */}
+              <div className="space-y-4">
+                <div className="flex items-end gap-3">
+                  <div className="flex-1 space-y-2">
+                    <Label>{getText('selectInstructor')}</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={selectedInstructorId}
+                        onValueChange={setSelectedInstructorId}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder={getText('selectInstructorPlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {isLoadingUsers ? (
+                            <div className="flex items-center gap-2 p-2 text-text-secondary">
+                              <Loader2 size={16} className="animate-spin" />
+                              <span className="text-sm">Loading...</span>
+                            </div>
+                          ) : (
+                            availableInstructors
+                              .filter((u) => !assignedInstructors.some((i) => i.userId === u.id))
+                              .map((user) => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                  {user.name} ({user.email})
+                                </SelectItem>
+                              ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {selectedInstructorId && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedInstructorId('')}
+                          className="px-2 text-text-placeholder hover:text-text-secondary transition-colors"
+                          title={language === 'ko' ? '선택 취소' : 'Clear selection'}
+                        >
+                          <X size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="w-40 space-y-2">
+                    <Label>{getText('instructorRole')}</Label>
+                    <Select
+                      value={selectedInstructorRole}
+                      onValueChange={(v) => setSelectedInstructorRole(v as InstructorRole)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(['MAIN', 'SUB', 'ASSISTANT'] as InstructorRole[]).map((role) => (
+                          <SelectItem
+                            key={role}
+                            value={role}
+                            disabled={role === 'MAIN' && assignedInstructors.some((i) => i.role === 'MAIN')}
+                          >
+                            {INSTRUCTOR_ROLE_LABELS[role][language]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddInstructor}
+                    disabled={!selectedInstructorId}
+                  >
+                    <UserPlus size={18} />
+                    {getText('addInstructor')}
+                  </Button>
+                </div>
+              </div>
+
+              {/* 배정된 강사 목록 */}
+              <div className="space-y-3">
+                <Label>{getText('assignedInstructors')}</Label>
+                {assignedInstructors.length === 0 ? (
+                  <div className="bg-bg-subtle rounded-lg p-6 border border-border text-center">
+                    <Users size={32} className="mx-auto text-text-placeholder mb-2" />
+                    <p className="text-sm text-text-secondary">{getText('noInstructorsAssigned')}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {assignedInstructors.map((instructor) => (
+                      <div
+                        key={instructor.userId}
+                        className="flex items-center justify-between bg-bg-subtle rounded-lg px-4 py-3 border border-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-bg-secondary flex items-center justify-center">
+                            <span className="text-sm font-medium text-text-secondary">
+                              {instructor.userName.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-text-primary">{instructor.userName}</p>
+                            <p className="text-sm text-text-secondary">{instructor.userEmail}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={cn(
+                              'px-2 py-1 rounded text-xs font-medium',
+                              instructor.role === 'MAIN'
+                                ? 'bg-blue-100 text-blue-700'
+                                : instructor.role === 'SUB'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-gray-100 text-gray-700'
+                            )}
+                          >
+                            {INSTRUCTOR_ROLE_LABELS[instructor.role][language]}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveInstructor(instructor.userId)}
+                            className="text-text-placeholder hover:text-status-error transition-colors"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
