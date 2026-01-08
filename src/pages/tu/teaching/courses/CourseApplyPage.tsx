@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, Loader2, AlertCircle } from 'lucide-react';
 import { Button, Card } from '@/components/common';
 import { useCourse } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { snapshotService } from '@/services/to/snapshotService';
 import { programService } from '@/services/to/programService';
 import { ProgramBasicInfoForm, type ProgramFormData } from '../programs/components/ProgramBasicInfoForm';
@@ -35,6 +36,7 @@ const t = {
 export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPageProps>) {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const id = courseId ? parseInt(courseId, 10) : 0;
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
@@ -107,7 +109,7 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
 
       alert(getText('createSuccess'));
       // 프로그램 상세 페이지로 이동
-      navigate(`/tu/teaching/programs/${program.id}`);
+      navigate(prefixPath(`/tu/teaching/programs/${program.id}`));
     } catch (err) {
       console.error('Create failed:', err);
       alert(getText('createFailed'));
@@ -138,7 +140,7 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/courses')}
+            onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
           >
             <ArrowLeft size={16} />
             목록으로
@@ -159,7 +161,7 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
                 variant="ghost"
                 size="sm"
                 className="border border-border"
-                onClick={() => navigate(`/tu/teaching/courses/${id}`)}
+                onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}`))}
               >
                 <ArrowLeft size={16} />
                 {getText('back')}

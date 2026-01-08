@@ -17,6 +17,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { useMyPosts } from '@/hooks/tu/useCommunityQueries';
 import { Badge, Button } from '@/components/common';
 import { POST_TYPE_LABELS } from '@/types/tu/community.types';
@@ -26,6 +27,7 @@ const PAGE_SIZE = 10;
 export function MyPostsPage() {
   const navigate = useNavigate();
   const { theme } = useThemeStore();
+  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
   const [page, setPage] = useState(0);
 
@@ -87,7 +89,7 @@ export function MyPostsPage() {
               </p>
             </div>
             <Button
-              onClick={() => navigate('/tu/b2c/community')}
+              onClick={() => navigate(prefixPath('/tu/b2c/community'))}
               className={`${
                 isDark
                   ? 'bg-[#6778ff] hover:bg-[#5567ee] text-white'
@@ -225,7 +227,7 @@ export function MyPostsPage() {
             커뮤니티에서 다른 개발자들과 지식을 나누고 소통해보세요
           </p>
           <Button
-            onClick={() => navigate('/tu/b2c/community')}
+            onClick={() => navigate(prefixPath('/tu/b2c/community'))}
             className="bg-[#6778ff] hover:bg-[#5567ee] text-white"
           >
             <PenSquare className="w-4 h-4 mr-2" />

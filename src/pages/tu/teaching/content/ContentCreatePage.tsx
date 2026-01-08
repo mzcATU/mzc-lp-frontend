@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ContentRegistrationWizard } from '@/components/domain/tu/content';
 import type { LOData, CompletionCriteria } from '@/types';
 import { useUploadContent, useCreateExternalLink } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 // 프론트 completionCriteria -> 백엔드 enum 변환
 const mapCompletionCriteria = (criteria: CompletionCriteria): 'BUTTON_CLICK' | 'PERCENT_90' | 'PERCENT_100' => {
@@ -19,11 +20,12 @@ const mapCompletionCriteria = (criteria: CompletionCriteria): 'BUTTON_CLICK' | '
 
 export function ContentCreatePage() {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const uploadContent = useUploadContent();
   const createExternalLink = useCreateExternalLink();
 
   const handleBack = () => {
-    navigate('/tu/teaching/content');
+    navigate(prefixPath('/tu/teaching/content'));
   };
 
   const handleSave = async (data: LOData) => {
@@ -49,7 +51,7 @@ export function ContentCreatePage() {
       }
 
       alert('콘텐츠가 등록되었습니다.');
-      navigate('/tu/teaching/content');
+      navigate(prefixPath('/tu/teaching/content'));
     } catch (error) {
       console.error('콘텐츠 등록 실패:', error);
       alert('콘텐츠 등록에 실패했습니다.');

@@ -12,6 +12,11 @@ export interface DataTableLabels {
   goToLastPage?: string;
 }
 
+export interface SortingState {
+  id: string;
+  desc: boolean;
+}
+
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -35,6 +40,12 @@ export interface DataTableProps<TData, TValue> {
   onPageChange?: (pageIndex: number) => void;
   /** 서버사이드 페이지네이션 시 페이지 사이즈 변경 핸들러 */
   onPageSizeChange?: (pageSize: number) => void;
+  /** 서버사이드 정렬 활성화 */
+  manualSorting?: boolean;
+  /** 서버사이드 정렬 시 정렬 상태 변경 핸들러 */
+  onSortingChange?: (sorting: SortingState[]) => void;
+  /** 현재 정렬 상태 (서버사이드 정렬 시) */
+  sorting?: SortingState[];
 }
 
 export interface DataTableColumnHeaderProps
