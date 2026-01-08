@@ -10,6 +10,7 @@ import {
   AssignmentCard,
   CourseTimeStatCard,
 } from '@/components/domain/tu/assignment';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 interface MyAssignmentsPageProps {
   language?: 'ko' | 'en';
@@ -30,6 +31,7 @@ const t = {
 
 export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   const getText = (key: keyof typeof t) => t[key][language];
 
@@ -109,7 +111,7 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                   <p className="text-sm text-text-placeholder mb-4">{getText('noAssignmentsDesc')}</p>
                   <Button
                     variant="outline"
-                    onClick={() => navigate('/tu/teaching/courses')}
+                    onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
                   >
                     <BookOpen size={16} />
                     {getText('goToCourseDesign')}
@@ -125,7 +127,7 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                       key={assignment.id}
                       assignment={assignment}
                       language={language}
-                      onClick={() => navigate(`/tu/teaching/assignments/${assignment.id}`)}
+                      onClick={() => navigate(prefixPath(`/tu/teaching/assignments/${assignment.id}`))}
                     />
                   ))}
                 </div>

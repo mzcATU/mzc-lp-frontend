@@ -18,6 +18,7 @@ import {
   useSubmitMyProgram,
   useDeleteMyProgram,
 } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import type { ProgramStatus } from '@/types/common';
 import { PROGRAM_STATUS_LABELS } from '@/types/common';
 import { ProgramInfoSection } from './components/ProgramInfoSection';
@@ -77,6 +78,7 @@ const canDelete = (status: ProgramStatus) => status === 'DRAFT' || status === 'R
 export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPageProps>) {
   const { programId } = useParams<{ programId: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const id = programId ? parseInt(programId, 10) : 0;
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
@@ -107,7 +109,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
     try {
       await deleteMutation.mutateAsync(id);
       alert(getText('deleteSuccess'));
-      navigate('/tu/teaching/programs');
+      navigate(prefixPath('/tu/teaching/programs'));
     } catch (err) {
       console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
@@ -138,7 +140,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
           <Button
             variant="ghost"
             className="mt-4 border border-border"
-            onClick={() => navigate('/tu/teaching/programs')}
+            onClick={() => navigate(prefixPath('/tu/teaching/programs'))}
           >
             <ArrowLeft size={16} />
             {getText('back')}
@@ -157,7 +159,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
             variant="ghost"
             size="sm"
             className="border border-border"
-            onClick={() => navigate('/tu/teaching/programs')}
+            onClick={() => navigate(prefixPath('/tu/teaching/programs'))}
           >
             <ArrowLeft size={16} />
             {getText('back')}
@@ -198,7 +200,7 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 variant="ghost"
                 size="sm"
                 className="border border-border"
-                onClick={() => navigate(`/tu/teaching/programs/${id}/edit`)}
+                onClick={() => navigate(prefixPath(`/tu/teaching/programs/${id}/edit`))}
               >
                 <Edit2 size={16} />
                 {getText('edit')}

@@ -32,6 +32,11 @@ export const userService = {
       if (params.status) apiParams.status = params.status;
       if (params.page !== undefined) apiParams.page = params.page;
       if (params.size !== undefined) apiParams.size = params.size;
+      // 정렬 파라미터 전달 (Spring Pageable 형식: sort=field,direction)
+      if (params.sortBy) {
+        const direction = params.sortDirection || 'asc';
+        apiParams.sort = `${params.sortBy},${direction}`;
+      }
     }
 
     const { data } = await axiosInstance.get<UserListResponse>(
@@ -133,14 +138,10 @@ export const userService = {
       formData.append('sendWelcomeEmail', String(options.sendWelcomeEmail));
     }
 
+    // Content-Type을 설정하지 않으면 axios가 자동으로 multipart/form-data와 boundary를 설정함
     const { data } = await axiosInstance.post<BulkCreateUsersResponse>(
       API_ENDPOINTS.USERS.BULK_FILE,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+      formData
     );
     return data;
   },

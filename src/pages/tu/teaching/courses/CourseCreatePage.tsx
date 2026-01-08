@@ -9,6 +9,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { ArrowLeft, ArrowRight, Save, FileText, Loader2, Send } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
@@ -74,6 +75,7 @@ async function deleteAllCurriculumItems(courseId: number): Promise<void> {
 
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [searchParams] = useSearchParams();
   const courseIdParam = searchParams.get('courseId');
 
@@ -155,19 +157,19 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       } catch (error) {
         console.error('강의 불러오기 실패:', error);
         alert('강의를 불러오는데 실패했습니다.');
-        navigate('/tu/teaching/courses');
+        navigate(prefixPath('/tu/teaching/courses'));
       } finally {
         setIsLoading(false);
       }
     };
     loadExistingCourse();
-  }, [courseId, navigate]);
+  }, [courseId, navigate, prefixPath]);
 
   // 네비게이션 핸들러
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
   const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   const handleGoToStep = (step: number) => setCurrentStep(step);
-  const handleClose = () => navigate('/tu/teaching/courses');
+  const handleClose = () => navigate(prefixPath('/tu/teaching/courses'));
 
   const handleSaveDraft = async () => {
     if (!formData.title) {
@@ -206,7 +208,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         targetCourseId = response.courseId;
         setCourseId(response.courseId);
         // URL 업데이트 (뒤로가기 시에도 courseId 유지)
-        navigate(`/tu/teaching/courses/create?courseId=${response.courseId}`, { replace: true });
+        navigate(prefixPath(`/tu/teaching/courses/create?courseId=${response.courseId}`), { replace: true });
 
         // 회차/콘텐츠 생성
         if (formData.curriculumItems.length > 0) {
@@ -289,7 +291,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       await courseService.publish(targetCourseId!);
 
       alert(getText('publishSuccess'));
-      navigate('/tu/teaching/courses');
+      navigate(prefixPath('/tu/teaching/courses'));
     } catch (error) {
       console.error('강의 발행 실패:', error);
       alert(getText('publishError'));

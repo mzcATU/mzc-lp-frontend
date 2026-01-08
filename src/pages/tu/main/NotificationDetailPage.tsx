@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   ArrowLeft,
   Bell,
@@ -72,6 +73,7 @@ const formatDate = (dateString: string): string => {
 export function NotificationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
@@ -91,7 +93,7 @@ export function NotificationDetailPage() {
     if (!notification) return;
     deleteNotificationMutation.mutate(notification.id, {
       onSuccess: () => {
-        navigate('/tu/b2c/notifications');
+        navigate(prefixPath('/tu/b2c/notifications'));
       },
     });
   };

@@ -24,6 +24,7 @@ import {
   PROGRAM_LEVEL_LABELS,
   PROGRAM_TYPE_LABELS,
 } from '@/types/common';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 interface MyProgramsPageProps {
   language?: 'ko' | 'en';
@@ -107,6 +108,7 @@ const canDelete = (status: ProgramStatus) => status === 'DRAFT' || status === 'R
 
 export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [filterStatus, setFilterStatus] = useState<'all' | ProgramStatus>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'title'>('recent');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -252,7 +254,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
               <Card
                 key={program.id}
                 className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
+                onClick={() => navigate(prefixPath(`/tu/teaching/programs/${program.id}`))}
               >
                 <div className="flex items-center gap-4">
                   {/* Thumbnail */}
@@ -301,7 +303,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                         size="sm"
                         variant="ghost"
                         className="border border-border"
-                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
+                        onClick={() => navigate(prefixPath(`/tu/teaching/programs/${program.id}/edit`))}
                       >
                         <Edit2 size={14} />
                         {getText('edit')}
@@ -311,7 +313,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                     {canSubmit(program.status) && (
                       <Button
                         size="sm"
-                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
+                        onClick={() => navigate(prefixPath(`/tu/teaching/programs/${program.id}/edit`))}
                       >
                         <Send size={14} />
                         {getText('submit')}
@@ -340,7 +342,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
               <Card
                 key={program.id}
                 className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow flex flex-col"
-                onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
+                onClick={() => navigate(prefixPath(`/tu/teaching/programs/${program.id}`))}
               >
                 {/* Thumbnail */}
                 <div className="aspect-video relative overflow-hidden bg-bg-secondary">
@@ -396,7 +398,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                         size="sm"
                         variant="ghost"
                         className="flex-1 border border-border"
-                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
+                        onClick={() => navigate(prefixPath(`/tu/teaching/programs/${program.id}/edit`))}
                       >
                         <Edit2 size={14} />
                         {getText('edit')}
@@ -407,7 +409,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
                       <Button
                         size="sm"
                         className="flex-1"
-                        onClick={() => navigate(`/tu/teaching/programs/${program.id}/edit`)}
+                        onClick={() => navigate(prefixPath(`/tu/teaching/programs/${program.id}/edit`))}
                       >
                         <Send size={14} />
                         {getText('submit')}
@@ -456,7 +458,7 @@ export function MyProgramsPage({ language = 'ko' }: Readonly<MyProgramsPageProps
             </ol>
           </div>
 
-          <Button onClick={() => navigate('/tu/teaching/courses')}>
+          <Button onClick={() => navigate(prefixPath('/tu/teaching/courses'))}>
             {getText('goToCourses')}
           </Button>
         </div>

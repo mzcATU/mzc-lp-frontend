@@ -77,9 +77,12 @@ function DataTable<TData, TValue>({
   pageIndex = 0,
   onPageChange,
   onPageSizeChange,
+  manualSorting = false,
+  onSortingChange: onSortingChangeProp,
+  sorting: sortingProp,
 }: DataTableProps<TData, TValue>) {
   const labels = { ...defaultLabels, ...customLabels };
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
@@ -93,18 +96,36 @@ function DataTable<TData, TValue>({
   const currentPageIndex = manualPagination ? pageIndex : internalPageIndex;
   const currentPageSize = manualPagination ? pageSize : internalPageSize;
 
+  // 서버사이드 정렬 시 외부 sorting 사용
+  const currentSorting = manualSorting && sortingProp ? sortingProp : internalSorting;
+
+  // 정렬 변경 핸들러
+  const handleSortingChange = React.useCallback(
+    (updater: SortingState | ((old: SortingState) => SortingState)) => {
+      const newSorting = typeof updater === 'function' ? updater(currentSorting) : updater;
+
+      if (manualSorting) {
+        onSortingChangeProp?.(newSorting);
+      } else {
+        setInternalSorting(newSorting);
+      }
+    },
+    [currentSorting, manualSorting, onSortingChangeProp]
+  );
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: manualPagination ? undefined : getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: handleSortingChange,
+    getSortedRowModel: manualSorting ? undefined : getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     manualPagination,
+    manualSorting,
     pageCount: manualPagination ? pageCount : undefined,
     initialState: {
       pagination: {
@@ -113,7 +134,7 @@ function DataTable<TData, TValue>({
       },
     },
     state: {
-      sorting,
+      sorting: currentSorting,
       columnFilters,
       columnVisibility,
       rowSelection,

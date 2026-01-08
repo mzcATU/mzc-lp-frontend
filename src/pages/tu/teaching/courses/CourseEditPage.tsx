@@ -20,6 +20,7 @@ import { convertHierarchyToCurriculumItems, isCurriculumFolder, isCurriculumCont
 import { Step1BasicInfo, Step3Review, translations } from './components';
 import { Step2CurriculumTree } from './components/Step2CurriculumTree';
 import type { TranslationKey } from './components';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 interface CourseEditPageProps {
   language?: 'ko' | 'en';
@@ -70,6 +71,7 @@ async function deleteAllCurriculumItems(courseId: number): Promise<void> {
 
 export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { courseId } = useParams<{ courseId: string }>();
   const courseIdNum = Number(courseId);
 
@@ -145,7 +147,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
   const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   const handleGoToStep = (step: number) => setCurrentStep(step);
-  const handleClose = () => navigate('/tu/teaching/courses');
+  const handleClose = () => navigate(prefixPath('/tu/teaching/courses'));
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -220,7 +222,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
       await updateCourseMutation.mutateAsync({ id: courseIdNum, request });
 
       alert('강의가 수정되었습니다!');
-      navigate(`/tu/teaching/courses/${courseIdNum}`);
+      navigate(prefixPath(`/tu/teaching/courses/${courseIdNum}`));
     } catch (error) {
       console.error('강의 수정 실패:', error);
       alert('강의 수정에 실패했습니다. 다시 시도해주세요.');

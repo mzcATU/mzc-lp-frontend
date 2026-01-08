@@ -44,6 +44,7 @@ import {
   isDestructiveUpdateRestricted,
   analyzeProgramChanges,
 } from '@/utils/roadmapUtils';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 const t = {
   createRoadmap: { ko: '로드맵 생성', en: 'Create Roadmap' },
@@ -110,6 +111,7 @@ interface SelectedProgram {
 
 export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko' | 'en' }>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
 
@@ -279,7 +281,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
       }
 
       // mutation의 onSuccess가 완료된 후 페이지 이동
-      navigate('/tu/teaching/roadmaps');
+      navigate(prefixPath('/tu/teaching/roadmaps'));
     } catch (error: any) {
       // RM007 에러 처리 (파괴적 업데이트 차단)
       if (error?.response?.data?.code === 'RM007') {
@@ -314,7 +316,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
     <div className="p-8 bg-bg-app min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <Button variant="ghost" onClick={() => navigate('/tu/teaching/roadmaps')} className="mb-4">
+        <Button variant="ghost" onClick={() => navigate(prefixPath('/tu/teaching/roadmaps'))} className="mb-4">
           <ArrowLeft size={20} />
           <span>{getText('back')}</span>
         </Button>
@@ -503,7 +505,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 mt-8">
-        <Button variant="outline" onClick={() => navigate('/tu/teaching/roadmaps')} disabled={isSaving}>
+        <Button variant="outline" onClick={() => navigate(prefixPath('/tu/teaching/roadmaps'))} disabled={isSaving}>
           {getText('cancel')}
         </Button>
         <Button

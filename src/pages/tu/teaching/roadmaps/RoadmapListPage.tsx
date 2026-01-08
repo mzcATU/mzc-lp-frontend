@@ -17,6 +17,7 @@ import {
   useDuplicateRoadmap,
 } from '@/hooks/tu';
 import type { RoadmapStatus } from '@/types/tu/roadmap.types';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 const t = {
   title: { ko: '로드맵', en: 'Roadmaps' },
@@ -49,6 +50,7 @@ const t = {
 
 export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' | 'en' }>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [filterStatus, setFilterStatus] = useState<'all' | RoadmapStatus>('all');
   const [sortBy, setSortBy] = useState<'updatedAt' | 'title' | 'enrolledStudents'>('updatedAt');
 
@@ -104,7 +106,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
           <h1 className="text-text-primary mb-2">{getText('title')}</h1>
           <p className="text-text-secondary m-0">{getText('subtitle')}</p>
         </div>
-        <Button onClick={() => navigate('/tu/teaching/roadmaps/create')}>
+        <Button onClick={() => navigate(prefixPath('/tu/teaching/roadmaps/create'))}>
           <Plus size={20} />
           <span>{getText('createRoadmap')}</span>
         </Button>
@@ -180,7 +182,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
             <Card
               key={roadmap.id}
               className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => navigate(`/tu/teaching/roadmaps/${roadmap.id}`)}
+              onClick={() => navigate(prefixPath(`/tu/teaching/roadmaps/${roadmap.id}`))}
             >
               <CardContent className="p-5">
                 <div className="flex justify-between items-start">
@@ -213,7 +215,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/tu/teaching/roadmaps/${roadmap.id}/edit`);
+                          navigate(prefixPath(`/tu/teaching/roadmaps/${roadmap.id}/edit`));
                         }}
                       >
                         <Edit size={16} className="mr-2" />
@@ -257,7 +259,7 @@ export function RoadmapListPage({ language = 'ko' }: Readonly<{ language?: 'ko' 
           <Map size={64} className="text-text-secondary mb-4 opacity-30 mx-auto" />
           <h3 className="text-text-primary mb-2">{getText('noRoadmaps')}</h3>
           <p className="text-text-secondary mb-6">{getText('noRoadmapsDesc')}</p>
-          <Button onClick={() => navigate('/tu/teaching/roadmaps/create')}>
+          <Button onClick={() => navigate(prefixPath('/tu/teaching/roadmaps/create'))}>
             {getText('createRoadmap')}
           </Button>
         </div>

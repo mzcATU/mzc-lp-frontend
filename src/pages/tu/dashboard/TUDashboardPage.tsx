@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   BookOpen,
   Users,
@@ -70,6 +71,7 @@ const STATUS_LABELS: Record<string, { ko: string; en: string }> = {
 
 export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
 
   // API 훅
   const { data: coursesData, isLoading: isLoadingCourses } = useMyCourses();
@@ -149,7 +151,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
               variant="ghost"
               size="sm"
               className="text-text-secondary"
-              onClick={() => navigate('/tu/teaching/courses')}
+              onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
             >
               {getText('viewAll')}
               <ArrowRight size={14} />
@@ -178,7 +180,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
                 </div>
                 <Button
                   size="sm"
-                  onClick={() => navigate(`/tu/teaching/courses/create?courseId=${course.courseId}`)}
+                  onClick={() => navigate(prefixPath(`/tu/teaching/courses/create?courseId=${course.courseId}`))}
                 >
                   {getText('continueButton')}
                 </Button>
@@ -203,7 +205,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
               variant="ghost"
               size="sm"
               className="text-text-secondary"
-              onClick={() => navigate('/tu/teaching/programs')}
+              onClick={() => navigate(prefixPath('/tu/teaching/programs'))}
             >
               {getText('viewAll')}
               <ArrowRight size={14} />
@@ -221,7 +223,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
               <div
                 key={program.id}
                 className="p-4 bg-bg-app_default rounded-lg flex justify-between items-center gap-4 cursor-pointer hover:bg-bg-secondary transition-colors"
-                onClick={() => navigate(`/tu/teaching/programs/${program.id}`)}
+                onClick={() => navigate(prefixPath(`/tu/teaching/programs/${program.id}`))}
               >
                 <div className="flex-1 min-w-0">
                   <div className="text-text-primary font-medium truncate">
@@ -262,7 +264,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
               variant="ghost"
               size="sm"
               className="text-text-secondary"
-              onClick={() => navigate('/tu/teaching/assignments')}
+              onClick={() => navigate(prefixPath('/tu/teaching/assignments'))}
             >
               {getText('viewAll')}
               <ArrowRight size={14} />
@@ -280,7 +282,7 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
               <div
                 key={stat.timeKey}
                 className="p-4 bg-bg-app_default rounded-lg flex justify-between items-center gap-4 cursor-pointer hover:bg-bg-secondary transition-colors"
-                onClick={() => navigate(`/tu/teaching/assignments/${stat.timeKey}`)}
+                onClick={() => navigate(prefixPath(`/tu/teaching/assignments/${stat.timeKey}`))}
               >
                 <div className="flex-1 min-w-0">
                   <div className="text-text-primary font-medium truncate mb-1">
@@ -321,14 +323,14 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
           {getText('quickActionTitle')}
         </h3>
         <div className="flex gap-3 flex-wrap">
-          <Button onClick={() => navigate('/tu/teaching/courses/create')}>
+          <Button onClick={() => navigate(prefixPath('/tu/teaching/courses/create'))}>
             <Plus size={18} />
             {getText('createCourse')}
           </Button>
           <Button
             variant="ghost"
             className="border border-border"
-            onClick={() => navigate('/tu/teaching/content/create')}
+            onClick={() => navigate(prefixPath('/tu/teaching/content/create'))}
           >
             <FolderPlus size={18} />
             {getText('createContent')}
