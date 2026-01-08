@@ -51,12 +51,6 @@ import {
   CheckCircle,
   Circle,
   Square,
-  Facebook,
-  Twitter,
-  Youtube,
-  Instagram,
-  Linkedin,
-  Github,
   type LucideIcon,
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
@@ -499,7 +493,6 @@ export function LayoutSettingsPage() {
   const [draggedCategoryIndex, setDraggedCategoryIndex] = useState<number | null>(null);
   const [dragOverCategoryIndex, setDragOverCategoryIndex] = useState<number | null>(null);
   const [draggedCourseSectionIndex, setDraggedCourseSectionIndex] = useState<number | null>(null);
-  const [dragOverCourseSectionIndex, setDragOverCourseSectionIndex] = useState<number | null>(null);
   const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
   const [previewBannerIndex, setPreviewBannerIndex] = useState(0);
   const [expandedMenuItems, setExpandedMenuItems] = useState<Set<string>>(new Set(['mypage-home']));
