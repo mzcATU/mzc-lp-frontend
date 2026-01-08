@@ -474,12 +474,15 @@ export function UsersPage() {
 
   // 템플릿 다운로드
   const handleDownloadTemplate = () => {
-    // CSV 템플릿 생성
-    const headers = ['email', 'name', 'department', 'role'];
+    // CSV 템플릿 생성 (백엔드 파서가 지원하는 컬럼)
+    // 필수: email (이메일)
+    // 선택: name (이름), password (비밀번호), phone (전화번호)
+    // 한글 헤더 사용 (백엔드가 한글 헤더 지원)
+    const headers = ['이메일', '이름', '비밀번호', '전화번호'];
     const exampleRows = [
-      ['user1@company.com', '홍길동', '개발팀', 'USER'],
-      ['user2@company.com', '김영희', '마케팅팀', 'USER'],
-      ['user3@company.com', '이철수', '인사팀', 'OPERATOR'],
+      ['user1@company.com', '홍길동', 'password123!', '010-1234-5678'],
+      ['user2@company.com', '김영희', 'secure456!', '010-2345-6789'],
+      ['user3@company.com', '이철수', 'pass789!', '010-3456-7890'],
     ];
 
     // CSV 콘텐츠 생성
@@ -496,14 +499,17 @@ export function UsersPage() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'bulk_account_template.csv');
+    link.setAttribute('download', '사용자_일괄_등록_템플릿.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success('템플릿 파일이 다운로드되었습니다.');
+    toast.success('템플릿 파일이 다운로드되었습니다.', {
+      description: '필수: 이메일 | 선택: 이름, 비밀번호, 전화번호 (최대 500행)',
+      duration: 4000,
+    });
   };
 
   // 미리보기용 이메일 생성
