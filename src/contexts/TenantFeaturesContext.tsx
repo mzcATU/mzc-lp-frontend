@@ -33,7 +33,7 @@ function useAuthenticatedFeatures(enabled: boolean) {
     enabled,
     staleTime: 1000 * 60 * 30, // 30분 캐싱
     gcTime: 1000 * 60 * 60, // 1시간 가비지 컬렉션
-    retry: 1,
+    retry: false, // 403 에러 시 재시도 안 함
   });
 }
 
@@ -47,7 +47,7 @@ function usePublicFeatures(enabled: boolean) {
     enabled,
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
-    retry: 1,
+    retry: false, // 에러 시 재시도 안 함
   });
 }
 
@@ -79,9 +79,18 @@ export function TenantFeaturesProvider({ children }: { children: ReactNode }) {
     }
     // 인증된 사용자(tenantId 있음): authFeatures 사용
     if (isAuthenticated && user?.tenantId) {
+      // 403 등 에러 발생 시 기본 기능 설정 사용
+      if (authError) {
+        console.warn('Failed to load tenant features, using defaults:', authError);
+        return { features: DEFAULT_FEATURES, isLoading: false, error: null };
+      }
       return { features: authFeatures, isLoading: authLoading, error: authError };
     }
     // 비로그인 사용자: publicFeatures 사용
+    if (publicError) {
+      console.warn('Failed to load public features, using defaults:', publicError);
+      return { features: DEFAULT_FEATURES, isLoading: false, error: null };
+    }
     return { features: publicFeatures, isLoading: publicLoading, error: publicError };
   }, [isSystemAdmin, isAuthenticated, user?.tenantId, authFeatures, authLoading, authError, publicFeatures, publicLoading, publicError]);
 
