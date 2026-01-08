@@ -14,7 +14,6 @@ import {
   GroupsPage,
   PermissionsPage,
   DomainSettingsPage,
-  BillingPage,
   LayoutSettingsPage,
   DesignSettingsPage,
   NavigationSettingsPage,
@@ -50,7 +49,6 @@ const taChildRoutes = (
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
-    <Route path="system/billing" element={<BillingPage />} />
     {/* 디자인 및 정책 */}
     <Route path="branding/layout" element={<LayoutSettingsPage />} />
     <Route path="branding/design" element={<DesignSettingsPage />} />

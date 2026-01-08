@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Download,
   Eye,
   Edit2,
@@ -25,7 +24,7 @@ import {
   History,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge } from '@/components/common';
+import { Button, Badge, BackButton } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import {
   useContent,
@@ -341,14 +340,11 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
         <div className="text-center">
           <AlertCircle size={48} className="mx-auto mb-3 text-status-error" />
           <p className="text-text-secondary">{error ? getText('error') : getText('notFound')}</p>
-          <Button
-            variant="ghost"
-            className="mt-4 border border-border"
+          <BackButton
             onClick={() => navigate(prefixPath('/tu/teaching/content'))}
-          >
-            <ArrowLeft size={16} />
-            {getText('backToList')}
-          </Button>
+            label={getText('backToList')}
+            className="mt-4"
+          />
         </div>
       </div>
     );
@@ -365,15 +361,10 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
         <div className="p-6 px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="border border-border"
+              <BackButton
                 onClick={() => navigate(prefixPath('/tu/teaching/content'))}
-              >
-                <ArrowLeft size={16} />
-                {getText('backToList')}
-              </Button>
+                label={getText('backToList')}
+              />
               <div>
                 <h1 className="text-text-primary text-xl mb-1">{getText('contentDetail')}</h1>
                 <div className="flex items-center gap-2">

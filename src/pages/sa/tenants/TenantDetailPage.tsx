@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Building2,
   Save,
   Upload,
@@ -18,6 +17,7 @@ import {
   PlanBadge,
 } from '@/components/domain/admin';
 import { Button } from '@/components/common/Button';
+import { BackButton } from '@/components/common/BackButton';
 import { Input } from '@/components/common/Input';
 import { Label } from '@/components/common/Label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/common/Card';
@@ -297,10 +297,7 @@ export function TenantDetailPage() {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/sa/tenants')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              목록으로
-            </Button>
+            <BackButton onClick={() => navigate('/sa/tenants')} />
             <Button onClick={handleSave} disabled={updateMutation.isPending}>
               {updateMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
