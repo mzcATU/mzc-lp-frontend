@@ -36,7 +36,6 @@ import {
 } from '@/components/common/Select';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -244,6 +243,8 @@ export function TenantsPage() {
   };
 
   const onSubmit = async (data: TenantFormData) => {
+    console.log('[TenantsPage] onSubmit called:', data);
+    console.log('[TenantsPage] selectedTenant:', selectedTenant);
     try {
       if (selectedTenant) {
         // 수정
@@ -252,6 +253,7 @@ export function TenantsPage() {
           status: data.status,
           plan: data.plan,
         };
+        console.log('[TenantsPage] updateData:', updateData);
         await updateMutation.mutateAsync({ id: selectedTenant.tenantId, request: updateData });
         toast.success('테넌트가 수정되었습니다.');
         setIsCreateDialogOpen(false);
@@ -278,7 +280,8 @@ export function TenantsPage() {
         });
       }
       reset();
-    } catch {
+    } catch (error) {
+      console.error('[TenantsPage] onSubmit error:', error);
       toast.error(selectedTenant ? '테넌트 수정에 실패했습니다.' : '테넌트 생성에 실패했습니다.');
     }
   };
@@ -521,7 +524,8 @@ export function TenantsPage() {
                 취소
               </Button>
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSubmit(onSubmit)}
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {(createMutation.isPending || updateMutation.isPending) && (
@@ -535,7 +539,7 @@ export function TenantsPage() {
       </Dialog>
 
       {/* 삭제 확인 다이얼로그 */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !deleteMutation.isPending && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>테넌트 삭제</AlertDialogTitle>
@@ -546,15 +550,15 @@ export function TenantsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction
+            <AlertDialogCancel disabled={deleteMutation.isPending}>취소</AlertDialogCancel>
+            <Button
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700"
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               삭제
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -573,7 +577,7 @@ export function TenantsPage() {
           <div className="space-y-4 py-4">
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm font-medium text-yellow-800 mb-3">
-                ⚠️ 임시 비밀번호는 이 창을 닫으면 다시 볼 수 없습니다.
+                임시 비밀번호는 이 창을 닫으면 다시 볼 수 없습니다.
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">

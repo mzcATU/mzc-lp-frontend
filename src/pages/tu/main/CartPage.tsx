@@ -7,6 +7,7 @@ import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useCart, useRemoveFromCart, useRemoveFromCartBulk, useAddToCart, useMyWishlist, useEnrollBulk } from '@/hooks/tu';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/common/authStore';
 import type { CartItemResponse } from '@/types/tu/cart.types';
 import type { WishlistItemResponse } from '@/types/tu/wishlist.types';
 
@@ -27,6 +28,7 @@ export function CartPage() {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
 
+  const { isAuthenticated } = useAuthStore();
   // Cart React Query 훅
   const { data: cartItems = [], isLoading: isCartLoading, error: cartError } = useCart();
   const removeFromCartMutation = useRemoveFromCart();
@@ -177,6 +179,34 @@ export function CartPage() {
       return sum + (isNaN(price) ? 0 : price);
     }, 0);
   }, [selectedCartItems]);
+
+
+  // 비로그인 상태
+  if (!isAuthenticated) {
+    return (
+      <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
+        <LandingHeader />
+        <main className="w-full px-4 md:px-8 lg:px-16 py-12">
+          <div className="text-center py-20">
+            <ShoppingCart className={`w-20 h-20 mx-auto mb-6 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+            <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              로그인이 필요합니다
+            </h2>
+            <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              장바구니를 보려면 로그인해주세요.
+            </p>
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-full text-white font-medium"
+            >
+              로그인하기 <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </main>
+        <LandingFooter />
+      </div>
+    );
+  }
 
   // 로딩 상태
   if (isCartLoading) {

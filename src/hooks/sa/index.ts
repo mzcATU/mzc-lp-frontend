@@ -3,6 +3,7 @@ export {
   useTenants,
   useTenant,
   useTenantStats,
+  useTenantUserStats,
   useCreateTenant,
   useUpdateTenant,
   useDeleteTenant,

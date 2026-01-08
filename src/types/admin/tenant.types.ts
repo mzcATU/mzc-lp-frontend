@@ -129,3 +129,16 @@ export interface UpdateTenantDetailRequest {
   branding?: Partial<TenantBranding>;
   settings?: Partial<TenantSettings>;
 }
+
+// 테넌트별 사용자 수 통계
+export interface TenantUserCount {
+  tenantId: number;
+  tenantCode: string;
+  tenantName: string;
+  userCount: number;
+}
+
+export interface TenantUserStatsResponse {
+  tenantUserCounts: TenantUserCount[];
+  totalUsers: number;
+}

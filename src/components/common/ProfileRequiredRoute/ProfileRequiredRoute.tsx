@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useMyProfile } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
@@ -13,16 +13,22 @@ interface ProfileRequiredRouteProps {
   skipProfileCheck?: boolean;
 }
 
+// 프로필 체크를 스킵해야 하는 관리자 역할
+const ADMIN_ROLES = new Set(['SYSTEM_ADMIN', 'TENANT_ADMIN', 'TENANT_OPERATOR']);
+
 /**
  * 프로필 정보(부서, 직급)가 완료된 사용자만 접근 가능한 라우트
  * 미완료 시 /profile-setup으로 리다이렉트
+ * 관리자 역할(SA, TA, TO)은 프로필 체크 스킵
  */
 export function ProfileRequiredRoute({
   children,
   skipProfileCheck = false,
 }: ProfileRequiredRouteProps) {
   const location = useLocation();
+  const { subdomain } = useParams<{ subdomain?: string }>();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const { data: profile, isLoading } = useMyProfile();
 
   // 인증되지 않은 경우 프로필 체크 스킵
@@ -32,6 +38,11 @@ export function ProfileRequiredRoute({
 
   // 프로필 체크 스킵 옵션
   if (skipProfileCheck) {
+    return <>{children}</>;
+  }
+
+  // 관리자 역할은 프로필 체크 스킵
+  if (user?.role && ADMIN_ROLES.has(user.role)) {
     return <>{children}</>;
   }
 
@@ -54,9 +65,11 @@ export function ProfileRequiredRoute({
     (!profile?.department && !profile?.position);
 
   if (isProfileIncomplete) {
+    // 서브도메인이 있으면 포함하여 리다이렉트
+    const profileSetupPath = subdomain ? `/${subdomain}/profile-setup` : '/profile-setup';
     return (
       <Navigate
-        to="/profile-setup"
+        to={profileSetupPath}
         state={{ returnTo: location.pathname }}
         replace
       />
