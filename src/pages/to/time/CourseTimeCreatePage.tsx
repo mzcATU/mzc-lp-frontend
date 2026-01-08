@@ -59,6 +59,8 @@ const t = {
   owner: { ko: '담당 강사', en: 'Owner' },
   noOwner: { ko: '미배정', en: 'Not assigned' },
   noThumbnail: { ko: '썸네일 없음', en: 'No thumbnail' },
+  recommendedPeriod: { ko: '권장 운영기간', en: 'Recommended Period' },
+  noRecommendedPeriod: { ko: '설정 안됨', en: 'Not set' },
   timeTitle: { ko: '차수명', en: 'Title' },
   timeTitlePlaceholder: { ko: '예: 2025년 1차', en: 'e.g., 2025 Session 1' },
   description: { ko: '설명', en: 'Description' },
@@ -591,6 +593,17 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                           </span>
                         </div>
                       </div>
+                      {/* 권장 운영기간 */}
+                      {(selectedProgram.courseStartDate || selectedProgram.courseEndDate) && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <span className="text-text-secondary">{getText('recommendedPeriod')}: </span>
+                          <span className="text-text-primary font-medium">
+                            {selectedProgram.courseStartDate && selectedProgram.courseEndDate
+                              ? `${selectedProgram.courseStartDate} ~ ${selectedProgram.courseEndDate}`
+                              : selectedProgram.courseStartDate || selectedProgram.courseEndDate || getText('noRecommendedPeriod')}
+                          </span>
+                        </div>
+                      )}
                       {selectedProgram.description && (
                         <p className="mt-2 text-sm text-text-secondary line-clamp-2">
                           {selectedProgram.description}
