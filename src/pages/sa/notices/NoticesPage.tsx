@@ -8,7 +8,9 @@ import {
   Calendar,
   Send,
   Archive,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -16,11 +18,13 @@ import { Input } from '@/components/common/Input';
 import { Badge } from '@/components/common/Badge';
 import { Label } from '@/components/common/Label';
 import { Textarea } from '@/components/common/Textarea';
+import { Checkbox } from '@/components/common/Checkbox';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/common/Dialog';
 import {
@@ -38,6 +42,9 @@ import {
   useDeleteNotice,
   usePublishNotice,
   useArchiveNotice,
+  useDistributeNotice,
+  useDistributeAllNotice,
+  useTenants,
 } from '@/hooks/sa';
 import type {
   Notice,
@@ -67,6 +74,11 @@ export function NoticesPage() {
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Notice | null>(null);
 
+  // Publish & Distribute state
+  const [publishTarget, setPublishTarget] = useState<Notice | null>(null);
+  const [distributeToAll, setDistributeToAll] = useState(true);
+  const [selectedTenantIds, setSelectedTenantIds] = useState<number[]>([]);
+
   // Form state
   const [formData, setFormData] = useState<CreateNoticeRequest>({
     title: '',
@@ -80,14 +92,18 @@ export function NoticesPage() {
     keyword: searchKeyword || undefined,
     status: statusFilter !== 'ALL' ? statusFilter : undefined,
   });
+  const { data: tenantsData } = useTenants({});
   const createMutation = useCreateNotice();
   const updateMutation = useUpdateNotice();
   const deleteMutation = useDeleteNotice();
   const publishMutation = usePublishNotice();
   const archiveMutation = useArchiveNotice();
+  const distributeMutation = useDistributeNotice();
+  const distributeAllMutation = useDistributeAllNotice();
 
   const notices = noticesData?.content || [];
   const totalNotices = noticesData?.totalElements || 0;
+  const tenants = tenantsData?.content || [];
 
   const handleCreateOpen = () => {
     setFormData({
@@ -133,8 +149,45 @@ export function NoticesPage() {
     setDeleteTarget(null);
   };
 
-  const handlePublish = async (id: number) => {
-    await publishMutation.mutateAsync(id);
+  const handlePublishOpen = (notice: Notice) => {
+    setPublishTarget(notice);
+    setDistributeToAll(true);
+    setSelectedTenantIds([]);
+  };
+
+  const handlePublishAndDistribute = async () => {
+    if (!publishTarget) return;
+
+    try {
+      // 1. 먼저 발행
+      await publishMutation.mutateAsync(publishTarget.id);
+
+      // 2. 배포
+      if (distributeToAll) {
+        await distributeAllMutation.mutateAsync(publishTarget.id);
+        toast.success('공지사항이 모든 테넌트에 발행되었습니다.');
+      } else if (selectedTenantIds.length > 0) {
+        await distributeMutation.mutateAsync({
+          id: publishTarget.id,
+          request: { tenantIds: selectedTenantIds },
+        });
+        toast.success(`공지사항이 ${selectedTenantIds.length}개 테넌트에 발행되었습니다.`);
+      } else {
+        toast.success('공지사항이 발행되었습니다. (배포 대상 없음)');
+      }
+
+      setPublishTarget(null);
+    } catch {
+      toast.error('공지사항 발행에 실패했습니다.');
+    }
+  };
+
+  const handleTenantSelect = (tenantId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedTenantIds((prev) => [...prev, tenantId]);
+    } else {
+      setSelectedTenantIds((prev) => prev.filter((id) => id !== tenantId));
+    }
   };
 
   const handleArchive = async (id: number) => {
@@ -241,9 +294,9 @@ export function NoticesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handlePublish(notice.id)}
+                        onClick={() => handlePublishOpen(notice)}
                         disabled={publishMutation.isPending}
-                        title="발행"
+                        title="발행 및 배포"
                       >
                         <Send className="h-4 w-4 text-green-600" />
                       </Button>
@@ -333,6 +386,15 @@ export function NoticesPage() {
                 rows={8}
               />
             </div>
+            <div className="space-y-2">
+              <Label>만료일 (선택)</Label>
+              <Input
+                type="datetime-local"
+                value={formData.expiredAt || ''}
+                onChange={(e) => setFormData({ ...formData, expiredAt: e.target.value || undefined })}
+              />
+              <p className="text-xs text-text-secondary">설정하지 않으면 무기한 게시됩니다.</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
@@ -399,6 +461,15 @@ export function NoticesPage() {
                 rows={8}
               />
             </div>
+            <div className="space-y-2">
+              <Label>만료일 (선택)</Label>
+              <Input
+                type="datetime-local"
+                value={formData.expiredAt || ''}
+                onChange={(e) => setFormData({ ...formData, expiredAt: e.target.value || undefined })}
+              />
+              <p className="text-xs text-text-secondary">설정하지 않으면 무기한 게시됩니다.</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingNotice(null)}>
@@ -437,6 +508,97 @@ export function NoticesPage() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Publish & Distribute Dialog */}
+      <Dialog open={!!publishTarget} onOpenChange={() => setPublishTarget(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>공지사항 발행 및 배포</DialogTitle>
+            <DialogDescription>
+              "{publishTarget?.title}" 공지를 발행하고 배포할 테넌트를 선택하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <Label className="text-base font-medium">배포 대상</Label>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant={distributeToAll ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDistributeToAll(true)}
+                >
+                  모든 테넌트
+                </Button>
+                <Button
+                  variant={!distributeToAll ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDistributeToAll(false)}
+                >
+                  선택한 테넌트
+                </Button>
+              </div>
+            </div>
+
+            {!distributeToAll && (
+              <div className="space-y-3">
+                <Label className="text-sm text-text-secondary">
+                  배포할 테넌트를 선택하세요 ({selectedTenantIds.length}개 선택됨)
+                </Label>
+                <div className="max-h-60 overflow-y-auto border rounded-lg p-3 space-y-2">
+                  {tenants.length === 0 ? (
+                    <p className="text-sm text-text-secondary text-center py-4">
+                      등록된 테넌트가 없습니다.
+                    </p>
+                  ) : (
+                    tenants.map((tenant) => (
+                      <div
+                        key={tenant.tenantId}
+                        className="flex items-center gap-3 p-2 hover:bg-bg-secondary rounded"
+                      >
+                        <Checkbox
+                          id={`tenant-${tenant.tenantId}`}
+                          checked={selectedTenantIds.includes(tenant.tenantId)}
+                          onCheckedChange={(checked) =>
+                            handleTenantSelect(tenant.tenantId, checked === true)
+                          }
+                        />
+                        <label
+                          htmlFor={`tenant-${tenant.tenantId}`}
+                          className="flex-1 cursor-pointer"
+                        >
+                          <div className="font-medium">{tenant.name}</div>
+                          <div className="text-xs text-text-secondary">{tenant.code}</div>
+                        </label>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPublishTarget(null)}>
+              취소
+            </Button>
+            <Button
+              onClick={handlePublishAndDistribute}
+              disabled={
+                publishMutation.isPending ||
+                distributeMutation.isPending ||
+                distributeAllMutation.isPending ||
+                (!distributeToAll && selectedTenantIds.length === 0)
+              }
+            >
+              {(publishMutation.isPending ||
+                distributeMutation.isPending ||
+                distributeAllMutation.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              발행 및 배포
             </Button>
           </DialogFooter>
         </DialogContent>

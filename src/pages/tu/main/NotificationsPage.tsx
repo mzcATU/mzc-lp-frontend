@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
-import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications } from '@/hooks/tu';
 import type { NotificationType } from '@/types/tu';
+import { useAuthStore } from '@/store/common/authStore';
 
 // 알림 타입별 필터 옵션
 const notificationTypes: { id: NotificationType | 'all'; label: string }[] = [
@@ -61,6 +62,7 @@ export function NotificationsPage() {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const [activeType, setActiveType] = useState<NotificationType | 'all'>('all');
+  const { isAuthenticated } = useAuthStore();
 
   // React Query 훅
   const filter = activeType === 'all' ? undefined : { type: activeType };
@@ -95,6 +97,33 @@ export function NotificationsPage() {
   const handleDeleteAllRead = () => {
     deleteReadNotificationsMutation.mutate();
   };
+
+  // 비로그인 상태
+  if (!isAuthenticated) {
+    return (
+      <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
+        <LandingHeader />
+        <main className="w-full px-4 md:px-8 lg:px-16 py-12">
+          <div className="text-center py-20">
+            <Bell className={`w-20 h-20 mx-auto mb-6 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+            <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              로그인이 필요합니다
+            </h2>
+            <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              알림을 보려면 로그인해주세요.
+            </p>
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-full text-white font-medium"
+            >
+              로그인하기 <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </main>
+        <LandingFooter />
+      </div>
+    );
+  }
 
   // 로딩 상태
   if (isLoading) {

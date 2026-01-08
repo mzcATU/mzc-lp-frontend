@@ -145,15 +145,6 @@ export const tenantAdminMenuData: MenuItem[] = [
     ],
   },
   {
-    id: 'automation',
-    label: { ko: '자동화', en: 'Automation' },
-    icon: Zap,
-    subItems: [
-      { id: 'auto-enrollment', label: { ko: '자동 입과 규칙', en: 'Auto Enrollment' }, icon: Zap, path: '/ta/automation/rules' },
-      { id: 'member-pools', label: { ko: '입과 그룹 관리', en: 'Enrollment Group Management' }, icon: Users, path: '/ta/automation/pools' },
-    ],
-  },
-  {
     id: 'tenant-analytics',
     label: { ko: '데이터 및 통계', en: 'Tenant Activity Analytics' },
     icon: TrendingUp,

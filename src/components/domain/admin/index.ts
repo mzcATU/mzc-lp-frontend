@@ -4,3 +4,4 @@ export { RoleBadge, RoleBadgeList, type SystemRole, type CourseRole } from './Ro
 export { AdminStatsCard, AdminStatsGrid } from './AdminStatsCard';
 export { AdminPageHeader } from './AdminPageHeader';
 export { RecentItemsList } from './RecentItemsList';
+export { SystemNoticePopup } from './SystemNoticePopup';

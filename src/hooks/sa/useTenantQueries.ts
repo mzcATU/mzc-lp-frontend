@@ -13,6 +13,7 @@ export const tenantKeys = {
   details: () => [...tenantKeys.all, 'detail'] as const,
   detail: (id: number) => [...tenantKeys.details(), id] as const,
   stats: () => [...tenantKeys.all, 'stats'] as const,
+  userStats: () => [...tenantKeys.all, 'userStats'] as const,
 };
 
 // ============================================
@@ -41,6 +42,14 @@ export const useTenantStats = () => {
   return useQuery({
     queryKey: tenantKeys.stats(),
     queryFn: () => tenantService.getStats(),
+  });
+};
+
+/** 테넌트별 사용자 수 통계 조회 */
+export const useTenantUserStats = () => {
+  return useQuery({
+    queryKey: tenantKeys.userStats(),
+    queryFn: () => tenantService.getUserStats(),
   });
 };
 
