@@ -90,6 +90,11 @@ const t = {
   classStartBeforeEnrollEnd: { ko: '학습 시작일은 모집 종료일 이후여야 합니다.', en: 'Class start date must be after enrollment end date.' },
   createSuccess: { ko: '차수가 생성되었습니다.', en: 'Course time created successfully.' },
   createError: { ko: '차수 생성에 실패했습니다.', en: 'Failed to create course time.' },
+  // Error messages
+  errorInstructorConflict: { ko: '강사 일정 충돌', en: 'Instructor Schedule Conflict' },
+  errorConflictingTimes: { ko: '충돌하는 차수', en: 'Conflicting course times' },
+  errorEnrollEndBeforeClassStart: { ko: '모집 종료일은 학습 시작일 이전이어야 합니다.', en: 'Enrollment end date must be before class start date.' },
+  errorValidation: { ko: '입력값을 확인해주세요.', en: 'Please check your input.' },
 };
 
 export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCreatePageProps>) {
@@ -132,6 +137,11 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateCourseTimeRequest, string>>>({});
+
+  // 강사 일정 충돌 정보
+  const [conflictInfo, setConflictInfo] = useState<{
+    conflicts: Array<{ conflictingTimeTitle: string; classStartDate: string; classEndDate: string }>;
+  } | null>(null);
 
   const validateStep = (step: number): boolean => {
     const newErrors: Partial<Record<keyof CreateCourseTimeRequest, string>> = {};
@@ -230,8 +240,18 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
     try {
       const priceNum = parseFloat(formData.price) || 0;
+
+      // 상시모집일 때 모집 종료일을 학습 시작일 하루 전으로 계산
+      let enrollEndDate = formData.enrollEndDate;
+      if (isAlwaysOpen && formData.classStartDate) {
+        const classStart = new Date(formData.classStartDate);
+        classStart.setDate(classStart.getDate() - 1);
+        enrollEndDate = classStart.toISOString().split('T')[0];
+      }
+
       const request: CreateCourseTimeRequest = {
         ...formData,
+        enrollEndDate,
         capacity: formData.capacity === 0 ? null : formData.capacity,
         price: priceNum.toString(),
         isFree: priceNum === 0,
@@ -239,12 +259,38 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         description: formData.description?.trim() || undefined,
       };
 
+      console.log('[CourseTimeCreatePage] request:', request);
       await createTime.mutateAsync(request);
       toast.success(getText('createSuccess'));
       navigate('/to/times');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Create failed:', err);
-      toast.error(getText('createError'));
+
+      // 에러 응답 파싱
+      const axiosErr = err as { response?: { data?: { error?: { code?: string; message?: string }; data?: Array<{ conflictingTimeTitle?: string; classStartDate?: string; classEndDate?: string }> } } };
+      const errorData = axiosErr?.response?.data;
+      const errorCode = errorData?.error?.code;
+
+      if (errorCode === 'IIS006' && errorData?.data) {
+        // 강사 일정 충돌 에러 - Step 2로 이동하여 페이지에 표시
+        const conflicts = errorData.data.map((c) => ({
+          conflictingTimeTitle: c.conflictingTimeTitle || '',
+          classStartDate: c.classStartDate || '',
+          classEndDate: c.classEndDate || '',
+        }));
+        setConflictInfo({ conflicts });
+        setCurrentStep(2); // Step 2로 자동 이동
+        toast.error(getText('errorInstructorConflict'));
+      } else if (errorCode === 'TS004') {
+        // 모집 종료일 validation 에러
+        toast.error(getText('errorEnrollEndBeforeClassStart'));
+      } else if (errorCode === 'C001') {
+        // 일반 validation 에러
+        toast.error(errorData?.error?.message || getText('errorValidation'));
+      } else {
+        // 기타 에러
+        toast.error(errorData?.error?.message || getText('createError'));
+      }
     }
   };
 
@@ -255,6 +301,10 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+    // 날짜 변경 시 충돌 정보 클리어
+    if (['classStartDate', 'classEndDate'].includes(field) && conflictInfo) {
+      setConflictInfo(null);
     }
   };
 
@@ -598,6 +648,42 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   </div>
                 </div>
               </div>
+
+              {/* 강사 일정 충돌 경고 */}
+              {conflictInfo && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                      <span className="text-red-600 text-xs font-bold">!</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-red-800">{getText('errorInstructorConflict')}</p>
+                      <p className="text-sm text-red-600 mt-1">{getText('errorConflictingTimes')}:</p>
+                      <ul className="mt-2 space-y-1">
+                        {conflictInfo.conflicts.map((c, i) => (
+                          <li key={i} className="text-sm text-red-700 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                            <span className="font-medium">{c.conflictingTimeTitle}</span>
+                            <span className="text-red-500">({c.classStartDate} ~ {c.classEndDate})</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-sm text-red-600 mt-3">
+                        {language === 'ko'
+                          ? '위 기간과 겹치지 않도록 학습 기간을 조정해주세요.'
+                          : 'Please adjust the learning period to avoid conflicts.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setConflictInfo(null)}
+                      className="text-red-400 hover:text-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

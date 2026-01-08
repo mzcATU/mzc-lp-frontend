@@ -258,7 +258,7 @@ export function TenantsPage() {
       } else {
         // 생성
         const createData: CreateTenantRequest = {
-          code: data.code,
+          code: data.code.toUpperCase(),
           name: data.name,
           type: data.type,
           plan: data.plan,
@@ -266,6 +266,7 @@ export function TenantsPage() {
           adminEmail: data.adminEmail,
           adminName: data.adminName,
         };
+        console.log('[TenantsPage] createData:', createData);
         const result = await createMutation.mutateAsync(createData);
         setIsCreateDialogOpen(false);
         // 생성 성공 시 관리자 정보 다이얼로그 표시
@@ -427,10 +428,12 @@ export function TenantsPage() {
                 <Label htmlFor="code">테넌트 코드</Label>
                 <Input
                   id="code"
-                  placeholder="영문 소문자, 숫자만 입력"
+                  placeholder="예: TENANT_01"
                   {...register('code', { required: !selectedTenant })}
                   disabled={!!selectedTenant}
+                  className="uppercase"
                 />
+                <p className="text-xs text-text-secondary">대문자, 숫자, 언더스코어(_)만 허용</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="plan">플랜</Label>
