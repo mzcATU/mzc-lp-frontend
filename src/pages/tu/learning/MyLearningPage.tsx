@@ -165,11 +165,12 @@ export function MyLearningPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
-  // API 파라미터
+  // API 파라미터 - "수강 중인 강의" 페이지이므로 APPROVED 상태만 조회
+  // 필터에서 다른 상태를 선택하면 해당 상태로 조회
   const params: EnrollmentFilterParams = {
     page,
     size: 12,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
+    status: statusFilter !== 'all' ? statusFilter : 'APPROVED',
   };
 
   const { data, isLoading, isError } = useMyEnrollments(params);
