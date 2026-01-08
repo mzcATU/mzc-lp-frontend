@@ -67,8 +67,12 @@ export const useLogin = () => {
       const isDefaultSubdomain = !subdomain || subdomain === 'default' || subdomain === 'www';
       const subdomainPrefix = (!isDefaultSubdomain && user.role !== 'SYSTEM_ADMIN') ? `/${subdomain}` : '';
 
-      // 프로필 미완성 시 프로필 수정 페이지로 리다이렉트 (단체 계정 생성 사용자)
-      if (userDetail.profileCompleted === false) {
+      // 관리자 역할은 프로필 체크 스킵
+      const adminRoles = ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'TENANT_OPERATOR'];
+      const isAdminRole = adminRoles.includes(user.role);
+
+      // 프로필 미완성 시 프로필 수정 페이지로 리다이렉트 (단체 계정 생성 사용자 - 관리자 제외)
+      if (!isAdminRole && userDetail.profileCompleted === false) {
         const profileEditPath = `${subdomainPrefix}/tu/b2c/mypage/profile`;
         navigate(profileEditPath, { state: { profileIncomplete: true } });
         return;
@@ -78,7 +82,7 @@ export const useLogin = () => {
       const roleBasePath: Record<string, string> = {
         SYSTEM_ADMIN: '/sa',
         TENANT_ADMIN: '/ta',
-        OPERATOR: '/to',
+        TENANT_OPERATOR: '/to',
         DESIGNER: '/tu/teaching',
         USER: '/tu/b2c',
       };

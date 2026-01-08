@@ -521,7 +521,8 @@ export function TenantsPage() {
                 취소
               </Button>
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSubmit(onSubmit)}
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {(createMutation.isPending || updateMutation.isPending) && (

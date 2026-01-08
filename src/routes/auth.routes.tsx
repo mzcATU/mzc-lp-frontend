@@ -23,5 +23,15 @@ export const authRoutes = (
         </ProtectedRoute>
       }
     />
+
+    {/* 프로필 설정 (서브도메인 포함) */}
+    <Route
+      path="/:subdomain/profile-setup"
+      element={
+        <ProtectedRoute>
+          <ProfileSetupPage />
+        </ProtectedRoute>
+      }
+    />
   </>
 );

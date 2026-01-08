@@ -10,3 +10,4 @@ export { employeeService } from './employeeService';
 export { departmentService } from './departmentService';
 export { autoEnrollmentRuleService } from './autoEnrollmentRuleService';
 export { tenantNoticeService } from './tenantNoticeService';
+export { systemNoticeService } from './systemNoticeService';

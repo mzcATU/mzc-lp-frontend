@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Building2, Briefcase, User, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguageStore } from '@/store/common/languageStore';
@@ -15,15 +15,24 @@ import {
 } from '@/components/common';
 import { useMyProfile, useUpdateProfile } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
-import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
 
 /**
  * 프로필 설정 페이지 (단체 계정 생성 후 직급/부서 입력용)
  * 필수 정보가 없는 사용자가 리다이렉트되는 페이지
  */
+// 역할별 기본 경로
+const ROLE_BASE_PATH: Record<string, string> = {
+  SYSTEM_ADMIN: '/sa',
+  TENANT_ADMIN: '/ta',
+  TENANT_OPERATOR: '/to',
+  DESIGNER: '/tu/teaching',
+  USER: '/tu/b2c',
+};
+
 export function ProfileSetupPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { subdomain } = useParams<{ subdomain?: string }>();
   const { language } = useLanguageStore();
   const user = useAuthStore((state) => state.user);
 
@@ -47,17 +56,32 @@ export function ProfileSetupPage() {
     }
   }, [profile]);
 
+  // 서브도메인 prefix 계산
+  const getSubdomainPrefix = () => {
+    if (subdomain && subdomain !== 'default' && subdomain !== 'www') {
+      return `/${subdomain}`;
+    }
+    return '';
+  };
+
+  // 역할에 맞는 리다이렉트 경로 계산
+  const getRedirectPath = () => {
+    const subdomainPrefix = getSubdomainPrefix();
+    const basePath = user?.role ? (ROLE_BASE_PATH[user.role] || '/tu/b2c') : '/tu/b2c';
+    return `${subdomainPrefix}${basePath}`;
+  };
+
   // 이미 프로필이 완료된 경우 원래 페이지로 리다이렉트
   useEffect(() => {
     if (profile?.profileCompleted && profile.department && profile.position) {
       const returnTo = location.state?.returnTo;
       if (returnTo) {
         navigate(returnTo, { replace: true });
-      } else if (user?.role) {
-        navigate(ROLE_REDIRECT_PATH[user.role], { replace: true });
+      } else {
+        navigate(getRedirectPath(), { replace: true });
       }
     }
-  }, [profile, navigate, location.state, user]);
+  }, [profile, navigate, location.state, user, subdomain]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,10 +112,8 @@ export function ProfileSetupPage() {
       const returnTo = location.state?.returnTo;
       if (returnTo) {
         navigate(returnTo, { replace: true });
-      } else if (user?.role) {
-        navigate(ROLE_REDIRECT_PATH[user.role], { replace: true });
       } else {
-        navigate('/', { replace: true });
+        navigate(getRedirectPath(), { replace: true });
       }
     } catch {
       toast.error(

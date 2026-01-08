@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TenantOperatorSidebar } from './TenantOperatorSidebar';
+import { SystemNoticePopup } from '@/components/domain/admin';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { tenantOperatorMenuData } from '@/config/sidebar-menus';
 import { useUIStore, useIsDarkMode } from '@/store/common/uiStore';
@@ -57,6 +58,9 @@ export function TenantOperatorLayout({
       />
 
       <main className="flex-1 overflow-auto">{children}</main>
+
+      {/* SA/TA 시스템 공지 팝업 */}
+      <SystemNoticePopup />
     </div>
   );
 }
