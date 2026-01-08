@@ -399,10 +399,48 @@ export function UsersPage() {
       });
 
       setProcessingProgress(100);
-      setUploadResult(convertApiResponse(response));
+      const result = convertApiResponse(response);
+      setUploadResult(result);
+
+      // 결과에 따른 피드백
+      if (result.failed > 0) {
+        // 일부 실패한 경우
+        toast.warning(`${result.success}개 계정 생성 완료, ${result.failed}개 실패`, {
+          description: '실패한 항목을 확인하고 수정 후 다시 시도해주세요.',
+          duration: 5000,
+        });
+      } else {
+        // 모두 성공한 경우
+        toast.success(`${result.success}개의 계정이 생성되었습니다.`);
+      }
     } catch (err) {
       console.error('파일 업로드 실패:', err);
-      toast.error(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.');
+
+      // Axios 에러에서 백엔드 에러 메시지 추출
+      let errorMessage = '파일 업로드에 실패했습니다.';
+      let errorDescription = '';
+
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { error?: { message?: string } }; status?: number } };
+
+        if (axiosError.response?.data?.error?.message) {
+          // 백엔드에서 보낸 상세한 에러 메시지 사용
+          errorMessage = axiosError.response.data.error.message;
+        } else if (axiosError.response?.status === 400) {
+          errorMessage = '파일 형식이 올바르지 않습니다.';
+          errorDescription = 'Excel 파일의 헤더를 확인해주세요. 필수 컬럼: email (또는 이메일)';
+        } else if (axiosError.response?.status === 500) {
+          errorMessage = '서버 오류가 발생했습니다.';
+          errorDescription = '파일 형식과 내용을 확인해주세요. 파일이 손상되었거나 올바른 Excel/CSV 파일이 아닐 수 있습니다.';
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      toast.error(errorMessage, {
+        description: errorDescription || '지원 형식: .xlsx, .csv (최대 500행)',
+        duration: 6000,
+      });
     } finally {
       setIsProcessing(false);
     }
