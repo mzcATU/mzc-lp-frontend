@@ -393,8 +393,9 @@ export function UsersPage() {
     try {
       setProcessingProgress(30);
 
-      // 실제 API 호출
+      // 실제 API 호출 (비밀번호 자동생성: 1q2w3e4r!)
       const response = await userService.fileBulkCreateUsers(file, {
+        defaultPassword: '1q2w3e4r!',
         autoLinkEmployees: true,
       });
 
@@ -476,13 +477,14 @@ export function UsersPage() {
   const handleDownloadTemplate = () => {
     // CSV 템플릿 생성 (백엔드 파서가 지원하는 컬럼)
     // 필수: email (이메일)
-    // 선택: name (이름), password (비밀번호), phone (전화번호), department (부서), position (직급)
+    // 선택: name (이름), phone (전화번호), department (부서), position (직급)
+    // 비밀번호는 자동으로 1q2w3e4r!로 생성됨
     // 한글 헤더 사용 (백엔드가 한글 헤더 지원)
-    const headers = ['이메일', '이름', '비밀번호', '전화번호', '부서', '직급'];
+    const headers = ['이메일', '이름', '전화번호', '부서', '직급'];
     const exampleRows = [
-      ['user1@company.com', '홍길동', 'password123!', '010-1234-5678', '개발팀', '대리'],
-      ['user2@company.com', '김영희', 'secure456!', '010-2345-6789', '마케팅팀', '과장'],
-      ['user3@company.com', '이철수', 'pass789!', '010-3456-7890', '인사팀', '팀장'],
+      ['user1@company.com', '홍길동', '010-1234-5678', '개발팀', '대리'],
+      ['user2@company.com', '김영희', '010-2345-6789', '마케팅팀', '과장'],
+      ['user3@company.com', '이철수', '010-3456-7890', '인사팀', '팀장'],
     ];
 
     // CSV 콘텐츠 생성
@@ -507,8 +509,8 @@ export function UsersPage() {
     URL.revokeObjectURL(url);
 
     toast.success('템플릿 파일이 다운로드되었습니다.', {
-      description: '필수: 이메일 | 선택: 이름, 비밀번호, 전화번호, 부서, 직급 (최대 500행)',
-      duration: 4000,
+      description: '필수: 이메일 | 선택: 이름, 전화번호, 부서, 직급 | 비밀번호: 자동생성 (1q2w3e4r!)',
+      duration: 5000,
     });
   };
 
