@@ -44,8 +44,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
-  // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
-  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
+  // USER: 권한 없음, INSTRUCTOR: 강사, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OWNER'>('USER');
 
   // 서브도메인 prefix 계산
   const getSubdomainPrefix = () => {
@@ -63,11 +63,14 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
         if (Array.isArray(roles) && roles.length > 0) {
           const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
           const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+          const hasInstructor = roles.some((r: { role: string }) => r.role === 'INSTRUCTOR');
 
           if (hasOwner) {
             setCourseRoleStatus('OWNER');
           } else if (hasDesigner) {
             setCourseRoleStatus('DESIGNER');
+          } else if (hasInstructor) {
+            setCourseRoleStatus('INSTRUCTOR');
           }
         }
       } catch (error) {
