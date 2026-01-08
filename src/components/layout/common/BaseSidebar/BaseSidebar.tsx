@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   ChevronDown,
@@ -34,10 +34,43 @@ export function BaseSidebar({
   roleType = 'tu',
 }: BaseSidebarProps & { showModeSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // 현재 경로에 맞는 메뉴 아이템 찾기
+  const findActiveMenuItem = useMemo(() => {
+    const { pathname } = location;
+
+    for (const item of menuData) {
+      // 2단계 서브메뉴 먼저 확인 (더 구체적인 경로 우선)
+      if (item.subItems) {
+        for (const subItem of item.subItems) {
+          if (subItem.path && pathname.startsWith(subItem.path)) {
+            return { itemId: subItem.id, parentId: item.id };
+          }
+        }
+      }
+
+      // 1단계 메뉴 확인
+      if (item.path && pathname.startsWith(item.path)) {
+        return { itemId: item.id, parentId: null };
+      }
+    }
+
+    return { itemId: 'dashboard', parentId: null };
+  }, [location.pathname, menuData]);
+
+  // URL 변경 시 활성 상태 동기화
+  useEffect(() => {
+    setActiveItem(findActiveMenuItem.itemId);
+
+    if (findActiveMenuItem.parentId && !expandedItems.includes(findActiveMenuItem.parentId)) {
+      setExpandedItems(prev => [...prev, findActiveMenuItem.parentId!]);
+    }
+  }, [findActiveMenuItem]);
 
   // 인증 스토어
   const { refreshToken, logout } = useAuthStore();
