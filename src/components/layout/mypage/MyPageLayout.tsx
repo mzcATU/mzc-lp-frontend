@@ -54,6 +54,7 @@ export function MyPageLayout({ children }: MyPageLayoutProps) {
           onMenuItemClick={handleMenuItemClick}
           isDarkMode={isDarkMode}
           language={language}
+          subdomain={subdomain}
         />
 
         <main className="flex-1 overflow-auto">{children}</main>

@@ -8,6 +8,7 @@ import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
+import { useSubdomainPath } from '@/hooks/common';
 import { cn } from '@/utils/cn';
 import {
   AlertDialog,
@@ -27,13 +28,25 @@ interface MyPageSidebarProps {
   onMenuItemClick?: (itemId: string) => void;
   isDarkMode?: boolean;
   language?: 'ko' | 'en';
+  subdomain?: string;
 }
 
 type ViewMode = 'instructor' | 'learner';
 
-export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
+export function MyPageSidebar({ onMenuItemClick, subdomain: subdomainProp }: MyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { subdomain: subdomainFromParams } = useSubdomainPath();
+
+  // props로 전달된 subdomain을 우선 사용, 없으면 훅에서 가져온 값 사용
+  const subdomain = subdomainProp || subdomainFromParams;
+  const prefixPath = (path: string) => {
+    if (subdomain) {
+      return `/${subdomain}${path}`;
+    }
+    return path;
+  };
+
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
@@ -269,7 +282,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                 <button
                   onClick={() => {
                     setCurrentMode('instructor');
-                    navigate('/tu/dashboard');
+                    navigate(prefixPath('/tu/dashboard'));
                   }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
@@ -288,7 +301,10 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                   <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
                 </button>
                 <button
-                  onClick={() => setCurrentMode('learner')}
+                  onClick={() => {
+                    setCurrentMode('learner');
+                    navigate(prefixPath('/tu/b2c/mypage'));
+                  }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
                     'transition-all duration-200 text-sm font-medium whitespace-nowrap'
