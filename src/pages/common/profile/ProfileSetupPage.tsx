@@ -37,7 +37,7 @@ export function ProfileSetupPage() {
   const user = useAuthStore((state) => state.user);
 
   // API Hooks
-  const { data: profile, isLoading: isLoadingProfile } = useMyProfile();
+  const { data: profile, isLoading: isLoadingProfile, refetch } = useMyProfile();
   const updateProfileMutation = useUpdateProfile();
 
   // Local State
@@ -64,10 +64,15 @@ export function ProfileSetupPage() {
     return '';
   };
 
-  // 프로필 설정 완료 후 마이페이지로 리다이렉트
+  // 역할에 맞는 리다이렉트 경로 계산 (USER는 마이페이지 프로필로 이동)
   const getRedirectPath = () => {
     const subdomainPrefix = getSubdomainPrefix();
-    return `${subdomainPrefix}/tu/b2c/mypage`;
+    // USER 역할은 프로필 설정 후 마이페이지 프로필로 이동
+    if (user?.role === 'USER') {
+      return `${subdomainPrefix}/tu/b2c/mypage/profile`;
+    }
+    const basePath = user?.role ? (ROLE_BASE_PATH[user.role] || '/tu/b2c') : '/tu/b2c';
+    return `${subdomainPrefix}${basePath}`;
   };
 
   // 이미 프로필이 완료된 경우 원래 페이지로 리다이렉트
@@ -100,6 +105,9 @@ export function ProfileSetupPage() {
         department: formData.department.trim(),
         position: formData.position.trim(),
       });
+
+      // 캐시 갱신 후 리다이렉트 (ProfileRequiredRoute가 업데이트된 프로필을 인식하도록)
+      await refetch();
 
       toast.success(
         language === 'ko'
