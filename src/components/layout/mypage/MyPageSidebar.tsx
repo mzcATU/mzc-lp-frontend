@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
@@ -34,6 +34,7 @@ type ViewMode = 'instructor' | 'learner';
 export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { subdomain } = useParams<{ subdomain?: string }>();
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
@@ -43,8 +44,16 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
-  // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
-  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
+  // USER: 권한 없음, INSTRUCTOR: 강사, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OWNER'>('USER');
+
+  // 서브도메인 prefix 계산
+  const getSubdomainPrefix = () => {
+    if (subdomain && subdomain !== 'default' && subdomain !== 'www') {
+      return `/${subdomain}`;
+    }
+    return '';
+  };
 
   // CourseRole API로 역할 확인
   useEffect(() => {
@@ -54,11 +63,14 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
         if (Array.isArray(roles) && roles.length > 0) {
           const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
           const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+          const hasInstructor = roles.some((r: { role: string }) => r.role === 'INSTRUCTOR');
 
           if (hasOwner) {
             setCourseRoleStatus('OWNER');
           } else if (hasDesigner) {
             setCourseRoleStatus('DESIGNER');
+          } else if (hasInstructor) {
+            setCourseRoleStatus('INSTRUCTOR');
           }
         }
       } catch (error) {
@@ -68,8 +80,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
     checkCourseRole();
   }, []);
 
-  // 사용자가 DESIGNER 이상의 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
-  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || courseRoleStatus !== 'USER';
+  // 사용자가 강사/디자이너 역할을 가지고 있는지 확인 (CourseRole 기준)
+  const isDesigner = courseRoleStatus !== 'USER';
 
   // 강의 개설하기 클릭 핸들러
   const handleCreateCourseClick = () => {
@@ -269,7 +281,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                 <button
                   onClick={() => {
                     setCurrentMode('instructor');
-                    navigate('/tu/dashboard');
+                    const subdomainPrefix = getSubdomainPrefix();
+                    navigate(`${subdomainPrefix}/tu/dashboard`);
                   }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',

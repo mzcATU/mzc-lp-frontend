@@ -345,7 +345,7 @@ export function TenantsPage() {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter || 'all'} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="상태" />
           </SelectTrigger>
@@ -357,7 +357,7 @@ export function TenantsPage() {
             <SelectItem value="TERMINATED">종료</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={planFilter} onValueChange={setPlanFilter}>
+        <Select value={planFilter || 'all'} onValueChange={setPlanFilter}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="플랜" />
           </SelectTrigger>
