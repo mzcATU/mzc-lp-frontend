@@ -6,11 +6,16 @@ import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import type { TaKpiDashboardResponse } from '@/types/admin';
 
+export type DashboardPeriod = '7d' | '30d' | 'all';
+
 export const taDashboardService = {
   /** TA KPI 대시보드 통계 조회 */
-  async getKpiDashboard(): Promise<TaKpiDashboardResponse> {
+  async getKpiDashboard(period?: DashboardPeriod): Promise<TaKpiDashboardResponse> {
     const { data } = await axiosInstance.get<TaKpiDashboardResponse>(
-      API_ENDPOINTS.TA_DASHBOARD.KPI
+      API_ENDPOINTS.TA_DASHBOARD.KPI,
+      {
+        params: period && period !== 'all' ? { period } : undefined,
+      }
     );
     return data;
   },

@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -165,6 +166,7 @@ function StatCard({
 
 export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<InstructorAssignmentsPageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<InstructorRole | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<AssignmentStatus | 'all'>('all');
@@ -408,7 +410,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem
-            onClick={() => item.courseTime?.id && navigate(`/to/times/${item.courseTime.id}`)}
+            onClick={() => item.courseTime?.id && navigate(prefixPath(`/to/times/${item.courseTime.id}`))}
             disabled={!item.courseTime?.id}
           >
             <Eye size={14} />
@@ -850,7 +852,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
                 <button
                   onClick={() => {
                     if (selectedAssignment.courseTime?.id) {
-                      navigate(`/to/times/${selectedAssignment.courseTime.id}`);
+                      navigate(prefixPath(`/to/times/${selectedAssignment.courseTime.id}`));
                     }
                   }}
                   disabled={!selectedAssignment.courseTime?.id}

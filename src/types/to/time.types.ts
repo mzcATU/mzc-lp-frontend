@@ -66,12 +66,16 @@ export interface CourseTimeInstructor {
   status: 'ACTIVE' | 'REPLACED' | 'CANCELLED';
 }
 
-/** 차수 상세 조회 응답 */
+/** 차수 상세 조회 응답 (백엔드 CourseTimeDetailResponse 매칭) */
 export interface CourseTimeDetailResponse extends CourseTimeResponse {
-  description: string | null;
-  location: string | null;
+  programId: number | null;
   programTitle: string | null;
-  cmCourseTitle: string | null;
+  programDescription: string | null;
+  maxWaitingCount: number | null;
+  minProgressForCompletion: number | null;
+  locationInfo: string | null;
+  createdBy: number | null;
+  updatedAt: string;
   instructors: CourseTimeInstructor[];
 }
 

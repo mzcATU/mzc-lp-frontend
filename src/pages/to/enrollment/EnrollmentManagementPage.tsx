@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -150,6 +151,7 @@ function StatCard({
 export function EnrollmentManagementPage({ language = 'ko' }: Readonly<EnrollmentManagementPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const courseTimeId = Number(id);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -475,7 +477,7 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/to/times')}
+              onClick={() => navigate(prefixPath('/to/times'))}
               className="border border-border"
             >
               <ArrowLeft size={16} />

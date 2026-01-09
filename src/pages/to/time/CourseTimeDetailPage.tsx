@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import {
   Edit,
@@ -23,7 +24,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge, Input, Label, NativeSelect, Card, Textarea, BackButton } from '@/components/common';
+import { Button, Badge, Input, Label, NativeSelect, Card, BackButton } from '@/components/common';
 import { EnrollmentTab } from '@/pages/to/enrollment';
 import {
   useTime,
@@ -138,6 +139,7 @@ const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'su
 export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const timeId = parseInt(id || '0');
 
   const [isEditing, setIsEditing] = useState(false);
@@ -189,10 +191,9 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     if (courseTime) {
       setEditData({
         title: courseTime.title,
-        description: courseTime.description || '',
         deliveryType: courseTime.deliveryType,
         enrollmentMethod: courseTime.enrollmentMethod,
-        location: courseTime.location || '',
+        location: courseTime.locationInfo || '',
         capacity: courseTime.capacity,
         price: courseTime.price ? parseFloat(courseTime.price) : null,
       });
@@ -221,7 +222,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     try {
       await deleteTime.mutateAsync(timeId);
       toast.success(getText('deleteSuccess'));
-      navigate('/to/times');
+      navigate(prefixPath('/to/times'));
     } catch (err) {
       console.error('Delete failed:', err);
       toast.error(getText('statusChangeError'));
@@ -309,7 +310,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
           <Calendar size={48} className="mx-auto mb-3 text-text-placeholder" />
           <p className="text-text-secondary">{error ? getText('error') : getText('notFound')}</p>
           <BackButton
-            onClick={() => navigate('/to/times')}
+            onClick={() => navigate(prefixPath('/to/times'))}
             label={getText('back')}
             className="mt-4"
           />
@@ -326,7 +327,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <BackButton
-                onClick={() => navigate('/to/times')}
+                onClick={() => navigate(prefixPath('/to/times'))}
                 label={getText('back')}
               />
               <div>
@@ -363,7 +364,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                       <span>{getText('edit')}</span>
                     </Button>
                   )}
-                  <Button variant="ghost" onClick={() => navigate(`/to/times/${timeId}/clone`)}>
+                  <Button variant="ghost" onClick={() => navigate(prefixPath(`/to/times/${timeId}/clone`))}>
                     <Copy size={20} />
                     <span>{getText('clone')}</span>
                   </Button>
@@ -427,78 +428,217 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         {/* 기본 정보 탭 */}
         {activeTab === 'info' && (
           <div className="p-6 px-8 max-w-6xl">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 기본 정보 */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                <FileText size={18} className="text-text-secondary" />
-                {getText('basicInfo')}
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-text-secondary">{getText('timeTitle')}</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editData.title || ''}
-                      onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-text-primary font-medium">{courseTime.title}</p>
-                  )}
+            {/* Bento Grid 레이아웃 */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* 기본 정보 + 프로그램 정보 (통합, 2열 차지) */}
+              <Card className="p-6 lg:col-span-2">
+                <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <FileText size={18} className="text-text-secondary" />
+                  {getText('basicInfo')}
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-text-secondary">{getText('timeTitle')}</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editData.title || ''}
+                        onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                      />
+                    ) : (
+                      <p className="text-text-primary font-medium text-lg">{courseTime.title}</p>
+                    )}
+                  </div>
+
+                  {/* 프로그램 정보 섹션 */}
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BookOpen size={16} className="text-text-secondary" />
+                      <span className="text-sm font-medium text-text-secondary">{getText('programInfo')}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-text-secondary">{getText('programTitle')}</Label>
+                        <p className="text-text-primary font-medium">{courseTime.programTitle || '-'}</p>
+                      </div>
+                      {courseTime.programDescription && (
+                        <div className="md:col-span-2">
+                          <Label className="text-text-secondary">{getText('description')}</Label>
+                          <p className="text-text-primary whitespace-pre-wrap text-sm">{courseTime.programDescription}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-border">
+                    <Label className="text-text-secondary">{getText('createdAt')}</Label>
+                    <p className="text-text-primary text-sm">{formatDateTime(courseTime.createdAt)}</p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-text-secondary">{getText('description')}</Label>
-                  {isEditing ? (
-                    <Textarea
-                      value={editData.description || ''}
-                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                      rows={3}
-                    />
-                  ) : (
-                    <p className="text-text-primary whitespace-pre-wrap">
-                      {courseTime.description || getText('noDescription')}
+              </Card>
+
+              {/* 정원 현황 (Progress Bar 포함) */}
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <Users size={18} className="text-text-secondary" />
+                  {getText('capacityInfo')}
+                </h2>
+                <div className="space-y-4">
+                  {/* Progress Bar */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-text-secondary">{getText('currentEnrollment')}</Label>
+                      <span className="text-text-primary font-semibold">
+                        {courseTime.currentEnrollment}
+                        <span className="text-text-secondary font-normal">
+                          {' / '}{courseTime.capacity || getText('unlimited')}
+                        </span>
+                      </span>
+                    </div>
+                    {courseTime.capacity ? (
+                      <div className="w-full bg-bg-secondary rounded-full h-3 overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all duration-500',
+                            (courseTime.currentEnrollment / courseTime.capacity) >= 0.9
+                              ? 'bg-status-error'
+                              : (courseTime.currentEnrollment / courseTime.capacity) >= 0.7
+                              ? 'bg-status-warning'
+                              : 'bg-status-success'
+                          )}
+                          style={{ width: `${Math.min(100, (courseTime.currentEnrollment / courseTime.capacity) * 100)}%` }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full bg-bg-secondary rounded-full h-3">
+                        <div className="h-full rounded-full bg-status-info w-1/4" />
+                      </div>
+                    )}
+                    {courseTime.capacity && (
+                      <p className="text-xs text-text-secondary mt-1">
+                        {Math.round((courseTime.currentEnrollment / courseTime.capacity) * 100)}% {language === 'ko' ? '모집 완료' : 'filled'}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="bg-bg-secondary p-3 rounded-lg">
+                      <Label className="text-text-secondary text-xs">{getText('availableSeats')}</Label>
+                      <p className="text-text-primary text-xl font-bold">
+                        {courseTime.availableSeats ?? '∞'}
+                      </p>
+                    </div>
+                    <div className="bg-bg-secondary p-3 rounded-lg">
+                      <Label className="text-text-secondary text-xs flex items-center gap-1">
+                        <DollarSign size={12} />
+                        {getText('price')}
+                      </Label>
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          value={editData.price ?? ''}
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              price: e.target.value ? parseInt(e.target.value) : null,
+                            })
+                          }
+                          placeholder="0 = 무료"
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="text-text-primary text-xl font-bold">
+                          {formatPrice(courseTime.price, courseTime.isFree)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* 기간 정보 (D-Day 배지 포함) */}
+              <Card className="p-6 lg:col-span-2">
+                <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <Calendar size={18} className="text-text-secondary" />
+                  {getText('periodInfo')}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 모집 기간 */}
+                  <div className="bg-bg-secondary p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-text-secondary">{getText('enrollmentPeriod')}</Label>
+                      {(() => {
+                        const today = new Date();
+                        const enrollStart = new Date(courseTime.enrollStartDate);
+                        const enrollEnd = new Date(courseTime.enrollEndDate);
+                        const isAlwaysOpen = courseTime.enrollEndDate === '9999-12-31';
+
+                        if (isAlwaysOpen) {
+                          return <Badge variant="success">{getText('alwaysOpen')}</Badge>;
+                        } else if (today < enrollStart) {
+                          const daysUntil = Math.ceil((enrollStart.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          return <Badge variant="secondary">D-{daysUntil}</Badge>;
+                        } else if (today <= enrollEnd) {
+                          const daysLeft = Math.ceil((enrollEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          return <Badge variant="success">{language === 'ko' ? `모집 중 (D-${daysLeft})` : `Open (D-${daysLeft})`}</Badge>;
+                        } else {
+                          return <Badge variant="destructive">{language === 'ko' ? '모집 종료' : 'Closed'}</Badge>;
+                        }
+                      })()}
+                    </div>
+                    <p className="text-text-primary font-medium">
+                      {formatDate(courseTime.enrollStartDate)} ~ {formatDate(courseTime.enrollEndDate)}
                     </p>
+                  </div>
+
+                  {/* 학습 기간 */}
+                  <div className="bg-bg-secondary p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-text-secondary">{getText('learningPeriod')}</Label>
+                      {(() => {
+                        const today = new Date();
+                        const classStart = new Date(courseTime.classStartDate);
+                        const classEnd = new Date(courseTime.classEndDate);
+
+                        if (today < classStart) {
+                          const daysUntil = Math.ceil((classStart.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          return <Badge variant="secondary">D-{daysUntil}</Badge>;
+                        } else if (today <= classEnd) {
+                          const daysLeft = Math.ceil((classEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          return <Badge variant="default">{language === 'ko' ? `진행 중 (D-${daysLeft})` : `Ongoing (D-${daysLeft})`}</Badge>;
+                        } else {
+                          return <Badge variant="destructive">{language === 'ko' ? '종료' : 'Ended'}</Badge>;
+                        }
+                      })()}
+                    </div>
+                    <p className="text-text-primary font-medium">
+                      {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-text-secondary">{getText('allowLateEnrollment')}</Label>
+                    <Badge variant={courseTime.allowLateEnrollment ? 'success' : 'secondary'}>
+                      {courseTime.allowLateEnrollment ? getText('allowLateEnrollmentYes') : getText('allowLateEnrollmentNo')}
+                    </Badge>
+                  </div>
+                  {courseTime.minProgressForCompletion && (
+                    <div className="flex items-center gap-2">
+                      <Label className="text-text-secondary">{getText('minProgressForCompletion')}</Label>
+                      <Badge variant="default">{courseTime.minProgressForCompletion}%</Badge>
+                    </div>
                   )}
                 </div>
-                <div className="pt-2 border-t border-border">
-                  <Label className="text-text-secondary">{getText('createdAt')}</Label>
-                  <p className="text-text-primary text-sm">{formatDateTime(courseTime.createdAt)}</p>
-                </div>
-              </div>
-            </Card>
+              </Card>
 
-            {/* 프로그램 정보 */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                <BookOpen size={18} className="text-text-secondary" />
-                {getText('programInfo')}
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-text-secondary">{getText('programTitle')}</Label>
-                  <p className="text-text-primary font-medium">{courseTime.programTitle || '-'}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-text-secondary">{getText('courseId')}</Label>
-                    <p className="text-text-primary">{courseTime.cmCourseId || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-text-secondary">{getText('courseTitle')}</Label>
-                    <p className="text-text-primary">{courseTime.cmCourseTitle || '-'}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* 진행 정보 */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                <Play size={18} className="text-text-secondary" />
-                {getText('deliveryInfo')}
-              </h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              {/* 진행 정보 */}
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <Play size={18} className="text-text-secondary" />
+                  {getText('deliveryInfo')}
+                </h2>
+                <div className="space-y-4">
                   <div>
                     <Label className="text-text-secondary">{getText('deliveryType')}</Label>
                     {isEditing ? (
@@ -513,7 +653,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                         }))}
                       />
                     ) : (
-                      <p className="text-text-primary">
+                      <p className="text-text-primary font-medium">
                         {DELIVERY_TYPE_LABELS[courseTime.deliveryType]}
                       </p>
                     )}
@@ -535,161 +675,65 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                         }))}
                       />
                     ) : (
-                      <p className="text-text-primary">
+                      <p className="text-text-primary font-medium">
                         {ENROLLMENT_METHOD_LABELS[courseTime.enrollmentMethod]}
                       </p>
                     )}
                   </div>
+                  <div>
+                    <Label className="text-text-secondary flex items-center gap-1">
+                      <MapPin size={14} />
+                      {getText('location')}
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        value={editData.location || ''}
+                        onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                      />
+                    ) : (
+                      <p className="text-text-primary">
+                        {courseTime.locationInfo || getText('noLocation')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-text-secondary flex items-center gap-1">
-                    <MapPin size={14} />
-                    {getText('location')}
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      value={editData.location || ''}
-                      onChange={(e) => setEditData({ ...editData, location: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-text-primary">
-                      {courseTime.location || getText('noLocation')}
-                    </p>
+              </Card>
+
+              {/* 강사 정보 (전체 너비) */}
+              <Card className="p-6 lg:col-span-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                    <User size={18} className="text-text-secondary" />
+                    {getText('instructors')}
+                  </h2>
+                  {courseTime.status === 'DRAFT' && (
+                    <Button variant="ghost" size="sm">
+                      <UserPlus size={16} />
+                      <span>{getText('addInstructor')}</span>
+                    </Button>
                   )}
                 </div>
-              </div>
-            </Card>
-
-            {/* 기간 정보 */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                <Calendar size={18} className="text-text-secondary" />
-                {getText('periodInfo')}
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-text-secondary">{getText('enrollmentPeriod')}</Label>
-                  <p className="text-text-primary">
-                    {formatDate(courseTime.enrollStartDate)} ~ {formatDate(courseTime.enrollEndDate)}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-text-secondary">{getText('learningPeriod')}</Label>
-                  <p className="text-text-primary">
-                    {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate)}
-                  </p>
-                </div>
-                <div className="pt-2 border-t border-border">
-                  <Label className="text-text-secondary">{getText('allowLateEnrollment')}</Label>
-                  <p className="text-text-primary">
-                    <Badge variant={courseTime.allowLateEnrollment ? 'success' : 'secondary'}>
-                      {courseTime.allowLateEnrollment ? getText('allowLateEnrollmentYes') : getText('allowLateEnrollmentNo')}
-                    </Badge>
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* 정원 및 수강 */}
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                <Users size={18} className="text-text-secondary" />
-                {getText('capacityInfo')}
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-text-secondary">{getText('capacity')}</Label>
-                  {isEditing ? (
-                    <Input
-                      type="number"
-                      value={editData.capacity ?? ''}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          capacity: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      placeholder="0 = 무제한"
-                    />
-                  ) : (
-                    <p className="text-text-primary text-xl font-semibold">
-                      {courseTime.capacity || getText('unlimited')}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label className="text-text-secondary">{getText('currentEnrollment')}</Label>
-                  <p className="text-text-primary text-xl font-semibold">
-                    {courseTime.currentEnrollment}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-text-secondary">{getText('availableSeats')}</Label>
-                  <p className="text-text-primary text-xl font-semibold">
-                    {courseTime.availableSeats ?? getText('unlimited')}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-text-secondary flex items-center gap-1">
-                    <DollarSign size={14} />
-                    {getText('price')}
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      type="number"
-                      value={editData.price ?? ''}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          price: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      placeholder="0 = 무료"
-                    />
-                  ) : (
-                    <p className="text-text-primary text-xl font-semibold">
-                      {formatPrice(courseTime.price, courseTime.isFree)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-
-            {/* 강사 정보 */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-                  <User size={18} className="text-text-secondary" />
-                  {getText('instructors')}
-                </h2>
-                {courseTime.status === 'DRAFT' && (
-                  <Button variant="ghost" size="sm">
-                    <UserPlus size={16} />
-                    <span>{getText('addInstructor')}</span>
-                  </Button>
-                )}
-              </div>
-              {courseTime.instructors && courseTime.instructors.length > 0 ? (
-                <div className="space-y-3">
-                  {courseTime.instructors.map((instructor) => (
-                    <div
-                      key={instructor.id}
-                      className="flex items-center justify-between p-3 bg-bg-secondary rounded-lg"
-                    >
-                      <div>
-                        <p className="text-text-primary font-medium">{instructor.userName}</p>
-                        <p className="text-text-secondary text-sm">{instructor.userEmail}</p>
+                {courseTime.instructors && courseTime.instructors.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {courseTime.instructors.map((instructor) => (
+                      <div
+                        key={instructor.id}
+                        className="flex items-center justify-between p-3 bg-bg-secondary rounded-lg"
+                      >
+                        <div>
+                          <p className="text-text-primary font-medium">{instructor.userName}</p>
+                          <p className="text-text-secondary text-sm">{instructor.userEmail}</p>
+                        </div>
+                        <Badge variant={instructor.role === 'MAIN' ? 'default' : 'secondary'}>
+                          {getText(instructor.role)}
+                        </Badge>
                       </div>
-                      <Badge variant={instructor.role === 'MAIN' ? 'default' : 'secondary'}>
-                        {getText(instructor.role)}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-text-secondary text-center py-4">{getText('noInstructors')}</p>
-              )}
-            </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-text-secondary text-center py-4">{getText('noInstructors')}</p>
+                )}
+              </Card>
             </div>
           </div>
         )}

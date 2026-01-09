@@ -17,6 +17,7 @@ import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
+import { useSubdomainPath } from '@/hooks/common';
 
 // 역할 타입
 type RoleType = 'sa' | 'ta' | 'to' | 'tu';
@@ -36,6 +37,7 @@ export function BaseSidebar({
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { prefixPath } = useSubdomainPath();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -116,9 +118,9 @@ export function BaseSidebar({
 
   const handleModeChange = (mode: ViewMode) => {
     if (mode === 'learner') {
-      navigate('/tu/b2c/mypage');
+      navigate(prefixPath('/tu/b2c/mypage'));
     } else {
-      navigate('/tu/dashboard');
+      navigate(prefixPath('/tu/dashboard'));
     }
   };
 

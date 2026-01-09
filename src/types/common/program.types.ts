@@ -47,6 +47,9 @@ export interface ProgramResponse {
   ownerName: string | null;
   ownerEmail: string | null;
   snapshotId: number | null;
+  // Course 권장 운영 기간 (차수 생성 시 참고용)
+  courseStartDate: string | null;
+  courseEndDate: string | null;
   createdAt: string;
   updatedAt: string;
 }

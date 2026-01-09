@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info, UserPlus, X, Users } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -58,6 +59,8 @@ const t = {
   owner: { ko: '담당 강사', en: 'Owner' },
   noOwner: { ko: '미배정', en: 'Not assigned' },
   noThumbnail: { ko: '썸네일 없음', en: 'No thumbnail' },
+  recommendedPeriod: { ko: '권장 운영기간', en: 'Recommended Period' },
+  noRecommendedPeriod: { ko: '설정 안됨', en: 'Not set' },
   timeTitle: { ko: '차수명', en: 'Title' },
   timeTitlePlaceholder: { ko: '예: 2025년 1차', en: 'e.g., 2025 Session 1' },
   description: { ko: '설명', en: 'Description' },
@@ -127,6 +130,7 @@ interface InstructorAssignment {
 
 export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCreatePageProps>) {
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const createTime = useCreateTime();
   const { data: approvedProgramsData, isLoading: isLoadingPrograms } = useApprovedPrograms();
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'DESIGNER', size: 100 });
@@ -321,13 +325,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               ? '차수가 생성되었으나 일부 강사 배정에 실패했습니다.'
               : 'Course time created but some instructor assignments failed.'
           );
-          navigate('/to/times');
+          navigate(prefixPath('/to/times'));
           return;
         }
       }
 
       toast.success(getText('createSuccess'));
-      navigate('/to/times');
+      navigate(prefixPath('/to/times'));
     } catch (err: unknown) {
       console.error('Create failed:', err);
 
@@ -446,7 +450,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       <div className="bg-bg-default border-b border-border px-6 py-4">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <h1 className="text-text-primary m-0">{getText('title')}</h1>
-          <Button variant="ghost" onClick={() => navigate('/to/times')} className="border border-border">
+          <Button variant="ghost" onClick={() => navigate(prefixPath('/to/times'))} className="border border-border">
             {getText('close')}
           </Button>
         </div>
@@ -589,6 +593,17 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                           </span>
                         </div>
                       </div>
+                      {/* 권장 운영기간 */}
+                      {(selectedProgram.courseStartDate || selectedProgram.courseEndDate) && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <span className="text-text-secondary">{getText('recommendedPeriod')}: </span>
+                          <span className="text-text-primary font-medium">
+                            {selectedProgram.courseStartDate && selectedProgram.courseEndDate
+                              ? `${selectedProgram.courseStartDate} ~ ${selectedProgram.courseEndDate}`
+                              : selectedProgram.courseStartDate || selectedProgram.courseEndDate || getText('noRecommendedPeriod')}
+                          </span>
+                        </div>
+                      )}
                       {selectedProgram.description && (
                         <p className="mt-2 text-sm text-text-secondary line-clamp-2">
                           {selectedProgram.description}

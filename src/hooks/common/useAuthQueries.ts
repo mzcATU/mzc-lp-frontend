@@ -68,7 +68,7 @@ export const useLogin = () => {
       const subdomainPrefix = (!isDefaultSubdomain && user.role !== 'SYSTEM_ADMIN') ? `/${subdomain}` : '';
 
       // 관리자 역할은 프로필 체크 스킵
-      const adminRoles = ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'TENANT_OPERATOR'];
+      const adminRoles = ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'OPERATOR'];
       const isAdminRole = adminRoles.includes(user.role);
 
       // 프로필 미완성 시 프로필 수정 페이지로 리다이렉트 (단체 계정 생성 사용자 - 관리자 제외)
@@ -82,7 +82,7 @@ export const useLogin = () => {
       const roleBasePath: Record<string, string> = {
         SYSTEM_ADMIN: '/sa',
         TENANT_ADMIN: '/ta',
-        TENANT_OPERATOR: '/to',
+        OPERATOR: '/to',
         DESIGNER: '/tu/teaching',
         USER: '/tu/b2c',
       };

@@ -52,7 +52,7 @@ export interface TaKpiDashboardResponse {
   userStats: TaUserStats;
   programStats: TaProgramStats;
   enrollmentStats: TaEnrollmentStats;
-  monthlyTrend: TaMonthlyTrend[];
+  dailyTrend: TaDailyTrend[];
 }
 
 /** TA 대시보드 - 사용자 통계 */
@@ -90,9 +90,9 @@ export interface TaEnrollmentByStatus {
   failed: number;
 }
 
-/** TA 대시보드 - 월별 추이 */
-export interface TaMonthlyTrend {
-  month: string;
+/** TA 대시보드 - 일별 추이 */
+export interface TaDailyTrend {
+  date: string;
   enrollments: number;
   completions: number;
 }

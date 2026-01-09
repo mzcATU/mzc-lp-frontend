@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
@@ -8,6 +8,7 @@ import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
+import { useSubdomainPath } from '@/hooks/common';
 import { cn } from '@/utils/cn';
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ interface MyPageSidebarProps {
   onMenuItemClick?: (itemId: string) => void;
   isDarkMode?: boolean;
   language?: 'ko' | 'en';
+  subdomain?: string;
 }
 
 type ViewMode = 'instructor' | 'learner';
@@ -34,7 +36,8 @@ type ViewMode = 'instructor' | 'learner';
 export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { subdomain } = useParams<{ subdomain?: string }>();
+  const { prefixPath } = useSubdomainPath();
+
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
@@ -46,14 +49,6 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const [isGrantingRole, setIsGrantingRole] = useState(false);
   // USER: 권한 없음, INSTRUCTOR: 강사, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
   const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OWNER'>('USER');
-
-  // 서브도메인 prefix 계산
-  const getSubdomainPrefix = () => {
-    if (subdomain && subdomain !== 'default' && subdomain !== 'www') {
-      return `/${subdomain}`;
-    }
-    return '';
-  };
 
   // CourseRole API로 역할 확인
   useEffect(() => {
@@ -281,8 +276,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                 <button
                   onClick={() => {
                     setCurrentMode('instructor');
-                    const subdomainPrefix = getSubdomainPrefix();
-                    navigate(`${subdomainPrefix}/tu/dashboard`);
+                    navigate(prefixPath('/tu/dashboard'));
                   }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
@@ -301,7 +295,10 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                   <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
                 </button>
                 <button
-                  onClick={() => setCurrentMode('learner')}
+                  onClick={() => {
+                    setCurrentMode('learner');
+                    navigate(prefixPath('/tu/b2c/mypage'));
+                  }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
                     'transition-all duration-200 text-sm font-medium whitespace-nowrap'

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Users, BookOpen, TrendingUp, GraduationCap, AlertCircle, UserPlus, FileText, CheckCircle } from 'lucide-react';
 import {
   AreaChart,
@@ -20,8 +20,9 @@ import { Progress } from '@/components/common/Progress';
 import { Skeleton } from '@/components/common/Skeleton';
 import { NoDataEmpty } from '@/components/common/EmptyState';
 import { useTaKpiDashboard } from '@/hooks/ta';
+import type { DashboardPeriod } from '@/services/ta';
 
-type DateRange = '7d' | '30d' | 'all';
+type DateRange = DashboardPeriod;
 
 const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: 'all', label: '전체' },
@@ -30,8 +31,8 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
 ];
 
 export function DashboardPage() {
-  const { data, isLoading, error } = useTaKpiDashboard();
   const [dateRange, setDateRange] = useState<DateRange>('all');
+  const { data, isLoading, error } = useTaKpiDashboard(dateRange);
 
   // 선택된 기간 라벨 가져오기
   const selectedRangeLabel = DATE_RANGE_OPTIONS.find((opt) => opt.value === dateRange)?.label ?? '';
@@ -56,99 +57,14 @@ export function DashboardPage() {
     );
   }
 
-  const userStats = data?.userStats ?? { total: 0, active: 0, inactive: 0, suspended: 0, withdrawn: 0, newThisMonth: 0 };
-  const programStats = data?.programStats ?? { total: 0, draft: 0, pending: 0, approved: 0, rejected: 0, closed: 0 };
-  const enrollmentStats = data?.enrollmentStats ?? { totalEnrollments: 0, byStatus: { enrolled: 0, completed: 0, dropped: 0, failed: 0 }, completionRate: 0 };
-  const monthlyTrend = data?.monthlyTrend ?? [];
+  const defaultUserStats = { total: 0, active: 0, inactive: 0, suspended: 0, withdrawn: 0, newThisMonth: 0 };
+  const defaultProgramStats = { total: 0, draft: 0, pending: 0, approved: 0, rejected: 0, closed: 0 };
+  const defaultEnrollmentStats = { totalEnrollments: 0, byStatus: { enrolled: 0, completed: 0, dropped: 0, failed: 0 }, completionRate: 0 };
 
-  // 1~12월 전체 X축 데이터 생성 (미래 데이터는 null로 처리)
-  const fullYearChartData = useMemo(() => {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1; // 1-12
-
-    // 1~12월 기본 데이터 생성
-    const fullYearData = Array.from({ length: 12 }, (_, i) => {
-      const month = i + 1;
-      const monthKey = `${currentYear}-${String(month).padStart(2, '0')}`;
-
-      // 기존 데이터에서 해당 월 찾기
-      const existingData = monthlyTrend.find((item) => item.month === monthKey);
-
-      // 미래 데이터는 null, 과거/현재는 데이터 또는 0
-      if (month > currentMonth) {
-        return {
-          month: monthKey,
-          enrollments: null,
-          completions: null,
-        };
-      }
-
-      return {
-        month: monthKey,
-        enrollments: existingData?.enrollments ?? 0,
-        completions: existingData?.completions ?? 0,
-      };
-    });
-
-    return fullYearData;
-  }, [monthlyTrend]);
-
-  // 선택한 기간에 따라 월별 트렌드 필터링 + 가짜 시작점 추가
-  const filteredMonthlyTrend = useMemo(() => {
-    let baseData: typeof fullYearChartData;
-
-    if (dateRange === 'all') {
-      baseData = fullYearChartData;
-    } else {
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth(); // 0-11
-
-      if (dateRange === '7d') {
-        // 이번 달만
-        baseData = fullYearChartData.slice(currentMonth, currentMonth + 1);
-      } else {
-        // 30d: 최근 6개월
-        const startMonth = Math.max(0, currentMonth - 5);
-        baseData = fullYearChartData.slice(startMonth, currentMonth + 1);
-      }
-    }
-
-    // 실제 데이터가 있는 포인트 개수 확인 (null이 아닌 데이터)
-    const validDataPoints = baseData.filter(
-      (item) => item.enrollments !== null || item.completions !== null
-    ).length;
-
-    // 데이터 포인트가 1개일 때: 가짜 시작점 추가 (바닥에서 올라가는 삼각형 효과)
-    if (validDataPoints === 1 && baseData.length > 0) {
-      const firstDataIndex = baseData.findIndex(
-        (item) => item.enrollments !== null || item.completions !== null
-      );
-
-      if (firstDataIndex > 0) {
-        // 앞에 데이터가 있으면 이전 월을 0으로 설정
-        const newData = [...baseData];
-        const prevMonth = newData[firstDataIndex - 1];
-        newData[firstDataIndex - 1] = {
-          ...prevMonth,
-          enrollments: 0,
-          completions: 0,
-        };
-        return newData;
-      } else {
-        // 첫 번째 월이 데이터 포인트면 앞에 가짜 시작점 추가
-        const currentYear = new Date().getFullYear();
-        const dummyStart = {
-          month: `${currentYear}-00`, // 가상의 0월 (표시 안 됨)
-          enrollments: 0,
-          completions: 0,
-        };
-        return [dummyStart, ...baseData];
-      }
-    }
-
-    return baseData;
-  }, [fullYearChartData, dateRange]);
+  const userStats = { ...defaultUserStats, ...data?.userStats };
+  const programStats = { ...defaultProgramStats, ...data?.programStats };
+  const enrollmentStats = { ...defaultEnrollmentStats, ...data?.enrollmentStats, byStatus: { ...defaultEnrollmentStats.byStatus, ...data?.enrollmentStats?.byStatus } };
+  const dailyTrend = data?.dailyTrend ?? [];
 
   return (
     <div className="p-6">
@@ -376,15 +292,15 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* 월별 수강 추이 차트 */}
+        {/* 일별 수강 추이 차트 */}
         <Card>
           <CardHeader>
-            <CardTitle>월별 수강 추이</CardTitle>
+            <CardTitle>일별 수강 추이</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-64" />
-            ) : filteredMonthlyTrend.length === 0 ? (
+            ) : dailyTrend.length === 0 ? (
               <NoDataEmpty
                 title="데이터가 없습니다"
                 description="선택한 기간에 수강 데이터가 없습니다."
@@ -394,7 +310,7 @@ export function DashboardPage() {
               <div className="w-full" style={{ minHeight: 256 }}>
                 <ResponsiveContainer width="100%" height={256}>
                   <AreaChart
-                    data={filteredMonthlyTrend}
+                    data={dailyTrend}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <defs>
@@ -411,14 +327,11 @@ export function DashboardPage() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis
-                      dataKey="month"
+                      dataKey="date"
                       tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
-                      tickFormatter={(value) => {
-                        const [, month] = value.split('-');
-                        const monthNum = parseInt(month);
-                        // 가짜 0월은 표시하지 않음
-                        if (monthNum === 0) return '';
-                        return `${monthNum}월`;
+                      tickFormatter={(value: string) => {
+                        const [, month, day] = value.split('-');
+                        return `${parseInt(month)}/${parseInt(day)}`;
                       }}
                     />
                     <YAxis
@@ -431,16 +344,9 @@ export function DashboardPage() {
                         border: '1px solid var(--border)',
                         borderRadius: '8px',
                       }}
-                      labelFormatter={(value) => {
-                        const [year, month] = value.split('-');
-                        const monthNum = parseInt(month);
-                        // 가짜 0월은 "시작점"으로 표시
-                        if (monthNum === 0) return '시작점';
-                        return `${year}년 ${monthNum}월`;
-                      }}
-                      formatter={(value, name) => {
-                        if (value === null) return ['데이터 없음', name];
-                        return [value, name];
+                      labelFormatter={(value: string) => {
+                        const [year, month, day] = value.split('-');
+                        return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
                       }}
                     />
                     <Legend />
@@ -450,11 +356,10 @@ export function DashboardPage() {
                       dataKey="enrollments"
                       name="수강 신청"
                       stroke="#4C2D9A"
-                      strokeWidth={3}
+                      strokeWidth={2}
                       fill="url(#enrollmentGradient)"
-                      connectNulls={false}
-                      dot={{ fill: '#4C2D9A', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, strokeWidth: 2 }}
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 2 }}
                     />
                     {/* 수료를 나중에 그려서 앞에 배치 */}
                     <Area
@@ -462,11 +367,10 @@ export function DashboardPage() {
                       dataKey="completions"
                       name="수료"
                       stroke="#3D7A4A"
-                      strokeWidth={3}
+                      strokeWidth={2}
                       fill="url(#completionGradient)"
-                      connectNulls={false}
-                      dot={{ fill: '#3D7A4A', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, strokeWidth: 2 }}
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 2 }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
