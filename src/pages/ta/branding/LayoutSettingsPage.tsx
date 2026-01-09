@@ -2329,6 +2329,23 @@ export function LayoutSettingsPage() {
             {/* TU 메인 미리보기 */}
             <TabsContent value="tu-main">
               <div className={`border rounded-lg overflow-hidden ${previewTheme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
+                {/* 브라우저 탭 시뮬레이션 (파비콘 미리보기) */}
+                <div className={`flex items-center gap-2 px-3 py-2 border-b ${previewTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-t-md text-xs ${previewTheme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-600'}`}>
+                    {settings.logo.faviconPreview ? (
+                      <img src={settings.logo.faviconPreview} alt="Favicon" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <div className="w-4 h-4 rounded bg-gray-300" />
+                    )}
+                    <span className="truncate max-w-[120px]">{settings.company.name || '사이트 제목'}</span>
+                  </div>
+                </div>
+
                 {/* 상단 알림 배너 */}
                 {settings.colors.enabled && (
                   <div
@@ -2348,9 +2365,18 @@ export function LayoutSettingsPage() {
                   }`}>
                     <div className="flex items-center gap-8">
                       {settings.header.showLogo && (
-                        <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
-                          {settings.company.name || 'Logo'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {(settings.logo.lightPreview || settings.logo.darkPreview) && (
+                            <img
+                              src={(previewTheme === 'dark' ? settings.logo.darkPreview : settings.logo.lightPreview) || settings.logo.lightPreview || settings.logo.darkPreview!}
+                              alt="Logo"
+                              className="h-8 object-contain"
+                            />
+                          )}
+                          <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
+                            {settings.company.name || 'Logo'}
+                          </span>
+                        </div>
                       )}
                       <div className={`hidden md:flex gap-6 text-sm font-medium ${previewTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                         {settings.header.navLinks.filter(l => l.visible).slice(0, 4).map((link, i) => (
@@ -2536,9 +2562,9 @@ export function LayoutSettingsPage() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      {settings.footer.socialLinks.facebook.enabled && settings.footer.socialLinks.facebook.url && (
+                      {settings.footer.socialLinks.facebook.enabled && (
                         <a
-                          href={settings.footer.socialLinks.facebook.url}
+                          href={settings.footer.socialLinks.facebook.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2549,9 +2575,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.twitter.enabled && settings.footer.socialLinks.twitter.url && (
+                      {settings.footer.socialLinks.twitter.enabled && (
                         <a
-                          href={settings.footer.socialLinks.twitter.url}
+                          href={settings.footer.socialLinks.twitter.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2562,9 +2588,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.youtube.enabled && settings.footer.socialLinks.youtube.url && (
+                      {settings.footer.socialLinks.youtube.enabled && (
                         <a
-                          href={settings.footer.socialLinks.youtube.url}
+                          href={settings.footer.socialLinks.youtube.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2575,9 +2601,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.instagram.enabled && settings.footer.socialLinks.instagram.url && (
+                      {settings.footer.socialLinks.instagram.enabled && (
                         <a
-                          href={settings.footer.socialLinks.instagram.url}
+                          href={settings.footer.socialLinks.instagram.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2588,9 +2614,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.linkedin.enabled && settings.footer.socialLinks.linkedin.url && (
+                      {settings.footer.socialLinks.linkedin.enabled && (
                         <a
-                          href={settings.footer.socialLinks.linkedin.url}
+                          href={settings.footer.socialLinks.linkedin.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2601,9 +2627,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.github.enabled && settings.footer.socialLinks.github.url && (
+                      {settings.footer.socialLinks.github.enabled && (
                         <a
-                          href={settings.footer.socialLinks.github.url}
+                          href={settings.footer.socialLinks.github.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2623,13 +2649,39 @@ export function LayoutSettingsPage() {
             {/* 마이페이지 미리보기 */}
             <TabsContent value="tu-mypage">
               <div className={`border rounded-lg overflow-hidden ${previewTheme === 'dark' ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+                {/* 브라우저 탭 시뮬레이션 (파비콘 미리보기) */}
+                <div className={`flex items-center gap-2 px-3 py-2 border-b ${previewTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-t-md text-xs ${previewTheme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-600'}`}>
+                    {settings.logo.faviconPreview ? (
+                      <img src={settings.logo.faviconPreview} alt="Favicon" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <div className="w-4 h-4 rounded bg-gray-300" />
+                    )}
+                    <span className="truncate max-w-[120px]">{settings.company.name || '사이트 제목'}</span>
+                  </div>
+                </div>
+
                 {/* 헤더 */}
                 <div className={`h-16 border-b flex items-center px-6 ${
                   previewTheme === 'dark' ? 'bg-[#1e1e1e] border-white/10' : 'bg-white border-gray-200'
                 }`}>
-                  <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
-                    {settings.company.name || 'Logo'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {(settings.logo.lightPreview || settings.logo.darkPreview) && (
+                      <img
+                        src={(previewTheme === 'dark' ? settings.logo.darkPreview : settings.logo.lightPreview) || settings.logo.lightPreview || settings.logo.darkPreview!}
+                        alt="Logo"
+                        className="h-8 object-contain"
+                      />
+                    )}
+                    <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
+                      {settings.company.name || 'Logo'}
+                    </span>
+                  </div>
                   <div className="ml-auto flex items-center gap-3">
                     <Bell className={`w-5 h-5 ${previewTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
                     <div
@@ -2825,13 +2877,39 @@ export function LayoutSettingsPage() {
             {/* TO 미리보기 */}
             <TabsContent value="to">
               <div className={`border rounded-lg overflow-hidden ${previewTheme === 'dark' ? 'bg-gray-950' : 'bg-gray-50'}`}>
+                {/* 브라우저 탭 시뮬레이션 (파비콘 미리보기) */}
+                <div className={`flex items-center gap-2 px-3 py-2 border-b ${previewTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-t-md text-xs ${previewTheme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-600'}`}>
+                    {settings.logo.faviconPreview ? (
+                      <img src={settings.logo.faviconPreview} alt="Favicon" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <div className="w-4 h-4 rounded bg-gray-300" />
+                    )}
+                    <span className="truncate max-w-[120px]">{settings.company.name || '사이트 제목'}</span>
+                  </div>
+                </div>
+
                 {/* 헤더 */}
                 <div className={`h-16 border-b flex items-center px-6 ${
                   previewTheme === 'dark' ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'
                 }`}>
-                  <span className={`font-bold text-xl ${previewTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {settings.company.name || 'Logo'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {(settings.logo.lightPreview || settings.logo.darkPreview) && (
+                      <img
+                        src={(previewTheme === 'dark' ? settings.logo.darkPreview : settings.logo.lightPreview) || settings.logo.lightPreview || settings.logo.darkPreview!}
+                        alt="Logo"
+                        className="h-8 object-contain"
+                      />
+                    )}
+                    <span className={`font-bold text-xl ${previewTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {settings.company.name || 'Logo'}
+                    </span>
+                  </div>
                   <span
                     className="ml-3 text-sm px-2 py-1 rounded-full cursor-pointer transition-all hover:scale-105"
                     style={{
