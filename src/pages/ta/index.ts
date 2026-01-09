@@ -6,7 +6,7 @@ export { UsersPage, UserDetailPage, OperatorsPage, GroupsPage, PermissionsPage }
 export { DomainSettingsPage } from './system';
 
 // Branding
-export { LayoutSettingsPage } from './branding';
+export { LayoutSettingsPage, DesignSettingsPage } from './branding';
 
 // Analytics
 export { RealtimePage, ExportPage, LogsPage } from './analytics';
