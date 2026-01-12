@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
     DESIGN: '/tenant/settings/design',
     LAYOUT: '/tenant/settings/layout',
     BRANDING: '/tenant/settings/branding',
+    BRANDING_EXTENDED: '/tenant/settings/branding/extended',
     USER_MANAGEMENT: '/tenant/settings/user-management',
     // Navigation
     NAVIGATION: '/tenant/settings/navigation',

@@ -9,10 +9,10 @@ import {
 } from '@/components/landing';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
-import { usePopularInstructors, useCourseTimeCatalog } from '@/hooks/tu';
+import { usePopularInstructors, useCourseTimeCatalog, usePublicLayout } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
-import { useAuthStore } from '@/store/common/authStore';
 import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
+import { useAuth } from '@/hooks/common/auth/useAuth';
 import type { InstructorSummary } from '@/types/tu';
 import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
 import { DELIVERY_TYPE_LABELS, PROGRAM_LEVEL_LABELS } from '@/types/tu/courseTimeCatalog.types';
@@ -141,12 +141,29 @@ export function LandingPage() {
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const { theme } = useThemeStore();
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const isDark = theme === 'dark';
   const { branding } = useTenantBranding();
 
-  const { isAuthenticated } = useAuthStore();
   // 브랜딩 CSS 적용
   useBrandingApply(branding);
+
+  // 레이아웃 설정 (카테고리 등) - 항상 호출 (공개 API, X-Subdomain 헤더로 테넌트 식별)
+  const { data: layoutData } = usePublicLayout();
+  const landingPageSettings = layoutData?.landingPageSettings;
+  const landingCategory = landingPageSettings?.landingCategory;
+
+  // TA에서 설정한 카테고리가 있으면 사용, 없으면 기본 카테고리 사용
+  const categoryOptions: CategoryOption[] = landingCategory?.enabled && landingCategory?.items?.length > 0
+    ? [
+        { id: null, name: '전체', code: 'all' },
+        ...landingCategory.items.map((name, index) => ({
+          id: index + 1,
+          name,
+          code: name.toLowerCase().replace(/\s+/g, '-'),
+        })),
+      ]
+    : CATEGORY_OPTIONS;
 
   // CourseTime API로 강의 데이터 로드 (모집중/진행중, 카테고리 필터 적용)
   const { data: courseTimeData, isLoading: isCoursesLoading } = useCourseTimeCatalog({
@@ -165,7 +182,7 @@ export function LandingPage() {
   const courses = courseTimes.map(convertCourseTimeToCardProps);
 
   // 현재 선택된 카테고리 정보 가져오기
-  const activeCategory = CATEGORY_OPTIONS.find((c) => c.id === activeCategoryId);
+  const activeCategory = categoryOptions.find((c) => c.id === activeCategoryId);
 
   // API에서 이미 categoryId로 필터링됨, 추가 클라이언트 필터링 불필요
   const filteredCourses = courses;
@@ -191,7 +208,7 @@ export function LandingPage() {
         <div className="w-full px-4 md:px-8 lg:px-16 py-12">
           {/* Quick Category Chips */}
           <div className="flex flex-wrap items-center gap-3">
-            {CATEGORY_OPTIONS.map((cat) => (
+            {categoryOptions.map((cat) => (
               <button
                 key={cat.code}
                 onClick={() => setActiveCategoryId(cat.id)}
