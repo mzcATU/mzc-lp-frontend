@@ -103,8 +103,8 @@ export function SettingsSecurityPage() {
   // Get base path from current location
   const basePath = location.pathname.split('/settings')[0];
   const isUserRole = basePath === '/tu';
-  // 어드민 역할 여부 (SA, TA, TO) - 부서/직급 입력 필드 표시용
-  const isAdminRole = basePath.endsWith('/sa') || basePath.endsWith('/ta') || basePath.endsWith('/to');
+  // 어드민 역할 여부 (SA, TA, CO) - 부서/직급 입력 필드 표시용
+  const isAdminRole = basePath.endsWith('/sa') || basePath.endsWith('/ta') || basePath.endsWith('/co');
 
   const handleProfileSave = async () => {
     if (!profileData.name.trim()) {

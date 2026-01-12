@@ -9,7 +9,7 @@ import type {
   MemberPoolMembersResponse,
   MemberPoolQueryParams,
   MemberPoolMemberQueryParams,
-} from '@/types/to/memberPool.types';
+} from '@/types/co/memberPool.types';
 
 // TA에서 TO의 타입을 재사용
 export type {
@@ -17,7 +17,7 @@ export type {
   MemberPoolMembersResponse,
   MemberPoolQueryParams,
   MemberPoolMemberQueryParams,
-} from '@/types/to/memberPool.types';
+} from '@/types/co/memberPool.types';
 
 export const memberPoolService = {
   // ============================================

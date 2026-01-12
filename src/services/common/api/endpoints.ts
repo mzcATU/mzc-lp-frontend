@@ -52,8 +52,8 @@ export const API_ENDPOINTS = {
     KPI: '/admin/dashboard/kpi',
   },
 
-  // TO Dashboard (OPERATOR)
-  TO_DASHBOARD: {
+  // CO Dashboard (OPERATOR)
+  CO_DASHBOARD: {
     TASKS: '/operator/dashboard/tasks',
   },
 

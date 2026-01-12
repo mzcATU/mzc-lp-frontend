@@ -10,9 +10,9 @@ export { SuperAdminSidebar } from './sa/SuperAdminSidebar';
 export { TenantAdminLayout } from './ta/TenantAdminLayout';
 export { TenantAdminSidebar } from './ta/TenantAdminSidebar';
 
-// TO (Tenant Operator)
-export { TenantOperatorLayout } from './to/TenantOperatorLayout';
-export { TenantOperatorSidebar } from './to/TenantOperatorSidebar';
+// CO (Course Operator)
+export { CourseOperatorLayout } from './co/CourseOperatorLayout';
+export { CourseOperatorSidebar } from './co/CourseOperatorSidebar';
 
 // TU (Tenant User)
 export { TenantUserLayout } from './tu/TenantUserLayout';

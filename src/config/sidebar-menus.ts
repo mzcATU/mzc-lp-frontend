@@ -167,22 +167,22 @@ export const tenantAdminMenuData: MenuItem[] = [
 ];
 
 /**
- * Tenant Operator (TO) 메뉴
+ * Course Operator (CO) 메뉴
  */
-export const tenantOperatorMenuData: MenuItem[] = [
+export const courseOperatorMenuData: MenuItem[] = [
   {
     id: 'dashboard',
     label: { ko: '대시보드', en: 'Dashboard' },
     icon: LayoutDashboard,
-    path: '/to/dashboard',
+    path: '/co/dashboard',
   },
   {
     id: 'course-catalog',
     label: { ko: '교육 과정 탐색', en: 'Course Catalog' },
     icon: Library,
     subItems: [
-      { id: 'course-search', label: { ko: '과정 검색 및 상세 조회', en: 'Course Search & Details' }, icon: Search, path: '/to/courses' },
-      { id: 'course-registration', label: { ko: '과정 등록/수정', en: 'Course Registration & Edit' }, icon: FolderEdit, path: '/to/courses/pending' },
+      { id: 'course-search', label: { ko: '과정 검색 및 상세 조회', en: 'Course Search & Details' }, icon: Search, path: '/co/courses' },
+      { id: 'course-registration', label: { ko: '과정 등록/수정', en: 'Course Registration & Edit' }, icon: FolderEdit, path: '/co/courses/pending' },
     ],
   },
   {
@@ -190,46 +190,46 @@ export const tenantOperatorMenuData: MenuItem[] = [
     label: { ko: '교육 운영 관리', en: 'Program Management' },
     icon: Layers,
     subItems: [
-      { id: 'time-management', label: { ko: '차수 운영', en: 'Course Time Operations' }, icon: Calendar, path: '/to/times' },
-      { id: 'instructor-management', label: { ko: '강사 배정 관리', en: 'Instructor Assignment' }, icon: UserCheck, path: '/to/instructors' },
+      { id: 'time-management', label: { ko: '차수 운영', en: 'Course Time Operations' }, icon: Calendar, path: '/co/times' },
+      { id: 'instructor-management', label: { ko: '강사 배정 관리', en: 'Instructor Assignment' }, icon: UserCheck, path: '/co/instructors' },
     ],
   },
-  // TODO: TO 콘텐츠 관리 기능 - 개발 예정으로 임시 숨김
+  // TODO: CO 콘텐츠 관리 기능 - 개발 예정으로 임시 숨김
   // {
   //   id: 'content-management',
   //   label: { ko: '콘텐츠 관리', en: 'Content Management' },
   //   icon: Database,
   //   subItems: [
-  //     { id: 'content-pool', label: { ko: '콘텐츠 풀', en: 'Content Pool' }, icon: Database, path: '/to/content' },
-  //     { id: 'learning-objects', label: { ko: '학습객체', en: 'Learning Objects' }, icon: Layers, path: '/to/learning-objects' },
+  //     { id: 'content-pool', label: { ko: '콘텐츠 풀', en: 'Content Pool' }, icon: Database, path: '/co/content' },
+  //     { id: 'learning-objects', label: { ko: '학습객체', en: 'Learning Objects' }, icon: Layers, path: '/co/learning-objects' },
   //   ],
   // },
   {
     id: 'user-management',
     label: { ko: '사용자 관리', en: 'User Management' },
     icon: Users,
-    path: '/to/users',
+    path: '/co/users',
   },
   {
     id: 'automation',
     label: { ko: '자동화 관리', en: 'Automation' },
     icon: Zap,
     subItems: [
-      { id: 'member-pools', label: { ko: '회원 풀 관리', en: 'Member Pool Management' }, icon: Users, path: '/to/member-pools' },
-      { id: 'auto-enrollment', label: { ko: '자동 입과 규칙', en: 'Auto Enrollment Rules' }, icon: Zap, path: '/to/auto-enrollment-rules' },
+      { id: 'member-pools', label: { ko: '회원 풀 관리', en: 'Member Pool Management' }, icon: Users, path: '/co/member-pools' },
+      { id: 'auto-enrollment', label: { ko: '자동 입과 규칙', en: 'Auto Enrollment Rules' }, icon: Zap, path: '/co/auto-enrollment-rules' },
     ],
   },
   {
     id: 'notice-management',
     label: { ko: '공지사항 관리', en: 'Notice Management' },
     icon: Megaphone,
-    path: '/to/notices',
+    path: '/co/notices',
   },
   {
     id: 'settings',
     label: { ko: '설정', en: 'Settings' },
     icon: Settings,
-    path: '/to/settings',
+    path: '/co/settings',
   },
 ];
 
@@ -318,13 +318,13 @@ export const myPageMenuData: MenuItem[] = [
  * 역할별 라벨
  * - SA: 시스템 관리 (전체 플랫폼)
  * - TA: 테넌트 관리 (기업 설정)
- * - TO: 교육 운영 (과정/차수 관리)
+ * - CO: 교육 운영 (과정/차수 관리)
  * - TU: 모드 스위처로 대체 (강사/학습자)
  */
 export const roleLabels = {
   superAdmin: { ko: '시스템 관리', en: 'System Admin' },
   tenantAdmin: { ko: '테넌트 관리', en: 'Tenant Admin' },
-  tenantOperator: { ko: '교육 운영', en: 'Operations' },
+  courseOperator: { ko: '교육 운영', en: 'Operations' },
   tenantUser: { ko: '강사 센터', en: 'Instructor Hub' },
   myPage: { ko: '마이페이지', en: 'My Page' },
 };

@@ -218,7 +218,7 @@ interface BrandingSettings {
       }[];
     }[];
   };
-  sidebarTO: {
+  sidebarCO: {
     enabled: boolean;
     items: {
       id: string;
@@ -381,45 +381,45 @@ const defaultBrandingSettings: BrandingSettings = {
       },
     ],
   },
-  sidebarTO: {
+  sidebarCO: {
     enabled: true,
     items: [
-      { id: 'to-1', label: '대시보드', url: '/to/dashboard', icon: 'layout-dashboard', visible: true },
+      { id: 'co-1', label: '대시보드', url: '/co/dashboard', icon: 'layout-dashboard', visible: true },
       {
-        id: 'to-2',
+        id: 'co-2',
         label: '교육 과정 탐색',
         url: '',
         icon: 'search',
         visible: true,
         children: [
-          { id: 'to-2-1', label: '과정 검색 및 상세 조회', url: '/to/courses', visible: true },
-          { id: 'to-2-2', label: '과정 등록/수정', url: '/to/courses/pending', visible: true },
+          { id: 'co-2-1', label: '과정 검색 및 상세 조회', url: '/co/courses', visible: true },
+          { id: 'co-2-2', label: '과정 등록/수정', url: '/co/courses/pending', visible: true },
         ],
       },
       {
-        id: 'to-3',
+        id: 'co-3',
         label: '교육 운영 관리',
         url: '',
         icon: 'calendar',
         visible: true,
         children: [
-          { id: 'to-3-1', label: '차수 운영', url: '/to/times', visible: true },
-          { id: 'to-3-2', label: '강사 배정 관리', url: '/to/instructors', visible: true },
+          { id: 'co-3-1', label: '차수 운영', url: '/co/times', visible: true },
+          { id: 'co-3-2', label: '강사 배정 관리', url: '/co/instructors', visible: true },
         ],
       },
       {
-        id: 'to-4',
+        id: 'co-4',
         label: '콘텐츠 관리',
         url: '',
         icon: 'database',
         visible: false,
         children: [
-          { id: 'to-4-1', label: '콘텐츠 풀', url: '/to/content', visible: true },
-          { id: 'to-4-2', label: '학습객체', url: '/to/learning-objects', visible: true },
+          { id: 'co-4-1', label: '콘텐츠 풀', url: '/co/content', visible: true },
+          { id: 'co-4-2', label: '학습객체', url: '/co/learning-objects', visible: true },
         ],
       },
-      { id: 'to-5', label: '사용자 관리', url: '/to/users', icon: 'users', visible: true },
-      { id: 'to-6', label: '설정', url: '/to/settings', icon: 'settings', visible: true },
+      { id: 'co-5', label: '사용자 관리', url: '/co/users', icon: 'users', visible: true },
+      { id: 'co-6', label: '설정', url: '/co/settings', icon: 'settings', visible: true },
     ],
   },
 };
@@ -485,7 +485,7 @@ export function LayoutSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [draggedBannerId, setDraggedBannerId] = useState<string | null>(null);
   const [dragOverBannerId, setDragOverBannerId] = useState<string | null>(null);
-  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'tu-4', 'tu-5', 'to-2', 'to-3', 'to-4']));
+  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'tu-4', 'tu-5', 'co-2', 'co-3', 'co-4']));
   const [draggedNavLinkIndex, setDraggedNavLinkIndex] = useState<number | null>(null);
   const [dragOverNavLinkIndex, setDragOverNavLinkIndex] = useState<number | null>(null);
   const [draggedLegalLinkIndex, setDraggedLegalLinkIndex] = useState<number | null>(null);
@@ -570,10 +570,10 @@ export function LayoutSettingsPage() {
   };
 
   // TO 사이드바 업데이트
-  const updateSidebarTO = (key: keyof BrandingSettings['sidebarTO'], value: unknown) => {
+  const updateSidebarTO = (key: keyof BrandingSettings['sidebarCO'], value: unknown) => {
     setSettings((prev) => ({
       ...prev,
-      sidebarTO: { ...prev.sidebarTO, [key]: value },
+      sidebarCO: { ...prev.sidebarCO, [key]: value },
     }));
     setHasChanges(true);
   };
@@ -2067,14 +2067,14 @@ export function LayoutSettingsPage() {
           icon={Sidebar}
           title="사이드바 (TO)"
           description="테넌트 관리자용 사이드바 메뉴를 설정합니다"
-          enabled={settings.sidebarTO.enabled}
+          enabled={settings.sidebarCO.enabled}
           onToggle={(enabled) => updateSidebarTO('enabled', enabled)}
         >
           <div className="space-y-4">
             <div>
               <Label>사이드바 항목</Label>
               <div className="space-y-1 mt-1.5">
-                {settings.sidebarTO.items.map((item, index) => (
+                {settings.sidebarCO.items.map((item, index) => (
                   <div key={item.id} className="space-y-1">
                     {/* 부모 항목 */}
                     <div className={`flex items-center gap-2 p-2 rounded-lg border ${item.children && item.children.length > 0 ? 'bg-bg-secondary' : ''} border-border-default`}>
@@ -2110,7 +2110,7 @@ export function LayoutSettingsPage() {
                         size="icon"
                         className="h-7 w-7"
                         onClick={() => {
-                          const newItems = [...settings.sidebarTO.items];
+                          const newItems = [...settings.sidebarCO.items];
                           newItems[index].visible = !newItems[index].visible;
                           updateSidebarTO('items', newItems);
                         }}
@@ -2124,7 +2124,7 @@ export function LayoutSettingsPage() {
                       <select
                         value={item.icon}
                         onChange={(e) => {
-                          const newItems = [...settings.sidebarTO.items];
+                          const newItems = [...settings.sidebarCO.items];
                           newItems[index].icon = e.target.value;
                           updateSidebarTO('items', newItems);
                         }}
@@ -2140,7 +2140,7 @@ export function LayoutSettingsPage() {
                       <Input
                         value={item.label}
                         onChange={(e) => {
-                          const newItems = [...settings.sidebarTO.items];
+                          const newItems = [...settings.sidebarCO.items];
                           newItems[index].label = e.target.value;
                           updateSidebarTO('items', newItems);
                         }}
@@ -2150,7 +2150,7 @@ export function LayoutSettingsPage() {
                       <Input
                         value={item.url}
                         onChange={(e) => {
-                          const newItems = [...settings.sidebarTO.items];
+                          const newItems = [...settings.sidebarCO.items];
                           newItems[index].url = e.target.value;
                           updateSidebarTO('items', newItems);
                         }}
@@ -2162,7 +2162,7 @@ export function LayoutSettingsPage() {
                         size="icon"
                         className="h-7 w-7"
                         onClick={() => {
-                          const newItems = [...settings.sidebarTO.items];
+                          const newItems = [...settings.sidebarCO.items];
                           if (!newItems[index].children) {
                             newItems[index].children = [];
                           }
@@ -2184,7 +2184,7 @@ export function LayoutSettingsPage() {
                         size="icon"
                         className="h-7 w-7"
                         onClick={() => {
-                          const newItems = settings.sidebarTO.items.filter((_, i) => i !== index);
+                          const newItems = settings.sidebarCO.items.filter((_, i) => i !== index);
                           updateSidebarTO('items', newItems);
                         }}
                       >
@@ -2202,7 +2202,7 @@ export function LayoutSettingsPage() {
                               size="icon"
                               className="h-6 w-6"
                               onClick={() => {
-                                const newItems = [...settings.sidebarTO.items];
+                                const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].visible = !newItems[index].children![childIndex].visible;
                                 updateSidebarTO('items', newItems);
                               }}
@@ -2216,7 +2216,7 @@ export function LayoutSettingsPage() {
                             <select
                               value={child.icon || ''}
                               onChange={(e) => {
-                                const newItems = [...settings.sidebarTO.items];
+                                const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].icon = e.target.value || undefined;
                                 updateSidebarTO('items', newItems);
                               }}
@@ -2233,7 +2233,7 @@ export function LayoutSettingsPage() {
                             <Input
                               value={child.label}
                               onChange={(e) => {
-                                const newItems = [...settings.sidebarTO.items];
+                                const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].label = e.target.value;
                                 updateSidebarTO('items', newItems);
                               }}
@@ -2243,7 +2243,7 @@ export function LayoutSettingsPage() {
                             <Input
                               value={child.url}
                               onChange={(e) => {
-                                const newItems = [...settings.sidebarTO.items];
+                                const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].url = e.target.value;
                                 updateSidebarTO('items', newItems);
                               }}
@@ -2255,7 +2255,7 @@ export function LayoutSettingsPage() {
                               size="icon"
                               className="h-6 w-6"
                               onClick={() => {
-                                const newItems = [...settings.sidebarTO.items];
+                                const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children = newItems[index].children!.filter((_, i) => i !== childIndex);
                                 updateSidebarTO('items', newItems);
                               }}
@@ -2273,7 +2273,7 @@ export function LayoutSettingsPage() {
                   size="sm"
                   onClick={() => {
                     updateSidebarTO('items', [
-                      ...settings.sidebarTO.items,
+                      ...settings.sidebarCO.items,
                       { id: `to-${Date.now()}`, label: '', url: '', icon: '', visible: true },
                     ]);
                   }}
@@ -2931,12 +2931,12 @@ export function LayoutSettingsPage() {
                 </div>
                 <div className="flex">
                   {/* 사이드바 */}
-                  {settings.sidebarTO.enabled && (
+                  {settings.sidebarCO.enabled && (
                     <div className={`w-64 border-r p-4 min-h-[400px] ${
                       previewTheme === 'dark' ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'
                     }`}>
                       <div className={`text-xs font-semibold mb-3 px-2 ${previewTheme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>관리 메뉴</div>
-                      {settings.sidebarTO.items.filter(item => item.visible).slice(0, 6).map((item, idx) => {
+                      {settings.sidebarCO.items.filter(item => item.visible).slice(0, 6).map((item, idx) => {
                         const isExpanded = expandedMenuItems.has(item.id);
                         const hasChildren = item.children && item.children.length > 0;
                         const IconComponent = item.icon ? iconMap[item.icon] : null;

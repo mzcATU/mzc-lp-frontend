@@ -3,7 +3,7 @@
  */
 
 // 사용자 역할 (백엔드 TenantRole enum)
-export type TenantRole = 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'DESIGNER' | 'USER';
+export type TenantRole = 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'DESIGNER' | 'INSTRUCTOR' | 'USER';
 
 // 사용자 상태
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
@@ -93,6 +93,7 @@ export const ROLE_LABELS: Record<TenantRole, { ko: string; en: string }> = {
   TENANT_ADMIN: { ko: '테넌트 관리자', en: 'Tenant Admin' },
   OPERATOR: { ko: '운영자', en: 'Operator' },
   DESIGNER: { ko: '설계자', en: 'Designer' },
+  INSTRUCTOR: { ko: '강사', en: 'Instructor' },
   USER: { ko: '일반 사용자', en: 'User' },
 };
 
@@ -101,8 +102,9 @@ export const ROLE_LABELS: Record<TenantRole, { ko: string; en: string }> = {
 export const ROLE_REDIRECT_PATH: Record<TenantRole, string> = {
   SYSTEM_ADMIN: '/sa',
   TENANT_ADMIN: '/ta',
-  OPERATOR: '/to',
+  OPERATOR: '/co',
   DESIGNER: '/',
+  INSTRUCTOR: '/',
   USER: '/',
 };
 
@@ -111,6 +113,6 @@ export const ROLE_REDIRECT_PATH: Record<TenantRole, string> = {
 export enum UserRole {
   SuperAdmin = 'SYSTEM_ADMIN',
   TenantAdmin = 'TENANT_ADMIN',
-  TenantOperator = 'OPERATOR',
+  CourseOperator = 'OPERATOR',
   TenantUser = 'USER',
 }

@@ -24,7 +24,7 @@ import { useAuthStore } from '@/store/common/authStore';
 const ROLE_BASE_PATH: Record<string, string> = {
   SYSTEM_ADMIN: '/sa',
   TENANT_ADMIN: '/ta',
-  TENANT_OPERATOR: '/to',
+  OPERATOR: '/co',
   DESIGNER: '/tu/teaching',
   USER: '/tu/b2c',
 };

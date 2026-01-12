@@ -82,7 +82,7 @@ export const useLogin = () => {
       const roleBasePath: Record<string, string> = {
         SYSTEM_ADMIN: '/sa',
         TENANT_ADMIN: '/ta',
-        OPERATOR: '/to',
+        OPERATOR: '/co',
         DESIGNER: '/tu/teaching',
         USER: '/tu/b2c',
       };
