@@ -12,6 +12,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
+import { Skeleton } from '@/components/common/Skeleton';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Badge } from '@/components/common/Badge';
@@ -180,11 +181,9 @@ export function TenantNoticesPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }

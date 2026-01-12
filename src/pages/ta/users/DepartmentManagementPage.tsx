@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Plus,
   Search,
@@ -131,7 +132,7 @@ export const DepartmentManagementPage = () => {
     // 하위 부서가 있는지 확인
     const hasChildren = departments.some((d) => d.parentId === id);
     if (hasChildren) {
-      alert('하위 부서가 있는 부서는 삭제할 수 없습니다.');
+      toast.error('하위 부서가 있는 부서는 삭제할 수 없습니다.');
       return;
     }
     setDepartments(departments.filter((d) => d.id !== id));

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Users, BookOpen, TrendingUp, GraduationCap, AlertCircle, UserPlus, FileText, CheckCircle } from 'lucide-react';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   AreaChart,
   Area,
@@ -316,13 +317,13 @@ export function DashboardPage() {
                     <defs>
                       {/* 수강 신청: indigo (브랜드 컬러) - 낮은 투명도 */}
                       <linearGradient id="enrollmentGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4C2D9A" stopOpacity={0.15} />
-                        <stop offset="100%" stopColor="#4C2D9A" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor={designTokens.badge.indigo.text} stopOpacity={0.15} />
+                        <stop offset="100%" stopColor={designTokens.badge.indigo.text} stopOpacity={0.02} />
                       </linearGradient>
                       {/* 수료: green (성공 컬러) - 낮은 투명도 */}
                       <linearGradient id="completionGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3D7A4A" stopOpacity={0.15} />
-                        <stop offset="100%" stopColor="#3D7A4A" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor={designTokens.badge.green.text} stopOpacity={0.15} />
+                        <stop offset="100%" stopColor={designTokens.badge.green.text} stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -355,7 +356,7 @@ export function DashboardPage() {
                       type="monotone"
                       dataKey="enrollments"
                       name="수강 신청"
-                      stroke="#4C2D9A"
+                      stroke={designTokens.badge.indigo.text}
                       strokeWidth={2}
                       fill="url(#enrollmentGradient)"
                       dot={false}
@@ -366,7 +367,7 @@ export function DashboardPage() {
                       type="monotone"
                       dataKey="completions"
                       name="수료"
-                      stroke="#3D7A4A"
+                      stroke={designTokens.badge.green.text}
                       strokeWidth={2}
                       fill="url(#completionGradient)"
                       dot={false}

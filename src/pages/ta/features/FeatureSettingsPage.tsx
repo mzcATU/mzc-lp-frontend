@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
+import { Skeleton } from '@/components/common/Skeleton';
 import { Button } from '@/components/common/Button';
 import { Switch } from '@/components/common/Switch';
 import { useTenantFeatures, useUpdateTenantFeatures } from '@/hooks/ta';
@@ -119,11 +120,9 @@ export function FeatureSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
