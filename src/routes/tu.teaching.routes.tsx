@@ -25,7 +25,7 @@ import { PlaceholderPage } from './pages';
 
 function TenantUserWrapper() {
   return (
-    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'OPERATOR', 'TENANT_ADMIN']}>
+    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN']}>
       <ProfileRequiredRoute>
         <TenantUserLayout>
           <Outlet />
