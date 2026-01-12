@@ -34,13 +34,33 @@ export function LandingHeader() {
   const { data: layoutData } = usePublicLayout();
 
   // 네비게이션 메뉴 (TA 설정 또는 기본값)
-  const navItems = navigationItems && navigationItems.length > 0 ? navigationItems : DEFAULT_NAV_ITEMS;
+  // headerSettings.navLinks가 있으면 그것을 사용 (visible 필터링), 없으면 API 데이터 사용
+  const headerNavLinks = (layoutData?.headerSettings as { navLinks?: Array<{ label: string; url: string; visible: boolean }> })?.navLinks;
+  const navItems = headerNavLinks && headerNavLinks.length > 0
+    ? headerNavLinks
+        .filter(link => link.visible)
+        .map((link, index) => ({
+          id: index + 1,
+          label: link.label,
+          icon: 'BookOpen',
+          path: link.url,
+          enabled: true,
+          displayOrder: index + 1,
+          target: null,
+          createdAt: '',
+          updatedAt: '',
+        }))
+    : (navigationItems && navigationItems.length > 0 ? navigationItems : DEFAULT_NAV_ITEMS);
 
   // 헤더 설정 (로고, 검색, 알림 표시 여부 등)
   const headerSettings = layoutData?.headerSettings;
+  const headerEnabled = headerSettings?.enabled !== false; // 헤더 전체 on/off (기본값 true)
   const showLogo = headerSettings?.showLogo !== false; // 기본값 true
   const showSearch = headerSettings?.showSearch !== false; // 기본값 true
   const showNotifications = headerSettings?.showNotifications !== false; // 기본값 true
+  const showThemeToggle = headerSettings?.showThemeToggle !== false; // 기본값 true
+  const showCart = headerSettings?.showCart !== false; // 기본값 true
+  const showWishlist = headerSettings?.showWishlist !== false; // 기본값 true
 
   // API Base URL
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -91,13 +111,14 @@ export function LandingHeader() {
         </div>
       )}
 
-      {/* Main Navigation */}
-      <div className={`w-full sticky top-0 z-50 border-b ${isDark ? 'glass-dark border-white/10' : 'border-gray-200'}`} style={{ backgroundColor: isDark ? undefined : '#fafafa' }}>
-        <div className="w-full px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between gap-6">
-          {/* Left: Logo & Menu */}
-          <div className="flex items-center gap-8 ml-2 md:ml-4">
-            {/* Logo - showLogo 설정에 따라 표시 */}
-            {showLogo && (
+      {/* Main Navigation - headerEnabled 설정에 따라 표시 */}
+      {headerEnabled && (
+        <div className={`w-full sticky top-0 z-50 border-b ${isDark ? 'glass-dark border-white/10' : 'border-gray-200'}`} style={{ backgroundColor: isDark ? undefined : '#fafafa' }}>
+          <div className="w-full px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between gap-6">
+            {/* Left: Logo & Menu */}
+            <div className="flex items-center gap-8 ml-2 md:ml-4">
+              {/* Logo - showLogo 설정에 따라 표시 */}
+              {showLogo && (
               <Link to={prefixPath('/tu/b2c')} className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
                 {fullLogoUrl ? (
                   <img src={fullLogoUrl} alt={tenantName} className="h-8 object-contain" />
@@ -166,38 +187,46 @@ export function LandingHeader() {
           {/* Right: Actions */}
           <div className="flex items-center gap-3 md:gap-5 mr-2 md:mr-4">
             <div className="flex items-center gap-2">
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-colors ${
-                  isDark
-                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                aria-label={isDark ? t.landing.switchToLight : t.landing.switchToDark}
-              >
-                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-              <Link
-                to={prefixPath('/tu/b2c/cart')}
-                className={`p-2 rounded-lg transition-colors relative ${
-                  isDark
-                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <ShoppingCart className="h-5 w-5" />
-              </Link>
-              <Link
-                to={prefixPath('/tu/b2c/wishlist')}
-                className={`p-2 rounded-lg transition-colors relative ${
-                  isDark
-                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <Heart className="h-5 w-5" />
-              </Link>
+              {/* Theme Toggle Button - showThemeToggle 설정에 따라 표시 */}
+              {showThemeToggle && (
+                <button
+                  onClick={toggleTheme}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark
+                      ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                  aria-label={isDark ? t.landing.switchToLight : t.landing.switchToDark}
+                >
+                  {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </button>
+              )}
+              {/* 장바구니 아이콘 - showCart 설정에 따라 표시 */}
+              {showCart && (
+                <Link
+                  to={prefixPath('/tu/b2c/cart')}
+                  className={`p-2 rounded-lg transition-colors relative ${
+                    isDark
+                      ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                </Link>
+              )}
+              {/* 위시리스트 아이콘 - showWishlist 설정에 따라 표시 */}
+              {showWishlist && (
+                <Link
+                  to={prefixPath('/tu/b2c/wishlist')}
+                  className={`p-2 rounded-lg transition-colors relative ${
+                    isDark
+                      ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <Heart className="h-5 w-5" />
+                </Link>
+              )}
               {/* 알림 아이콘 - showNotifications 설정에 따라 표시 */}
               {showNotifications && (
                 <Link
@@ -377,6 +406,7 @@ export function LandingHeader() {
           </div>
         </div>
       </div>
+      )}
     </header>
   );
 }
