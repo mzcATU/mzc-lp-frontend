@@ -58,7 +58,7 @@ export function DashboardPage() {
     );
   }
 
-  const defaultUserStats = { total: 0, active: 0, inactive: 0, suspended: 0, withdrawn: 0, newThisMonth: 0 };
+  const defaultUserStats = { total: 0, active: 0, inactive: 0, suspended: 0, withdrawn: 0, newInPeriod: 0 };
   const defaultProgramStats = { total: 0, draft: 0, pending: 0, approved: 0, rejected: 0, closed: 0 };
   const defaultEnrollmentStats = { totalEnrollments: 0, byStatus: { enrolled: 0, completed: 0, dropped: 0, failed: 0 }, completionRate: 0 };
 
@@ -111,7 +111,7 @@ export function DashboardPage() {
             />
             <AdminStatsCard
               title="이번 달 신규"
-              value={userStats.newThisMonth.toLocaleString()}
+              value={userStats.newInPeriod.toLocaleString()}
               subtitle="신규 가입자"
               icon={UserPlus}
               variant="success"

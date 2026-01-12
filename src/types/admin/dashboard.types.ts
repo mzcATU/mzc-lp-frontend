@@ -62,7 +62,7 @@ export interface TaUserStats {
   suspended: number;
   withdrawn: number;
   total: number;
-  newThisMonth: number;
+  newInPeriod: number;
 }
 
 /** TA 대시보드 - 프로그램 통계 */
