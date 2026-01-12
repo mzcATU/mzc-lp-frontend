@@ -384,42 +384,42 @@ const defaultBrandingSettings: BrandingSettings = {
   sidebarCO: {
     enabled: true,
     items: [
-      { id: 'to-1', label: '대시보드', url: '/to/dashboard', icon: 'layout-dashboard', visible: true },
+      { id: 'co-1', label: '대시보드', url: '/co/dashboard', icon: 'layout-dashboard', visible: true },
       {
-        id: 'to-2',
+        id: 'co-2',
         label: '교육 과정 탐색',
         url: '',
         icon: 'search',
         visible: true,
         children: [
-          { id: 'to-2-1', label: '과정 검색 및 상세 조회', url: '/to/courses', visible: true },
-          { id: 'to-2-2', label: '과정 등록/수정', url: '/to/courses/pending', visible: true },
+          { id: 'co-2-1', label: '과정 검색 및 상세 조회', url: '/co/courses', visible: true },
+          { id: 'co-2-2', label: '과정 등록/수정', url: '/co/courses/pending', visible: true },
         ],
       },
       {
-        id: 'to-3',
+        id: 'co-3',
         label: '교육 운영 관리',
         url: '',
         icon: 'calendar',
         visible: true,
         children: [
-          { id: 'to-3-1', label: '차수 운영', url: '/to/times', visible: true },
-          { id: 'to-3-2', label: '강사 배정 관리', url: '/to/instructors', visible: true },
+          { id: 'co-3-1', label: '차수 운영', url: '/co/times', visible: true },
+          { id: 'co-3-2', label: '강사 배정 관리', url: '/co/instructors', visible: true },
         ],
       },
       {
-        id: 'to-4',
+        id: 'co-4',
         label: '콘텐츠 관리',
         url: '',
         icon: 'database',
         visible: false,
         children: [
-          { id: 'to-4-1', label: '콘텐츠 풀', url: '/to/content', visible: true },
-          { id: 'to-4-2', label: '학습객체', url: '/to/learning-objects', visible: true },
+          { id: 'co-4-1', label: '콘텐츠 풀', url: '/co/content', visible: true },
+          { id: 'co-4-2', label: '학습객체', url: '/co/learning-objects', visible: true },
         ],
       },
-      { id: 'to-5', label: '사용자 관리', url: '/to/users', icon: 'users', visible: true },
-      { id: 'to-6', label: '설정', url: '/to/settings', icon: 'settings', visible: true },
+      { id: 'co-5', label: '사용자 관리', url: '/co/users', icon: 'users', visible: true },
+      { id: 'co-6', label: '설정', url: '/co/settings', icon: 'settings', visible: true },
     ],
   },
 };
@@ -485,7 +485,7 @@ export function LayoutSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [draggedBannerId, setDraggedBannerId] = useState<string | null>(null);
   const [dragOverBannerId, setDragOverBannerId] = useState<string | null>(null);
-  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'tu-4', 'tu-5', 'to-2', 'to-3', 'to-4']));
+  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'tu-4', 'tu-5', 'co-2', 'co-3', 'co-4']));
   const [draggedNavLinkIndex, setDraggedNavLinkIndex] = useState<number | null>(null);
   const [dragOverNavLinkIndex, setDragOverNavLinkIndex] = useState<number | null>(null);
   const [draggedLegalLinkIndex, setDraggedLegalLinkIndex] = useState<number | null>(null);
@@ -569,7 +569,7 @@ export function LayoutSettingsPage() {
     setHasChanges(true);
   };
 
-  // TO 사이드바 업데이트
+  // CO 사이드바 업데이트
   const updateSidebarCO = (key: keyof BrandingSettings['sidebarCO'], value: unknown) => {
     setSettings((prev) => ({
       ...prev,
@@ -2329,6 +2329,23 @@ export function LayoutSettingsPage() {
             {/* TU 메인 미리보기 */}
             <TabsContent value="tu-main">
               <div className={`border rounded-lg overflow-hidden ${previewTheme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
+                {/* 브라우저 탭 시뮬레이션 (파비콘 미리보기) */}
+                <div className={`flex items-center gap-2 px-3 py-2 border-b ${previewTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-t-md text-xs ${previewTheme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-600'}`}>
+                    {settings.logo.faviconPreview ? (
+                      <img src={settings.logo.faviconPreview} alt="Favicon" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <div className="w-4 h-4 rounded bg-gray-300" />
+                    )}
+                    <span className="truncate max-w-[120px]">{settings.company.name || '사이트 제목'}</span>
+                  </div>
+                </div>
+
                 {/* 상단 알림 배너 */}
                 {settings.colors.enabled && (
                   <div
@@ -2348,9 +2365,18 @@ export function LayoutSettingsPage() {
                   }`}>
                     <div className="flex items-center gap-8">
                       {settings.header.showLogo && (
-                        <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
-                          {settings.company.name || 'Logo'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {(settings.logo.lightPreview || settings.logo.darkPreview) && (
+                            <img
+                              src={(previewTheme === 'dark' ? settings.logo.darkPreview : settings.logo.lightPreview) || settings.logo.lightPreview || settings.logo.darkPreview!}
+                              alt="Logo"
+                              className="h-8 object-contain"
+                            />
+                          )}
+                          <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
+                            {settings.company.name || 'Logo'}
+                          </span>
+                        </div>
                       )}
                       <div className={`hidden md:flex gap-6 text-sm font-medium ${previewTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                         {settings.header.navLinks.filter(l => l.visible).slice(0, 4).map((link, i) => (
@@ -2536,9 +2562,9 @@ export function LayoutSettingsPage() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      {settings.footer.socialLinks.facebook.enabled && settings.footer.socialLinks.facebook.url && (
+                      {settings.footer.socialLinks.facebook.enabled && (
                         <a
-                          href={settings.footer.socialLinks.facebook.url}
+                          href={settings.footer.socialLinks.facebook.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2549,9 +2575,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.twitter.enabled && settings.footer.socialLinks.twitter.url && (
+                      {settings.footer.socialLinks.twitter.enabled && (
                         <a
-                          href={settings.footer.socialLinks.twitter.url}
+                          href={settings.footer.socialLinks.twitter.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2562,9 +2588,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.youtube.enabled && settings.footer.socialLinks.youtube.url && (
+                      {settings.footer.socialLinks.youtube.enabled && (
                         <a
-                          href={settings.footer.socialLinks.youtube.url}
+                          href={settings.footer.socialLinks.youtube.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2575,9 +2601,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.instagram.enabled && settings.footer.socialLinks.instagram.url && (
+                      {settings.footer.socialLinks.instagram.enabled && (
                         <a
-                          href={settings.footer.socialLinks.instagram.url}
+                          href={settings.footer.socialLinks.instagram.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2588,9 +2614,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.linkedin.enabled && settings.footer.socialLinks.linkedin.url && (
+                      {settings.footer.socialLinks.linkedin.enabled && (
                         <a
-                          href={settings.footer.socialLinks.linkedin.url}
+                          href={settings.footer.socialLinks.linkedin.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2601,9 +2627,9 @@ export function LayoutSettingsPage() {
                           </svg>
                         </a>
                       )}
-                      {settings.footer.socialLinks.github.enabled && settings.footer.socialLinks.github.url && (
+                      {settings.footer.socialLinks.github.enabled && (
                         <a
-                          href={settings.footer.socialLinks.github.url}
+                          href={settings.footer.socialLinks.github.url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 cursor-pointer ${previewTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-700 hover:bg-gray-600'}`}
@@ -2623,13 +2649,39 @@ export function LayoutSettingsPage() {
             {/* 마이페이지 미리보기 */}
             <TabsContent value="tu-mypage">
               <div className={`border rounded-lg overflow-hidden ${previewTheme === 'dark' ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+                {/* 브라우저 탭 시뮬레이션 (파비콘 미리보기) */}
+                <div className={`flex items-center gap-2 px-3 py-2 border-b ${previewTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-t-md text-xs ${previewTheme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-600'}`}>
+                    {settings.logo.faviconPreview ? (
+                      <img src={settings.logo.faviconPreview} alt="Favicon" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <div className="w-4 h-4 rounded bg-gray-300" />
+                    )}
+                    <span className="truncate max-w-[120px]">{settings.company.name || '사이트 제목'}</span>
+                  </div>
+                </div>
+
                 {/* 헤더 */}
                 <div className={`h-16 border-b flex items-center px-6 ${
                   previewTheme === 'dark' ? 'bg-[#1e1e1e] border-white/10' : 'bg-white border-gray-200'
                 }`}>
-                  <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
-                    {settings.company.name || 'Logo'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {(settings.logo.lightPreview || settings.logo.darkPreview) && (
+                      <img
+                        src={(previewTheme === 'dark' ? settings.logo.darkPreview : settings.logo.lightPreview) || settings.logo.lightPreview || settings.logo.darkPreview!}
+                        alt="Logo"
+                        className="h-8 object-contain"
+                      />
+                    )}
+                    <span className="font-bold text-xl tracking-tight" style={{ color: settings.colors.primary }}>
+                      {settings.company.name || 'Logo'}
+                    </span>
+                  </div>
                   <div className="ml-auto flex items-center gap-3">
                     <Bell className={`w-5 h-5 ${previewTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} />
                     <div
@@ -2825,13 +2877,39 @@ export function LayoutSettingsPage() {
             {/* TO 미리보기 */}
             <TabsContent value="to">
               <div className={`border rounded-lg overflow-hidden ${previewTheme === 'dark' ? 'bg-gray-950' : 'bg-gray-50'}`}>
+                {/* 브라우저 탭 시뮬레이션 (파비콘 미리보기) */}
+                <div className={`flex items-center gap-2 px-3 py-2 border-b ${previewTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-t-md text-xs ${previewTheme === 'dark' ? 'bg-gray-900 text-gray-300' : 'bg-white text-gray-600'}`}>
+                    {settings.logo.faviconPreview ? (
+                      <img src={settings.logo.faviconPreview} alt="Favicon" className="w-4 h-4 object-contain" />
+                    ) : (
+                      <div className="w-4 h-4 rounded bg-gray-300" />
+                    )}
+                    <span className="truncate max-w-[120px]">{settings.company.name || '사이트 제목'}</span>
+                  </div>
+                </div>
+
                 {/* 헤더 */}
                 <div className={`h-16 border-b flex items-center px-6 ${
                   previewTheme === 'dark' ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'
                 }`}>
-                  <span className={`font-bold text-xl ${previewTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {settings.company.name || 'Logo'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {(settings.logo.lightPreview || settings.logo.darkPreview) && (
+                      <img
+                        src={(previewTheme === 'dark' ? settings.logo.darkPreview : settings.logo.lightPreview) || settings.logo.lightPreview || settings.logo.darkPreview!}
+                        alt="Logo"
+                        className="h-8 object-contain"
+                      />
+                    )}
+                    <span className={`font-bold text-xl ${previewTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      {settings.company.name || 'Logo'}
+                    </span>
+                  </div>
                   <span
                     className="ml-3 text-sm px-2 py-1 rounded-full cursor-pointer transition-all hover:scale-105"
                     style={{

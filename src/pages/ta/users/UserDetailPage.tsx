@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Save,
   BookOpen,
@@ -13,6 +14,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   AdminPageHeader,
   StatusBadge,
@@ -235,8 +237,8 @@ export function UserDetailPage() {
           systemRole: formState.systemRole,
         },
       });
-    } catch (err) {
-      console.error('Failed to save user:', err);
+    } catch {
+      toast.error('사용자 저장에 실패했습니다.');
     }
   };
 
@@ -246,14 +248,19 @@ export function UserDetailPage() {
 
   const handleRoleChange = async (role: SystemRole) => {
     if (formState) {
+      const previousRole = formState.systemRole;
       setFormState({ ...formState, systemRole: role });
       try {
         await updateRoleMutation.mutateAsync({
           id: userId,
           request: { systemRole: role },
         });
-      } catch (err) {
-        console.error('Failed to update role:', err);
+        toast.success('역할이 성공적으로 변경되었습니다.');
+        refetch(); // 데이터 다시 가져오기
+      } catch {
+        // 실패 시 이전 역할로 롤백
+        setFormState({ ...formState, systemRole: previousRole });
+        toast.error('역할 변경에 실패했습니다.');
       }
     }
   };
@@ -266,8 +273,8 @@ export function UserDetailPage() {
     try {
       await deleteMutation.mutateAsync(userId);
       navigate('/ta/users');
-    } catch (err) {
-      console.error('Failed to delete user:', err);
+    } catch {
+      toast.error('사용자 삭제에 실패했습니다.');
     }
   };
 
@@ -364,13 +371,13 @@ export function UserDetailPage() {
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-green-600">{formState.stats.completedCourses}</p>
+            <p className="text-3xl font-bold" style={{ color: designTokens.badge.green.text }}>{formState.stats.completedCourses}</p>
             <p className="text-sm text-text-secondary">완료</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-blue-600">{formState.stats.inProgressCourses}</p>
+            <p className="text-3xl font-bold" style={{ color: designTokens.badge.blue.text }}>{formState.stats.inProgressCourses}</p>
             <p className="text-sm text-text-secondary">진행 중</p>
           </CardContent>
         </Card>
@@ -382,7 +389,7 @@ export function UserDetailPage() {
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-3xl font-bold text-yellow-600">{formState.stats.averageScore}점</p>
+            <p className="text-3xl font-bold" style={{ color: designTokens.badge.yellow.text }}>{formState.stats.averageScore}</p>
             <p className="text-sm text-text-secondary">평균 점수</p>
           </CardContent>
         </Card>
@@ -500,11 +507,11 @@ export function UserDetailPage() {
 
               {/* 위험 영역 */}
               <div className="border-t pt-6">
-                <h4 className="font-medium mb-4 text-red-600">위험 영역</h4>
-                <div className="p-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20">
+                <h4 className="font-medium mb-4" style={{ color: designTokens.status.error_text }}>위험 영역</h4>
+                <div className="p-4 rounded-lg" style={{ backgroundColor: designTokens.status.error_background, border: `1px solid ${designTokens.status.error_text}30` }}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-red-600">사용자 삭제</p>
+                      <p className="font-medium" style={{ color: designTokens.status.error_text }}>사용자 삭제</p>
                       <p className="text-sm text-text-secondary">
                         이 작업은 되돌릴 수 없습니다. 사용자의 모든 데이터가 삭제됩니다.
                       </p>

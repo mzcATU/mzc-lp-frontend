@@ -42,7 +42,7 @@ import type {
   MemberPoolResponse,
   MemberPoolMemberDto,
   EmployeeStatus,
-} from '@/types/to/memberPool.types';
+} from '@/types/co/memberPool.types';
 
 // 직원 상태 라벨
 const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {

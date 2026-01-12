@@ -300,3 +300,11 @@ export {
   useUpdateCourseReview,
   useDeleteCourseReview,
 } from './useCourseReviewQueries';
+
+// User Notice Hooks (TU 공지)
+export {
+  userNoticeKeys,
+  useUserNotices,
+  useUserNotice,
+  useUnreadNoticeCount,
+} from './useUserNoticeQueries';

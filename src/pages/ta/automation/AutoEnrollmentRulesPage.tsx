@@ -103,8 +103,8 @@ export const AutoEnrollmentRulesPage = () => {
       } else {
         await activateRule.mutateAsync(rule.id);
       }
-    } catch (err) {
-      console.error('Failed to toggle rule active status:', err);
+    } catch {
+      // 에러는 mutation의 onError에서 처리됨
     }
   };
 

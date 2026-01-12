@@ -11,11 +11,34 @@ import type {
 } from '@/types/tu/courseTimeCatalog.types';
 import type { ApiResponse, PageResponse } from '@/types/common';
 
+/**
+ * URL에서 서브도메인 추출
+ * 예: /mzc/tu/b2c/courses → 'mzc'
+ */
+function getSubdomainFromUrl(): string | null {
+  const pathname = window.location.pathname;
+  // 패턴: /:subdomain/tu/... 또는 /:subdomain/ta/... 등
+  const match = pathname.match(/^\/([^/]+)\/(?:tu|ta|to|sa)\//);
+  if (match) {
+    return match[1];
+  }
+  return null;
+}
+
 // Public API용 axios 인스턴스 (인증 토큰 불필요)
 // VITE_API_BASE_URL이 이미 /api를 포함하므로 BASE_URL에서 /api 제거
 const publicAxios = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
   timeout: 10000,
+});
+
+// 요청 인터셉터: X-Subdomain 헤더 추가
+publicAxios.interceptors.request.use((config) => {
+  const subdomain = getSubdomainFromUrl();
+  if (subdomain) {
+    config.headers['X-Subdomain'] = subdomain;
+  }
+  return config;
 });
 
 const BASE_URL = '/public/course-times';

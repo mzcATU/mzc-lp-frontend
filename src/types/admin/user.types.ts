@@ -5,8 +5,8 @@
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'BLOCKED';
 // 백엔드 TenantRole enum과 동기화: SYSTEM_ADMIN, TENANT_ADMIN, OPERATOR, DESIGNER, INSTRUCTOR, USER
 export type SystemRole = 'SYSTEM_ADMIN' | 'TENANT_ADMIN' | 'OPERATOR' | 'DESIGNER' | 'INSTRUCTOR' | 'USER';
-// 백엔드 CourseRole enum과 동기화: DESIGNER, OWNER, INSTRUCTOR
-export type CourseRole = 'DESIGNER' | 'OWNER' | 'INSTRUCTOR';
+// 백엔드 CourseRole enum과 동기화: DESIGNER, INSTRUCTOR
+export type CourseRole = 'DESIGNER' | 'INSTRUCTOR';
 
 export interface AdminUser {
   id: number;

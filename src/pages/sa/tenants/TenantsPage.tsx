@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Building2, Loader2 } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Building2, Loader2, Users, BookOpen } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -109,6 +109,13 @@ export function TenantsPage() {
   });
 
   const tenants = tenantsData?.content || [];
+
+  // 전체 통계 계산
+  const totalStats = useMemo(() => {
+    const totalUsers = tenants.reduce((sum, t) => sum + (t.userCount || 0), 0);
+    const totalCourses = tenants.reduce((sum, t) => sum + (t.courseCount || 0), 0);
+    return { totalUsers, totalCourses, totalTenants: tenants.length };
+  }, [tenants]);
 
   const columns: ColumnDef<Tenant>[] = [
     {
@@ -334,6 +341,37 @@ export function TenantsPage() {
         }
       />
 
+      {/* 전체 통계 카드 */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white border rounded-lg p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            <Building2 className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm text-text-secondary">전체 테넌트</p>
+            <p className="text-xl font-semibold">{totalStats.totalTenants}개</p>
+          </div>
+        </div>
+        <div className="bg-white border rounded-lg p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+            <Users className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm text-text-secondary">전체 사용자</p>
+            <p className="text-xl font-semibold">{totalStats.totalUsers.toLocaleString()}명</p>
+          </div>
+        </div>
+        <div className="bg-white border rounded-lg p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <p className="text-sm text-text-secondary">전체 강좌</p>
+            <p className="text-xl font-semibold">{totalStats.totalCourses}개</p>
+          </div>
+        </div>
+      </div>
+
       {/* 필터 영역 */}
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-sm">
@@ -345,7 +383,7 @@ export function TenantsPage() {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter || 'all'} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="상태" />
           </SelectTrigger>
@@ -357,7 +395,7 @@ export function TenantsPage() {
             <SelectItem value="TERMINATED">종료</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={planFilter} onValueChange={setPlanFilter}>
+        <Select value={planFilter || 'all'} onValueChange={setPlanFilter}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="플랜" />
           </SelectTrigger>

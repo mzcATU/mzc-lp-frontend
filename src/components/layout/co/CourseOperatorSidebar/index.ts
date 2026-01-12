@@ -1,0 +1,1 @@
+export { CourseOperatorSidebar } from './CourseOperatorSidebar';

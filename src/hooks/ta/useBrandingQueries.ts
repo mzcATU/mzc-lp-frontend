@@ -6,6 +6,7 @@ import {
   brandingService,
   type UpdateDesignSettingsRequest,
   type UpdateLayoutSettingsRequest,
+  type UpdateExtendedBrandingRequest,
   type NavigationItemRequest,
 } from '@/services/ta/brandingService';
 
@@ -51,6 +52,19 @@ export const useUpdateLayoutSettings = () => {
   return useMutation({
     mutationFn: (request: UpdateLayoutSettingsRequest) =>
       brandingService.updateLayoutSettings(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: brandingKeys.settings() });
+    },
+  });
+};
+
+/** 확장 브랜딩 설정 업데이트 (배너, 랜딩페이지, 사이드바 TU/TO) */
+export const useUpdateExtendedBrandingSettings = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: UpdateExtendedBrandingRequest) =>
+      brandingService.updateExtendedBrandingSettings(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: brandingKeys.settings() });
     },

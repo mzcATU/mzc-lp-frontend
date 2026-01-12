@@ -5,8 +5,8 @@ export { UsersPage, UserDetailPage, OperatorsPage, GroupsPage, PermissionsPage }
 // System
 export { DomainSettingsPage } from './system';
 
-// Branding
-export { LayoutSettingsPage } from './branding';
+// Branding (새로운 통합 페이지)
+export { BrandingSettingsPage, LayoutSettingsPage, DesignSettingsPage } from './branding';
 
 // Analytics
 export { RealtimePage, ExportPage, LogsPage } from './analytics';
@@ -14,8 +14,8 @@ export { RealtimePage, ExportPage, LogsPage } from './analytics';
 // Settings
 export { TenantSettingsPage, UserManagementSettingsPage } from './settings';
 
-// Features
+// Features (기존 유지 - 호환성)
 export { FeatureSettingsPage, TenantCategoryPage } from './features';
 
 // Notices
-export { TenantNoticesPage } from './notices';
+export { TenantNoticesPage, SystemNoticesPage, NoticeInboxPage } from './notices';

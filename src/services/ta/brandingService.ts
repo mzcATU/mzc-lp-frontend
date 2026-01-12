@@ -15,6 +15,7 @@ import type {
   ResponsiveSettings,
   UpdateDesignSettingsRequest,
   UpdateLayoutSettingsRequest,
+  UpdateExtendedBrandingRequest,
 } from '@/types/admin';
 
 // Re-export types for consumers
@@ -30,6 +31,7 @@ export type {
   ResponsiveSettings,
   UpdateDesignSettingsRequest,
   UpdateLayoutSettingsRequest,
+  UpdateExtendedBrandingRequest,
 };
 
 // ============================================
@@ -54,6 +56,12 @@ export interface TenantSettingsResponse {
   sidebarSettings: SidebarSettings;
   footerSettings: FooterSettings;
   contentSettings: ContentSettings;
+  // 확장 브랜딩 설정
+  companyName: string | null;
+  bannerSettings: Record<string, unknown> | null;
+  landingPageSettings: Record<string, unknown> | null;
+  sidebarTUSettings: Record<string, unknown> | null;
+  sidebarCOSettings: Record<string, unknown> | null;
   // 확장 UI 설정
   typographySettings: TypographySettings | null;
   colorModeSettings: ColorModeSettings | null;
@@ -132,6 +140,15 @@ export const brandingService = {
   async updateLayoutSettings(request: UpdateLayoutSettingsRequest): Promise<TenantSettingsResponse> {
     const { data } = await axiosInstance.put<TenantSettingsResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.LAYOUT,
+      request
+    );
+    return data;
+  },
+
+  /** 확장 브랜딩 설정 업데이트 (배너, 랜딩페이지, 사이드바 TU/CO) */
+  async updateExtendedBrandingSettings(request: UpdateExtendedBrandingRequest): Promise<TenantSettingsResponse> {
+    const { data } = await axiosInstance.put<TenantSettingsResponse>(
+      API_ENDPOINTS.TENANT_SETTINGS.BRANDING_EXTENDED,
       request
     );
     return data;

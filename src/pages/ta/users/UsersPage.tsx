@@ -120,6 +120,7 @@ export function UsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [bulkCreateMethod, setBulkCreateMethod] = useState<'pattern' | 'file'>('pattern');
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
 
@@ -382,10 +383,32 @@ export function UsersPage() {
     };
   };
 
-  // 파일 드롭존
+  // 파일 드롭존 - 파일 선택만 처리
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (!file) return;
+
+    // 파일 저장
+    setUploadedFile(file);
+    toast.success('파일이 선택되었습니다.', {
+      description: '생성하기 버튼을 눌러 계정을 생성하세요.',
+    });
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+    },
+    maxFiles: 1,
+    maxSize: 10 * 1024 * 1024, // 10MB
+  });
+
+  // 파일 업로드 계정 생성 확인 - 실제 API 호출
+  const handleFileUploadConfirm = async () => {
+    if (!uploadedFile) return;
 
     setIsProcessing(true);
     setProcessingProgress(0);
@@ -394,7 +417,7 @@ export function UsersPage() {
       setProcessingProgress(30);
 
       // 실제 API 호출 (비밀번호 자동생성: 1q2w3e4r!)
-      const response = await userService.fileBulkCreateUsers(file, {
+      const response = await userService.fileBulkCreateUsers(uploadedFile, {
         defaultPassword: '1q2w3e4r!',
         autoLinkEmployees: true,
       });
@@ -413,10 +436,15 @@ export function UsersPage() {
       } else {
         // 모두 성공한 경우
         toast.success(`${result.success}개의 계정이 생성되었습니다.`);
+        // 성공 시 다이얼로그 닫기
+        setTimeout(() => {
+          setUploadResult(null);
+          setUploadedFile(null);
+          setIsBulkCreateDialogOpen(false);
+          setBulkCreateMethod('pattern');
+        }, 1500);
       }
     } catch (err) {
-      console.error('파일 업로드 실패:', err);
-
       // Axios 에러에서 백엔드 에러 메시지 추출
       let errorMessage = '파일 업로드에 실패했습니다.';
       let errorDescription = '';
@@ -445,31 +473,12 @@ export function UsersPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'text/csv': ['.csv'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-    },
-    maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
-  });
-
-  // 파일 업로드 계정 생성 확인 (이미 API 호출로 생성됨)
-  const handleFileUploadConfirm = () => {
-    if (!uploadResult) return;
-    toast.success(`${uploadResult.success}개의 계정이 생성되었습니다.`);
-    setUploadResult(null);
-    setIsBulkCreateDialogOpen(false);
-    setBulkCreateMethod('pattern');
   };
 
   // 파일 업로드 리셋
   const handleFileUploadReset = () => {
     setUploadResult(null);
+    setUploadedFile(null);
     setProcessingProgress(0);
   };
 
@@ -1028,7 +1037,7 @@ export function UsersPage() {
 
             {/* 파일 업로드 탭 */}
             <TabsContent value="file" className="mt-4">
-              {!uploadResult ? (
+              {!uploadResult && !uploadedFile ? (
                 <div className="space-y-6">
                   {/* 업로드 영역 */}
                   <div
@@ -1042,39 +1051,21 @@ export function UsersPage() {
                     }}
                   >
                     <input {...getInputProps()} />
-                    {isProcessing ? (
-                      <div className="space-y-4">
-                        <FileSpreadsheet
-                          className="w-16 h-16 mx-auto animate-pulse"
-                          style={{ color: designTokens.button.brand_default }}
-                        />
-                        <p className="text-lg font-medium" style={{ color: designTokens.text.primary }}>
-                          파일 처리 중...
-                        </p>
-                        <div className="max-w-md mx-auto">
-                          <Progress value={processingProgress} />
-                          <p className="text-sm mt-2" style={{ color: designTokens.text.secondary }}>
-                            {processingProgress}%
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <Upload
-                          className="w-16 h-16 mx-auto mb-4"
-                          style={{ color: designTokens.text.placeholder }}
-                        />
-                        <p className="text-lg font-medium mb-2" style={{ color: designTokens.text.primary }}>
-                          {isDragActive
-                            ? '여기에 파일을 놓으세요'
-                            : 'Excel 또는 CSV 파일을 드래그하거나 클릭하여 업로드'}
-                        </p>
-                        <p className="text-sm mb-4" style={{ color: designTokens.text.placeholder }}>
-                          .xlsx, .xls, .csv (최대 10MB)
-                        </p>
-                        <Button type="button" variant="outline">파일 선택</Button>
-                      </>
-                    )}
+                    <>
+                      <Upload
+                        className="w-16 h-16 mx-auto mb-4"
+                        style={{ color: designTokens.text.placeholder }}
+                      />
+                      <p className="text-lg font-medium mb-2" style={{ color: designTokens.text.primary }}>
+                        {isDragActive
+                          ? '여기에 파일을 놓으세요'
+                          : 'Excel 또는 CSV 파일을 드래그하거나 클릭하여 업로드'}
+                      </p>
+                      <p className="text-sm mb-4" style={{ color: designTokens.text.placeholder }}>
+                        .xlsx, .xls, .csv (최대 10MB)
+                      </p>
+                      <Button type="button" variant="outline">파일 선택</Button>
+                    </>
                   </div>
 
                   {/* 템플릿 다운로드 */}
@@ -1127,7 +1118,104 @@ export function UsersPage() {
                     </div>
                   </div>
                 </div>
-              ) : (
+              ) : !uploadResult && uploadedFile ? (
+                <div className="space-y-6">
+                  {/* 선택된 파일 정보 */}
+                  <div className="rounded-lg border p-6">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-12 h-12 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: designTokens.bg.secondary }}
+                      >
+                        <FileSpreadsheet
+                          className="w-6 h-6"
+                          style={{ color: designTokens.button.brand_default }}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium mb-1" style={{ color: designTokens.text.primary }}>
+                          {uploadedFile.name}
+                        </p>
+                        <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+                          {(uploadedFile.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleFileUploadReset}
+                        className="gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        제거
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 처리 중 상태 */}
+                  {isProcessing && (
+                    <div className="rounded-lg border p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.button.brand_default }} />
+                        </div>
+                        <p className="text-center font-medium" style={{ color: designTokens.text.primary }}>
+                          파일 처리 중...
+                        </p>
+                        <div className="max-w-md mx-auto">
+                          <Progress value={processingProgress} />
+                          <p className="text-sm text-center mt-2" style={{ color: designTokens.text.secondary }}>
+                            {processingProgress}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 안내 메시지 */}
+                  {!isProcessing && (
+                    <div className="rounded-lg p-4" style={{ backgroundColor: designTokens.bg.secondary }}>
+                      <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+                        <strong>• 이메일</strong>: 필수 항목 (중복 불가)<br />
+                        <strong>• 이름</strong>: 선택 항목<br />
+                        <strong>• 전화번호, 부서, 직급</strong>: 선택 항목<br />
+                        <strong>• 비밀번호</strong>: 자동 생성 (1q2w3e4r!)
+                      </p>
+                    </div>
+                  )}
+
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleFileUploadReset}
+                      disabled={isProcessing}
+                      className="gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleFileUploadConfirm}
+                      disabled={isProcessing}
+                      className="gap-2"
+                      style={{
+                        backgroundColor: designTokens.button.brand_default,
+                        color: designTokens.button.brand_text,
+                      }}
+                    >
+                      {isProcessing ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <UserPlus className="w-4 h-4" />
+                      )}
+                      계정 생성하기
+                    </Button>
+                  </DialogFooter>
+                </div>
+              ) : uploadResult ? (
                 <div className="space-y-6">
                   {/* 업로드 결과 */}
                   <div className="grid grid-cols-3 gap-4">
@@ -1272,7 +1360,7 @@ export function UsersPage() {
                     </Button>
                   </DialogFooter>
                 </div>
-              )}
+              ) : null}
             </TabsContent>
           </Tabs>
         </DialogContent>

@@ -277,7 +277,9 @@ export function CourseReviewSection({ timeId, isDark = false, canWrite = false }
             아직 수강평이 없습니다
           </p>
           <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-            첫 번째 수강평을 작성해보세요!
+            {canWrite
+              ? '첫 번째 수강평을 작성해보세요!'
+              : '수강 신청 후 수강평을 작성할 수 있습니다.'}
           </p>
         </div>
       )}

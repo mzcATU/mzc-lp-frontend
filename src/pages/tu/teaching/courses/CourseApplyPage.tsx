@@ -4,8 +4,8 @@ import { ArrowLeft, Send, Loader2, AlertCircle } from 'lucide-react';
 import { Button, Card } from '@/components/common';
 import { useCourse } from '@/hooks/tu';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
-import { snapshotService } from '@/services/to/snapshotService';
-import { programService } from '@/services/to/programService';
+import { snapshotService } from '@/services/co/snapshotService';
+import { programService } from '@/services/co/programService';
 import { ProgramBasicInfoForm, type ProgramFormData } from '../programs/components/ProgramBasicInfoForm';
 import type { ProgramLevel, ProgramType } from '@/types/common';
 

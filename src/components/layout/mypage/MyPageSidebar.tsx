@@ -8,6 +8,7 @@ import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
+import { useSubdomainPath } from '@/hooks/common';
 import { cn } from '@/utils/cn';
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ interface MyPageSidebarProps {
   onMenuItemClick?: (itemId: string) => void;
   isDarkMode?: boolean;
   language?: 'ko' | 'en';
+  subdomain?: string;
 }
 
 type ViewMode = 'instructor' | 'learner';
@@ -34,6 +36,8 @@ type ViewMode = 'instructor' | 'learner';
 export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
+
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const { t } = useTranslation();
@@ -43,8 +47,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
-  // USER: 권한 없음, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
-  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'DESIGNER' | 'OWNER'>('USER');
+  // USER: 권한 없음, INSTRUCTOR: 강사, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
+  const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OWNER'>('USER');
 
   // CourseRole API로 역할 확인
   useEffect(() => {
@@ -54,11 +58,14 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
         if (Array.isArray(roles) && roles.length > 0) {
           const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
           const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+          const hasInstructor = roles.some((r: { role: string }) => r.role === 'INSTRUCTOR');
 
           if (hasOwner) {
             setCourseRoleStatus('OWNER');
           } else if (hasDesigner) {
             setCourseRoleStatus('DESIGNER');
+          } else if (hasInstructor) {
+            setCourseRoleStatus('INSTRUCTOR');
           }
         }
       } catch (error) {
@@ -68,8 +75,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
     checkCourseRole();
   }, []);
 
-  // 사용자가 DESIGNER 이상의 역할을 가지고 있는지 확인 (시스템 역할 또는 CourseRole)
-  const isDesigner = user?.role === 'OPERATOR' || user?.role === 'TENANT_ADMIN' || courseRoleStatus !== 'USER';
+  // 사용자가 강사/디자이너 역할을 가지고 있는지 확인 (CourseRole 기준)
+  const isDesigner = courseRoleStatus !== 'USER';
 
   // 강의 개설하기 클릭 핸들러
   const handleCreateCourseClick = () => {
@@ -269,7 +276,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                 <button
                   onClick={() => {
                     setCurrentMode('instructor');
-                    navigate('/tu/dashboard');
+                    navigate(prefixPath('/tu/dashboard'));
                   }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
@@ -288,7 +295,10 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
                   <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
                 </button>
                 <button
-                  onClick={() => setCurrentMode('learner')}
+                  onClick={() => {
+                    setCurrentMode('learner');
+                    navigate(prefixPath('/tu/b2c/mypage'));
+                  }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
                     'transition-all duration-200 text-sm font-medium whitespace-nowrap'

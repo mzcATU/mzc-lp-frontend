@@ -17,9 +17,10 @@ import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
+import { useSubdomainPath } from '@/hooks/common';
 
 // 역할 타입
-type RoleType = 'sa' | 'ta' | 'to' | 'tu';
+type RoleType = 'sa' | 'ta' | 'co' | 'tu';
 
 export function BaseSidebar({
   isExpanded,
@@ -36,6 +37,7 @@ export function BaseSidebar({
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { prefixPath } = useSubdomainPath();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -78,8 +80,8 @@ export function BaseSidebar({
   // 테넌트 브랜딩 (SA 제외)
   const { branding } = useTenantBranding();
 
-  // 어드민 역할 여부 (SA, TA, TO)
-  const isAdminRole = roleType === 'sa' || roleType === 'ta' || roleType === 'to';
+  // 어드민 역할 여부 (SA, TA, CO)
+  const isAdminRole = roleType === 'sa' || roleType === 'ta' || roleType === 'co';
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -116,9 +118,9 @@ export function BaseSidebar({
 
   const handleModeChange = (mode: ViewMode) => {
     if (mode === 'learner') {
-      navigate('/tu/b2c/mypage');
+      navigate(prefixPath('/tu/b2c/mypage'));
     } else {
-      navigate('/tu/dashboard');
+      navigate(prefixPath('/tu/dashboard'));
     }
   };
 

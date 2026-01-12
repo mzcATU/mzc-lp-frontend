@@ -11,6 +11,7 @@ import {
   useUpdateCourseCommunityPost,
   useDeleteCourseCommunityPost,
 } from '@/hooks/tu/useCourseCommunityQueries';
+import { useAuthStore } from '@/store/common/authStore';
 import type {
   CourseCommunityFilter,
   PostType,
@@ -26,6 +27,7 @@ interface CourseCommunitySectionProps {
   timeId: number;
   isDark: boolean;
   canWrite?: boolean;
+  instructorIds?: number[];
 }
 
 const POST_TYPE_FILTERS: { value: PostType | 'all'; label: string }[] = [
@@ -40,7 +42,9 @@ export function CourseCommunitySection({
   timeId,
   isDark,
   canWrite = true,
+  instructorIds,
 }: CourseCommunitySectionProps) {
+  const { user } = useAuthStore();
   const [filter, setFilter] = useState<CourseCommunityFilter>({
     type: 'all',
     sortBy: 'latest',
@@ -273,6 +277,8 @@ export function CourseCommunitySection({
                 post={post}
                 isDark={isDark}
                 onClick={() => setSelectedPost(post)}
+                currentUserId={user?.id}
+                instructorIds={instructorIds}
               />
             ))}
 
@@ -340,6 +346,7 @@ export function CourseCommunitySection({
           onClose={() => setSelectedPost(null)}
           onEdit={() => handleEditClick(selectedPost)}
           onDelete={() => handleDeletePost(selectedPost.id)}
+          instructorIds={instructorIds}
         />
       )}
     </div>

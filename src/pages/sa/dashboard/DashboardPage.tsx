@@ -13,8 +13,9 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { NoDataEmpty } from '@/components/common/EmptyState';
 import { useSaDashboard } from '@/hooks/sa';
 import type { TenantStatus, PlanType } from '@/types/admin';
+import type { DashboardPeriod } from '@/services/sa';
 
-type DateRange = '7d' | '30d' | 'all';
+type DateRange = DashboardPeriod;
 
 const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: 'all', label: '전체' },
@@ -23,8 +24,8 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
 ];
 
 export function DashboardPage() {
-  const { data, isLoading, error } = useSaDashboard();
   const [dateRange, setDateRange] = useState<DateRange>('all');
+  const { data, isLoading, error } = useSaDashboard(dateRange);
 
   // 선택된 기간 라벨 가져오기
   const selectedRangeLabel = DATE_RANGE_OPTIONS.find((opt) => opt.value === dateRange)?.label ?? '';

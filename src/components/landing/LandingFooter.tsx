@@ -2,13 +2,11 @@ import { Youtube, Instagram } from 'lucide-react';
 import { useTranslation } from '@/store/common/languageStore';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { usePublicLayout } from '@/hooks/tu';
-import { useAuth } from '@/hooks/common/auth';
 
 export function LandingFooter() {
   const { t } = useTranslation();
   const { branding } = useTenantBranding();
-  const { isAuthenticated } = useAuth();
-  const { data: layoutData } = usePublicLayout(isAuthenticated);
+  const { data: layoutData } = usePublicLayout();
   const tenantName = branding?.tenantName || 'MEGAZONECLOUD';
 
   // 푸터 설정

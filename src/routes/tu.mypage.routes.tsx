@@ -15,6 +15,7 @@ import {
   CertificationsPage,
   MyPostsPage,
   MyCommentsPage,
+  UserNoticesPage,
 } from '@/pages/tu';
 import {
   SettingsPage,
@@ -25,7 +26,7 @@ import {
 
 function MyPageWrapper() {
   return (
-    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'OPERATOR', 'TENANT_ADMIN']}>
+    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN']}>
       <ProfileRequiredRoute>
         <MyPageLayout>
           <Outlet />
@@ -38,7 +39,7 @@ function MyPageWrapper() {
 // 플레이어용 Wrapper (레이아웃 없이 전체 화면)
 function PlayerWrapper() {
   return (
-    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'OPERATOR', 'TENANT_ADMIN']}>
+    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN']}>
       <ProfileRequiredRoute>
         <Outlet />
       </ProfileRequiredRoute>
@@ -78,6 +79,7 @@ export const tuMyPageRoutes = (
     <Route path="teaching/stats" element={<TeachingStatsPage />} />
     <Route path="posts" element={<MyPostsPage />} />
     <Route path="comments" element={<MyCommentsPage />} />
+    <Route path="notices" element={<UserNoticesPage />} />
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />
     <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
@@ -103,6 +105,9 @@ export const tuMyPageRoutes = (
     {/* 커뮤니티 */}
     <Route path="posts" element={<MyPostsPage />} />
     <Route path="comments" element={<MyCommentsPage />} />
+
+    {/* 공지사항 */}
+    <Route path="notices" element={<UserNoticesPage />} />
 
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />

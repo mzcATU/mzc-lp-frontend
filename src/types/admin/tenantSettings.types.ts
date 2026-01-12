@@ -129,6 +129,13 @@ export interface TenantSettingsDetail {
   footerSettings: FooterSettings | null;
   contentSettings: ContentSettings | null;
 
+  // Extended Branding Settings
+  companyName: string | null;
+  bannerSettings: Record<string, unknown> | null;
+  landingPageSettings: Record<string, unknown> | null;
+  sidebarTUSettings: Record<string, unknown> | null;
+  sidebarCOSettings: Record<string, unknown> | null;
+
   // Extended UI Settings
   typographySettings: TypographySettings | null;
   colorModeSettings: ColorModeSettings | null;
@@ -248,4 +255,80 @@ export interface NavigationItemRequest {
   enabled?: boolean;
   displayOrder?: number;
   target?: string;
+}
+
+// ============================================
+// 확장 브랜딩 설정 타입
+// ============================================
+
+// 배너 아이템
+export interface BannerItem {
+  id: string;
+  type: 'image' | 'code';
+  imageUrl: string | null;
+  code: string;
+  title: string;
+  order: number;
+}
+
+// 배너 설정
+export interface BannerSettings {
+  enabled: boolean;
+  items: BannerItem[];
+}
+
+// 랜딩 페이지 카테고리 설정
+export interface LandingCategorySettings {
+  enabled: boolean;
+  items: string[];
+  sectionTitle: string;
+}
+
+// 강좌 섹션 아이템
+export interface CourseSectionItem {
+  id: string;
+  title: string;
+}
+
+// 강좌 섹션 설정
+export interface CourseSectionsSettings {
+  enabled: boolean;
+  items: CourseSectionItem[];
+}
+
+// 랜딩 페이지 설정
+export interface LandingPageSettings {
+  landingCategory: LandingCategorySettings;
+  courseSections: CourseSectionsSettings;
+}
+
+// 사이드바 메뉴 아이템
+export interface SidebarMenuItem {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  visible: boolean;
+  children?: {
+    id: string;
+    label: string;
+    url: string;
+    icon?: string;
+    visible: boolean;
+  }[];
+}
+
+// TU/CO 사이드바 설정
+export interface SidebarRoleSettings {
+  enabled: boolean;
+  items: SidebarMenuItem[];
+}
+
+// 확장 브랜딩 설정 요청 타입
+export interface UpdateExtendedBrandingRequest {
+  companyName?: string;
+  bannerSettings?: BannerSettings;
+  landingPageSettings?: LandingPageSettings;
+  sidebarTUSettings?: SidebarRoleSettings;
+  sidebarCOSettings?: SidebarRoleSettings;
 }

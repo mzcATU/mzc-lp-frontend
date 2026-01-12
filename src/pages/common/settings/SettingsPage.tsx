@@ -52,19 +52,32 @@ const getSettingCards = (userRole: UserRole): SettingCardData[] => {
   ];
 };
 
-// URL 경로에서 역할 추출
+// URL 경로에서 역할 추출 (subdomain 지원: /sa, /ta, /co 또는 /:subdomain/ta, /:subdomain/co)
 const getRoleFromPath = (pathname: string): UserRole => {
-  if (pathname.startsWith('/sa')) return 'SYSTEM_ADMIN';
-  if (pathname.startsWith('/ta')) return 'TENANT_ADMIN';
-  if (pathname.startsWith('/to')) return 'OPERATOR';
+  if (pathname.includes('/sa')) return 'SYSTEM_ADMIN';
+  if (pathname.includes('/ta')) return 'TENANT_ADMIN';
+  if (pathname.includes('/co')) return 'OPERATOR';
   return 'USER';
 };
 
-// 역할별 base path
+// 역할별 base path (subdomain 지원)
 const getBasePath = (pathname: string): string => {
-  if (pathname.startsWith('/sa')) return '/sa';
-  if (pathname.startsWith('/ta')) return '/ta';
-  if (pathname.startsWith('/to')) return '/to';
+  // /sa 또는 /:subdomain/sa
+  const saMatch = pathname.match(/^(\/[^/]+)?\/sa/);
+  if (saMatch) return saMatch[0];
+
+  // /ta 또는 /:subdomain/ta
+  const taMatch = pathname.match(/^(\/[^/]+)?\/ta/);
+  if (taMatch) return taMatch[0];
+
+  // /co 또는 /:subdomain/co
+  const coMatch = pathname.match(/^(\/[^/]+)?\/co/);
+  if (coMatch) return coMatch[0];
+
+  // /tu 또는 /:subdomain/tu
+  const tuMatch = pathname.match(/^(\/[^/]+)?\/tu/);
+  if (tuMatch) return tuMatch[0];
+
   return '/tu';
 };
 

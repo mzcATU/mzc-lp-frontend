@@ -2,7 +2,7 @@
 export * from './common';
 
 // Role-specific types
-export * from './to';
+export * from './co';
 
 // SA, TA, TU types will be exported here as they are created
 // export * from './sa';
