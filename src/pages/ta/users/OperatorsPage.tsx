@@ -8,6 +8,7 @@ import {
   Loader2,
   Shield,
 } from 'lucide-react';
+import { designTokens } from '@/styles/admin-design-tokens';
 import { AdminPageHeader, StatusBadge } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -32,13 +33,13 @@ const roleLabels: Record<SystemRole, string> = {
   USER: '일반 사용자',
 };
 
-const roleColors: Record<SystemRole, string> = {
-  SYSTEM_ADMIN: 'bg-purple-100 text-purple-700',
-  TENANT_ADMIN: 'bg-blue-100 text-blue-700',
-  OPERATOR: 'bg-green-100 text-green-700',
-  DESIGNER: 'bg-orange-100 text-orange-700',
-  INSTRUCTOR: 'bg-emerald-100 text-emerald-700',
-  USER: 'bg-gray-100 text-gray-700',
+const roleColorStyles: Record<SystemRole, { bg: string; text: string }> = {
+  SYSTEM_ADMIN: { bg: designTokens.badge.purple.bg, text: designTokens.badge.purple.text },
+  TENANT_ADMIN: { bg: designTokens.badge.blue.bg, text: designTokens.badge.blue.text },
+  OPERATOR: { bg: designTokens.badge.green.bg, text: designTokens.badge.green.text },
+  DESIGNER: { bg: designTokens.badge.orange.bg, text: designTokens.badge.orange.text },
+  INSTRUCTOR: { bg: designTokens.badge.green.bg, text: designTokens.badge.green.text },
+  USER: { bg: designTokens.badge.gray.bg, text: designTokens.badge.gray.text },
 };
 
 export function OperatorsPage() {
@@ -191,7 +192,10 @@ export function OperatorsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{operator.name}</p>
-                        <span className={`px-2 py-0.5 text-xs rounded ${roleColors[operator.systemRole]}`}>
+                        <span
+                          className="px-2 py-0.5 text-xs rounded"
+                          style={{ backgroundColor: roleColorStyles[operator.systemRole].bg, color: roleColorStyles[operator.systemRole].text }}
+                        >
                           {roleLabels[operator.systemRole]}
                         </span>
                         <StatusBadge status={operator.status} />

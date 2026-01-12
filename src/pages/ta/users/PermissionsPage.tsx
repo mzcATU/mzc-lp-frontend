@@ -7,6 +7,7 @@ import {
   Shield,
   Info,
 } from 'lucide-react';
+import { designTokens } from '@/styles/admin-design-tokens';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
 import {
@@ -104,13 +105,13 @@ export function PermissionsPage() {
       />
 
       {/* Info Banner */}
-      <Card className="mb-6 bg-blue-50 border-blue-200">
+      <Card className="mb-6" style={{ backgroundColor: designTokens.badge.blue.bg, borderColor: `${designTokens.badge.blue.text}30` }}>
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+            <Info className="h-5 w-5 mt-0.5" style={{ color: designTokens.badge.blue.text }} />
             <div>
-              <p className="font-medium text-blue-900">권한 안내</p>
-              <p className="text-sm text-blue-700">
+              <p className="font-medium" style={{ color: designTokens.badge.blue.text }}>권한 안내</p>
+              <p className="text-sm" style={{ color: designTokens.badge.blue.text }}>
                 아래는 각 역할별로 접근 가능한 기능 목록입니다. 권한은 시스템에서 관리되며,
                 역할 변경은 사용자 관리 페이지에서 가능합니다.
               </p>
@@ -187,7 +188,8 @@ export function PermissionsPage() {
                           item.roles[role.id] && (
                             <span
                               key={role.id}
-                              className="px-2 py-1 text-xs rounded bg-green-100 text-green-700"
+                              className="px-2 py-1 text-xs rounded"
+                              style={{ backgroundColor: designTokens.badge.green.bg, color: designTokens.badge.green.text }}
                             >
                               {role.name}
                             </span>
@@ -232,11 +234,17 @@ export function PermissionsPage() {
                       {systemRoles.map((role) => (
                         <td key={role.id} className="text-center p-3">
                           {item.roles[role.id] ? (
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-600">
+                            <span
+                              className="inline-flex items-center justify-center w-6 h-6 rounded-full"
+                              style={{ backgroundColor: designTokens.badge.green.bg, color: designTokens.badge.green.text }}
+                            >
                               ✓
                             </span>
                           ) : (
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400">
+                            <span
+                              className="inline-flex items-center justify-center w-6 h-6 rounded-full"
+                              style={{ backgroundColor: designTokens.badge.gray.bg, color: designTokens.badge.gray.text }}
+                            >
                               -
                             </span>
                           )}

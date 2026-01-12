@@ -46,8 +46,7 @@ export function DesignSettingsPage() {
     try {
       await updateMutation.mutateAsync(formData);
       toast.success('디자인 설정이 저장되었습니다.');
-    } catch (error) {
-      console.error('Failed to save design settings:', error);
+    } catch {
       toast.error('디자인 설정 저장에 실패했습니다.');
     }
   };
