@@ -381,45 +381,45 @@ const defaultBrandingSettings: BrandingSettings = {
       },
     ],
   },
-  sidebarTO: {
+  sidebarCO: {
     enabled: true,
     items: [
-      { id: 'to-1', label: '대시보드', url: '/to/dashboard', icon: 'layout-dashboard', visible: true },
+      { id: 'co-1', label: '대시보드', url: '/co/dashboard', icon: 'layout-dashboard', visible: true },
       {
-        id: 'to-2',
+        id: 'co-2',
         label: '교육 과정 탐색',
         url: '',
         icon: 'search',
         visible: true,
         children: [
-          { id: 'to-2-1', label: '과정 검색 및 상세 조회', url: '/to/courses', visible: true },
-          { id: 'to-2-2', label: '과정 등록/수정', url: '/to/courses/pending', visible: true },
+          { id: 'co-2-1', label: '과정 검색 및 상세 조회', url: '/co/courses', visible: true },
+          { id: 'co-2-2', label: '과정 등록/수정', url: '/co/courses/pending', visible: true },
         ],
       },
       {
-        id: 'to-3',
+        id: 'co-3',
         label: '교육 운영 관리',
         url: '',
         icon: 'calendar',
         visible: true,
         children: [
-          { id: 'to-3-1', label: '차수 운영', url: '/to/times', visible: true },
-          { id: 'to-3-2', label: '강사 배정 관리', url: '/to/instructors', visible: true },
+          { id: 'co-3-1', label: '차수 운영', url: '/co/times', visible: true },
+          { id: 'co-3-2', label: '강사 배정 관리', url: '/co/instructors', visible: true },
         ],
       },
       {
-        id: 'to-4',
+        id: 'co-4',
         label: '콘텐츠 관리',
         url: '',
         icon: 'database',
         visible: false,
         children: [
-          { id: 'to-4-1', label: '콘텐츠 풀', url: '/to/content', visible: true },
-          { id: 'to-4-2', label: '학습객체', url: '/to/learning-objects', visible: true },
+          { id: 'co-4-1', label: '콘텐츠 풀', url: '/co/content', visible: true },
+          { id: 'co-4-2', label: '학습객체', url: '/co/learning-objects', visible: true },
         ],
       },
-      { id: 'to-5', label: '사용자 관리', url: '/to/users', icon: 'users', visible: true },
-      { id: 'to-6', label: '설정', url: '/to/settings', icon: 'settings', visible: true },
+      { id: 'co-5', label: '사용자 관리', url: '/co/users', icon: 'users', visible: true },
+      { id: 'co-6', label: '설정', url: '/co/settings', icon: 'settings', visible: true },
     ],
   },
 };

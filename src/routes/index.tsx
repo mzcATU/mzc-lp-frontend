@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import ComponentShowcase from '@/pages/dev/ComponentShowcase';
 import { saRoutes } from './sa.routes';
 import { taRoutes } from './ta.routes';
-import { toRoutes } from './to.routes';
+import { coRoutes } from './co.routes';
 import { tuRoutes } from './tu.routes';
 import { authRoutes } from './auth.routes';
 import { UnauthorizedPage } from './pages';
@@ -16,7 +16,7 @@ export function AppRoutes() {
       {/* 역할별 라우트 */}
       {saRoutes}
       {taRoutes}
-      {toRoutes}
+      {coRoutes}
       {tuRoutes}
 
       {/* 인증 페이지 */}

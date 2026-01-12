@@ -1,0 +1,94 @@
+/**
+ * TO(Tenant Operator) 사용자 관리 API 서비스
+ */
+import axiosInstance from '@/services/common/api/axiosInstance';
+import { API_ENDPOINTS } from '@/services/common/api/endpoints';
+import type {
+  UserListResponse,
+  TOUserDetailResponse,
+  ChangeStatusRequest,
+  UserFilterParams,
+} from '@/types/co/user.types';
+import type {
+  EnrollmentResponse,
+  EnrollmentFilterParams,
+  UserEnrollmentStatsResponse,
+} from '@/types/co/enrollment.types';
+import type { InstructorDetailStatResponse } from '@/types/tu/instructorAssignment.types';
+
+// Spring Page 응답 타입
+interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export const userService = {
+  // ============================================
+  // 조회
+  // ============================================
+
+  /** 사용자 목록 조회 */
+  async getUsers(params?: UserFilterParams): Promise<PageResponse<UserListResponse>> {
+    const response = await axiosInstance.get<PageResponse<UserListResponse>>(
+      API_ENDPOINTS.USERS.BASE,
+      { params }
+    );
+    return response.data;
+  },
+
+  /** 사용자 상세 조회 */
+  async getUser(id: number): Promise<TOUserDetailResponse> {
+    const { data } = await axiosInstance.get<TOUserDetailResponse>(
+      API_ENDPOINTS.USERS.BY_ID(id)
+    );
+    return data;
+  },
+
+  // ============================================
+  // 상태 변경
+  // ============================================
+
+  /** 사용자 상태 변경 */
+  async changeStatus(id: number, request: ChangeStatusRequest): Promise<TOUserDetailResponse> {
+    const { data } = await axiosInstance.put<TOUserDetailResponse>(
+      API_ENDPOINTS.USERS.STATUS(id),
+      request
+    );
+    return data;
+  },
+
+  // ============================================
+  // 사용자별 수강 이력
+  // ============================================
+
+  /** 사용자별 수강 이력 조회 */
+  async getUserEnrollments(
+    userId: number,
+    params?: EnrollmentFilterParams
+  ): Promise<PageResponse<EnrollmentResponse>> {
+    const response = await axiosInstance.get<PageResponse<EnrollmentResponse>>(
+      API_ENDPOINTS.USERS.ENROLLMENTS(userId),
+      { params }
+    );
+    return response.data;
+  },
+
+  /** 사용자별 수강 통계 조회 */
+  async getUserEnrollmentStats(userId: number): Promise<UserEnrollmentStatsResponse> {
+    const { data } = await axiosInstance.get<UserEnrollmentStatsResponse>(
+      API_ENDPOINTS.USERS.ENROLLMENT_STATS(userId)
+    );
+    return data;
+  },
+
+  /** 사용자별 강사 통계 조회 (DESIGNER 역할용) */
+  async getUserInstructorStats(userId: number): Promise<InstructorDetailStatResponse> {
+    const { data } = await axiosInstance.get<InstructorDetailStatResponse>(
+      API_ENDPOINTS.USERS.INSTRUCTOR_STATS(userId)
+    );
+    return data;
+  },
+};

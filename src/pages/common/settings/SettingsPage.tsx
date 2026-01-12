@@ -52,11 +52,11 @@ const getSettingCards = (userRole: UserRole): SettingCardData[] => {
   ];
 };
 
-// URL 경로에서 역할 추출 (subdomain 지원: /sa, /ta, /to 또는 /:subdomain/ta, /:subdomain/to)
+// URL 경로에서 역할 추출 (subdomain 지원: /sa, /ta, /co 또는 /:subdomain/ta, /:subdomain/co)
 const getRoleFromPath = (pathname: string): UserRole => {
   if (pathname.includes('/sa')) return 'SYSTEM_ADMIN';
   if (pathname.includes('/ta')) return 'TENANT_ADMIN';
-  if (pathname.includes('/to')) return 'OPERATOR';
+  if (pathname.includes('/co')) return 'OPERATOR';
   return 'USER';
 };
 
@@ -70,9 +70,9 @@ const getBasePath = (pathname: string): string => {
   const taMatch = pathname.match(/^(\/[^/]+)?\/ta/);
   if (taMatch) return taMatch[0];
 
-  // /to 또는 /:subdomain/to
-  const toMatch = pathname.match(/^(\/[^/]+)?\/to/);
-  if (toMatch) return toMatch[0];
+  // /co 또는 /:subdomain/co
+  const coMatch = pathname.match(/^(\/[^/]+)?\/co/);
+  if (coMatch) return coMatch[0];
 
   // /tu 또는 /:subdomain/tu
   const tuMatch = pathname.match(/^(\/[^/]+)?\/tu/);

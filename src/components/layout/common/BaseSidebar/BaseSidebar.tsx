@@ -20,7 +20,7 @@ import { authService } from '@/services/common/authService';
 import { useSubdomainPath } from '@/hooks/common';
 
 // 역할 타입
-type RoleType = 'sa' | 'ta' | 'to' | 'tu';
+type RoleType = 'sa' | 'ta' | 'co' | 'tu';
 
 export function BaseSidebar({
   isExpanded,
@@ -80,8 +80,8 @@ export function BaseSidebar({
   // 테넌트 브랜딩 (SA 제외)
   const { branding } = useTenantBranding();
 
-  // 어드민 역할 여부 (SA, TA, TO)
-  const isAdminRole = roleType === 'sa' || roleType === 'ta' || roleType === 'to';
+  // 어드민 역할 여부 (SA, TA, CO)
+  const isAdminRole = roleType === 'sa' || roleType === 'ta' || roleType === 'co';
 
   // 로그아웃 핸들러
   const handleLogout = async () => {

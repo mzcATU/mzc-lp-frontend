@@ -5,7 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
 import { memberPoolService } from '@/services/ta/memberPoolService';
-import type { MemberPoolQueryParams, MemberPoolMemberQueryParams } from '@/types/to/memberPool.types';
+import type { MemberPoolQueryParams, MemberPoolMemberQueryParams } from '@/types/co/memberPool.types';
 
 // ============================================
 // Query Keys

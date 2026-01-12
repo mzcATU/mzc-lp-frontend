@@ -3,8 +3,8 @@
  * TU가 Course를 Program으로 신청하는 기능
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { snapshotService } from '@/services/to/snapshotService';
-import { programService } from '@/services/to/programService';
+import { snapshotService } from '@/services/co/snapshotService';
+import { programService } from '@/services/co/programService';
 import type { CourseDetailResponse, CourseResponse } from '@/types/common/course.types';
 import type { ProgramLevel, ProgramType } from '@/types/common/program.types';
 

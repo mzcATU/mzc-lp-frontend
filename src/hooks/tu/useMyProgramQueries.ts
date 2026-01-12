@@ -6,8 +6,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
-import { programService, type ProgramFilterParams } from '@/services/to/programService';
-import { snapshotService } from '@/services/to/snapshotService';
+import { programService, type ProgramFilterParams } from '@/services/co/programService';
+import { snapshotService } from '@/services/co/snapshotService';
 import type {
   UpdateProgramRequest,
   CreateSnapshotItemRequest,
