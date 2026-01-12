@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/common/Ca
 import { Progress } from '@/components/common/Progress';
 import { Skeleton } from '@/components/common/Skeleton';
 import { NoDataEmpty } from '@/components/common/EmptyState';
-import { useToDashboard } from '@/hooks/co';
+import { useCoDashboard } from '@/hooks/co';
 import type { DashboardPeriod } from '@/services/co';
 
 type DateRange = DashboardPeriod;
@@ -42,7 +42,7 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
 
 export function DashboardPage() {
   const [dateRange, setDateRange] = useState<DateRange>('all');
-  const { data, isLoading, error } = useToDashboard(dateRange);
+  const { data, isLoading, error } = useCoDashboard(dateRange);
 
   if (error) {
     return (

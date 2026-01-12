@@ -356,20 +356,20 @@ const defaultBrandingSettings: BrandingSettings = {
   sidebarCO: {
     enabled: true,
     items: [
-      { id: 'to-1', label: '대시보드', url: '/to/dashboard', icon: 'layout-dashboard', visible: true },
+      { id: 'co-1', label: '대시보드', url: '/co/dashboard', icon: 'layout-dashboard', visible: true },
       {
-        id: 'to-2',
+        id: 'co-2',
         label: '교육 과정 탐색',
         url: '',
         icon: 'search',
         visible: true,
         children: [
-          { id: 'to-2-1', label: '과정 검색', url: '/to/courses', visible: true },
-          { id: 'to-2-2', label: '과정 등록/수정', url: '/to/courses/pending', visible: true },
+          { id: 'co-2-1', label: '과정 검색', url: '/co/courses', visible: true },
+          { id: 'co-2-2', label: '과정 등록/수정', url: '/co/courses/pending', visible: true },
         ],
       },
-      { id: 'to-3', label: '사용자 관리', url: '/to/users', icon: 'users', visible: true },
-      { id: 'to-4', label: '설정', url: '/to/settings', icon: 'settings', visible: true },
+      { id: 'co-3', label: '사용자 관리', url: '/co/users', icon: 'users', visible: true },
+      { id: 'co-4', label: '설정', url: '/co/settings', icon: 'settings', visible: true },
     ],
   },
 };
@@ -401,7 +401,7 @@ export function BrandingSettingsPage() {
   const [draggedLegalLinkIndex, setDraggedLegalLinkIndex] = useState<number | null>(null);
   const [draggedLandingCategoryIndex, setDraggedLandingCategoryIndex] = useState<number | null>(null);
   const [draggedCourseSectionIndex, setDraggedCourseSectionIndex] = useState<number | null>(null);
-  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'to-2']));
+  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'co-2']));
   const [expandedMenuItems, setExpandedMenuItems] = useState<Set<string>>(new Set(['mypage-home']));
 
   // 브랜딩 설정 API 관련

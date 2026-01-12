@@ -1,32 +1,32 @@
 /**
- * TO 운영 대시보드 관련 타입 정의
+ * CO 운영 대시보드 관련 타입 정의
  * GET /api/operator/dashboard/tasks
  */
 
-/** TO 운영 대시보드 응답 */
-export interface ToOperatorDashboardResponse {
-  pendingTasks: ToPendingTasks;
-  courseTimeStats: ToCourseTimeStats;
-  enrollmentStats: ToEnrollmentStats;
-  dailyTrend: ToDailyEnrollment[];
+/** CO 운영 대시보드 응답 */
+export interface CoOperatorDashboardResponse {
+  pendingTasks: CoPendingTasks;
+  courseTimeStats: CoCourseTimeStats;
+  enrollmentStats: CoEnrollmentStats;
+  dailyTrend: CoDailyEnrollment[];
 }
 
 /** 대기 중인 작업 */
-export interface ToPendingTasks {
+export interface CoPendingTasks {
   programsPendingApproval: number;
   courseTimesNeedingInstructor: number;
 }
 
 /** 차수 통계 */
-export interface ToCourseTimeStats {
-  byStatus: ToCourseTimeByStatus;
-  byDeliveryType: ToCourseTimeByDeliveryType;
-  freeVsPaid: ToFreeVsPaid;
+export interface CoCourseTimeStats {
+  byStatus: CoCourseTimeByStatus;
+  byDeliveryType: CoCourseTimeByDeliveryType;
+  freeVsPaid: CoFreeVsPaid;
   total: number;
 }
 
 /** 차수 상태별 통계 */
-export interface ToCourseTimeByStatus {
+export interface CoCourseTimeByStatus {
   draft: number;
   recruiting: number;
   ongoing: number;
@@ -35,7 +35,7 @@ export interface ToCourseTimeByStatus {
 }
 
 /** 차수 운영 방식별 통계 */
-export interface ToCourseTimeByDeliveryType {
+export interface CoCourseTimeByDeliveryType {
   online: number;
   offline: number;
   blended: number;
@@ -43,22 +43,22 @@ export interface ToCourseTimeByDeliveryType {
 }
 
 /** 무료/유료 통계 */
-export interface ToFreeVsPaid {
+export interface CoFreeVsPaid {
   free: number;
   paid: number;
 }
 
 /** 수강 통계 */
-export interface ToEnrollmentStats {
+export interface CoEnrollmentStats {
   totalEnrollments: number;
-  byStatus: ToEnrollmentByStatus;
-  byType: ToEnrollmentByType;
+  byStatus: CoEnrollmentByStatus;
+  byType: CoEnrollmentByType;
   completionRate: number;
   averageCapacityUtilization: number;
 }
 
 /** 수강 상태별 통계 */
-export interface ToEnrollmentByStatus {
+export interface CoEnrollmentByStatus {
   enrolled: number;
   completed: number;
   dropped: number;
@@ -66,13 +66,13 @@ export interface ToEnrollmentByStatus {
 }
 
 /** 수강 유형별 통계 */
-export interface ToEnrollmentByType {
+export interface CoEnrollmentByType {
   voluntary: number;
   mandatory: number;
 }
 
 /** 일별 수강신청 추이 */
-export interface ToDailyEnrollment {
+export interface CoDailyEnrollment {
   date: string;
   enrollments: number;
 }

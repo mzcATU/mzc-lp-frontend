@@ -485,7 +485,7 @@ export function LayoutSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [draggedBannerId, setDraggedBannerId] = useState<string | null>(null);
   const [dragOverBannerId, setDragOverBannerId] = useState<string | null>(null);
-  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'tu-4', 'tu-5', 'to-2', 'to-3', 'to-4']));
+  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'tu-4', 'tu-5', 'co-2', 'co-3', 'co-4']));
   const [draggedNavLinkIndex, setDraggedNavLinkIndex] = useState<number | null>(null);
   const [dragOverNavLinkIndex, setDragOverNavLinkIndex] = useState<number | null>(null);
   const [draggedLegalLinkIndex, setDraggedLegalLinkIndex] = useState<number | null>(null);
