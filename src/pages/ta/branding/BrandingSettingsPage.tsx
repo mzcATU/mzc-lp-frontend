@@ -211,7 +211,7 @@ interface BrandingSettings {
       children?: { id: string; label: string; url: string; icon?: string; visible: boolean }[];
     }[];
   };
-  sidebarTO: {
+  sidebarCO: {
     enabled: boolean;
     items: {
       id: string;
@@ -353,7 +353,7 @@ const defaultBrandingSettings: BrandingSettings = {
       { id: 'tu-4', label: '설정', url: '/tu/b2c/mypage/settings', icon: 'settings', visible: true },
     ],
   },
-  sidebarTO: {
+  sidebarCO: {
     enabled: true,
     items: [
       { id: 'to-1', label: '대시보드', url: '/to/dashboard', icon: 'layout-dashboard', visible: true },
@@ -463,8 +463,8 @@ export function BrandingSettingsPage() {
         ...(tenantSettings.sidebarTUSettings && {
           sidebarTU: tenantSettings.sidebarTUSettings as typeof prev.sidebarTU,
         }),
-        ...(tenantSettings.sidebarTOSettings && {
-          sidebarTO: tenantSettings.sidebarTOSettings as typeof prev.sidebarTO,
+        ...(tenantSettings.sidebarCOSettings && {
+          sidebarCO: tenantSettings.sidebarCOSettings as typeof prev.sidebarCO,
         }),
       }));
     }
@@ -512,8 +512,8 @@ export function BrandingSettingsPage() {
     setHasChanges(true);
   };
 
-  const updateSidebarTO = (key: keyof BrandingSettings['sidebarTO'], value: unknown) => {
-    setSettings(prev => ({ ...prev, sidebarTO: { ...prev.sidebarTO, [key]: value } }));
+  const updateSidebarTO = (key: keyof BrandingSettings['sidebarCO'], value: unknown) => {
+    setSettings(prev => ({ ...prev, sidebarCO: { ...prev.sidebarCO, [key]: value } }));
     setHasChanges(true);
   };
 
@@ -635,7 +635,7 @@ export function BrandingSettingsPage() {
           courseSections: settings.courseSections,
         },
         sidebarTUSettings: settings.sidebarTU,
-        sidebarTOSettings: settings.sidebarTO,
+        sidebarCOSettings: settings.sidebarCO,
       });
 
       setHasChanges(false);
@@ -1598,13 +1598,13 @@ export function BrandingSettingsPage() {
                       <Sidebar className="h-4 w-4 text-brand-primary" />
                       <CardTitle className="text-base">사이드바 (운영자)</CardTitle>
                     </div>
-                    <Switch checked={settings.sidebarTO.enabled} onCheckedChange={(v) => updateSidebarTO('enabled', v)} />
+                    <Switch checked={settings.sidebarCO.enabled} onCheckedChange={(v) => updateSidebarTO('enabled', v)} />
                   </div>
                 </CardHeader>
-                {settings.sidebarTO.enabled && (
+                {settings.sidebarCO.enabled && (
                   <CardContent>
                     <div className="space-y-1">
-                      {settings.sidebarTO.items.map((item, index) => {
+                      {settings.sidebarCO.items.map((item, index) => {
                         const isItemCommunityDisabled = isCommunityRelated(item.label) && !featureFormData.communityEnabled;
                         return (
                           <div key={item.id} className="space-y-1">
@@ -1638,7 +1638,7 @@ export function BrandingSettingsPage() {
                                 className="h-7 w-7 p-0"
                                 disabled={isItemCommunityDisabled}
                                 onClick={() => {
-                                  const newItems = [...settings.sidebarTO.items];
+                                  const newItems = [...settings.sidebarCO.items];
                                   newItems[index].visible = !newItems[index].visible;
                                   updateSidebarTO('items', newItems);
                                 }}
@@ -1654,7 +1654,7 @@ export function BrandingSettingsPage() {
                                 value={item.icon}
                                 disabled={isItemCommunityDisabled}
                                 onChange={(e) => {
-                                  const newItems = [...settings.sidebarTO.items];
+                                  const newItems = [...settings.sidebarCO.items];
                                   newItems[index].icon = e.target.value;
                                   updateSidebarTO('items', newItems);
                                 }}
@@ -1668,7 +1668,7 @@ export function BrandingSettingsPage() {
                                 value={item.label}
                                 disabled={isItemCommunityDisabled}
                                 onChange={(e) => {
-                                  const newItems = [...settings.sidebarTO.items];
+                                  const newItems = [...settings.sidebarCO.items];
                                   newItems[index].label = e.target.value;
                                   updateSidebarTO('items', newItems);
                                 }}
@@ -1679,7 +1679,7 @@ export function BrandingSettingsPage() {
                                 value={item.url}
                                 disabled={isItemCommunityDisabled}
                                 onChange={(e) => {
-                                  const newItems = [...settings.sidebarTO.items];
+                                  const newItems = [...settings.sidebarCO.items];
                                   newItems[index].url = e.target.value;
                                   updateSidebarTO('items', newItems);
                                 }}
@@ -1692,7 +1692,7 @@ export function BrandingSettingsPage() {
                                 className="h-7 w-7 p-0"
                                 disabled={isItemCommunityDisabled}
                                 onClick={() => {
-                                  const newItems = [...settings.sidebarTO.items];
+                                  const newItems = [...settings.sidebarCO.items];
                                   if (!newItems[index].children) newItems[index].children = [];
                                   newItems[index].children!.push({
                                     id: `${item.id}-${Date.now()}`,
@@ -1711,7 +1711,7 @@ export function BrandingSettingsPage() {
                                 size="sm"
                                 className="h-7 w-7 p-0"
                                 disabled={isItemCommunityDisabled}
-                                onClick={() => updateSidebarTO('items', settings.sidebarTO.items.filter((_, i) => i !== index))}
+                                onClick={() => updateSidebarTO('items', settings.sidebarCO.items.filter((_, i) => i !== index))}
                               >
                                 <Trash2 className={`h-4 w-4 ${isItemCommunityDisabled ? 'text-gray-300' : 'text-red-500'}`} />
                               </Button>
@@ -1728,7 +1728,7 @@ export function BrandingSettingsPage() {
                                     size="sm"
                                     className="h-6 w-6 p-0"
                                     onClick={() => {
-                                      const newItems = [...settings.sidebarTO.items];
+                                      const newItems = [...settings.sidebarCO.items];
                                       newItems[index].children![childIndex].visible = !newItems[index].children![childIndex].visible;
                                       updateSidebarTO('items', newItems);
                                     }}
@@ -1738,7 +1738,7 @@ export function BrandingSettingsPage() {
                                   <Input
                                     value={child.label}
                                     onChange={(e) => {
-                                      const newItems = [...settings.sidebarTO.items];
+                                      const newItems = [...settings.sidebarCO.items];
                                       newItems[index].children![childIndex].label = e.target.value;
                                       updateSidebarTO('items', newItems);
                                     }}
@@ -1748,7 +1748,7 @@ export function BrandingSettingsPage() {
                                   <Input
                                     value={child.url}
                                     onChange={(e) => {
-                                      const newItems = [...settings.sidebarTO.items];
+                                      const newItems = [...settings.sidebarCO.items];
                                       newItems[index].children![childIndex].url = e.target.value;
                                       updateSidebarTO('items', newItems);
                                     }}
@@ -1760,7 +1760,7 @@ export function BrandingSettingsPage() {
                                     size="sm"
                                     className="h-6 w-6 p-0"
                                     onClick={() => {
-                                      const newItems = [...settings.sidebarTO.items];
+                                      const newItems = [...settings.sidebarCO.items];
                                       newItems[index].children = newItems[index].children!.filter((_, i) => i !== childIndex);
                                       updateSidebarTO('items', newItems);
                                     }}
@@ -1779,7 +1779,7 @@ export function BrandingSettingsPage() {
                       variant="outline"
                       size="sm"
                       className="w-full mt-2"
-                      onClick={() => updateSidebarTO('items', [...settings.sidebarTO.items, { id: `to-${Date.now()}`, label: '', url: '', icon: 'home', visible: true }])}
+                      onClick={() => updateSidebarTO('items', [...settings.sidebarCO.items, { id: `to-${Date.now()}`, label: '', url: '', icon: 'home', visible: true }])}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       항목 추가
@@ -2247,7 +2247,7 @@ export function BrandingSettingsPage() {
               {previewPage === 'to' && (
                 <div className="flex min-h-[400px]">
                   {/* 사이드바 */}
-                  {settings.sidebarTO.enabled && (
+                  {settings.sidebarCO.enabled && (
                     <div
                       onClick={(e) => {
                         // 메뉴 토글 클릭이 아닐 때만 탭 변경
@@ -2263,7 +2263,7 @@ export function BrandingSettingsPage() {
                         <span className="opacity-0 group-hover:opacity-100 text-xs font-medium text-brand-primary bg-white px-2 py-1 rounded shadow">사이드바 (운영자) 설정</span>
                       </div>
                       <div className={`text-xs font-semibold mb-3 px-2 ${previewTheme === 'dark' ? 'text-[#9e9e9e]' : 'text-gray-400'}`}>관리 메뉴</div>
-                      {settings.sidebarTO.items.filter(item => item.visible).filter(item => !isCommunityRelated(item.label) || featureFormData.communityEnabled).slice(0, 6).map((item, idx) => {
+                      {settings.sidebarCO.items.filter(item => item.visible).filter(item => !isCommunityRelated(item.label) || featureFormData.communityEnabled).slice(0, 6).map((item, idx) => {
                         const isExpanded = expandedMenuItems.has(item.id);
                         const hasChildren = item.children && item.children.length > 0;
                         const IconComponent = item.icon ? iconMap[item.icon] : null;

@@ -79,7 +79,7 @@ const DEFAULT_LAYOUT: PublicLayoutResponse = {
   },
   landingPageSettings: null,
   sidebarTUSettings: null,
-  sidebarTOSettings: null,
+  sidebarCOSettings: null,
 };
 
 /** 기본 배너 설정 */

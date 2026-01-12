@@ -88,7 +88,7 @@ export interface PublicLayoutResponse {
   bannerSettings: BannerSettings | null;
   landingPageSettings: LandingPageSettings | null;
   sidebarTUSettings: SidebarRoleSettings | null;
-  sidebarTOSettings: SidebarRoleSettings | null;
+  sidebarCOSettings: SidebarRoleSettings | null;
 }
 
 /**
@@ -163,7 +163,7 @@ export interface SidebarMenuItem {
 }
 
 /**
- * TU/TO 사이드바 설정 타입
+ * TU/CO 사이드바 설정 타입
  */
 export interface SidebarRoleSettings {
   enabled: boolean;

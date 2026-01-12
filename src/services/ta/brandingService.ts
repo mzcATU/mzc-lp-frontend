@@ -61,7 +61,7 @@ export interface TenantSettingsResponse {
   bannerSettings: Record<string, unknown> | null;
   landingPageSettings: Record<string, unknown> | null;
   sidebarTUSettings: Record<string, unknown> | null;
-  sidebarTOSettings: Record<string, unknown> | null;
+  sidebarCOSettings: Record<string, unknown> | null;
   // 확장 UI 설정
   typographySettings: TypographySettings | null;
   colorModeSettings: ColorModeSettings | null;
@@ -145,7 +145,7 @@ export const brandingService = {
     return data;
   },
 
-  /** 확장 브랜딩 설정 업데이트 (배너, 랜딩페이지, 사이드바 TU/TO) */
+  /** 확장 브랜딩 설정 업데이트 (배너, 랜딩페이지, 사이드바 TU/CO) */
   async updateExtendedBrandingSettings(request: UpdateExtendedBrandingRequest): Promise<TenantSettingsResponse> {
     const { data } = await axiosInstance.put<TenantSettingsResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.BRANDING_EXTENDED,

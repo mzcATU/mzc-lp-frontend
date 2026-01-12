@@ -134,7 +134,7 @@ export interface TenantSettingsDetail {
   bannerSettings: Record<string, unknown> | null;
   landingPageSettings: Record<string, unknown> | null;
   sidebarTUSettings: Record<string, unknown> | null;
-  sidebarTOSettings: Record<string, unknown> | null;
+  sidebarCOSettings: Record<string, unknown> | null;
 
   // Extended UI Settings
   typographySettings: TypographySettings | null;
@@ -318,7 +318,7 @@ export interface SidebarMenuItem {
   }[];
 }
 
-// TU/TO 사이드바 설정
+// TU/CO 사이드바 설정
 export interface SidebarRoleSettings {
   enabled: boolean;
   items: SidebarMenuItem[];
@@ -330,5 +330,5 @@ export interface UpdateExtendedBrandingRequest {
   bannerSettings?: BannerSettings;
   landingPageSettings?: LandingPageSettings;
   sidebarTUSettings?: SidebarRoleSettings;
-  sidebarTOSettings?: SidebarRoleSettings;
+  sidebarCOSettings?: SidebarRoleSettings;
 }
