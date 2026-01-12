@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
-import { useUnreadNotificationCount, usePublicNavigation } from '@/hooks/tu';
+import { useUnreadNotificationCount, usePublicNavigation, usePublicLayout } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import type { NavigationItemResponse } from '@/types/tu/branding.types';
 
@@ -34,6 +34,15 @@ export function LandingHeader() {
 
   // 네비게이션 메뉴 (TA 설정 또는 기본값)
   const navItems = navigationItems && navigationItems.length > 0 ? navigationItems : DEFAULT_NAV_ITEMS;
+
+  // 레이아웃 설정 가져오기
+  const { data: layoutData } = usePublicLayout();
+
+  // 헤더 설정 (로고, 검색, 알림 표시 여부 등)
+  const headerSettings = layoutData?.headerSettings;
+  const showLogo = headerSettings?.showLogo !== false; // 기본값 true
+  const showSearch = headerSettings?.showSearch !== false; // 기본값 true
+  const showNotifications = headerSettings?.showNotifications !== false; // 기본값 true
 
   // API Base URL
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -130,27 +139,29 @@ export function LandingHeader() {
             </nav>
           </div>
 
-          {/* Center: Search Bar */}
-          <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-xl relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.landing.searchPlaceholder}
-              className={`w-full rounded-full pl-5 pr-12 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#6778ff] focus:border-[#6778ff] transition-all ${
-                isDark
-                  ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500'
-                  : 'border border-gray-300 text-gray-900 placeholder-gray-400'
-              }`}
-              style={{ backgroundColor: isDark ? undefined : '#fafafa' }}
-            />
-            <button
-              type="submit"
-              className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] hover:from-[#8b99ff] hover:to-[#c084fc] w-9 h-9 flex items-center justify-center transition-colors"
-            >
-              <Search className="h-4 w-4 text-white" />
-            </button>
-          </form>
+          {/* Center: Search Bar - showSearch 설정에 따라 표시 */}
+          {showSearch && (
+            <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-xl relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t.landing.searchPlaceholder}
+                className={`w-full rounded-full pl-5 pr-12 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#6778ff] focus:border-[#6778ff] transition-all ${
+                  isDark
+                    ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500'
+                    : 'border border-gray-300 text-gray-900 placeholder-gray-400'
+                }`}
+                style={{ backgroundColor: isDark ? undefined : '#fafafa' }}
+              />
+              <button
+                type="submit"
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] hover:from-[#8b99ff] hover:to-[#c084fc] w-9 h-9 flex items-center justify-center transition-colors"
+              >
+                <Search className="h-4 w-4 text-white" />
+              </button>
+            </form>
+          )}
 
           {/* Right: Actions */}
           <div className="flex items-center gap-3 md:gap-5 mr-2 md:mr-4">
@@ -187,21 +198,24 @@ export function LandingHeader() {
               >
                 <Heart className="h-5 w-5" />
               </Link>
-              <Link
-                to={prefixPath('/tu/b2c/notifications')}
-                className={`p-2 rounded-lg transition-colors relative ${
-                  isDark
-                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-gradient-to-r from-[#6778ff] to-[#a855f7] rounded-full">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </Link>
+              {/* 알림 아이콘 - showNotifications 설정에 따라 표시 */}
+              {showNotifications && (
+                <Link
+                  to={prefixPath('/tu/b2c/notifications')}
+                  className={`p-2 rounded-lg transition-colors relative ${
+                    isDark
+                      ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold text-white bg-gradient-to-r from-[#6778ff] to-[#a855f7] rounded-full">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               {isAuthenticated && user ? (
                 /* Logged in state */
                 <div className="relative">
