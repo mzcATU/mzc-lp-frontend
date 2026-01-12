@@ -21,6 +21,10 @@ export {
   useArchiveNotice,
   useDistributeNotice,
   useDistributeAllNotice,
+  // 배포 통계
+  useDistributionStats,
+  useDistributionSummary,
+  useDistributionStatsForNotice,
 } from './useNoticeQueries';
 
 export {

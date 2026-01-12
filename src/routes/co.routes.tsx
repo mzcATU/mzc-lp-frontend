@@ -19,7 +19,7 @@ import {
 } from '@/pages/co/program';
 import { InstructorAssignmentsPage } from '@/pages/co/instructor';
 import { UserManagementPage } from '@/pages/co/user';
-import { OperatorNoticesPage } from '@/pages/co/notices';
+import { OperatorNoticesPage, OperatorNoticeInboxPage } from '@/pages/co/notices';
 import { DashboardPage } from '@/pages/co';
 import MemberPoolListPage from '@/pages/co/member-pool/MemberPoolListPage';
 import AutoEnrollmentRulesPage from '@/pages/co/auto-enrollment/AutoEnrollmentRulesPage';
@@ -60,7 +60,8 @@ export const coRoutes = (
     {/* 자동 입과 규칙 관리 */}
     <Route path="auto-enrollment-rules" element={<AutoEnrollmentRulesPage />} />
     {/* 공지사항 관리 */}
-    <Route path="notices" element={<OperatorNoticesPage />} />
+    <Route path="notices" element={<OperatorNoticeInboxPage />} />
+    <Route path="notices/manage" element={<OperatorNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

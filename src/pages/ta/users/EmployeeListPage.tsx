@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Search,
   Filter,
@@ -212,7 +213,7 @@ export const EmployeeListPage = () => {
 
     setShowLmsAccountModal(false);
     setLmsAccountEmployee(null);
-    alert(`${lmsAccountEmployee.name}님의 LMS 계정이 생성되었습니다.`);
+    toast.success(`${lmsAccountEmployee.name}님의 LMS 계정이 생성되었습니다.`);
   };
 
   // 엑셀 파일 처리 (시뮬레이션)
@@ -239,8 +240,7 @@ export const EmployeeListPage = () => {
 
   // 업로드 확정
   const confirmUpload = () => {
-    // 실제 구현에서는 API 호출
-    console.log('Uploading:', uploadPreview);
+    // TODO: 실제 구현에서는 API 호출
     setShowUploadModal(false);
     setUploadPreview(null);
   };

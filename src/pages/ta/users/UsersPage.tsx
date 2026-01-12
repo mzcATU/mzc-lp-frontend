@@ -445,8 +445,6 @@ export function UsersPage() {
         }, 1500);
       }
     } catch (err) {
-      console.error('파일 업로드 실패:', err);
-
       // Axios 에러에서 백엔드 에러 메시지 추출
       let errorMessage = '파일 업로드에 실패했습니다.';
       let errorDescription = '';

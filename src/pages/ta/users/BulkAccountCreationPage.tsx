@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { toast } from 'sonner';
 import {
   Upload,
   FileSpreadsheet,
@@ -133,7 +134,6 @@ export const BulkAccountCreationPage = () => {
       setProcessingProgress(100);
       setUploadResult(convertApiResponse(response));
     } catch (err) {
-      console.error('파일 업로드 실패:', err);
       setError(err instanceof Error ? err.message : '파일 업로드에 실패했습니다.');
     } finally {
       setIsProcessing(false);
@@ -154,7 +154,7 @@ export const BulkAccountCreationPage = () => {
   // 계정 생성 완료 확인
   const handleConfirm = () => {
     // 이미 API 호출로 계정이 생성되었으므로 결과만 알림
-    alert(`${uploadResult?.success}개의 계정이 생성되었습니다.`);
+    toast.success(`${uploadResult?.success}개의 계정이 생성되었습니다.`);
     handleReset();
   };
 
@@ -167,8 +167,8 @@ export const BulkAccountCreationPage = () => {
 
   // 템플릿 다운로드
   const handleDownloadTemplate = () => {
-    // 실제로는 서버에서 템플릿 파일 다운로드
-    alert('템플릿 다운로드 (CSV/Excel)');
+    // TODO: 실제로는 서버에서 템플릿 파일 다운로드
+    toast.info('템플릿 다운로드 기능이 준비 중입니다.');
   };
 
   const statusColors: Record<AccountPreview['status'], 'green' | 'yellow' | 'red'> = {

@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/store/common/authStore';
 import { API_ENDPOINTS } from './endpoints';
+import { extractTenantIdentifier } from '@/utils/tenantUtils';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -29,12 +30,18 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
   failedQueue = [];
 };
 
-// Request interceptor: 토큰 헤더 추가
+// Request interceptor: 토큰 및 서브도메인 헤더 추가
 axiosInstance.interceptors.request.use(
   (config) => {
     const accessToken = useAuthStore.getState().accessToken;
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    // 서브도메인 헤더 추가 (테넌트 식별용)
+    const tenantIdentifier = extractTenantIdentifier();
+    if (tenantIdentifier?.type === 'subdomain') {
+      config.headers['X-Subdomain'] = tenantIdentifier.identifier;
     }
 
     // FormData인 경우 Content-Type을 제거하여 브라우저가 자동으로 multipart/form-data로 설정하도록 함

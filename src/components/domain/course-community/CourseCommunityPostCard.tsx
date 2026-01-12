@@ -2,7 +2,8 @@
  * 코스 커뮤니티 게시글 카드 컴포넌트
  */
 
-import { MessageCircle, Heart, Eye, Clock, CheckCircle } from 'lucide-react';
+import { MessageCircle, Heart, Eye, Clock, CheckCircle, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 import type { CourseCommunityPost } from '@/types/tu/courseCommunity.types';
 import { POST_TYPE_LABELS } from '@/types/tu/courseCommunity.types';
 import { formatDistanceToNow } from 'date-fns';
@@ -12,6 +13,8 @@ interface CourseCommunityPostCardProps {
   post: CourseCommunityPost;
   isDark: boolean;
   onClick: () => void;
+  currentUserId?: number;
+  instructorIds?: number[];
 }
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -26,6 +29,8 @@ export function CourseCommunityPostCard({
   post,
   isDark,
   onClick,
+  currentUserId,
+  instructorIds,
 }: CourseCommunityPostCardProps) {
   const typeColor = TYPE_COLORS[post.type] || TYPE_COLORS.discussion;
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
@@ -33,9 +38,30 @@ export function CourseCommunityPostCard({
     locale: ko,
   });
 
+  // 비밀글 열람 권한 확인
+  const canViewPrivatePost = (): boolean => {
+    if (!post.isPrivate) return true;
+    if (!currentUserId) return false;
+    if (post.author.id === currentUserId) return true;
+    if (instructorIds?.includes(currentUserId)) return true;
+    return false;
+  };
+
+  const hasAccess = canViewPrivatePost();
+
+  const handleClick = () => {
+    if (post.isPrivate && !hasAccess) {
+      toast.error('비밀글입니다', {
+        description: '작성자와 강사만 열람할 수 있습니다.',
+      });
+      return;
+    }
+    onClick();
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={`p-4 rounded-xl cursor-pointer transition-all hover:shadow-md ${
         isDark
           ? 'bg-white/5 hover:bg-white/10 border border-white/10'
@@ -61,6 +87,12 @@ export function CourseCommunityPostCard({
               해결됨
             </span>
           )}
+          {post.isPrivate && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-500/10 text-gray-500">
+              <Lock className="w-3 h-3" />
+              비밀글
+            </span>
+          )}
         </div>
       </div>
 
@@ -68,13 +100,13 @@ export function CourseCommunityPostCard({
       <h3
         className={`font-semibold mb-2 line-clamp-2 ${
           isDark ? 'text-white' : 'text-gray-900'
-        }`}
+        } ${!hasAccess && post.isPrivate ? 'italic' : ''}`}
       >
-        {post.title}
+        {hasAccess ? post.title : '비밀글입니다'}
       </h3>
 
       {/* Excerpt */}
-      {post.excerpt && (
+      {hasAccess && post.excerpt && (
         <p
           className={`text-sm mb-3 line-clamp-2 ${
             isDark ? 'text-gray-400' : 'text-gray-600'
@@ -83,9 +115,18 @@ export function CourseCommunityPostCard({
           {post.excerpt}
         </p>
       )}
+      {!hasAccess && post.isPrivate && (
+        <p
+          className={`text-sm mb-3 ${
+            isDark ? 'text-gray-500' : 'text-gray-400'
+          }`}
+        >
+          작성자와 강사만 열람할 수 있습니다.
+        </p>
+      )}
 
       {/* Tags */}
-      {post.tags && post.tags.length > 0 && (
+      {hasAccess && post.tags && post.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {post.tags.slice(0, 3).map((tag) => (
             <span

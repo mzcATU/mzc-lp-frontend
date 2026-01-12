@@ -10,6 +10,9 @@ import type {
   CreateNoticeRequest,
   UpdateNoticeRequest,
   DistributeNoticeRequest,
+  NoticeDistributionStatsResponse,
+  NoticeDistributionSummary,
+  NoticeDistributionStats,
 } from '@/types/admin';
 
 export const noticeService = {
@@ -83,6 +86,35 @@ export const noticeService = {
   async getDistributedTenants(id: number): Promise<number[]> {
     const { data } = await axiosInstance.get<number[]>(
       API_ENDPOINTS.NOTICES.TENANTS(id)
+    );
+    return data;
+  },
+
+  // ============================================
+  // 배포 통계 API
+  // ============================================
+
+  /** 배포 통계 목록 조회 */
+  async getDistributionStats(params?: { page?: number; size?: number }): Promise<NoticeDistributionStatsResponse> {
+    const { data } = await axiosInstance.get<NoticeDistributionStatsResponse>(
+      API_ENDPOINTS.NOTICES.DISTRIBUTIONS,
+      { params }
+    );
+    return data;
+  },
+
+  /** 배포 통계 요약 조회 */
+  async getDistributionSummary(): Promise<NoticeDistributionSummary> {
+    const { data } = await axiosInstance.get<NoticeDistributionSummary>(
+      API_ENDPOINTS.NOTICES.DISTRIBUTIONS_SUMMARY
+    );
+    return data;
+  },
+
+  /** 특정 공지 배포 상세 조회 */
+  async getDistributionStatsForNotice(id: number): Promise<NoticeDistributionStats> {
+    const { data } = await axiosInstance.get<NoticeDistributionStats>(
+      API_ENDPOINTS.NOTICES.DISTRIBUTION_BY_ID(id)
     );
     return data;
   },

@@ -14,16 +14,15 @@ import {
   GroupsPage,
   PermissionsPage,
   DomainSettingsPage,
-  LayoutSettingsPage,
-  DesignSettingsPage,
+  BrandingSettingsPage,
   RealtimePage,
   ExportPage,
   LogsPage,
   TenantSettingsPage,
   UserManagementSettingsPage,
-  FeatureSettingsPage,
-  TenantCategoryPage,
   TenantNoticesPage,
+  SystemNoticesPage,
+  NoticeInboxPage,
 } from '@/pages/ta';
 import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
 import { AutoEnrollmentRulesPage } from '@/pages/ta/automation/AutoEnrollmentRulesPage';
@@ -47,9 +46,8 @@ const taChildRoutes = (
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
-    {/* 디자인 및 정책 */}
-    <Route path="branding/design" element={<DesignSettingsPage />} />
-    <Route path="branding/layout" element={<LayoutSettingsPage />} />
+    {/* 브랜딩 설정 (통합) */}
+    <Route path="branding" element={<BrandingSettingsPage />} />
     {/* 사용자 및 권한 */}
     <Route path="users" element={<UsersPage />} />
     <Route path="users/:id" element={<UserDetailPage />} />
@@ -64,11 +62,10 @@ const taChildRoutes = (
     <Route path="analytics/realtime" element={<RealtimePage />} />
     <Route path="analytics/export" element={<ExportPage />} />
     <Route path="analytics/logs" element={<LogsPage />} />
-    {/* 기능 설정 */}
-    <Route path="features" element={<FeatureSettingsPage />} />
-    <Route path="features/categories" element={<TenantCategoryPage />} />
     {/* 공지사항 관리 */}
-    <Route path="notices" element={<TenantNoticesPage />} />
+    <Route path="notices" element={<NoticeInboxPage />} />
+    <Route path="notices/manage" element={<TenantNoticesPage />} />
+    <Route path="notices/system" element={<SystemNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

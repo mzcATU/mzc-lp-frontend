@@ -6,3 +6,4 @@ export * from './useEnrollmentQueries';
 export * from './useDashboardQueries';
 export * from './useMemberPoolQueries';
 export * from './useAutoEnrollmentRuleQueries';
+export * from './useOperatorNoticeQueries';
