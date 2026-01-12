@@ -62,6 +62,12 @@ import { Switch } from '@/components/common/Switch';
 import { Input } from '@/components/common/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/Tabs';
 import { useTenantFeatures, useUpdateTenantFeatures } from '@/hooks/ta';
+import {
+  useTenantSettings,
+  useUpdateDesignSettings,
+  useUpdateLayoutSettings,
+  useUpdateExtendedBrandingSettings,
+} from '@/hooks/ta/useBrandingQueries';
 import type { UpdateTenantFeaturesRequest } from '@/services/ta/tenantFeaturesService';
 
 // 사용 가능한 아이콘 목록
@@ -253,8 +259,45 @@ const defaultBrandingSettings: BrandingSettings = {
   banner: {
     enabled: true,
     items: [
-      { id: '1', type: 'image', imagePreview: null, code: '', title: '메인 배너' },
-      { id: '2', type: 'image', imagePreview: null, code: '', title: '프로모션 배너' },
+      {
+        id: 'default-1',
+        type: 'code',
+        imagePreview: null,
+        code: `<div class="flex flex-col items-start justify-center h-full px-8 md:px-16">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20 mb-6">MZC LEARN</span>
+      <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">Empower Your</h2>
+      <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight bg-gradient-to-r from-[#6778ff] to-[#a855f7] bg-clip-text text-transparent">Future</h2>
+      <p class="text-xl md:text-2xl font-medium text-gray-300 mt-6">최신 기술 트렌드를 선도하는<br/>실무 중심의 IT 교육</p>
+      <p class="text-base md:text-lg text-gray-500 mt-2">AWS, AI, 클라우드 전문가가 되는 가장 빠른 길</p>
+    </div>`,
+        title: 'Empower Your Future',
+      },
+      {
+        id: 'default-2',
+        type: 'code',
+        imagePreview: null,
+        code: `<div class="flex flex-col items-start justify-center h-full px-8 md:px-16">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20 mb-6">ROADMAP</span>
+      <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">Build Your</h2>
+      <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight bg-gradient-to-r from-[#a855f7] to-[#ec4899] bg-clip-text text-transparent">Career</h2>
+      <p class="text-xl md:text-2xl font-medium text-gray-300 mt-6">단계별 로드맵으로<br/>체계적인 성장을 경험하세요</p>
+      <p class="text-base md:text-lg text-gray-500 mt-2">입문부터 전문가까지, 맞춤형 학습 경로 제공</p>
+    </div>`,
+        title: 'Build Your Career',
+      },
+      {
+        id: 'default-3',
+        type: 'code',
+        imagePreview: null,
+        code: `<div class="flex flex-col items-start justify-center h-full px-8 md:px-16">
+      <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20 mb-6">CLOUD</span>
+      <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">Master</h2>
+      <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight bg-gradient-to-r from-[#6778ff] to-[#6bc2f0] bg-clip-text text-transparent">Cloud</h2>
+      <p class="text-xl md:text-2xl font-medium text-gray-300 mt-6">클라우드 기술의 핵심을<br/>실습과 함께 마스터하세요</p>
+      <p class="text-base md:text-lg text-gray-500 mt-2">AWS, Azure, GCP 공인 자격증 취득 지원</p>
+    </div>`,
+        title: 'Master Cloud',
+      },
     ],
   },
   footer: {
@@ -361,6 +404,12 @@ export function BrandingSettingsPage() {
   const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'to-2']));
   const [expandedMenuItems, setExpandedMenuItems] = useState<Set<string>>(new Set(['mypage-home']));
 
+  // 브랜딩 설정 API 관련
+  const { data: tenantSettings, isLoading: settingsLoading } = useTenantSettings();
+  const updateDesignMutation = useUpdateDesignSettings();
+  const updateLayoutMutation = useUpdateLayoutSettings();
+  const updateExtendedBrandingMutation = useUpdateExtendedBrandingSettings();
+
   // 기능 설정 관련
   const { data: features, isLoading: featuresLoading } = useTenantFeatures();
   const updateFeaturesMutation = useUpdateTenantFeatures();
@@ -384,6 +433,42 @@ export function BrandingSettingsPage() {
       });
     }
   }, [features]);
+
+  // 서버에서 받아온 브랜딩 설정을 로컬 상태에 초기화
+  useEffect(() => {
+    if (tenantSettings) {
+      setSettings(prev => ({
+        ...prev,
+        company: {
+          name: tenantSettings.companyName || prev.company.name,
+        },
+        logo: {
+          lightPreview: tenantSettings.logoUrl || prev.logo.lightPreview,
+          darkPreview: tenantSettings.darkLogoUrl || prev.logo.darkPreview,
+          faviconPreview: tenantSettings.faviconUrl || prev.logo.faviconPreview,
+        },
+        colors: {
+          primary: tenantSettings.primaryColor || prev.colors.primary,
+          secondary: tenantSettings.secondaryColor || prev.colors.secondary,
+        },
+        // 확장 브랜딩 설정 (배너 설정이 있고 items가 있으면 사용, 없으면 기본값 유지)
+        ...((tenantSettings.bannerSettings as { items?: unknown[] } | undefined)?.items?.length &&
+          (tenantSettings.bannerSettings as { items?: unknown[] }).items!.length > 0 && {
+          banner: tenantSettings.bannerSettings as typeof prev.banner,
+        }),
+        ...(tenantSettings.landingPageSettings && {
+          landingCategory: (tenantSettings.landingPageSettings as { landingCategory?: typeof prev.landingCategory }).landingCategory || prev.landingCategory,
+          courseSections: (tenantSettings.landingPageSettings as { courseSections?: typeof prev.courseSections }).courseSections || prev.courseSections,
+        }),
+        ...(tenantSettings.sidebarTUSettings && {
+          sidebarTU: tenantSettings.sidebarTUSettings as typeof prev.sidebarTU,
+        }),
+        ...(tenantSettings.sidebarTOSettings && {
+          sidebarTO: tenantSettings.sidebarTOSettings as typeof prev.sidebarTO,
+        }),
+      }));
+    }
+  }, [tenantSettings]);
 
   // 커뮤니티 관련 항목인지 확인하는 헬퍼 함수
   const isCommunityRelated = (label: string) => {
@@ -503,9 +588,59 @@ export function BrandingSettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // TODO: 브랜딩 설정 저장 API 연동
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 디자인 설정 저장
+      await updateDesignMutation.mutateAsync({
+        logoUrl: settings.logo.lightPreview,
+        darkLogoUrl: settings.logo.darkPreview,
+        faviconUrl: settings.logo.faviconPreview,
+        primaryColor: settings.colors.primary,
+        secondaryColor: settings.colors.secondary,
+      });
+
+      // 레이아웃 설정 저장
+      await updateLayoutMutation.mutateAsync({
+        headerSettings: {
+          enabled: settings.header.enabled,
+          showLogo: settings.header.showLogo,
+          showSearch: settings.header.showSearch,
+          showNotifications: settings.header.showNotifications,
+          showThemeToggle: settings.header.showThemeToggle,
+          navLinks: settings.header.navLinks,
+        } as unknown as Parameters<typeof updateLayoutMutation.mutateAsync>[0]['headerSettings'],
+        footerSettings: {
+          enabled: settings.footer.enabled,
+          companyInfo: settings.footer.companyInfo,
+          copyright: settings.footer.copyright,
+          legalLinks: settings.footer.legalLinks,
+          socialLinks: settings.footer.socialLinks,
+        } as unknown as Parameters<typeof updateLayoutMutation.mutateAsync>[0]['footerSettings'],
+      });
+
+      // 확장 브랜딩 설정 저장
+      await updateExtendedBrandingMutation.mutateAsync({
+        companyName: settings.company.name,
+        bannerSettings: {
+          enabled: settings.banner.enabled,
+          items: settings.banner.items.map((item, index) => ({
+            id: item.id,
+            type: item.type,
+            imageUrl: item.imagePreview,
+            code: item.code,
+            title: item.title,
+            order: index,
+          })),
+        },
+        landingPageSettings: {
+          landingCategory: settings.landingCategory,
+          courseSections: settings.courseSections,
+        },
+        sidebarTUSettings: settings.sidebarTU,
+        sidebarTOSettings: settings.sidebarTO,
+      });
+
       setHasChanges(false);
+    } catch (error) {
+      console.error('브랜딩 설정 저장 실패:', error);
     } finally {
       setIsSaving(false);
     }
@@ -517,7 +652,7 @@ export function BrandingSettingsPage() {
   };
 
   // 로딩 중
-  if (featuresLoading) {
+  if (featuresLoading || settingsLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
@@ -535,7 +670,7 @@ export function BrandingSettingsPage() {
             <p className="text-sm text-text-secondary mt-1">테넌트의 브랜드 아이덴티티와 레이아웃을 설정합니다</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
+            <Button variant="outline" onClick={handleReset}>
               <RotateCcw className="mr-2 h-4 w-4" />
               초기화
             </Button>

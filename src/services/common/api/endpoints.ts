@@ -63,6 +63,7 @@ export const API_ENDPOINTS = {
     DESIGN: '/tenant/settings/design',
     LAYOUT: '/tenant/settings/layout',
     BRANDING: '/tenant/settings/branding',
+    BRANDING_EXTENDED: '/tenant/settings/branding/extended',
     USER_MANAGEMENT: '/tenant/settings/user-management',
     // Navigation
     NAVIGATION: '/tenant/settings/navigation',
@@ -91,6 +92,17 @@ export const API_ENDPOINTS = {
     DISTRIBUTE: (id: number) => `/sa/notices/${id}/distribute`,
     DISTRIBUTE_ALL: (id: number) => `/sa/notices/${id}/distribute-all`,
     TENANTS: (id: number) => `/sa/notices/${id}/tenants`,
+    // 배포 통계
+    DISTRIBUTIONS: '/sa/notices/distributions',
+    DISTRIBUTIONS_SUMMARY: '/sa/notices/distributions/summary',
+    DISTRIBUTION_BY_ID: (id: number) => `/sa/notices/${id}/distributions`,
+  },
+
+  // System Notices for TA (TA가 받은 SA 공지)
+  SYSTEM_NOTICES_FOR_TA: {
+    BASE: '/ta/notices',
+    BY_ID: (id: number) => `/ta/notices/${id}`,
+    MARK_READ: (id: number) => `/ta/notices/${id}/read`,
   },
 
   // Categories (TO)

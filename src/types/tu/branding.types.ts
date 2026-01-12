@@ -83,4 +83,89 @@ export interface PublicLayoutResponse {
   footerSettings: FooterSettings | null;
   contentSettings: ContentSettings | null;
   navigationItems: NavigationItemResponse[];
+  // 확장 브랜딩 설정
+  companyName: string | null;
+  bannerSettings: BannerSettings | null;
+  landingPageSettings: LandingPageSettings | null;
+  sidebarTUSettings: SidebarRoleSettings | null;
+  sidebarTOSettings: SidebarRoleSettings | null;
+}
+
+/**
+ * 배너 아이템 타입
+ */
+export interface BannerItem {
+  id: string;
+  type: 'image' | 'code';
+  imageUrl: string | null;
+  code: string;
+  title: string;
+  order: number;
+}
+
+/**
+ * 배너 설정 타입
+ */
+export interface BannerSettings {
+  enabled: boolean;
+  items: BannerItem[];
+}
+
+/**
+ * 랜딩 카테고리 설정 타입
+ */
+export interface LandingCategorySettings {
+  enabled: boolean;
+  items: string[];
+  sectionTitle: string;
+}
+
+/**
+ * 강좌 섹션 아이템 타입
+ */
+export interface CourseSectionItem {
+  id: string;
+  title: string;
+}
+
+/**
+ * 강좌 섹션 설정 타입
+ */
+export interface CourseSectionsSettings {
+  enabled: boolean;
+  items: CourseSectionItem[];
+}
+
+/**
+ * 랜딩 페이지 설정 타입
+ */
+export interface LandingPageSettings {
+  landingCategory: LandingCategorySettings;
+  courseSections: CourseSectionsSettings;
+}
+
+/**
+ * 사이드바 메뉴 아이템 타입
+ */
+export interface SidebarMenuItem {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  visible: boolean;
+  children?: {
+    id: string;
+    label: string;
+    url: string;
+    icon?: string;
+    visible: boolean;
+  }[];
+}
+
+/**
+ * TU/TO 사이드바 설정 타입
+ */
+export interface SidebarRoleSettings {
+  enabled: boolean;
+  items: SidebarMenuItem[];
 }

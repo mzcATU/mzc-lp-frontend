@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
-import { useUnreadNotificationCount, usePublicNavigation } from '@/hooks/tu';
+import { useUnreadNotificationCount, usePublicNavigation, usePublicLayout } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import type { NavigationItemResponse } from '@/types/tu/branding.types';
 
@@ -30,10 +30,15 @@ export function LandingHeader() {
   const { data: unreadCountData } = useUnreadNotificationCount(isAuthenticated);
   const unreadCount = unreadCountData?.count || 0;
   const { branding } = useTenantBranding();
-  const { data: navigationItems } = usePublicNavigation(isAuthenticated);
+  const { data: navigationItems } = usePublicNavigation();
+  const { data: layoutData } = usePublicLayout();
 
   // 네비게이션 메뉴 (TA 설정 또는 기본값)
   const navItems = navigationItems && navigationItems.length > 0 ? navigationItems : DEFAULT_NAV_ITEMS;
+
+  // 헤더 설정 (로고 표시 여부 등)
+  const headerSettings = layoutData?.headerSettings;
+  const showLogo = headerSettings?.showLogo !== false; // 기본값 true
 
   // API Base URL
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -89,17 +94,19 @@ export function LandingHeader() {
         <div className="w-full px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between gap-6">
           {/* Left: Logo & Menu */}
           <div className="flex items-center gap-8 ml-2 md:ml-4">
-            {/* Logo */}
-            <Link to={prefixPath('/tu/b2c')} className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
-              {fullLogoUrl ? (
-                <img src={fullLogoUrl} alt={tenantName} className="h-8 object-contain" />
-              ) : (
-                <>
-                  <span className="text-2xl">M</span>
-                  <span className="gradient-text">{tenantName}</span>
-                </>
-              )}
-            </Link>
+            {/* Logo - showLogo 설정에 따라 표시 */}
+            {showLogo && (
+              <Link to={prefixPath('/tu/b2c')} className={`flex items-center gap-2 font-bold text-xl tracking-tight ${isDark ? '' : 'text-gray-900'}`}>
+                {fullLogoUrl ? (
+                  <img src={fullLogoUrl} alt={tenantName} className="h-8 object-contain" />
+                ) : (
+                  <>
+                    <span className="text-2xl">M</span>
+                    <span className="gradient-text">{tenantName}</span>
+                  </>
+                )}
+              </Link>
+            )}
 
             {/* Desktop Nav Links */}
             <nav className={`hidden md:flex items-center gap-8 font-medium text-[15px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
