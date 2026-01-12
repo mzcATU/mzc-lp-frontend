@@ -987,6 +987,7 @@ export function CourseDetailPage() {
                 timeId={courseTimeId}
                 isDark={isDark}
                 canWrite={isAlreadyEnrolled}
+                instructorIds={courseTime?.instructors?.map((i) => i.id)}
               />
             </section>
           )}
