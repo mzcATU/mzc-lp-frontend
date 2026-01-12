@@ -14,6 +14,7 @@ import {
   Loader2,
   Send,
   CornerDownRight,
+  Lock,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -38,6 +39,7 @@ interface CourseCommunityPostDetailProps {
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  instructorIds?: number[];
 }
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -55,6 +57,7 @@ export function CourseCommunityPostDetail({
   onClose,
   onEdit,
   onDelete,
+  instructorIds,
 }: CourseCommunityPostDetailProps) {
   const { user } = useAuthStore();
   const [commentContent, setCommentContent] = useState('');
@@ -120,6 +123,17 @@ export function CourseCommunityPostDetail({
 
   const isAuthor = user?.id === post?.author.id;
   const comments = commentsData?.comments || [];
+
+  // 비밀글 열람 권한 확인
+  const canViewPrivatePost = (): boolean => {
+    if (!post?.isPrivate) return true;
+    if (!user?.id) return false;
+    if (post.author.id === user.id) return true;
+    if (instructorIds?.includes(user.id)) return true;
+    return false;
+  };
+
+  const hasAccess = canViewPrivatePost();
 
   const renderComment = (comment: Comment, depth = 0) => {
     const isCommentAuthor = user?.id === comment.author.id;
@@ -291,6 +305,36 @@ export function CourseCommunityPostDetail({
         {isPostLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
+          </div>
+        ) : post && !hasAccess ? (
+          <div className="flex flex-col items-center justify-center py-20 px-6">
+            <div
+              className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
+                isDark ? 'bg-white/10' : 'bg-gray-100'
+              }`}
+            >
+              <Lock className={`w-10 h-10 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+            </div>
+            <h3
+              className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+            >
+              비밀글입니다
+            </h3>
+            <p
+              className={`text-center mb-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+            >
+              작성자와 강사만 열람할 수 있습니다.
+            </p>
+            <button
+              onClick={onClose}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                isDark
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              돌아가기
+            </button>
           </div>
         ) : post ? (
           <div className="p-6">

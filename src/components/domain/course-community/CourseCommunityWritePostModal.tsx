@@ -3,7 +3,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { X, Tag, Loader2, ImagePlus, Trash2 } from 'lucide-react';
+import { X, Tag, Loader2, ImagePlus, Trash2, Lock } from 'lucide-react';
 import type {
   PostType,
   CreateCourseCommunityPostRequest,
@@ -46,6 +46,7 @@ export function CourseCommunityWritePostModal({
   const [images, setImages] = useState<
     { file: File; preview: string; uploading: boolean; url?: string }[]
   >([]);
+  const [isPrivate, setIsPrivate] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     content?: string;
@@ -60,6 +61,7 @@ export function CourseCommunityWritePostModal({
       setTitle(editPost.title);
       setContent(editPost.content);
       setTags(editPost.tags || []);
+      setIsPrivate(editPost.isPrivate || false);
     } else {
       setPostType('question');
       setTitle('');
@@ -67,6 +69,7 @@ export function CourseCommunityWritePostModal({
       setTags([]);
       setTagInput('');
       setImages([]);
+      setIsPrivate(false);
       setErrors({});
     }
   }, [editPost, isOpen]);
@@ -203,6 +206,7 @@ export function CourseCommunityWritePostModal({
       content: content.trim(),
       category: categoryMap[postType] || '일반',
       tags: tags.length > 0 ? tags : undefined,
+      isPrivate: isPrivate || undefined,
     };
 
     await onSubmit(data);
@@ -510,6 +514,41 @@ export function CourseCommunityWritePostModal({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Private Post Option */}
+          <div
+            className={`flex items-center gap-3 p-4 rounded-xl border ${
+              isDark ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'
+            }`}
+          >
+            <input
+              type="checkbox"
+              id="isPrivate"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 text-[#6778ff] focus:ring-[#6778ff] cursor-pointer"
+            />
+            <Lock
+              className={`w-4 h-4 ${
+                isPrivate
+                  ? 'text-[#6778ff]'
+                  : isDark
+                    ? 'text-gray-500'
+                    : 'text-gray-400'
+              }`}
+            />
+            <label
+              htmlFor="isPrivate"
+              className={`flex-1 cursor-pointer ${isDark ? 'text-white' : 'text-gray-900'}`}
+            >
+              <span className="font-medium">비밀글로 작성</span>
+              <span
+                className={`text-xs ml-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+              >
+                작성자와 강사만 열람 가능
+              </span>
+            </label>
           </div>
 
           {/* Submit Button */}

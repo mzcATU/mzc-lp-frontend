@@ -43,6 +43,7 @@ export interface CourseCommunityPost {
   isLiked?: boolean;
   isPinned?: boolean;
   isSolved?: boolean;
+  isPrivate?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -77,6 +78,7 @@ export interface CreateCourseCommunityPostRequest {
   content: string;
   category: string;
   tags?: string[];
+  isPrivate?: boolean;
 }
 
 // 코스 커뮤니티 게시글 수정 요청
@@ -84,6 +86,7 @@ export interface UpdateCourseCommunityPostRequest {
   title?: string;
   content?: string;
   tags?: string[];
+  isPrivate?: boolean;
 }
 
 // 코스 커뮤니티 댓글 작성 요청
