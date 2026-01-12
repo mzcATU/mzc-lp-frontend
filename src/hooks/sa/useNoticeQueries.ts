@@ -18,6 +18,11 @@ export const noticeKeys = {
   details: () => [...noticeKeys.all, 'detail'] as const,
   detail: (id: number) => [...noticeKeys.details(), id] as const,
   tenants: (id: number) => [...noticeKeys.all, 'tenants', id] as const,
+  // 배포 통계
+  distributions: () => [...noticeKeys.all, 'distributions'] as const,
+  distributionList: (params?: { page?: number; size?: number }) => [...noticeKeys.distributions(), 'list', params] as const,
+  distributionSummary: () => [...noticeKeys.distributions(), 'summary'] as const,
+  distributionDetail: (id: number) => [...noticeKeys.distributions(), 'detail', id] as const,
 };
 
 // ============================================
@@ -141,6 +146,36 @@ export const useDistributeAllNotice = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: noticeKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: noticeKeys.tenants(id) });
+      queryClient.invalidateQueries({ queryKey: noticeKeys.distributions() });
     },
+  });
+};
+
+// ============================================
+// 배포 통계 Queries
+// ============================================
+
+/** 배포 통계 목록 조회 */
+export const useDistributionStats = (params?: { page?: number; size?: number }) => {
+  return useQuery({
+    queryKey: noticeKeys.distributionList(params),
+    queryFn: () => noticeService.getDistributionStats(params),
+  });
+};
+
+/** 배포 통계 요약 조회 */
+export const useDistributionSummary = () => {
+  return useQuery({
+    queryKey: noticeKeys.distributionSummary(),
+    queryFn: () => noticeService.getDistributionSummary(),
+  });
+};
+
+/** 특정 공지 배포 상세 조회 */
+export const useDistributionStatsForNotice = (id: number) => {
+  return useQuery({
+    queryKey: noticeKeys.distributionDetail(id),
+    queryFn: () => noticeService.getDistributionStatsForNotice(id),
+    enabled: !!id,
   });
 };

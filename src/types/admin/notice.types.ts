@@ -55,3 +55,47 @@ export interface UpdateNoticeRequest {
 export interface DistributeNoticeRequest {
   tenantIds: number[];
 }
+
+// ============================================
+// 배포 통계 타입
+// ============================================
+
+export interface TenantDistributionInfo {
+  tenantId: number;
+  tenantName: string;
+  tenantCode: string;
+  isRead: boolean;
+  distributedAt: string;
+  readAt: string | null;
+}
+
+export interface NoticeDistributionStats {
+  noticeId: number;
+  noticeTitle: string;
+  noticeType: NoticeType;
+  noticeStatus: NoticeStatus;
+  isPinned: boolean;
+  totalTenants: number;
+  sentCount: number;
+  readCount: number;
+  publishedAt: string | null;
+  createdAt: string;
+  tenantDistributions: TenantDistributionInfo[];
+}
+
+export interface NoticeDistributionStatsResponse {
+  content: NoticeDistributionStats[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export interface NoticeDistributionSummary {
+  totalDistributions: number;
+  completedCount: number;
+  inProgressCount: number;
+  totalTenants: number;
+  totalReadCount: number;
+  averageReadRate: number;
+}
