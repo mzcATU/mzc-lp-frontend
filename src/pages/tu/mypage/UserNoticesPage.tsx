@@ -118,7 +118,7 @@ export function UserNoticesPage() {
                           <Badge className={typeConf.color}>{typeConf.label}</Badge>
                         </div>
                         <p className="text-sm text-text-secondary line-clamp-2">
-                          {notice.content.replaceAll(/<[^>]*>/g, '').substring(0, 150)}...
+                          {notice.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2 ml-4">

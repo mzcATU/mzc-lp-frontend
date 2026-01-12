@@ -452,8 +452,8 @@ export function BrandingSettingsPage() {
           secondary: tenantSettings.secondaryColor || prev.colors.secondary,
         },
         // 확장 브랜딩 설정 (배너 설정이 있고 items가 있으면 사용, 없으면 기본값 유지)
-        ...(tenantSettings.bannerSettings &&
-          (tenantSettings.bannerSettings as { items?: unknown[] }).items?.length > 0 && {
+        ...((tenantSettings.bannerSettings as { items?: unknown[] } | undefined)?.items?.length &&
+          (tenantSettings.bannerSettings as { items?: unknown[] }).items!.length > 0 && {
           banner: tenantSettings.bannerSettings as typeof prev.banner,
         }),
         ...(tenantSettings.landingPageSettings && {
@@ -606,14 +606,14 @@ export function BrandingSettingsPage() {
           showNotifications: settings.header.showNotifications,
           showThemeToggle: settings.header.showThemeToggle,
           navLinks: settings.header.navLinks,
-        },
+        } as unknown as Parameters<typeof updateLayoutMutation.mutateAsync>[0]['headerSettings'],
         footerSettings: {
           enabled: settings.footer.enabled,
           companyInfo: settings.footer.companyInfo,
           copyright: settings.footer.copyright,
           legalLinks: settings.footer.legalLinks,
           socialLinks: settings.footer.socialLinks,
-        },
+        } as unknown as Parameters<typeof updateLayoutMutation.mutateAsync>[0]['footerSettings'],
       });
 
       // 확장 브랜딩 설정 저장
@@ -621,7 +621,14 @@ export function BrandingSettingsPage() {
         companyName: settings.company.name,
         bannerSettings: {
           enabled: settings.banner.enabled,
-          items: settings.banner.items,
+          items: settings.banner.items.map((item, index) => ({
+            id: item.id,
+            type: item.type,
+            imageUrl: item.imagePreview,
+            code: item.code,
+            title: item.title,
+            order: index,
+          })),
         },
         landingPageSettings: {
           landingCategory: settings.landingCategory,

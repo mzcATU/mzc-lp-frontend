@@ -3,7 +3,6 @@ import {
   Send,
   Building2,
   CheckCircle,
-  Clock,
   Eye,
   Search,
   ChevronLeft,
@@ -28,7 +27,7 @@ import {
   useDistributionSummary,
   useDistributionStatsForNotice,
 } from '@/hooks/sa';
-import type { NoticeDistributionStats, TenantDistributionInfo } from '@/types/admin';
+import type { TenantDistributionInfo } from '@/types/admin';
 
 const typeConfig: Record<string, { label: string; color: string }> = {
   GENERAL: { label: '일반', color: 'bg-gray-100 text-gray-700' },
