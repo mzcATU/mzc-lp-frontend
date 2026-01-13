@@ -127,9 +127,17 @@ export type {
   NotificationListResponse,
   UnreadCountResponse,
   NotificationFilter,
+  NotificationReferenceType,
+  CourseNotificationSubtype,
+  AssignmentNotificationSubtype,
+  NotificationMetadata,
 } from './notification.types';
 
-export { NOTIFICATION_TYPE_LABELS, NOTIFICATION_TYPE_COLORS } from './notification.types';
+export {
+  NOTIFICATION_TYPE_LABELS,
+  NOTIFICATION_TYPE_COLORS,
+  getNotificationDeepLink,
+} from './notification.types';
 
 // Course Explore (강의 탐색)
 export type {
