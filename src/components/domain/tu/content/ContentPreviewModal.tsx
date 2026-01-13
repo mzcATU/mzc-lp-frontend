@@ -156,15 +156,24 @@ export function ContentPreviewModal({
         );
 
       case 'DOCUMENT':
-        // PDF인 경우 iframe으로 인라인 미리보기
+        // PDF인 경우 object 태그로 인라인 미리보기
         if (previewData?.contentType?.includes('pdf')) {
           return (
             <div className="flex flex-col space-y-3">
-              <iframe
-                src={blobUrl}
-                title={fileName || 'PDF 미리보기'}
-                className="w-full h-[70vh] border-0 rounded-lg"
-              />
+              <object
+                data={`${blobUrl}#toolbar=1&view=FitH`}
+                type="application/pdf"
+                className="w-full h-[70vh] rounded-lg bg-bg-secondary"
+              >
+                <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
+                  <FileText className="w-16 h-16 text-text-secondary" />
+                  <p className="text-text-secondary">PDF를 표시할 수 없습니다.</p>
+                  <Button onClick={handleDownload}>
+                    <Download size={16} />
+                    다운로드
+                  </Button>
+                </div>
+              </object>
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" className="border border-border" onClick={handleDownload}>
                   <Download size={16} />

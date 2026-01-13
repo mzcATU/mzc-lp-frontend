@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,6 +9,8 @@ import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
 import { useSubdomainPath } from '@/hooks/common';
+import { usePublicLayout } from '@/hooks/tu';
+import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import { cn } from '@/utils/cn';
 import {
   AlertDialog,
@@ -21,6 +23,16 @@ import {
   AlertDialogTitle,
 } from '@/components/common';
 import type { MenuItem } from '@/types';
+
+// 브랜딩 설정의 visible 속성을 기반으로 메뉴 필터링
+interface BrandingSidebarItem {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  visible: boolean;
+  children?: BrandingSidebarItem[];
+}
 
 interface MyPageSidebarProps {
   isExpanded: boolean;
@@ -37,6 +49,54 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
+
+  // 브랜딩 설정에서 사이드바 설정 가져오기
+  const { data: layoutData } = usePublicLayout();
+  const sidebarSettings = layoutData?.sidebarTUSettings as { enabled?: boolean; items?: BrandingSidebarItem[] } | undefined;
+
+  // 기능 설정 가져오기
+  const { isFeatureEnabled } = useTenantFeatures();
+  const communityEnabled = isFeatureEnabled('communityEnabled');
+  const userCourseCreationEnabled = isFeatureEnabled('userCourseCreationEnabled');
+  const instructorTabEnabled = isFeatureEnabled('instructorTabEnabled');
+
+  // 브랜딩 설정 + 기능 설정을 기반으로 메뉴 필터링
+  const filteredMenuData = useMemo((): MenuItem[] => {
+    // 1. 브랜딩 설정에서 visible: false인 항목 찾기
+    const hiddenIds = new Set<string>();
+    if (sidebarSettings?.items && sidebarSettings.items.length > 0) {
+      const collectHiddenIds = (items: BrandingSidebarItem[]) => {
+        for (const item of items) {
+          if (!item.visible) {
+            hiddenIds.add(item.id);
+          }
+          if (item.children) {
+            collectHiddenIds(item.children);
+          }
+        }
+      };
+      collectHiddenIds(sidebarSettings.items);
+    }
+
+    // 2. 기능 설정에 따라 추가로 숨길 항목
+    // 커뮤니티 비활성화 시 커뮤니티 메뉴 숨김
+    if (!communityEnabled) {
+      hiddenIds.add('my-community');
+    }
+    // 사용자 강의 생성 비활성화 시 강의 디자인 관련 메뉴 숨김
+    if (!userCourseCreationEnabled) {
+      hiddenIds.add('my-teaching');
+      hiddenIds.add('create-course');
+    }
+
+    // 3. 숨겨진 항목 필터링
+    return myPageMenuData
+      .filter((item) => !hiddenIds.has(item.id))
+      .map((item) => ({
+        ...item,
+        subItems: item.subItems?.filter((sub) => !hiddenIds.has(sub.id)),
+      }));
+  }, [sidebarSettings, communityEnabled, userCourseCreationEnabled]);
 
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
@@ -263,8 +323,8 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
-        {/* 모드 스위처 (디자이너 권한이 있는 경우에만 표시) */}
-        {isDesigner && (
+        {/* 모드 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
+        {isDesigner && instructorTabEnabled && (
           <>
             <div
               className="relative rounded-lg p-1 mb-3"
@@ -329,7 +389,7 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
 
         {/* 메뉴 리스트 */}
         <nav className="space-y-1 flex-1">
-          {myPageMenuData.map(renderMenuItem)}
+          {filteredMenuData.map(renderMenuItem)}
         </nav>
 
         {/* 설정 토글 영역 */}

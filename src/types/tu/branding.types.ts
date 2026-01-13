@@ -58,14 +58,22 @@ export interface FooterSettings {
   showCopyright?: boolean;
   showSocialLinks?: boolean;
   socialLinks?: {
-    facebook?: string;
-    twitter?: string;
-    instagram?: string;
-    youtube?: string;
-    linkedin?: string;
+    facebook?: string | { enabled?: boolean; url?: string };
+    twitter?: string | { enabled?: boolean; url?: string };
+    instagram?: string | { enabled?: boolean; url?: string };
+    youtube?: string | { enabled?: boolean; url?: string };
+    linkedin?: string | { enabled?: boolean; url?: string };
   };
   companyInfoFields?: string[];
   showNewsletter?: boolean;
+  companyInfo?: {
+    ceo?: string;
+    businessNo?: string;
+    address?: string;
+    phone?: string;
+  };
+  legalLinks?: { label: string; url: string }[];
+  copyright?: string;
 }
 
 /**
