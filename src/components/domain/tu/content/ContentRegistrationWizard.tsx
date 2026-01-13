@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Save, FileText, Upload } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
 import type { LOData } from '@/types';
@@ -15,11 +15,9 @@ interface ContentRegistrationWizardProps {
 
 const t = {
   title: { ko: '콘텐츠 등록', en: 'Create Content' },
-  loadTemplate: { ko: '템플릿 불러오기', en: 'Load Template' },
   close: { ko: '닫기', en: 'Close' },
   previous: { ko: '이전', en: 'Previous' },
   next: { ko: '다음', en: 'Next' },
-  saveDraft: { ko: '임시저장', en: 'Save Draft' },
   submit: { ko: '발행하기', en: 'Publish' },
   step1: { ko: '콘텐츠 정의', en: 'Content Definition' },
   step2: { ko: '파일 업로드', en: 'File Upload' },
@@ -66,15 +64,6 @@ export function ContentRegistrationWizard({
     }
   };
 
-  const handleSaveDraft = () => {
-    console.log('Saving draft:', formData);
-    alert('임시저장되었습니다.');
-  };
-
-  const handleLoadTemplate = () => {
-    alert('템플릿 불러오기 기능은 추후 구현됩니다.');
-  };
-
   const handleSubmit = () => {
     if (!validateCurrentStep()) {
       return;
@@ -89,16 +78,8 @@ export function ContentRegistrationWizard({
         alert('콘텐츠 제목을 입력해주세요.');
         return false;
       }
-      if (!formData.description.trim()) {
-        alert('간략 설명을 입력해주세요.');
-        return false;
-      }
       if (!formData.loType) {
         alert('콘텐츠 유형을 선택해주세요.');
-        return false;
-      }
-      if (!formData.category) {
-        alert('카테고리를 선택해주세요.');
         return false;
       }
     }
@@ -154,10 +135,6 @@ export function ContentRegistrationWizard({
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <h1 className="text-text-primary m-0">{getText('title')}</h1>
           <div className="flex gap-3 items-center">
-            <Button variant="ghost" onClick={handleLoadTemplate} className="border border-border">
-              <FileText size={16} />
-              {getText('loadTemplate')}
-            </Button>
             <Button variant="ghost" onClick={onBack} className="border border-border">
               {getText('close')}
             </Button>
@@ -210,10 +187,6 @@ export function ContentRegistrationWizard({
                 {getText('previous')}
               </Button>
             )}
-            <Button variant="ghost" onClick={handleSaveDraft} className="border border-border">
-              <Save size={18} />
-              {getText('saveDraft')}
-            </Button>
           </div>
 
           <div>

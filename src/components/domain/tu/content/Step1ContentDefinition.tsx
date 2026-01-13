@@ -111,7 +111,7 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
           {/* 간략 설명 */}
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">
-              간략 설명 <span className="text-status-error">*</span>
+              간략 설명
             </label>
             <Textarea
               value={data.description}
@@ -172,7 +172,7 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
           {/* 카테고리 드롭다운 */}
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">
-              카테고리 <span className="text-status-error">*</span>
+              카테고리
             </label>
             <NativeSelect
               value={data.category || ''}
@@ -225,53 +225,55 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
         </div>
       </div>
 
-      {/* 미리보기 이미지 업로드 */}
-      <div>
-        <h2 className="text-text-primary mb-4">미리보기 이미지 (썸네일)</h2>
+      {/* 미리보기 이미지 업로드 - 동영상만 표시 */}
+      {data.loType === 'video' && (
+        <div>
+          <h2 className="text-text-primary mb-4">미리보기 이미지 (썸네일)</h2>
 
-        {!data.thumbnailImage ? (
-          <div
-            onClick={() => thumbnailInputRef.current?.click()}
-            className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-action-primary hover:bg-bg-secondary transition-all"
-          >
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-bg-secondary flex items-center justify-center mb-3">
-                <ImageIcon className="w-8 h-8 text-text-secondary" />
+          {!data.thumbnailImage ? (
+            <div
+              onClick={() => thumbnailInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-action-primary hover:bg-bg-secondary transition-all"
+            >
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-bg-secondary flex items-center justify-center mb-3">
+                  <ImageIcon className="w-8 h-8 text-text-secondary" />
+                </div>
+                <p className="text-text-primary mb-1">이미지를 선택하세요</p>
+                <p className="text-xs text-text-secondary">권장 크기: 1200x630px | JPG, PNG (최대 5MB)</p>
               </div>
-              <p className="text-text-primary mb-1">이미지를 선택하세요</p>
-              <p className="text-xs text-text-secondary">권장 크기: 1200x630px | JPG, PNG (최대 5MB)</p>
+              <input
+                ref={thumbnailInputRef}
+                type="file"
+                onChange={handleThumbnailUpload}
+                accept="image/jpeg,image/png"
+                className="hidden"
+              />
             </div>
-            <input
-              ref={thumbnailInputRef}
-              type="file"
-              onChange={handleThumbnailUpload}
-              accept="image/jpeg,image/png"
-              className="hidden"
-            />
-          </div>
-        ) : (
-          <div className="border border-border rounded-lg p-4 bg-bg-secondary">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-lg bg-bg-default border border-border flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <img
-                  src={URL.createObjectURL(data.thumbnailImage)}
-                  alt="Thumbnail"
-                  className="w-full h-full object-cover"
-                />
+          ) : (
+            <div className="border border-border rounded-lg p-4 bg-bg-secondary">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-lg bg-bg-default border border-border flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <img
+                    src={URL.createObjectURL(data.thumbnailImage)}
+                    alt="Thumbnail"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-text-primary mb-1 truncate">{data.thumbnailImage.name}</p>
+                  <p className="text-sm text-text-secondary">
+                    {(data.thumbnailImage.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <Button type="button" variant="ghost" onClick={handleRemoveThumbnail} className="border border-border">
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-text-primary mb-1 truncate">{data.thumbnailImage.name}</p>
-                <p className="text-sm text-text-secondary">
-                  {(data.thumbnailImage.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-              <Button type="button" variant="ghost" onClick={handleRemoveThumbnail} className="border border-border">
-                <X className="w-5 h-5" />
-              </Button>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

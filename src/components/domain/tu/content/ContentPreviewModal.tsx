@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Loader2, ExternalLink, Download, AlertCircle, FileText, Lock } from 'lucide-react';
+import { Loader2, ExternalLink, Download, AlertCircle, FileText } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,6 @@ interface ContentPreviewModalProps {
   contentId: number | null;
   contentType: ContentType | null;
   fileName?: string;
-  downloadable?: boolean;
 }
 
 export function ContentPreviewModal({
@@ -25,7 +24,6 @@ export function ContentPreviewModal({
   contentId,
   contentType,
   fileName,
-  downloadable = true,
 }: Readonly<ContentPreviewModalProps>) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
@@ -78,22 +76,6 @@ export function ContentPreviewModal({
 
   // 콘텐츠 타입에 따른 렌더링
   const renderContent = useMemo(() => {
-    // 다운로드 비허용 콘텐츠는 미리보기 제한
-    if (!downloadable && contentType !== 'EXTERNAL_LINK') {
-      return (
-        <div className="flex flex-col items-center justify-center py-12 space-y-4">
-          <Lock className="w-16 h-16 text-text-secondary" />
-          <p className="text-text-primary text-lg font-medium">{fileName}</p>
-          <p className="text-text-secondary text-sm text-center">
-            이 콘텐츠는 미리보기가 제한되어 있습니다.
-          </p>
-          <p className="text-text-tertiary text-xs text-center">
-            학습 페이지에서 콘텐츠를 확인하세요.
-          </p>
-        </div>
-      );
-    }
-
     if (contentType === 'EXTERNAL_LINK') {
       return (
         <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -183,14 +165,12 @@ export function ContentPreviewModal({
                 title={fileName || 'PDF 미리보기'}
                 className="w-full h-[70vh] border-0 rounded-lg"
               />
-              {downloadable && (
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" className="border border-border" onClick={handleDownload}>
-                    <Download size={16} />
-                    다운로드
-                  </Button>
-                </div>
-              )}
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" className="border border-border" onClick={handleDownload}>
+                  <Download size={16} />
+                  다운로드
+                </Button>
+              </div>
             </div>
           );
         }
@@ -202,12 +182,10 @@ export function ContentPreviewModal({
             <p className="text-text-secondary text-sm">
               이 문서 형식은 미리보기를 지원하지 않습니다.
             </p>
-            {downloadable && (
-              <Button onClick={handleDownload}>
-                <Download size={16} />
-                다운로드
-              </Button>
-            )}
+            <Button onClick={handleDownload}>
+              <Download size={16} />
+              다운로드
+            </Button>
           </div>
         );
 
@@ -219,7 +197,7 @@ export function ContentPreviewModal({
           </div>
         );
     }
-  }, [contentType, isLoading, error, blobUrl, previewData, contentDetail, fileName, downloadable]);
+  }, [contentType, isLoading, error, blobUrl, previewData, contentDetail, fileName]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
