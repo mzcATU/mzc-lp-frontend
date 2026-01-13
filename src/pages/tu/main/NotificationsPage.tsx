@@ -7,6 +7,7 @@ import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications } from '@/hooks/tu';
 import type { NotificationType } from '@/types/tu';
+import { getNotificationDeepLink } from '@/types/tu';
 import { useAuthStore } from '@/store/common/authStore';
 
 // 알림 타입별 필터 옵션
@@ -260,12 +261,15 @@ export function NotificationsPage() {
           <div className="space-y-3">
             {filteredNotifications.map((notification) => {
               const IconComponent = getNotificationIcon(notification.type);
+              const deepLink = getNotificationDeepLink(notification);
               return (
                 <div
                   key={notification.id}
                   onClick={() => {
                     markAsRead(notification.id);
-                    navigate(prefixPath(`/tu/b2c/notifications/${notification.id}`));
+                    // 딥링크가 있으면 해당 페이지로, 없으면 알림 상세로
+                    const targetPath = deepLink || `/tu/b2c/notifications/${notification.id}`;
+                    navigate(prefixPath(targetPath));
                   }}
                   className={`rounded-xl p-4 flex gap-4 cursor-pointer transition-all border ${
                     isDark

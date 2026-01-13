@@ -20,7 +20,8 @@ import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { Button } from '@/components/common';
 import { useNotification, useMarkAsRead, useDeleteNotification } from '@/hooks/tu';
-import type { NotificationType } from '@/types/tu';
+import type { NotificationType, NotificationMetadata } from '@/types/tu';
+import { getNotificationDeepLink } from '@/types/tu';
 
 // 알림 타입별 아이콘 매핑
 const getNotificationIcon = (type: NotificationType) => {
@@ -57,6 +58,126 @@ const getTypeLabel = (type: NotificationType) => {
     default: return '알림';
   }
 };
+
+// 알림 타입별 액션 버튼 레이블
+const getActionButtonLabel = (type: NotificationType) => {
+  switch (type) {
+    case 'COURSE': return '강의 보기';
+    case 'ASSIGNMENT': return '과제 확인';
+    case 'SYSTEM': return '공지 보기';
+    case 'COMMENT':
+    case 'LIKE': return '게시글 보기';
+    default: return '자세히 보기';
+  }
+};
+
+// 알림 타입별 추가 정보 컴포넌트
+interface NotificationMetadataInfoProps {
+  type: NotificationType;
+  metadata: NotificationMetadata;
+  isDark: boolean;
+}
+
+function NotificationMetadataInfo({ type, metadata, isDark }: NotificationMetadataInfoProps) {
+  const baseClasses = `mb-6 p-4 rounded-xl ${
+    isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
+  }`;
+
+  switch (type) {
+    case 'COURSE':
+      if (!metadata.courseName && !metadata.enrollmentStatus) return null;
+      return (
+        <div className={baseClasses}>
+          <div className="flex flex-wrap items-center gap-3">
+            {metadata.courseName && (
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>강의명</span>
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {metadata.courseName}
+                </span>
+              </div>
+            )}
+            {metadata.enrollmentStatus && (
+              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                metadata.enrollmentStatus === 'APPROVED'
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'bg-red-500/20 text-red-400'
+              }`}>
+                {metadata.enrollmentStatus === 'APPROVED' ? '승인됨' : '거절됨'}
+              </span>
+            )}
+          </div>
+        </div>
+      );
+
+    case 'ASSIGNMENT':
+      if (!metadata.assignmentName && !metadata.dueDate && metadata.score === undefined) return null;
+      return (
+        <div className={baseClasses}>
+          <div className="space-y-2">
+            {metadata.assignmentName && (
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>과제명</span>
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {metadata.assignmentName}
+                </span>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-4">
+              {metadata.dueDate && (
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>마감일</span>
+                  <span className={`text-sm font-medium ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
+                    {new Date(metadata.dueDate).toLocaleDateString('ko-KR')}
+                  </span>
+                </div>
+              )}
+              {metadata.score !== undefined && metadata.maxScore !== undefined && (
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>점수</span>
+                  <span className={`text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                    {metadata.score} / {metadata.maxScore}점
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'SYSTEM':
+      if (!metadata.noticeCategory) return null;
+      return (
+        <div className={baseClasses}>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>카테고리</span>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+              isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {metadata.noticeCategory}
+            </span>
+          </div>
+        </div>
+      );
+
+    case 'COMMENT':
+    case 'LIKE':
+      if (!metadata.postTitle) return null;
+      return (
+        <div className={baseClasses}>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>게시글</span>
+            <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {metadata.postTitle}
+            </span>
+          </div>
+        </div>
+      );
+
+    default:
+      return null;
+  }
+}
 
 // 날짜 포맷
 const formatDate = (dateString: string): string => {
@@ -198,22 +319,35 @@ export function NotificationDetailPage() {
             </div>
 
             {/* Content */}
-            <div className={`mb-8 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+            <div className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               <p className="text-base leading-relaxed">{notification.message}</p>
             </div>
 
-            {/* Action Button - 알림에 링크가 있는 경우 */}
-            {notification.link && (
-              <div className="mb-6">
-                <Link
-                  to={notification.link}
-                  className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-xl text-white font-medium"
-                >
-                  자세히 보기
-                  <ExternalLink className="w-4 h-4" />
-                </Link>
-              </div>
+            {/* 알림 타입별 추가 정보 */}
+            {notification.metadata && (
+              <NotificationMetadataInfo
+                type={notification.type}
+                metadata={notification.metadata}
+                isDark={isDark}
+              />
             )}
+
+            {/* Action Button - 딥링크가 있는 경우 */}
+            {(() => {
+              const deepLink = getNotificationDeepLink(notification);
+              if (!deepLink) return null;
+              return (
+                <div className="mb-6">
+                  <Link
+                    to={deepLink}
+                    className="inline-flex items-center gap-2 landing-btn-primary px-6 py-3 rounded-xl text-white font-medium"
+                  >
+                    {getActionButtonLabel(notification.type)}
+                    <ExternalLink className="w-4 h-4" />
+                  </Link>
+                </div>
+              );
+            })()}
 
             {/* Footer Actions */}
             <div className={`flex items-center justify-between pt-6 border-t ${
