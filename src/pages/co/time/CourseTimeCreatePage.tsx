@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info, UserPlus, X, Users } from 'lucide-react';
@@ -130,12 +130,16 @@ interface InstructorAssignment {
 
 export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCreatePageProps>) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { prefixPath } = useSubdomainPath();
   const createTime = useCreateTime();
   const { data: approvedProgramsData, isLoading: isLoadingPrograms } = useApprovedPrograms();
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'DESIGNER', size: 100 });
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
+
+  // URL에서 programId 쿼리 파라미터 읽기
+  const initialProgramId = searchParams.get('programId');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -416,6 +420,22 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const handleRemoveInstructor = (userId: number) => {
     setAssignedInstructors((prev) => prev.filter((i) => i.userId !== userId));
   };
+
+  // URL에서 전달된 programId로 초기 선택
+  useEffect(() => {
+    if (initialProgramId && approvedPrograms.length > 0 && !selectedProgram) {
+      const programId = parseInt(initialProgramId);
+      const program = approvedPrograms.find((p) => p.id === programId);
+      if (program) {
+        setSelectedProgram(program);
+        setFormData((prev) => ({
+          ...prev,
+          programId: program.id,
+          title: prev.title || program.title,
+        }));
+      }
+    }
+  }, [initialProgramId, approvedPrograms, selectedProgram]);
 
   // Owner를 주강사로 자동 추가
   const handleUseOwnerToggle = (checked: boolean) => {

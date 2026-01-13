@@ -13,6 +13,7 @@ import {
   Clock,
   BookOpen,
   Layers,
+  Plus,
 } from 'lucide-react';
 import { Button, Badge, Card, Label, Textarea, BackButton } from '@/components/common';
 import {
@@ -78,6 +79,7 @@ const t = {
   noSnapshot: { ko: '연결된 스냅샷이 없습니다.', en: 'No snapshot linked.' },
   courseDetails: { ko: '과정 세부 정보', en: 'Course Details' },
   metadata: { ko: '메타데이터', en: 'Metadata' },
+  createCourseTime: { ko: '차수 생성', en: 'Create Course Time' },
 };
 
 const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -228,7 +230,28 @@ export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPag
                 </Button>
               </>
             )}
-            {(program.status === 'APPROVED' || program.status === 'DRAFT') && (
+            {program.status === 'APPROVED' && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClose}
+                  disabled={closeProgram.isPending}
+                  className="border border-border"
+                >
+                  <Archive size={16} />
+                  {closeProgram.isPending ? getText('closing') : getText('close')}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate(prefixPath(`/co/times/create?programId=${program.id}`))}
+                >
+                  <Plus size={16} />
+                  {getText('createCourseTime')}
+                </Button>
+              </>
+            )}
+            {program.status === 'DRAFT' && (
               <Button
                 variant="ghost"
                 size="sm"

@@ -178,12 +178,9 @@ export const courseOperatorMenuData: MenuItem[] = [
   },
   {
     id: 'course-catalog',
-    label: { ko: '교육 과정 탐색', en: 'Course Catalog' },
+    label: { ko: '과정 탐색', en: 'Courses' },
     icon: Library,
-    subItems: [
-      { id: 'course-search', label: { ko: '과정 검색 및 상세 조회', en: 'Course Search & Details' }, icon: Search, path: '/co/courses' },
-      { id: 'course-registration', label: { ko: '과정 등록/수정', en: 'Course Registration & Edit' }, icon: FolderEdit, path: '/co/courses/pending' },
-    ],
+    path: '/co/courses',
   },
   {
     id: 'program-management',
