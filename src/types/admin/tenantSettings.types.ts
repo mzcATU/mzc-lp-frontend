@@ -9,10 +9,14 @@
 // 헤더 설정
 export interface HeaderSettings {
   // 기본 설정
+  enabled?: boolean;
   style: 'fixed' | 'sticky' | 'static';
   showLogo: boolean;
   showSearch: boolean;
+  showCart?: boolean;
+  showWishlist?: boolean;
   showNotifications: boolean;
+  showThemeToggle?: boolean;
   // 확장 설정
   height: 'compact' | 'default' | 'large'; // 48px / 64px / 80px
   backgroundOpacity: 'solid' | 'translucent' | 'transparent'; // 스크롤 시 효과
@@ -20,6 +24,7 @@ export interface HeaderSettings {
   userMenuStyle: 'avatar' | 'name' | 'dropdown'; // 사용자 메뉴 스타일
   shadow: 'none' | 'sm' | 'md'; // 그림자
   mobileMenuStyle: 'hamburger' | 'drawer' | 'bottomSheet'; // 모바일 메뉴
+  navLinks?: Array<{ label: string; url: string; visible: boolean }>;
 }
 
 // 사이드바 설정

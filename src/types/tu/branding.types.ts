@@ -32,16 +32,21 @@ export interface NavigationItemResponse {
  * 헤더 설정 타입
  */
 export interface HeaderSettings {
+  enabled?: boolean;
   style?: 'fixed' | 'sticky' | 'static';
   height?: 'compact' | 'default' | 'large';
   showLogo?: boolean;
   showSearch?: boolean;
+  showCart?: boolean;
+  showWishlist?: boolean;
   showNotifications?: boolean;
+  showThemeToggle?: boolean;
   backgroundOpacity?: number;
   navigationPosition?: 'left' | 'center' | 'right';
   userMenuStyle?: 'dropdown' | 'drawer';
   showShadow?: boolean;
   mobileMenuStyle?: 'drawer' | 'fullscreen';
+  navLinks?: Array<{ label: string; url: string; visible: boolean }>;
 }
 
 /**

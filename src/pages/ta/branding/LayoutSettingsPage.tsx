@@ -569,8 +569,8 @@ export function LayoutSettingsPage() {
     setHasChanges(true);
   };
 
-  // TO 사이드바 업데이트
-  const updateSidebarTO = (key: keyof BrandingSettings['sidebarCO'], value: unknown) => {
+  // CO 사이드바 업데이트
+  const updateSidebarCO = (key: keyof BrandingSettings['sidebarCO'], value: unknown) => {
     setSettings((prev) => ({
       ...prev,
       sidebarCO: { ...prev.sidebarCO, [key]: value },
@@ -2068,7 +2068,7 @@ export function LayoutSettingsPage() {
           title="사이드바 (TO)"
           description="테넌트 관리자용 사이드바 메뉴를 설정합니다"
           enabled={settings.sidebarCO.enabled}
-          onToggle={(enabled) => updateSidebarTO('enabled', enabled)}
+          onToggle={(enabled) => updateSidebarCO('enabled', enabled)}
         >
           <div className="space-y-4">
             <div>
@@ -2112,7 +2112,7 @@ export function LayoutSettingsPage() {
                         onClick={() => {
                           const newItems = [...settings.sidebarCO.items];
                           newItems[index].visible = !newItems[index].visible;
-                          updateSidebarTO('items', newItems);
+                          updateSidebarCO('items', newItems);
                         }}
                       >
                         {item.visible ? (
@@ -2126,7 +2126,7 @@ export function LayoutSettingsPage() {
                         onChange={(e) => {
                           const newItems = [...settings.sidebarCO.items];
                           newItems[index].icon = e.target.value;
-                          updateSidebarTO('items', newItems);
+                          updateSidebarCO('items', newItems);
                         }}
                         className="h-8 px-2 border border-border-default rounded-md text-sm bg-white"
                         title="아이콘"
@@ -2142,7 +2142,7 @@ export function LayoutSettingsPage() {
                         onChange={(e) => {
                           const newItems = [...settings.sidebarCO.items];
                           newItems[index].label = e.target.value;
-                          updateSidebarTO('items', newItems);
+                          updateSidebarCO('items', newItems);
                         }}
                         placeholder="항목명"
                         className="flex-1 h-8"
@@ -2152,7 +2152,7 @@ export function LayoutSettingsPage() {
                         onChange={(e) => {
                           const newItems = [...settings.sidebarCO.items];
                           newItems[index].url = e.target.value;
-                          updateSidebarTO('items', newItems);
+                          updateSidebarCO('items', newItems);
                         }}
                         placeholder="/url"
                         className="flex-1 h-8"
@@ -2172,7 +2172,7 @@ export function LayoutSettingsPage() {
                             url: '',
                             visible: true,
                           });
-                          updateSidebarTO('items', newItems);
+                          updateSidebarCO('items', newItems);
                           setExpandedSidebarItems((prev) => new Set([...prev, item.id]));
                         }}
                         title="하위 항목 추가"
@@ -2185,7 +2185,7 @@ export function LayoutSettingsPage() {
                         className="h-7 w-7"
                         onClick={() => {
                           const newItems = settings.sidebarCO.items.filter((_, i) => i !== index);
-                          updateSidebarTO('items', newItems);
+                          updateSidebarCO('items', newItems);
                         }}
                       >
                         <Trash2 className="h-4 w-4 text-status-error" />
@@ -2204,7 +2204,7 @@ export function LayoutSettingsPage() {
                               onClick={() => {
                                 const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].visible = !newItems[index].children![childIndex].visible;
-                                updateSidebarTO('items', newItems);
+                                updateSidebarCO('items', newItems);
                               }}
                             >
                               {child.visible ? (
@@ -2218,7 +2218,7 @@ export function LayoutSettingsPage() {
                               onChange={(e) => {
                                 const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].icon = e.target.value || undefined;
-                                updateSidebarTO('items', newItems);
+                                updateSidebarCO('items', newItems);
                               }}
                               className="h-7 px-2 border border-border-default rounded-md text-xs bg-white"
                               title="아이콘 (선택사항)"
@@ -2235,7 +2235,7 @@ export function LayoutSettingsPage() {
                               onChange={(e) => {
                                 const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].label = e.target.value;
-                                updateSidebarTO('items', newItems);
+                                updateSidebarCO('items', newItems);
                               }}
                               placeholder="하위 항목명"
                               className="flex-1 h-7 text-sm"
@@ -2245,7 +2245,7 @@ export function LayoutSettingsPage() {
                               onChange={(e) => {
                                 const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children![childIndex].url = e.target.value;
-                                updateSidebarTO('items', newItems);
+                                updateSidebarCO('items', newItems);
                               }}
                               placeholder="/url"
                               className="flex-1 h-7 text-sm"
@@ -2257,7 +2257,7 @@ export function LayoutSettingsPage() {
                               onClick={() => {
                                 const newItems = [...settings.sidebarCO.items];
                                 newItems[index].children = newItems[index].children!.filter((_, i) => i !== childIndex);
-                                updateSidebarTO('items', newItems);
+                                updateSidebarCO('items', newItems);
                               }}
                             >
                               <Trash2 className="h-3 w-3 text-status-error" />
@@ -2272,7 +2272,7 @@ export function LayoutSettingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    updateSidebarTO('items', [
+                    updateSidebarCO('items', [
                       ...settings.sidebarCO.items,
                       { id: `to-${Date.now()}`, label: '', url: '', icon: '', visible: true },
                     ]);

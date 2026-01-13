@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Save,
   RotateCcw,
@@ -387,6 +388,8 @@ const FEATURES = [
 type SettingTab = 'brand' | 'layout' | 'features';
 
 export function BrandingSettingsPage() {
+  const queryClient = useQueryClient();
+
   // 브랜딩 설정 상태
   const [settings, setSettings] = useState<BrandingSettings>(defaultBrandingSettings);
   const [hasChanges, setHasChanges] = useState(false);
@@ -465,6 +468,19 @@ export function BrandingSettingsPage() {
         }),
         ...(tenantSettings.sidebarCOSettings && {
           sidebarCO: tenantSettings.sidebarCOSettings as typeof prev.sidebarCO,
+        }),
+        // 헤더 설정 로드
+        ...(tenantSettings.headerSettings && {
+          header: {
+            ...prev.header,
+            enabled: (tenantSettings.headerSettings as { enabled?: boolean }).enabled ?? prev.header.enabled,
+            showLogo: (tenantSettings.headerSettings as { showLogo?: boolean }).showLogo ?? prev.header.showLogo,
+            showSearch: (tenantSettings.headerSettings as { showSearch?: boolean }).showSearch ?? prev.header.showSearch,
+            showCart: (tenantSettings.headerSettings as { showCart?: boolean }).showCart ?? prev.header.showCart,
+            showWishlist: (tenantSettings.headerSettings as { showWishlist?: boolean }).showWishlist ?? prev.header.showWishlist,
+            showNotifications: (tenantSettings.headerSettings as { showNotifications?: boolean }).showNotifications ?? prev.header.showNotifications,
+            showThemeToggle: (tenantSettings.headerSettings as { showThemeToggle?: boolean }).showThemeToggle ?? prev.header.showThemeToggle,
+          },
         }),
       }));
     }
@@ -603,6 +619,8 @@ export function BrandingSettingsPage() {
           enabled: settings.header.enabled,
           showLogo: settings.header.showLogo,
           showSearch: settings.header.showSearch,
+          showCart: settings.header.showCart,
+          showWishlist: settings.header.showWishlist,
           showNotifications: settings.header.showNotifications,
           showThemeToggle: settings.header.showThemeToggle,
           navLinks: settings.header.navLinks,
@@ -639,6 +657,9 @@ export function BrandingSettingsPage() {
       });
 
       setHasChanges(false);
+
+      // TU 페이지의 캐시 무효화 (public-layout)
+      await queryClient.invalidateQueries({ queryKey: ['public-layout'] });
     } catch (error) {
       console.error('브랜딩 설정 저장 실패:', error);
     } finally {
@@ -1951,8 +1972,8 @@ export function BrandingSettingsPage() {
                         <span>검색</span>
                       </div>
                     )}
-                    {featureFormData.wishlistEnabled && <Heart className={`w-4 h-4 ${previewTheme === 'dark' ? 'text-[#9e9e9e]' : 'text-gray-600'}`} />}
-                    {featureFormData.cartEnabled && <ShoppingCart className={`w-4 h-4 ${previewTheme === 'dark' ? 'text-[#9e9e9e]' : 'text-gray-600'}`} />}
+                    {settings.header.showWishlist && featureFormData.wishlistEnabled && <Heart className={`w-4 h-4 ${previewTheme === 'dark' ? 'text-[#9e9e9e]' : 'text-gray-600'}`} />}
+                    {settings.header.showCart && featureFormData.cartEnabled && <ShoppingCart className={`w-4 h-4 ${previewTheme === 'dark' ? 'text-[#9e9e9e]' : 'text-gray-600'}`} />}
                     {settings.header.showNotifications && <Bell className={`w-4 h-4 ${previewTheme === 'dark' ? 'text-[#9e9e9e]' : 'text-gray-600'}`} />}
                     {settings.header.showThemeToggle && (previewTheme === 'dark' ? <Moon className="w-4 h-4 text-[#9e9e9e]" /> : <Sun className="w-4 h-4 text-gray-600" />)}
                     <div
