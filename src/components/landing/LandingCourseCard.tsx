@@ -3,6 +3,7 @@ import { Star, Heart, Loader2, Calendar, Users } from 'lucide-react';
 import { useAuthStore } from '@/store/common/authStore';
 import { useSubdomainPath } from '@/hooks/common';
 import { useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
+import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import { toast } from 'sonner';
 
 interface LandingCourseCardProps {
@@ -51,6 +52,8 @@ export function LandingCourseCard({
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const { isAuthenticated } = useAuthStore();
+  const { isFeatureEnabled } = useTenantFeatures();
+  const paidModeEnabled = isFeatureEnabled('paidModeEnabled');
 
   // 찜 상태 확인 및 토글
   const { data: isWishlisted = false, isLoading: isWishlistChecking } = useCheckWishlistStatus(
@@ -194,7 +197,8 @@ export function LandingCourseCard({
 
         {/* 하단 푸터 (가격 + 참여자 수) */}
         <div className="px-4 pb-4 flex items-center justify-between">
-          {price ? (
+          {/* 유료 모드일 때만 가격 표시 */}
+          {paidModeEnabled && price ? (
             <span className="font-bold text-[#6778ff] text-lg">{price}</span>
           ) : (
             <span />

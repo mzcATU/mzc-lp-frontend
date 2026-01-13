@@ -25,6 +25,7 @@ import { LandingFooter } from '@/components/landing/LandingFooter';
 import { CourseCommunitySection } from '@/components/domain/course-community';
 import { CourseReviewSection } from '@/components/domain/course-review';
 import { useCourseTimeDetail, useEnroll, useMyEnrollments, useCheckWishlistStatus, useToggleWishlist, useCheckCartStatus, useToggleCart } from '@/hooks/tu';
+import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
 import {
   DELIVERY_TYPE_LABELS,
@@ -200,6 +201,12 @@ export function CourseDetailPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
+  // 기능 설정
+  const { isFeatureEnabled } = useTenantFeatures();
+  const paidModeEnabled = isFeatureEnabled('paidModeEnabled');
+  const cartEnabled = isFeatureEnabled('cartEnabled');
+  const communityEnabled = isFeatureEnabled('communityEnabled');
+
   const toggleSection = (index: number) => {
     if (expandedSections.includes(index)) {
       setExpandedSections(expandedSections.filter((i) => i !== index));
@@ -341,9 +348,9 @@ export function CourseDetailPage() {
     );
   }
 
-  // 가격 정보
+  // 가격 정보 (유료 모드가 비활성화되면 무료로 표시)
   const price = courseTime.isFree ? 0 : parseFloat(courseTime.price);
-  const priceDisplay = courseTime.isFree ? '무료' : `₩${price.toLocaleString()}`;
+  const priceDisplay = !paidModeEnabled || courseTime.isFree ? '무료' : `₩${price.toLocaleString()}`;
 
   // 썸네일
   const thumbnailUrl =
@@ -417,8 +424,8 @@ export function CourseDetailPage() {
                   </span>
                 )}
 
-                {/* 무료 태그 */}
-                {courseTime.isFree && (
+                {/* 무료 태그 (유료 모드일 때만 표시) */}
+                {paidModeEnabled && courseTime.isFree && (
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#ff7867] to-[#ff9a5a] text-white">
                     무료
                   </span>
@@ -538,14 +545,16 @@ export function CourseDetailPage() {
                 }`}
               >
                 <div className="p-6">
-                  {/* Price */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <span
-                      className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}
-                    >
-                      {priceDisplay}
-                    </span>
-                  </div>
+                  {/* Price (유료 모드일 때만 가격 표시, 무료 모드면 숨김) */}
+                  {paidModeEnabled && (
+                    <div className="flex items-center gap-3 mb-4">
+                      <span
+                        className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                      >
+                        {priceDisplay}
+                      </span>
+                    </div>
+                  )}
 
                   {/* 모집 기간 (상시모집이 아닌 경우) */}
                   {!courseTime.isOnDemand && (
@@ -661,24 +670,27 @@ export function CourseDetailPage() {
                             '수강 신청'
                           )}
                         </button>
-                        <button
-                          onClick={handleAddToCart}
-                          disabled={toggleCartMutation.isPending || isCartChecking}
-                          className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                            isInCart
-                              ? 'bg-green-500 text-white hover:bg-green-600'
-                              : isDark
-                                ? 'bg-white text-gray-900 hover:bg-gray-100'
-                                : 'bg-gray-900 text-white hover:bg-gray-800'
-                          }`}
-                        >
-                          {toggleCartMutation.isPending ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <ShoppingCart className="w-5 h-5" />
-                          )}
-                          {isInCart ? '장바구니에 담김' : '장바구니 담기'}
-                        </button>
+                        {/* 장바구니 버튼 (유료 모드 + 장바구니 기능 활성화시만 표시) */}
+                        {paidModeEnabled && cartEnabled && (
+                          <button
+                            onClick={handleAddToCart}
+                            disabled={toggleCartMutation.isPending || isCartChecking}
+                            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isInCart
+                                ? 'bg-green-500 text-white hover:bg-green-600'
+                                : isDark
+                                  ? 'bg-white text-gray-900 hover:bg-gray-100'
+                                  : 'bg-gray-900 text-white hover:bg-gray-800'
+                            }`}
+                          >
+                            {toggleCartMutation.isPending ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <ShoppingCart className="w-5 h-5" />
+                            )}
+                            {isInCart ? '장바구니에 담김' : '장바구니 담기'}
+                          </button>
+                        )}
                       </>
                     ) : (
                       <button
@@ -811,27 +823,30 @@ export function CourseDetailPage() {
                 />
               )}
             </button>
-            <button
-              onClick={() => setActiveTab('community')}
-              className={`py-4 font-medium transition-colors relative ${
-                activeTab === 'community'
-                  ? isDark
-                    ? 'text-white'
-                    : 'text-gray-900'
-                  : isDark
-                    ? 'text-gray-400 hover:text-gray-300'
-                    : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              커뮤니티
-              {activeTab === 'community' && (
-                <div
-                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-                    isDark ? 'bg-white' : 'bg-gray-900'
-                  }`}
-                />
-              )}
-            </button>
+            {/* 커뮤니티 탭 (communityEnabled일 때만 표시) */}
+            {communityEnabled && (
+              <button
+                onClick={() => setActiveTab('community')}
+                className={`py-4 font-medium transition-colors relative ${
+                  activeTab === 'community'
+                    ? isDark
+                      ? 'text-white'
+                      : 'text-gray-900'
+                    : isDark
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                커뮤니티
+                {activeTab === 'community' && (
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                      isDark ? 'bg-white' : 'bg-gray-900'
+                    }`}
+                  />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -980,8 +995,8 @@ export function CourseDetailPage() {
             </section>
           )}
 
-          {/* 커뮤니티 탭 */}
-          {activeTab === 'community' && (
+          {/* 커뮤니티 탭 (communityEnabled일 때만 표시) */}
+          {communityEnabled && activeTab === 'community' && (
             <section className="mb-12">
               <CourseCommunitySection
                 timeId={courseTimeId}
