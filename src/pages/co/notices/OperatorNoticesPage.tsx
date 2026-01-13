@@ -189,7 +189,7 @@ export function OperatorNoticesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-text-primary">사용자 공지사항</h1>
+          <h1 className="text-2xl font-semibold text-text-primary">공지사항 관리</h1>
           <p className="text-sm text-text-secondary mt-1">
             학습자에게 전달할 공지사항을 관리합니다
           </p>

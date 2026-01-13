@@ -103,7 +103,7 @@ const initialFormData: RuleFormData = {
 };
 
 /**
- * TO 자동 입과 규칙 관리 페이지
+ * CO 자동 입과 규칙 관리 페이지
  * - 조건 충족 시 자동으로 교육 과정에 배정되는 규칙 관리
  * - CRUD 및 활성화/비활성화 기능
  */
@@ -285,7 +285,7 @@ export default function AutoEnrollmentRulesPage() {
               className="text-[28px] font-semibold mb-2"
               style={{ color: designTokens.text.primary }}
             >
-              자동 입과 규칙 관리
+              자동 입과 규칙
             </h1>
             <p className="text-sm" style={{ color: designTokens.text.secondary }}>
               특정 조건 충족 시 교육 과정에 자동으로 배정되는 규칙을 관리합니다.
