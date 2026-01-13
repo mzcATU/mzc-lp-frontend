@@ -219,3 +219,39 @@ export const useContentPreview = (id: number | null) => {
     enabled: !!id,
   });
 };
+
+// 일괄 업로드 파라미터
+interface BulkUploadParams {
+  files: File[];
+  folderId?: number;
+  completionCriteria?: 'BUTTON_CLICK' | 'PERCENT_90' | 'PERCENT_100';
+  downloadable?: boolean;
+}
+
+// 다중 파일 일괄 업로드
+export const useBulkUploadContent = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ files, folderId, completionCriteria, downloadable }: BulkUploadParams) =>
+      contentService.bulkUploadFiles(files, { folderId, completionCriteria, downloadable }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });
+    },
+  });
+};
+
+// ZIP 파일 일괄 업로드
+export const useBulkUploadFromZip = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ file, folderId, completionCriteria, downloadable }: { file: File } & Omit<BulkUploadParams, 'files'>) =>
+      contentService.bulkUploadFromZip(file, { folderId, completionCriteria, downloadable }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });
+    },
+  });
+};

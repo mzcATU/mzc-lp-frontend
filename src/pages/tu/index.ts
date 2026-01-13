@@ -7,6 +7,7 @@ export {
   CourseApplyPage,
   TuContentCreatePage,
   ContentDetailPage,
+  ContentBulkUploadPage,
   MyAssignmentsPage,
   AssignmentDetailPage,
   MyProgramsPage,

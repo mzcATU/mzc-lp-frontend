@@ -143,6 +143,8 @@ export const API_ENDPOINTS = {
   CONTENTS: {
     BASE: '/contents',
     UPLOAD: '/contents/upload',
+    BULK_UPLOAD: '/contents/bulk-upload',
+    BULK_UPLOAD_ZIP: '/contents/bulk-upload/zip',
     EXTERNAL_LINK: '/contents/external-link',
     MY: '/contents/my',
     BY_ID: (id: number) => `/contents/${id}`,
