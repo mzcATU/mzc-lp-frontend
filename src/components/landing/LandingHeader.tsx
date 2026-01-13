@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, PlusCircle, Shield, Globe, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/common/auth';
@@ -17,8 +17,14 @@ const DEFAULT_NAV_ITEMS: NavigationItemResponse[] = [
   { id: 3, label: '커뮤니티', icon: 'Users', path: '/tu/b2c/community', enabled: true, displayOrder: 3, target: null, createdAt: '', updatedAt: '' },
 ];
 
+const BANNER_DISMISSED_KEY = 'tu_top_banner_dismissed';
+
 export function LandingHeader() {
-  const [showBanner, setShowBanner] = useState(true);
+  // 배너 닫힘 상태를 localStorage에서 읽어서 초기화
+  const [showBanner, setShowBanner] = useState(() => {
+    const dismissed = localStorage.getItem(BANNER_DISMISSED_KEY);
+    return dismissed !== 'true';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
@@ -38,6 +44,13 @@ export function LandingHeader() {
   // 네비게이션 메뉴 (TA 설정 또는 기본값)
   // headerSettings.navLinks가 있으면 그것을 사용 (visible 필터링), 없으면 API 데이터 사용
   const headerNavLinks = (layoutData?.headerSettings as { navLinks?: Array<{ label: string; url: string; visible: boolean }> })?.navLinks;
+
+  // URL 정규화: /courses -> /tu/b2c/courses (외부 링크는 제외)
+  const normalizeNavUrl = (url: string) => {
+    if (url.startsWith('http') || url.startsWith('/tu/')) return url;
+    return `/tu/b2c${url.startsWith('/') ? url : `/${url}`}`;
+  };
+
   const navItems = headerNavLinks && headerNavLinks.length > 0
     ? headerNavLinks
         .filter(link => link.visible)
@@ -45,7 +58,7 @@ export function LandingHeader() {
           id: index + 1,
           label: link.label,
           icon: 'BookOpen',
-          path: link.url,
+          path: normalizeNavUrl(link.url),
           enabled: true,
           displayOrder: index + 1,
           target: null,
@@ -93,7 +106,22 @@ export function LandingHeader() {
 
   const tenantName = branding?.tenantName || 'MZC Learn';
 
+  // 상단 배너 설정 (TA에서 설정 가능)
+  const topBannerSettings = (layoutData?.headerSettings as { topBanner?: { enabled?: boolean; text?: string; linkUrl?: string; linkText?: string } })?.topBanner;
+  const topBannerEnabled = topBannerSettings?.enabled !== false; // 기본값 true
+  const topBannerText = topBannerSettings?.text || t.landing.banner;
+  const topBannerLinkUrl = topBannerSettings?.linkUrl;
+  const topBannerLinkText = topBannerSettings?.linkText;
+
+  // 배너 닫기 핸들러 (localStorage에 저장)
+  const handleCloseBanner = useCallback(() => {
+    localStorage.setItem(BANNER_DISMISSED_KEY, 'true');
+    setShowBanner(false);
+  }, []);
+
   const handleLogout = () => {
+    // 로그아웃 시 배너 닫힘 상태 리셋
+    localStorage.removeItem(BANNER_DISMISSED_KEY);
     logout();
     setShowDropdown(false);
   };
@@ -108,11 +136,21 @@ export function LandingHeader() {
   return (
     <header className="w-full flex flex-col">
       {/* Top Notification Banner - Gradient */}
-      {showBanner && (
+      {showBanner && topBannerEnabled && (
         <div className="bg-gradient-to-r from-[#6778ff] via-[#a855f7] to-[#6bc2f0] text-white text-xs md:text-sm py-2.5 px-4 text-center font-medium flex justify-center items-center gap-2 relative">
-          <span>{t.landing.banner}</span>
+          <span>{topBannerText}</span>
+          {topBannerLinkUrl && topBannerLinkText && (
+            <a
+              href={topBannerLinkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline ml-1"
+            >
+              {topBannerLinkText}
+            </a>
+          )}
           <button
-            onClick={() => setShowBanner(false)}
+            onClick={handleCloseBanner}
             className="absolute right-4 text-white/70 hover:text-white text-lg transition-colors"
             aria-label={t.landing.closeBanner}
           >

@@ -25,6 +25,12 @@ export interface HeaderSettings {
   shadow: 'none' | 'sm' | 'md'; // 그림자
   mobileMenuStyle: 'hamburger' | 'drawer' | 'bottomSheet'; // 모바일 메뉴
   navLinks?: Array<{ label: string; url: string; visible: boolean }>;
+  topBanner?: {
+    enabled?: boolean;
+    text?: string;
+    linkUrl?: string;
+    linkText?: string;
+  };
 }
 
 // 사이드바 설정

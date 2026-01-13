@@ -281,6 +281,12 @@ interface BrandingSettings {
     showNotifications: boolean;
     showThemeToggle: boolean;
     navLinks: { label: string; url: string; visible: boolean }[];
+    topBanner: {
+      enabled: boolean;
+      text: string;
+      linkUrl: string;
+      linkText: string;
+    };
   };
   banner: {
     enabled: boolean;
@@ -362,10 +368,16 @@ const defaultBrandingSettings: BrandingSettings = {
     showNotifications: true,
     showThemeToggle: true,
     navLinks: [
-      { label: '강의 탐색', url: '/courses', visible: true },
-      { label: '로드맵', url: '/roadmaps', visible: true },
-      { label: '커뮤니티', url: '/community', visible: true },
+      { label: '강의 탐색', url: '/tu/b2c/courses', visible: true },
+      { label: '로드맵', url: '/tu/b2c/roadmaps', visible: true },
+      { label: '커뮤니티', url: '/tu/b2c/community', visible: true },
     ],
+    topBanner: {
+      enabled: true,
+      text: 'MZC Learn Platform - 클라우드 교육의 새로운 시작',
+      linkUrl: '',
+      linkText: '',
+    },
   },
   banner: {
     enabled: true,
@@ -559,6 +571,10 @@ const getExpandableItemIds = () => {
             showWishlist: (tenantSettings.headerSettings as { showWishlist?: boolean }).showWishlist ?? prev.header.showWishlist,
             showNotifications: (tenantSettings.headerSettings as { showNotifications?: boolean }).showNotifications ?? prev.header.showNotifications,
             showThemeToggle: (tenantSettings.headerSettings as { showThemeToggle?: boolean }).showThemeToggle ?? prev.header.showThemeToggle,
+            topBanner: {
+              ...prev.header.topBanner,
+              ...(tenantSettings.headerSettings as { topBanner?: typeof prev.header.topBanner }).topBanner,
+            },
           },
         }),
       }));
@@ -703,6 +719,7 @@ const getExpandableItemIds = () => {
           showNotifications: settings.header.showNotifications,
           showThemeToggle: settings.header.showThemeToggle,
           navLinks: settings.header.navLinks,
+          topBanner: settings.header.topBanner,
         } as unknown as Parameters<typeof updateLayoutMutation.mutateAsync>[0]['headerSettings'],
         footerSettings: {
           enabled: settings.footer.enabled,
@@ -1123,6 +1140,62 @@ const getExpandableItemIds = () => {
                     <div className="flex items-center justify-between">
                       <Label>테마 토글 표시</Label>
                       <Switch checked={settings.header.showThemeToggle} onCheckedChange={(v) => updateHeader('showThemeToggle', v)} />
+                    </div>
+
+                    {/* 상단 배너 설정 */}
+                    <div className="pt-3 border-t">
+                      <div className="flex items-center justify-between mb-3">
+                        <Label className="font-medium">상단 알림 배너</Label>
+                        <Switch
+                          checked={settings.header.topBanner.enabled}
+                          onCheckedChange={(v) => setSettings(prev => ({
+                            ...prev,
+                            header: { ...prev.header, topBanner: { ...prev.header.topBanner, enabled: v } }
+                          }))}
+                        />
+                      </div>
+                      {settings.header.topBanner.enabled && (
+                        <div className="space-y-3">
+                          <div>
+                            <Label className="text-xs text-muted-foreground mb-1 block">배너 텍스트</Label>
+                            <Input
+                              value={settings.header.topBanner.text}
+                              onChange={(e) => setSettings(prev => ({
+                                ...prev,
+                                header: { ...prev.header, topBanner: { ...prev.header.topBanner, text: e.target.value } }
+                              }))}
+                              placeholder="상단에 표시할 텍스트"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1 block">링크 URL (선택)</Label>
+                              <Input
+                                value={settings.header.topBanner.linkUrl}
+                                onChange={(e) => setSettings(prev => ({
+                                  ...prev,
+                                  header: { ...prev.header, topBanner: { ...prev.header.topBanner, linkUrl: e.target.value } }
+                                }))}
+                                placeholder="https://..."
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1 block">링크 텍스트 (선택)</Label>
+                              <Input
+                                value={settings.header.topBanner.linkText}
+                                onChange={(e) => setSettings(prev => ({
+                                  ...prev,
+                                  header: { ...prev.header, topBanner: { ...prev.header.topBanner, linkText: e.target.value } }
+                                }))}
+                                placeholder="자세히 보기"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            * 사용자가 X 버튼을 누르면 다음 로그인까지 숨겨집니다
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* 내비게이션 링크 */}
