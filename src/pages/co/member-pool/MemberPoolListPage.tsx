@@ -114,7 +114,7 @@ const initialFormData: MemberPoolFormData = {
 };
 
 /**
- * TO 회원 풀 관리 페이지
+ * CO 회원 풀 관리 페이지
  * - 조건 기반 직원 그룹 관리
  * - CRUD 및 활성화/비활성화 기능
  */

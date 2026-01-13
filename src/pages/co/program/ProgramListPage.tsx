@@ -49,7 +49,7 @@ interface ProgramListPageProps {
 }
 
 const t = {
-  title: { ko: '과정 검색 및 상세 조회', en: 'Course Search & Details' },
+  title: { ko: '과정 탐색', en: 'Courses' },
   subtitle: { ko: '등록된 교육 과정을 검색하고 조회합니다.', en: 'Search and view registered courses.' },
   searchPlaceholder: { ko: '과정명 검색...', en: 'Search course...' },
   filter: { ko: '필터', en: 'Filter' },

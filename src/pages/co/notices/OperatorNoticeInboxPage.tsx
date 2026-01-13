@@ -231,7 +231,7 @@ export function OperatorNoticeInboxPage() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-text-primary">공지사항</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">공지사항 관리</h1>
         <p className="text-sm text-text-secondary mt-1">
           관리자 공지를 확인하고 학습자에게 공지를 발송합니다
         </p>
