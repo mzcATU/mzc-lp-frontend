@@ -52,7 +52,9 @@ export function SettingsSecurityPage() {
   const { t } = useTranslation();
   const { language } = useLanguageStore();
   const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  // TU 경로에서만 다크모드 적용
+  const isTuPage = location.pathname.includes('/tu/');
+  const isDark = isTuPage && theme === 'dark';
 
   // API Hooks
   const { data: profile, isLoading: isLoadingProfile } = useMyProfile();

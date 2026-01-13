@@ -1,12 +1,16 @@
+import { useLocation } from 'react-router-dom';
 import { Bell, Construction } from 'lucide-react';
 import { useTranslation } from '@/store/common/languageStore';
 import { useThemeStore } from '@/store/common/themeStore';
 import { Card, CardHeader, CardTitle, CardContent, EmptyState } from '@/components/common';
 
 export function SettingsNotificationsPage() {
+  const location = useLocation();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
-  const isDark = theme === 'dark';
+  // TU 경로에서만 다크모드 적용
+  const isTuPage = location.pathname.includes('/tu/');
+  const isDark = isTuPage && theme === 'dark';
 
   const cardClass = isDark
     ? 'bg-white/5 border-white/10'
