@@ -241,17 +241,3 @@ export const useBulkUploadContent = () => {
     },
   });
 };
-
-// ZIP 파일 일괄 업로드
-export const useBulkUploadFromZip = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ file, folderId, completionCriteria, downloadable }: { file: File } & Omit<BulkUploadParams, 'files'>) =>
-      contentService.bulkUploadFromZip(file, { folderId, completionCriteria, downloadable }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: contentKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: contentKeys.myLists() });
-    },
-  });
-};

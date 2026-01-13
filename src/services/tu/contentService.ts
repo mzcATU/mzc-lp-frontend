@@ -139,34 +139,6 @@ export const contentService = {
     return data;
   },
 
-  // ZIP 파일 일괄 업로드
-  async bulkUploadFromZip(zipFile: File, options?: BulkUploadOptions): Promise<BulkUploadResponse> {
-    const formData = new FormData();
-    formData.append('file', zipFile);
-
-    if (options?.folderId) {
-      formData.append('folderId', String(options.folderId));
-    }
-    if (options?.completionCriteria) {
-      formData.append('completionCriteria', options.completionCriteria);
-    }
-    if (options?.downloadable !== undefined) {
-      formData.append('downloadable', String(options.downloadable));
-    }
-
-    const { data } = await axiosInstance.post<BulkUploadResponse>(
-      API_ENDPOINTS.CONTENTS.BULK_UPLOAD_ZIP,
-      formData,
-      {
-        headers: {
-          'Content-Type': undefined,
-        },
-        timeout: 600000, // 10분
-      }
-    );
-    return data;
-  },
-
   // 콘텐츠 목록 조회
   async getContents(params?: ContentFilterParams): Promise<PageResponse<ContentListResponse>> {
     const { data } = await axiosInstance.get<PageResponse<ContentListResponse>>(

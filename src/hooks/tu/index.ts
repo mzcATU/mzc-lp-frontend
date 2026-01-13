@@ -16,7 +16,6 @@ export {
   useRestoreVersion,
   useContentPreview,
   useBulkUploadContent,
-  useBulkUploadFromZip,
 } from './useContentQueries';
 
 // Learning Object (LO) Hooks

@@ -4,7 +4,6 @@ import {
   Upload,
   X,
   File,
-  FileArchive,
   CheckCircle,
   AlertCircle,
   Loader2,
@@ -13,14 +12,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
-import { useBulkUploadContent, useBulkUploadFromZip } from '@/hooks/tu';
+import { useBulkUploadContent } from '@/hooks/tu';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 interface ContentBulkUploadPageProps {
   language?: 'ko' | 'en';
 }
 
-type UploadMode = 'files' | 'zip' | 'folder';
+type UploadMode = 'files' | 'folder';
 
 interface FileItem {
   file: File;
@@ -35,13 +34,10 @@ const t = {
   uploadMode: { ko: '업로드 방식', en: 'Upload Mode' },
   multipleFiles: { ko: '파일 선택', en: 'Select Files' },
   multipleFilesDesc: { ko: '여러 개의 파일을 직접 선택', en: 'Select multiple files directly' },
-  zipFile: { ko: 'ZIP 파일', en: 'ZIP File' },
-  zipFileDesc: { ko: 'ZIP 압축 파일을 업로드', en: 'Upload a ZIP archive' },
   folderUpload: { ko: '폴더 업로드', en: 'Folder Upload' },
   folderUploadDesc: { ko: '폴더 전체를 업로드', en: 'Upload an entire folder' },
   dragAndDrop: { ko: '파일을 드래그하여 업로드하거나', en: 'Drag and drop files here or' },
   selectFiles: { ko: '파일 선택', en: 'Select Files' },
-  selectZip: { ko: 'ZIP 파일 선택', en: 'Select ZIP File' },
   selectFolder: { ko: '폴더 선택', en: 'Select Folder' },
   supportedFormats: { ko: '지원 형식: MP4, MOV, JPG, PNG, PDF, DOC, DOCX, PPT, PPTX', en: 'Supported: MP4, MOV, JPG, PNG, PDF, DOC, DOCX, PPT, PPTX' },
   maxFiles: { ko: '최대 10개, 총 2GB까지', en: 'Max 10 files, up to 2GB total' },
@@ -84,11 +80,9 @@ export function ContentBulkUploadPage({ language = 'ko' }: Readonly<ContentBulkU
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const zipInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
   const bulkUpload = useBulkUploadContent();
-  const zipUpload = useBulkUploadFromZip();
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -119,15 +113,6 @@ export function ContentBulkUploadPage({ language = 'ko' }: Readonly<ContentBulkU
   }, []);
 
   const addFiles = (newFiles: File[]) => {
-    // ZIP 모드인 경우 첫 번째 ZIP 파일만 추가
-    if (uploadMode === 'zip') {
-      const zipFile = newFiles.find(f => f.name.toLowerCase().endsWith('.zip'));
-      if (zipFile) {
-        setFiles([{ file: zipFile, status: 'pending' }]);
-      }
-      return;
-    }
-
     // 최대 10개 제한
     const currentCount = files.length;
     const allowedCount = 10 - currentCount;
@@ -180,33 +165,18 @@ export function ContentBulkUploadPage({ language = 'ko' }: Readonly<ContentBulkU
     setUploadResult(null);
 
     try {
-      if (uploadMode === 'zip' && files.length === 1) {
-        // ZIP 파일 업로드
-        const result = await zipUpload.mutateAsync({
-          file: files[0].file,
-          completionCriteria: 'BUTTON_CLICK',
-          downloadable: false,
-        });
-        setUploadResult({
-          success: result.successCount,
-          failed: result.failCount,
-          total: result.totalCount,
-          failedItems: result.failedItems,
-        });
-      } else {
-        // 다중 파일 업로드
-        const result = await bulkUpload.mutateAsync({
-          files: files.map(f => f.file),
-          completionCriteria: 'BUTTON_CLICK',
-          downloadable: false,
-        });
-        setUploadResult({
-          success: result.successCount,
-          failed: result.failCount,
-          total: result.totalCount,
-          failedItems: result.failedItems,
-        });
-      }
+      // 다중 파일 업로드
+      const result = await bulkUpload.mutateAsync({
+        files: files.map(f => f.file),
+        completionCriteria: 'BUTTON_CLICK',
+        downloadable: false,
+      });
+      setUploadResult({
+        success: result.successCount,
+        failed: result.failCount,
+        total: result.totalCount,
+        failedItems: result.failedItems,
+      });
     } catch (error) {
       console.error('Bulk upload failed:', error);
       setUploadResult({
@@ -298,10 +268,9 @@ export function ContentBulkUploadPage({ language = 'ko' }: Readonly<ContentBulkU
           <>
             <div className="bg-bg-default rounded-xl p-6 border border-border mb-6">
               <h2 className="text-text-primary mb-4">{getText('uploadMode')}</h2>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {([
                   { mode: 'files' as const, icon: File, title: getText('multipleFiles'), desc: getText('multipleFilesDesc') },
-                  { mode: 'zip' as const, icon: FileArchive, title: getText('zipFile'), desc: getText('zipFileDesc') },
                   { mode: 'folder' as const, icon: FolderUp, title: getText('folderUpload'), desc: getText('folderUploadDesc') },
                 ]).map(({ mode, icon: Icon, title, desc }) => (
                   <button
@@ -342,9 +311,7 @@ export function ContentBulkUploadPage({ language = 'ko' }: Readonly<ContentBulkU
                     : 'border-border hover:border-action-primary hover:bg-bg-secondary/50'
                 )}
                 onClick={() => {
-                  if (uploadMode === 'zip') {
-                    zipInputRef.current?.click();
-                  } else if (uploadMode === 'folder') {
+                  if (uploadMode === 'folder') {
                     folderInputRef.current?.click();
                   } else {
                     fileInputRef.current?.click();
@@ -357,9 +324,7 @@ export function ContentBulkUploadPage({ language = 'ko' }: Readonly<ContentBulkU
                   </div>
                   <p className="text-text-primary mb-2">{getText('dragAndDrop')}</p>
                   <Button type="button">
-                    {uploadMode === 'zip' ? getText('selectZip') :
-                     uploadMode === 'folder' ? getText('selectFolder') :
-                     getText('selectFiles')}
+                    {uploadMode === 'folder' ? getText('selectFolder') : getText('selectFiles')}
                   </Button>
                   <p className="text-xs text-text-secondary mt-4">{getText('supportedFormats')}</p>
                   <p className="text-xs text-text-secondary">{getText('maxFiles')}</p>
@@ -373,13 +338,6 @@ export function ContentBulkUploadPage({ language = 'ko' }: Readonly<ContentBulkU
                   onChange={handleFileSelect}
                   className="hidden"
                   accept=".mp4,.mov,.avi,.mkv,.jpg,.jpeg,.png,.gif,.webp,.pdf,.txt,.doc,.docx,.ppt,.pptx"
-                />
-                <input
-                  ref={zipInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept=".zip"
                 />
                 <input
                   ref={folderInputRef}
