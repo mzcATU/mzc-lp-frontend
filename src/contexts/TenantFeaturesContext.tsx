@@ -25,20 +25,6 @@ const DEFAULT_FEATURES: TenantFeaturesResponse = {
 };
 
 /**
- * 인증된 사용자용 기능 설정 조회 Hook
- */
-function useAuthenticatedFeatures(enabled: boolean) {
-  return useQuery({
-    queryKey: ['tenant-features', 'authenticated'],
-    queryFn: () => tenantFeaturesService.getFeatures(),
-    enabled,
-    staleTime: 1000 * 60 * 30, // 30분 캐싱
-    gcTime: 1000 * 60 * 60, // 1시간 가비지 컬렉션
-    retry: false, // 403 에러 시 재시도 안 함
-  });
-}
-
-/**
  * 공개 기능 설정 조회 Hook (비로그인 사용자용)
  */
 function usePublicFeatures(enabled: boolean) {
