@@ -7,6 +7,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { useUnreadNotificationCount, usePublicNavigation, usePublicLayout } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
+import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import type { NavigationItemResponse } from '@/types/tu/branding.types';
 
 // 기본 네비게이션 메뉴 (fallback)
@@ -32,6 +33,7 @@ export function LandingHeader() {
   const { branding } = useTenantBranding();
   const { data: navigationItems } = usePublicNavigation();
   const { data: layoutData } = usePublicLayout();
+  const { isFeatureEnabled } = useTenantFeatures();
 
   // 네비게이션 메뉴 (TA 설정 또는 기본값)
   // headerSettings.navLinks가 있으면 그것을 사용 (visible 필터링), 없으면 API 데이터 사용
@@ -59,8 +61,16 @@ export function LandingHeader() {
   const showSearch = headerSettings?.showSearch !== false; // 기본값 true
   const showNotifications = headerSettings?.showNotifications !== false; // 기본값 true
   const showThemeToggle = headerSettings?.showThemeToggle !== false; // 기본값 true
-  const showCart = headerSettings?.showCart !== false; // 기본값 true
-  const showWishlist = headerSettings?.showWishlist !== false; // 기본값 true
+  // 유료 모드 확인
+  const paidModeEnabled = isFeatureEnabled('paidModeEnabled');
+  // 장바구니/위시리스트: 레이아웃 설정 + 기능 설정 + 유료모드 모두 확인
+  // 무료 모드(paidModeEnabled=false)면 장바구니 숨김
+  const showCart = (headerSettings?.showCart !== false) && isFeatureEnabled('cartEnabled') && paidModeEnabled;
+  const showWishlist = (headerSettings?.showWishlist !== false) && isFeatureEnabled('wishlistEnabled');
+  // 커뮤니티 기능 확인
+  const communityEnabled = isFeatureEnabled('communityEnabled');
+  // 사용자 강의 생성 기능 확인
+  const userCourseCreationEnabled = isFeatureEnabled('userCourseCreationEnabled');
 
   // API Base URL
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
@@ -133,7 +143,15 @@ export function LandingHeader() {
 
             {/* Desktop Nav Links */}
             <nav className={`hidden md:flex items-center gap-8 font-medium text-[15px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              {navItems.map((item) => {
+              {navItems
+                .filter((item) => {
+                  // 커뮤니티 링크는 communityEnabled가 false면 숨김
+                  if (item.path.includes('/community') && !communityEnabled) {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((item) => {
                 const isExternal = item.path.startsWith('http');
                 const linkPath = isExternal ? item.path : prefixPath(item.path);
 
@@ -304,18 +322,20 @@ export function LandingHeader() {
                           <BookOpen className="w-4 h-4" />
                           {t.landing.mypage}
                         </Link>
-                        <Link
-                          to={prefixPath('/tu/b2c/mypage/teaching')}
-                          onClick={() => setShowDropdown(false)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
-                            isDark
-                              ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                              : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                          }`}
-                        >
-                          <PlusCircle className="w-4 h-4" />
-                          {t.landing.createCourse}
-                        </Link>
+                        {userCourseCreationEnabled && (
+                          <Link
+                            to={prefixPath('/tu/b2c/mypage/teaching')}
+                            onClick={() => setShowDropdown(false)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                              isDark
+                                ? 'text-gray-300 hover:text-white hover:bg-white/10'
+                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                            }`}
+                          >
+                            <PlusCircle className="w-4 h-4" />
+                            {t.landing.createCourse}
+                          </Link>
+                        )}
                       </div>
 
                       {/* 설정 메뉴 */}

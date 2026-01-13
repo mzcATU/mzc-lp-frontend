@@ -14,6 +14,7 @@ export interface TenantFeaturesResponse {
   cartEnabled: boolean;
   wishlistEnabled: boolean;
   instructorTabEnabled: boolean;
+  paidModeEnabled: boolean; // 유료 모드 활성화 (false면 무료 모드 - 가격 숨김)
 }
 
 export interface UpdateTenantFeaturesRequest {
@@ -22,6 +23,7 @@ export interface UpdateTenantFeaturesRequest {
   cartEnabled?: boolean;
   wishlistEnabled?: boolean;
   instructorTabEnabled?: boolean;
+  paidModeEnabled?: boolean;
 }
 
 // ============================================

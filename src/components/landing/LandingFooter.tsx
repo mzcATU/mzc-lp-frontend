@@ -11,7 +11,25 @@ export function LandingFooter() {
 
   // 푸터 설정
   const footerSettings = layoutData?.footerSettings;
-  const socialLinks = footerSettings?.socialLinks;
+  const rawSocialLinks = footerSettings?.socialLinks as Record<string, { enabled?: boolean; url?: string } | string> | undefined;
+
+  // socialLinks 구조 통일 (TA에서 { enabled, url } 형식으로 저장)
+  const socialLinks = rawSocialLinks ? {
+    twitter: typeof rawSocialLinks.twitter === 'object' && rawSocialLinks.twitter?.enabled ? rawSocialLinks.twitter.url : (typeof rawSocialLinks.twitter === 'string' ? rawSocialLinks.twitter : undefined),
+    youtube: typeof rawSocialLinks.youtube === 'object' && rawSocialLinks.youtube?.enabled ? rawSocialLinks.youtube.url : (typeof rawSocialLinks.youtube === 'string' ? rawSocialLinks.youtube : undefined),
+    instagram: typeof rawSocialLinks.instagram === 'object' && rawSocialLinks.instagram?.enabled ? rawSocialLinks.instagram.url : (typeof rawSocialLinks.instagram === 'string' ? rawSocialLinks.instagram : undefined),
+    linkedin: typeof rawSocialLinks.linkedin === 'object' && rawSocialLinks.linkedin?.enabled ? rawSocialLinks.linkedin.url : (typeof rawSocialLinks.linkedin === 'string' ? rawSocialLinks.linkedin : undefined),
+    facebook: typeof rawSocialLinks.facebook === 'object' && rawSocialLinks.facebook?.enabled ? rawSocialLinks.facebook.url : (typeof rawSocialLinks.facebook === 'string' ? rawSocialLinks.facebook : undefined),
+  } : undefined;
+
+  // 회사 정보
+  const companyInfo = footerSettings?.companyInfo as { ceo?: string; businessNo?: string; address?: string; phone?: string } | undefined;
+
+  // 법적 링크
+  const legalLinks = footerSettings?.legalLinks as { label: string; url: string }[] | undefined;
+
+  // 저작권 정보
+  const copyright = footerSettings?.copyright as string | undefined;
 
   // 푸터가 비활성화되어 있으면 렌더링하지 않음
   if (footerSettings?.enabled === false) {
@@ -29,10 +47,10 @@ export function LandingFooter() {
                 <span className="text-2xl font-bold gradient-text">{tenantName}</span>
               </div>
               <div className="text-[12px] landing-text-muted leading-relaxed space-y-1">
-                <p>{t.footer.company} | {t.footer.ceo}</p>
-                <p>{t.footer.businessNo}</p>
-                <p>{t.footer.address}</p>
-                <p>{t.footer.phone}</p>
+                <p>{tenantName} | 대표: {companyInfo?.ceo || t.footer.ceo}</p>
+                <p>사업자등록번호: {companyInfo?.businessNo || t.footer.businessNo}</p>
+                <p>{companyInfo?.address || t.footer.address}</p>
+                <p>대표전화: {companyInfo?.phone || t.footer.phone}</p>
               </div>
             </div>
 
@@ -129,19 +147,29 @@ export function LandingFooter() {
         {/* Bottom Section - Legal */}
         <div className="landing-border-top pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-wrap gap-6 text-[12px] landing-text-muted">
-            <a href="#" className="landing-link-hover transition-colors">
-              {t.footer.privacyPolicy}
-            </a>
-            <a href="#" className="landing-link-hover transition-colors">
-              {t.footer.terms}
-            </a>
-            <a href="#" className="landing-link-hover transition-colors">
-              {t.footer.emailPolicy}
-            </a>
+            {legalLinks && legalLinks.length > 0 ? (
+              legalLinks.map((link, index) => (
+                <a key={index} href={link.url || '#'} className="landing-link-hover transition-colors">
+                  {link.label}
+                </a>
+              ))
+            ) : (
+              <>
+                <a href="/privacy" className="landing-link-hover transition-colors">
+                  {t.footer.privacyPolicy}
+                </a>
+                <a href="/terms" className="landing-link-hover transition-colors">
+                  {t.footer.terms}
+                </a>
+                <a href="/email-policy" className="landing-link-hover transition-colors">
+                  {t.footer.emailPolicy}
+                </a>
+              </>
+            )}
           </div>
           {footerSettings?.showCopyright !== false && (
             <p className="text-[12px] landing-text-muted">
-              &copy; {new Date().getFullYear()} {tenantName}. All rights reserved.
+              {copyright || `© ${new Date().getFullYear()} ${tenantName}. All rights reserved.`}
             </p>
           )}
         </div>

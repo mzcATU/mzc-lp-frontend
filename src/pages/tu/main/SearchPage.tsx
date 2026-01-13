@@ -18,6 +18,7 @@ import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LandingCourseCard } from '@/components/landing';
 import { useCourseTimeCatalog, useRoadmapExplore, useCommunityPosts } from '@/hooks/tu';
+import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import type { RoadmapExploreItem } from '@/types/tu/roadmapExplore.types';
 import type { CommunityPost } from '@/types/tu/community.types';
 import { ROADMAP_LEVEL_LABELS } from '@/types/tu/roadmapExplore.types';
@@ -873,6 +874,10 @@ export function SearchPage() {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 
+  // 기능 설정
+  const { isFeatureEnabled } = useTenantFeatures();
+  const paidModeEnabled = isFeatureEnabled('paidModeEnabled');
+
   // 필터 초기화
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
@@ -1359,7 +1364,7 @@ export function SearchPage() {
                           id={course.id}
                           title={course.title}
                           instructor={course.instructor}
-                          price={course.price}
+                          price={paidModeEnabled ? course.price : null}
                           rating={course.rating}
                           reviewCount={course.reviewCount}
                           studentCount={course.studentCount}
