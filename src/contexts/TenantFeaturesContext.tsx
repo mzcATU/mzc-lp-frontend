@@ -97,8 +97,8 @@ export function TenantFeaturesProvider({ children }: { children: ReactNode }) {
 
   // 편의 메서드
   const isFeatureEnabled = (feature: keyof TenantFeaturesResponse): boolean => {
-    if (!features) return true; // 로딩 중이거나 에러 시 기본적으로 활성화
-    return features[feature] ?? true;
+    if (!features) return DEFAULT_FEATURES[feature] ?? true; // 로딩 중이거나 에러 시 기본값 사용
+    return features[feature] ?? DEFAULT_FEATURES[feature] ?? true;
   };
 
   return (
