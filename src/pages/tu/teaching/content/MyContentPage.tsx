@@ -22,11 +22,12 @@ import {
   X,
   Folder,
   FolderInput,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, ViewToggle, DataTable, DataTableColumnHeader, IconStatCard, Checkbox } from '@/components/common';
 import { useMyContents, useDeleteContent, useArchiveContent, useRestoreContent, useContentFolderTree } from '@/hooks/tu';
-import { learningObjectService } from '@/services/tu';
+import { learningObjectService, contentService } from '@/services/tu';
 import {
   ContentCard,
   ContentPreviewModal,
@@ -100,6 +101,7 @@ const t = {
   deselectAll: { ko: '선택 해제', en: 'Deselect All' },
   moveFailed: { ko: '일부 콘텐츠 이동에 실패했습니다.', en: 'Failed to move some contents.' },
   moveSuccess: { ko: '콘텐츠가 이동되었습니다.', en: 'Contents moved successfully.' },
+  download: { ko: '다운로드', en: 'Download' },
 };
 
 export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>) {
@@ -119,8 +121,7 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
     contentId: number | null;
     contentType: ContentType | null;
     fileName: string | null;
-    downloadable: boolean;
-  }>({ isOpen: false, contentId: null, contentType: null, fileName: null, downloadable: true });
+  }>({ isOpen: false, contentId: null, contentType: null, fileName: null });
 
   // 폴더 관리 패널 상태
   const [isFolderPanelOpen, setIsFolderPanelOpen] = useState(false);
@@ -204,12 +205,20 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
       contentId: content.id,
       contentType: content.contentType,
       fileName: content.originalFileName,
-      downloadable: content.downloadable ?? true,
     });
   };
 
+  const handleDownload = async (content: ContentListResponse) => {
+    try {
+      await contentService.downloadFile(content.id, content.originalFileName);
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert(getText('error'));
+    }
+  };
+
   const handleClosePreview = () => {
-    setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null, downloadable: true });
+    setPreviewModal({ isOpen: false, contentId: null, contentType: null, fileName: null });
   };
 
   // 콘텐츠 선택 핸들러
@@ -350,6 +359,14 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
             >
               <Eye size={16} />
             </button>
+            {item.contentType !== 'EXTERNAL_LINK' && (
+              <button
+                onClick={() => handleDownload(item)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-sm text-text-primary hover:bg-bg-secondary transition-colors"
+              >
+                <Download size={16} />
+              </button>
+            )}
             {item.status === 'ARCHIVED' ? (
               <button
                 onClick={() => handleRestore(item.id)}
@@ -658,7 +675,6 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
         contentId={previewModal.contentId}
         contentType={previewModal.contentType}
         fileName={previewModal.fileName ?? undefined}
-        downloadable={previewModal.downloadable}
       />
 
       {/* 폴더 관리 슬라이드 패널 */}

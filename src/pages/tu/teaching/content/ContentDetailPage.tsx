@@ -433,17 +433,15 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
                       <Eye size={16} className="mr-2" />
                       {getText('preview')}
                     </Button>
-                    {content.downloadable !== false && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-gray-600 border-gray-200 hover:bg-gray-50"
-                        onClick={handleDownload}
-                      >
-                        <Download size={16} className="mr-2" />
-                        {getText('download')}
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                      onClick={handleDownload}
+                    >
+                      <Download size={16} className="mr-2" />
+                      {getText('download')}
+                    </Button>
                   </>
                 )}
 
@@ -730,7 +728,6 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
         contentId={contentId}
         contentType={content.contentType}
         fileName={content.originalFileName}
-        downloadable={content.downloadable ?? true}
       />
     </div>
   );
