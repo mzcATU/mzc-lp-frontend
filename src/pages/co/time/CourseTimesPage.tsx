@@ -19,6 +19,8 @@ import {
   MoreHorizontal,
   Play,
   BookOpen,
+  UserCheck,
+  UserX,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -47,9 +49,11 @@ interface CourseTimesPageProps {
 }
 
 const t = {
-  title: { ko: '차수 관리', en: 'Course Time Management' },
+  title: { ko: '차수 운영', en: 'Course Time Operations' },
   subtitle: { ko: '차수를 생성하고 관리하세요.', en: 'Create and manage course times.' },
   createTime: { ko: '차수 생성', en: 'Create Course Time' },
+  manageStudents: { ko: '수강생 관리', en: 'Manage Students' },
+  selectTimeFirst: { ko: '차수를 선택해주세요', en: 'Please select a course time' },
   searchPlaceholder: { ko: '차수명 검색...', en: 'Search course time...' },
   filter: { ko: '필터', en: 'Filter' },
   status: { ko: '상태', en: 'Status' },
@@ -78,9 +82,13 @@ const t = {
   columnDelivery: { ko: '진행 방식', en: 'Delivery' },
   columnPeriod: { ko: '학습 기간', en: 'Period' },
   columnCapacity: { ko: '정원', en: 'Capacity' },
+  columnInstructor: { ko: '강사', en: 'Instructor' },
   columnActions: { ko: '액션', en: 'Actions' },
+  instructorAssigned: { ko: '배정됨', en: 'Assigned' },
+  instructorNotAssigned: { ko: '미배정', en: 'Not Assigned' },
   unlimited: { ko: '무제한', en: 'Unlimited' },
-  alwaysOpen: { ko: '상시모집', en: 'Always Open' },
+  alwaysOpen: { ko: '무기한', en: 'No End Date' },
+  noPeriod: { ko: '무기한', en: 'No Limit' },
   view: { ko: '상세보기', en: 'View' },
   clone: { ko: '복제', en: 'Clone' },
   delete: { ko: '삭제', en: 'Delete' },
@@ -153,6 +161,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
   const [statusFilter, setStatusFilter] = useState<CourseTimeStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
+  const [selectedTimeId, setSelectedTimeId] = useState<number | null>(null);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -303,9 +312,38 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
     return `${current} / ${capacity}`;
   };
 
+  // 체크박스 선택 핸들러
+  const handleCheckboxChange = (id: number) => {
+    setSelectedTimeId(selectedTimeId === id ? null : id);
+  };
+
+  // 수강생 관리 페이지로 이동 (차수 상세의 수강생 탭)
+  const handleManageStudents = () => {
+    if (selectedTimeId) {
+      navigate(prefixPath(`/co/times/${selectedTimeId}?tab=students`));
+    } else {
+      toast.info(getText('selectTimeFirst'));
+    }
+  };
+
   // 리스트뷰 컬럼 정의
   const columns: ColumnDef<CourseTimeResponse>[] = useMemo(
     () => [
+      {
+        id: 'select',
+        header: () => <span className="sr-only">Select</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={selectedTimeId === row.original.id}
+              onChange={() => handleCheckboxChange(row.original.id)}
+              className="h-4 w-4 rounded border-border text-btn-neutral focus:ring-btn-neutral cursor-pointer"
+            />
+          </div>
+        ),
+        size: 40,
+      },
       {
         accessorKey: 'title',
         header: ({ column }) => (
@@ -361,24 +399,75 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
       {
         id: 'period',
         header: getText('columnPeriod'),
-        cell: ({ row }) => (
-          <div className="text-sm text-text-secondary">
-            <p>{formatDate(row.original.classStartDate)}</p>
-            <p className="text-xs">~ {formatDate(row.original.classEndDate, true)}</p>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const startDate = row.original.classStartDate;
+          const endDate = row.original.classEndDate;
+
+          // 학습 기간 없음 체크 (9999년)
+          const isNoLimit = startDate?.startsWith('9999') && endDate?.startsWith('9999');
+
+          if (isNoLimit) {
+            return (
+              <span className="text-sm text-text-secondary">
+                {getText('noPeriod')}
+              </span>
+            );
+          }
+
+          return (
+            <div className="text-sm text-text-secondary">
+              <p>{formatDate(startDate)}</p>
+              <p className="text-xs">~ {formatDate(endDate)}</p>
+            </div>
+          );
+        },
       },
       {
         id: 'capacity',
         header: getText('columnCapacity'),
         cell: ({ row }) => (
-          <div className="flex items-center gap-1.5">
+          <div
+            className="flex items-center gap-1.5 cursor-pointer hover:text-action-primary transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(prefixPath(`/co/times/${row.original.id}?tab=students`));
+            }}
+          >
             <Users size={14} className="text-text-secondary" />
-            <span className="text-sm text-text-primary">
+            <span className="text-sm text-text-primary hover:underline">
               {formatCapacity(row.original.capacity, row.original.currentEnrollment)}
             </span>
           </div>
         ),
+      },
+      {
+        id: 'instructor',
+        header: getText('columnInstructor'),
+        cell: ({ row }) => {
+          const mainInstructor = row.original.instructors?.find(
+            (i) => i.role === 'MAIN' && i.status === 'ACTIVE'
+          );
+          const hasInstructor = !!mainInstructor;
+          return (
+            <div className="flex items-center gap-1.5">
+              {hasInstructor ? (
+                <>
+                  <UserCheck size={14} className="text-status-success" />
+                  <span className="text-sm text-text-primary truncate max-w-[100px]">
+                    {mainInstructor.userName}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <UserX size={14} className="text-text-placeholder" />
+                  <span className="text-sm text-text-placeholder">
+                    {getText('instructorNotAssigned')}
+                  </span>
+                </>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: 'actions',
@@ -397,7 +486,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
         },
       },
     ],
-    [language, deleteTime.isPending, openTime.isPending, navigate]
+    [language, deleteTime.isPending, openTime.isPending, navigate, selectedTimeId]
   );
 
   if (error) {
@@ -519,12 +608,22 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
             />
           </div>
 
-          {/* Count */}
+          {/* Count and Actions */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
               {filteredTimes.length}
               {getText('timeCount')}
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManageStudents}
+              disabled={!selectedTimeId}
+              className="gap-1.5"
+            >
+              <Users size={16} />
+              {getText('manageStudents')}
+            </Button>
           </div>
 
           {/* Loading State */}

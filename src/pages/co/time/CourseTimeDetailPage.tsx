@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import {
@@ -139,12 +139,30 @@ const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'su
 export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { prefixPath } = useSubdomainPath();
   const timeId = parseInt(id || '0');
 
+  // URL의 tab 파라미터에 따라 초기 탭 설정
+  const getInitialTab = (): 'info' | 'enrollments' => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'students' || tabParam === 'enrollments') {
+      return 'enrollments';
+    }
+    return 'info';
+  };
+
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UpdateCourseTimeRequest>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'enrollments'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'enrollments'>(getInitialTab);
+
+  // URL 파라미터 변경 시 탭 업데이트
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'students' || tabParam === 'enrollments') {
+      setActiveTab('enrollments');
+    }
+  }, [searchParams]);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 

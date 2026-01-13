@@ -49,8 +49,8 @@ interface UserManagementPageProps {
 }
 
 const t = {
-  title: { ko: '사용자 관리', en: 'User Management' },
-  subtitle: { ko: '테넌트 내 사용자를 관리합니다.', en: 'Manage users in the tenant.' },
+  title: { ko: '수강생 관리', en: 'Student Management' },
+  subtitle: { ko: '수강생 정보를 조회하고 관리합니다.', en: 'View and manage student information.' },
   searchPlaceholder: { ko: '이름, 이메일 검색...', en: 'Search name, email...' },
   filter: { ko: '필터', en: 'Filter' },
   status: { ko: '상태', en: 'Status' },

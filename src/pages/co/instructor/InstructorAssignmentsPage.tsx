@@ -54,7 +54,7 @@ interface InstructorAssignmentsPageProps {
 }
 
 const t = {
-  title: { ko: '강사 배정 정보', en: 'Instructor Assignments' },
+  title: { ko: '강사 관리', en: 'Instructor Management' },
   subtitle: { ko: '전체 강사 배정 현황을 확인합니다.', en: 'View all instructor assignments.' },
   searchPlaceholder: { ko: '강사명, 차수명, 과정명 검색...', en: 'Search instructor, course time, course...' },
   filter: { ko: '필터', en: 'Filter' },

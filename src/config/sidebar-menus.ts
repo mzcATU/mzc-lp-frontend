@@ -44,6 +44,7 @@ import {
   Zap,
   FolderTree,
   Map,
+  UserSquare2,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -187,7 +188,8 @@ export const courseOperatorMenuData: MenuItem[] = [
     icon: Layers,
     subItems: [
       { id: 'time-management', label: { ko: '차수 운영', en: 'Course Time Operations' }, icon: Calendar, path: '/co/times' },
-      { id: 'instructor-management', label: { ko: '강사 배정 관리', en: 'Instructor Assignment' }, icon: UserCheck, path: '/co/instructors' },
+      { id: 'student-management', label: { ko: '수강생 관리', en: 'Student Management' }, icon: Users, path: '/co/users' },
+      { id: 'instructor-management', label: { ko: '강사 관리', en: 'Instructor Management' }, icon: UserCheck, path: '/co/instructors' },
     ],
   },
   // TODO: CO 콘텐츠 관리 기능 - 개발 예정으로 임시 숨김
@@ -201,15 +203,9 @@ export const courseOperatorMenuData: MenuItem[] = [
   //   ],
   // },
   {
-    id: 'user-management',
-    label: { ko: '사용자 관리', en: 'User Management' },
-    icon: Users,
-    path: '/co/users',
-  },
-  {
-    id: 'automation',
-    label: { ko: '자동화 관리', en: 'Automation' },
-    icon: Zap,
+    id: 'student-group-management',
+    label: { ko: '수강생 그룹 관리', en: 'Student Group Management' },
+    icon: UserSquare2,
     subItems: [
       { id: 'member-pools', label: { ko: '회원 풀 관리', en: 'Member Pool Management' }, icon: Users, path: '/co/member-pools' },
       { id: 'auto-enrollment', label: { ko: '자동 입과 규칙', en: 'Auto Enrollment Rules' }, icon: Zap, path: '/co/auto-enrollment-rules' },
