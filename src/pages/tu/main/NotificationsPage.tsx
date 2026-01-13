@@ -16,7 +16,7 @@ const notificationTypes: { id: NotificationType | 'all'; label: string }[] = [
   { id: 'COMMENT', label: '댓글' },
   { id: 'LIKE', label: '좋아요' },
   { id: 'COURSE', label: '강의' },
-  { id: 'SYSTEM', label: '시스템' },
+  { id: 'SYSTEM', label: '공지사항' },
   { id: 'ASSIGNMENT', label: '과제' },
 ];
 

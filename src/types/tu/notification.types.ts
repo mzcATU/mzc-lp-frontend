@@ -15,6 +15,7 @@ export interface NotificationMetadata {
   // COURSE 알림
   courseName?: string;
   courseId?: number;
+  courseTimeId?: number;
   enrollmentStatus?: 'APPROVED' | 'REJECTED';
 
   // ASSIGNMENT 알림
@@ -76,7 +77,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   COMMENT: '댓글',
   LIKE: '좋아요',
   COURSE: '강의',
-  SYSTEM: '시스템',
+  SYSTEM: '공지사항',
   ASSIGNMENT: '과제',
 };
 
@@ -132,14 +133,14 @@ export function getNotificationDeepLink(notification: NotificationItem): string 
 
   switch (type) {
     case 'COURSE':
-      return getCourseNotificationLink(referenceType, referenceId, message);
+      return getCourseNotificationLink(referenceType, referenceId, message, notification.metadata);
     case 'ASSIGNMENT':
       return getAssignmentNotificationLink(referenceType, referenceId, message);
     case 'SYSTEM':
       return getSystemNotificationLink(referenceType, referenceId);
     case 'COMMENT':
     case 'LIKE':
-      return getInteractionNotificationLink(referenceType, referenceId);
+      return getInteractionNotificationLink(referenceType, referenceId, notification.metadata);
     default:
       return null;
   }
@@ -148,28 +149,30 @@ export function getNotificationDeepLink(notification: NotificationItem): string 
 function getCourseNotificationLink(
   referenceType: string,
   referenceId: number,
-  message?: string
+  message?: string,
+  metadata?: NotificationMetadata
 ): string | null {
+  const courseTimeId = metadata?.courseTimeId;
+
   // 수강신청 거절 시 강의 상세 페이지로 (재신청 유도)
   if (message?.includes('거절') || message?.includes('반려')) {
-    if (referenceType === 'ENROLLMENT') {
-      // enrollment에서는 courseId를 알 수 없으므로 기본 경로
-      return '/tu/courses';
+    if (courseTimeId) {
+      return `/tu/b2c/times/${courseTimeId}`;
     }
-    return `/tu/courses/${referenceId}`;
+    return '/tu/b2c/courses';
   }
 
   // 승인/강의 시작/종료는 내 강의 페이지로
+  if (courseTimeId) {
+    return `/tu/b2c/times/${courseTimeId}`;
+  }
+
   if (referenceType === 'COURSE') {
-    return `/tu/my-courses/${referenceId}`;
+    return `/tu/b2c/times/${referenceId}`;
   }
 
-  if (referenceType === 'ENROLLMENT') {
-    // enrollment의 경우 내 강의 목록으로
-    return '/tu/my-courses';
-  }
-
-  return null;
+  // enrollment의 경우 내 강의 목록으로
+  return '/tu/b2c/my-courses';
 }
 
 function getAssignmentNotificationLink(
@@ -202,13 +205,11 @@ function getSystemNotificationLink(
 
 function getInteractionNotificationLink(
   referenceType: string,
-  referenceId: number
+  referenceId: number,
+  _metadata?: NotificationMetadata
 ): string | null {
-  if (referenceType === 'POST') {
-    return `/tu/community/posts/${referenceId}`;
-  }
-  if (referenceType === 'COMMENT') {
-    return `/tu/community/posts/${referenceId}`;
+  if (referenceType === 'POST' || referenceType === 'COMMENT') {
+    return `/tu/b2c/community/${referenceId}`;
   }
   return null;
 }

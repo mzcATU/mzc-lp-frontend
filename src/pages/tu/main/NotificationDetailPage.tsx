@@ -53,7 +53,7 @@ const getTypeLabel = (type: NotificationType) => {
     case 'COMMENT': return '댓글';
     case 'LIKE': return '좋아요';
     case 'COURSE': return '강의';
-    case 'SYSTEM': return '시스템';
+    case 'SYSTEM': return '공지사항';
     case 'ASSIGNMENT': return '과제';
     default: return '알림';
   }
