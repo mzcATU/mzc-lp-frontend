@@ -13,6 +13,7 @@ import { usePopularInstructors, useCourseTimeCatalog, usePublicLayout } from '@/
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
 import { useAuth } from '@/hooks/common/auth/useAuth';
+import { useSubdomainPath } from '@/hooks/common';
 import type { InstructorSummary } from '@/types/tu';
 import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
 import { DELIVERY_TYPE_LABELS, PROGRAM_LEVEL_LABELS } from '@/types/tu/courseTimeCatalog.types';
@@ -142,6 +143,7 @@ export function LandingPage() {
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
   const { branding } = useTenantBranding();
 
@@ -237,12 +239,12 @@ export function LandingPage() {
               </h2>
               <p className="landing-text-muted text-sm mt-2">{t.landing.featuredCoursesDesc}</p>
             </div>
-            <a
-              href="/tu/b2c/courses"
+            <Link
+              to={prefixPath('/tu/b2c/courses')}
               className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
             >
               {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
 
           {isCoursesLoading ? (
@@ -299,12 +301,12 @@ export function LandingPage() {
               <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">{t.landing.beginnerCourses}</h2>
               <p className="landing-text-muted text-sm mt-2">{t.landing.beginnerCoursesDesc}</p>
             </div>
-            <a
-              href="/tu/b2c/courses"
+            <Link
+              to={prefixPath('/tu/b2c/courses')}
               className="text-sm landing-text-secondary hover:opacity-80 flex items-center gap-1 transition-colors"
             >
               {t.landing.viewAll} <ChevronRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
           {isCoursesLoading ? (
             <div className="flex justify-center items-center py-20">
@@ -342,7 +344,7 @@ export function LandingPage() {
               {popularInstructors.map((instructor) => (
                 <Link
                   key={instructor.id}
-                  to={`/tu/b2c/instructors/${instructor.id}`}
+                  to={prefixPath(`/tu/b2c/instructors/${instructor.id}`)}
                   className={`group block rounded-2xl p-6 transition-all duration-300 border ${
                     isDark
                       ? 'glass border-white/10 hover:border-[#6778ff]/50'
@@ -414,7 +416,7 @@ export function LandingPage() {
                 </p>
               </div>
               <Link
-                to={isAuthenticated ? "/tu/b2c/mypage/teaching" : "/login"}
+                to={isAuthenticated ? prefixPath("/tu/b2c/mypage/teaching") : "/login"}
                 className="flex items-center gap-2 px-8 py-4 bg-white text-[#6778ff] font-semibold rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
               >
                 강사 시작하기

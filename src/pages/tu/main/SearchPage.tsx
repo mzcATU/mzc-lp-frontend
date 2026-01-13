@@ -18,6 +18,7 @@ import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { LandingCourseCard } from '@/components/landing';
 import { useCourseTimeCatalog, useRoadmapExplore, useCommunityPosts } from '@/hooks/tu';
+import { useSubdomainPath } from '@/hooks/common';
 import type { RoadmapExploreItem } from '@/types/tu/roadmapExplore.types';
 import type { CommunityPost } from '@/types/tu/community.types';
 import { ROADMAP_LEVEL_LABELS } from '@/types/tu/roadmapExplore.types';
@@ -685,8 +686,9 @@ function searchCommunity(posts: CommunityPost[], keyword: string): CommunityPost
  * 로드맵 카드 컴포넌트
  */
 function RoadmapCard({ roadmap, isDark }: { roadmap: RoadmapExploreItem; isDark: boolean }) {
+  const { prefixPath } = useSubdomainPath();
   return (
-    <Link to={`/tu/b2c/roadmaps/${roadmap.id}`} className="group block">
+    <Link to={prefixPath(`/tu/b2c/roadmaps/${roadmap.id}`)} className="group block">
       <div
         className={`rounded-2xl overflow-hidden border transition-all duration-300 ${
           isDark
@@ -818,9 +820,10 @@ function FilterDropdown({
  * 커뮤니티 게시글 카드 컴포넌트
  */
 function CommunityCard({ post, isDark }: { post: CommunityPost; isDark: boolean }) {
+  const { prefixPath } = useSubdomainPath();
   return (
     <Link
-      to={`/tu/b2c/community/${post.id}`}
+      to={prefixPath(`/tu/b2c/community/${post.id}`)}
       className={`block p-4 rounded-xl border transition-all duration-300 ${
         isDark
           ? 'bg-white/5 border-white/10 hover:border-[#6778ff]/50'

@@ -97,13 +97,9 @@ function NotificationMetadataInfo({ type, metadata, isDark }: NotificationMetada
                 </span>
               </div>
             )}
-            {metadata.enrollmentStatus && (
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                metadata.enrollmentStatus === 'APPROVED'
-                  ? 'bg-emerald-500/20 text-emerald-400'
-                  : 'bg-red-500/20 text-red-400'
-              }`}>
-                {metadata.enrollmentStatus === 'APPROVED' ? '승인됨' : '거절됨'}
+            {metadata.enrollmentStatus === 'APPROVED' && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
+                승인됨
               </span>
             )}
           </div>
@@ -251,7 +247,7 @@ export function NotificationDetailPage() {
             <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               해당 알림이 삭제되었거나 존재하지 않습니다.
             </p>
-            <Button onClick={() => navigate('/tu/b2c/notifications')}>
+            <Button onClick={() => navigate(prefixPath('/tu/b2c/notifications'))}>
               알림 목록으로 돌아가기
             </Button>
           </div>
@@ -271,7 +267,7 @@ export function NotificationDetailPage() {
         <div className="max-w-3xl mx-auto">
           {/* Back Button */}
           <button
-            onClick={() => navigate('/tu/b2c/notifications')}
+            onClick={() => navigate(prefixPath('/tu/b2c/notifications'))}
             className={`flex items-center gap-2 mb-6 transition-colors ${
               isDark
                 ? 'text-gray-400 hover:text-white'
