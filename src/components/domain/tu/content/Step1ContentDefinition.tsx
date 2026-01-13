@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { FileText, FileVideo, Link as LinkIcon, X, Tag, Image as ImageIcon } from 'lucide-react';
+import { useState, useRef, DragEvent } from 'react';
+import { FileText, FileVideo, Link as LinkIcon, X, Tag, Image as ImageIcon, Upload, File, ExternalLink } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Input, Textarea, NativeSelect } from '@/components/common';
 import { inputVariants } from '@/styles/form';
@@ -56,6 +56,12 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
   const [tagInput, setTagInput] = useState('');
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
+  // 파일 업로드 관련 상태
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleAddTag = () => {
     if (tagInput.trim() && !data.tags.includes(tagInput.trim())) {
       onUpdate({ tags: [...data.tags, tagInput.trim()] });
@@ -86,6 +92,238 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
     if (thumbnailInputRef.current) {
       thumbnailInputRef.current.value = '';
     }
+  };
+
+  // 파일 업로드 관련 핸들러
+  const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  const handleFileUpload = (file: globalThis.File) => {
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsUploading(false);
+          onUpdate({ uploadedFile: file });
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
+  };
+
+  const handleRemoveFile = () => {
+    onUpdate({ uploadedFile: undefined });
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCancelUpload = () => {
+    setIsUploading(false);
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // 파일 업로드 UI 렌더링
+  const renderFileUpload = () => {
+    if (!data.loType || data.loType === 'external-link') return null;
+
+    const acceptedFormats =
+      data.loType === 'video'
+        ? '.mp4,.mov,.avi,.mkv'
+        : data.loType === 'image'
+          ? '.jpg,.jpeg,.png,.gif,.webp'
+          : '.pdf,.txt,.doc,.docx,.ppt,.pptx';
+    const formatText =
+      data.loType === 'video'
+        ? 'MP4, MOV, AVI, MKV (최대 500MB)'
+        : data.loType === 'image'
+          ? 'JPG, PNG, GIF, WEBP (최대 20MB)'
+          : 'PDF, TXT, DOC, DOCX, PPT, PPTX (최대 100MB)';
+    const uploadTitle =
+      data.loType === 'video' ? '비디오 파일 업로드' : data.loType === 'image' ? '이미지 파일 업로드' : '문서 파일 업로드';
+
+    return (
+      <div>
+        <h2 className="text-text-primary mb-4">
+          {uploadTitle} <span className="text-status-error">*</span>
+        </h2>
+
+        {!data.uploadedFile && !isUploading && (
+          <div
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={cn(
+              'border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer',
+              isDragging
+                ? 'border-action-primary bg-action-primary/5'
+                : 'border-border hover:border-action-primary hover:bg-bg-secondary/50'
+            )}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="flex flex-col items-center">
+              <div className="w-20 h-20 mb-4 rounded-full bg-bg-secondary flex items-center justify-center">
+                <Upload className="w-10 h-10 text-action-primary" />
+              </div>
+              <p className="text-text-primary mb-2">파일을 드래그하여 업로드하거나</p>
+              <Button type="button">파일 선택</Button>
+              <p className="text-xs text-text-secondary mt-4">지원 형식: {formatText}</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                className="hidden"
+                accept={acceptedFormats}
+              />
+            </div>
+          </div>
+        )}
+
+        {isUploading && (
+          <div className="border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-text-primary">업로드 중...</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-secondary">{uploadProgress}%</span>
+                <Button type="button" variant="ghost" size="sm" onClick={handleCancelUpload}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="w-full bg-bg-secondary rounded-full h-2">
+              <div
+                className="bg-action-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {data.uploadedFile && (
+          <div className="border border-border rounded-lg p-6 bg-bg-secondary/50">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-lg bg-bg-default border border-border flex items-center justify-center flex-shrink-0">
+                <File className="w-7 h-7 text-action-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-text-primary mb-1 truncate">{data.uploadedFile.name}</p>
+                <p className="text-sm text-text-secondary">{formatFileSize(data.uploadedFile.size)}</p>
+              </div>
+              <Button type="button" variant="ghost" size="sm" onClick={handleRemoveFile} className="border border-border">
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 외부 링크 입력 UI 렌더링
+  const renderExternalLinkInput = () => {
+    if (data.loType !== 'external-link') return null;
+
+    return (
+      <div>
+        <h2 className="text-text-primary mb-4">
+          외부 링크 URL <span className="text-status-error">*</span>
+        </h2>
+
+        <div className="space-y-4">
+          <div>
+            <div className="relative">
+              <LinkIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary" />
+              <Input
+                type="url"
+                value={data.externalUrl || ''}
+                onChange={(e) => onUpdate({ externalUrl: e.target.value })}
+                placeholder="https://example.com"
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {data.externalUrl && (
+            <div className="border border-border rounded-lg p-4 bg-bg-secondary/50">
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-lg bg-bg-default border border-border flex items-center justify-center flex-shrink-0">
+                  <ExternalLink className="w-6 h-6 text-action-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-text-secondary mb-1">연결된 URL</p>
+                  <a
+                    href={data.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-action-primary hover:underline break-all"
+                  >
+                    {data.externalUrl}
+                  </a>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onUpdate({ externalUrl: undefined })}
+                  className="border border-border"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -163,6 +401,12 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
           })}
         </div>
       </div>
+
+      {/* 파일 업로드 (유형 선택 후 표시) */}
+      {renderFileUpload()}
+
+      {/* 외부 링크 입력 (external-link 선택 시) */}
+      {renderExternalLinkInput()}
 
       {/* 카테고리 및 태그 */}
       <div>
