@@ -25,7 +25,7 @@ import type {
   DeliveryType,
   EnrollmentMethod,
 } from '@/types/co/time.types';
-import { DELIVERY_TYPE_LABELS, ENROLLMENT_METHOD_LABELS } from '@/types/co/time.types';
+import { DELIVERY_TYPE_LABELS, DELIVERY_TYPE_DESCRIPTIONS, ENROLLMENT_METHOD_LABELS, ENROLLMENT_METHOD_DESCRIPTIONS } from '@/types/co/time.types';
 import { PROGRAM_LEVEL_LABELS, PROGRAM_TYPE_LABELS } from '@/types/common/program.types';
 import type { ProgramResponse } from '@/types/common/program.types';
 import type { InstructorRole } from '@/types/tu/instructorAssignment.types';
@@ -45,7 +45,7 @@ const t = {
   // Steps
   step1: { ko: '기본 정보', en: 'Basic Info' },
   step2: { ko: '일정 및 모집', en: 'Schedule' },
-  step3: { ko: '운영 설정', en: 'Settings' },
+  step3: { ko: '평가 기준', en: 'Evaluation' },
   // Step 1 - Basic Info
   selectProgram: { ko: '교육 과정 선택', en: 'Select Course' },
   selectProgramPlaceholder: { ko: '교육 과정을 선택하세요', en: 'Select a course' },
@@ -76,8 +76,10 @@ const t = {
   learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
   classStartDate: { ko: '학습 시작일', en: 'Start Date' },
   classEndDate: { ko: '학습 종료일', en: 'End Date' },
-  alwaysOpen: { ko: '상시모집', en: 'Always Open' },
-  alwaysOpenHint: { ko: '종료일 없이 언제든 수강 가능', en: 'No end date, always available' },
+  alwaysOpen: { ko: '수시 모집', en: 'Rolling Admission' },
+  alwaysOpenHint: { ko: '모집 종료일 없이 수시로 모집', en: 'No enrollment end date' },
+  noLearningPeriod: { ko: '학습 기간 없음', en: 'No Learning Period' },
+  noLearningPeriodHint: { ko: '모집 종료 후 바로 학습 시작', en: 'Start learning immediately after enrollment' },
   // Step 3 - Capacity & Price
   capacity: { ko: '정원', en: 'Capacity' },
   capacityPlaceholder: { ko: '비워두면 무제한', en: 'Leave empty for unlimited' },
@@ -85,9 +87,17 @@ const t = {
   price: { ko: '가격 (원)', en: 'Price (KRW)' },
   pricePlaceholder: { ko: '0', en: '0' },
   priceHint: { ko: '수강료를 설정합니다. 0이면 무료입니다.', en: 'Set course fee. 0 means free.' },
-  minProgress: { ko: '수료 기준 (%)', en: 'Completion Criteria (%)' },
+  minProgress: { ko: '수료 기준', en: 'Completion Criteria' },
   minProgressPlaceholder: { ko: '80', en: '80' },
-  minProgressHint: { ko: '수료를 위한 최소 진도율입니다.', en: 'Minimum progress for completion.' },
+  minProgressHint: { ko: '수료를 위한 최소 진도율을 설정합니다.', en: 'Set minimum progress rate for completion.' },
+  completionRate: { ko: '진도율', en: 'Progress Rate' },
+  // Price section
+  priceType: { ko: '수강료 설정', en: 'Course Fee' },
+  free: { ko: '무료', en: 'Free' },
+  paid: { ko: '유료', en: 'Paid' },
+  freeHint: { ko: '수강료 없이 무료로 제공', en: 'Offer for free without any fee' },
+  paidHint: { ko: '수강료를 설정하여 유료로 제공', en: 'Set a fee for paid access' },
+  priceAmount: { ko: '수강료 (원)', en: 'Course Fee (KRW)' },
   allowLateEnrollment: { ko: '중간 합류 허용', en: 'Allow Late Enrollment' },
   allowLateEnrollmentHint: { ko: '학습 시작 후에도 수강 신청 허용', en: 'Allow enrollment after course starts' },
   // Validation
@@ -156,8 +166,10 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   // 선택된 프로그램 정보
   const [selectedProgram, setSelectedProgram] = useState<ProgramResponse | null>(null);
 
-  // 상시모집 상태
+  // 수시 모집 상태 (모집 종료일 없음)
   const [isAlwaysOpen, setIsAlwaysOpen] = useState(false);
+  // 학습 기간 없음 상태 (모집 종료 후 바로 시작)
+  const [noLearningPeriod, setNoLearningPeriod] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<CreateCourseTimeRequest>({
@@ -200,22 +212,26 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     } else if (step === 2) {
       if (!formData.enrollStartDate) newErrors.enrollStartDate = getText('required');
       if (!isAlwaysOpen && !formData.enrollEndDate) newErrors.enrollEndDate = getText('required');
-      if (!formData.classStartDate) newErrors.classStartDate = getText('required');
-      if (!isAlwaysOpen && !formData.classEndDate) newErrors.classEndDate = getText('required');
 
-      // 날짜 유효성 검사 (상시모집이 아닌 경우에만)
+      // 학습 기간이 있는 경우에만 학습 시작일/종료일 필수
+      if (!noLearningPeriod) {
+        if (!formData.classStartDate) newErrors.classStartDate = getText('required');
+        if (!isAlwaysOpen && !formData.classEndDate) newErrors.classEndDate = getText('required');
+      }
+
+      // 날짜 유효성 검사 (수시 모집이 아닌 경우에만)
       if (!isAlwaysOpen && formData.enrollStartDate && formData.enrollEndDate) {
         if (new Date(formData.enrollEndDate) < new Date(formData.enrollStartDate)) {
           newErrors.enrollEndDate = getText('enrollEndBeforeStart');
         }
       }
-      if (!isAlwaysOpen && formData.classStartDate && formData.classEndDate) {
+      if (!noLearningPeriod && !isAlwaysOpen && formData.classStartDate && formData.classEndDate) {
         if (new Date(formData.classEndDate) < new Date(formData.classStartDate)) {
           newErrors.classEndDate = getText('classEndBeforeStart');
         }
       }
-      // 학습 시작일이 모집 종료일 이후인지 검사
-      if (formData.enrollEndDate && formData.classStartDate && !isAlwaysOpen) {
+      // 학습 시작일이 모집 종료일 이후인지 검사 (학습 기간이 있고 수시 모집이 아닌 경우)
+      if (!noLearningPeriod && formData.enrollEndDate && formData.classStartDate && !isAlwaysOpen) {
         if (new Date(formData.classStartDate) < new Date(formData.enrollEndDate)) {
           newErrors.classStartDate = getText('classStartBeforeEnrollEnd');
         }
@@ -226,21 +242,39 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     return Object.keys(newErrors).length === 0;
   };
 
-  // 상시모집 토글 핸들러
+  // 수시 모집 토글 핸들러 (모집 종료일 없음)
   const handleAlwaysOpenToggle = (checked: boolean) => {
     setIsAlwaysOpen(checked);
     if (checked) {
-      // 상시모집 선택 시 종료일을 9999-12-31로 설정
+      // 수시 모집 선택 시 모집 종료일을 9999-12-31로 설정
       setFormData((prev) => ({
         ...prev,
         enrollEndDate: '9999-12-31',
-        classEndDate: '9999-12-31',
       }));
     } else {
-      // 상시모집 해제 시 종료일 초기화
+      // 수시 모집 해제 시 모집 종료일 초기화
       setFormData((prev) => ({
         ...prev,
         enrollEndDate: '',
+      }));
+    }
+  };
+
+  // 학습 기간 없음 토글 핸들러
+  const handleNoLearningPeriodToggle = (checked: boolean) => {
+    setNoLearningPeriod(checked);
+    if (checked) {
+      // 학습 기간 없음 선택 시 학습 시작/종료일을 9999-12-31로 설정
+      setFormData((prev) => ({
+        ...prev,
+        classStartDate: '9999-12-31',
+        classEndDate: '9999-12-31',
+      }));
+    } else {
+      // 학습 기간 없음 해제 시 학습 시작/종료일 초기화
+      setFormData((prev) => ({
+        ...prev,
+        classStartDate: '',
         classEndDate: '',
       }));
     }
@@ -666,51 +700,103 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
           {/* Step 2: 일정 및 모집 */}
           {currentStep === 2 && (
             <div className="flex flex-col gap-8">
-              {/* 수강 신청 방식 */}
-              <div className="space-y-2">
-                <Label htmlFor="enrollmentMethod">{getText('enrollmentMethod')}</Label>
-                <Select
-                  value={formData.enrollmentMethod}
-                  onValueChange={(value) => handleInputChange('enrollmentMethod', value as EnrollmentMethod)}
-                >
-                  <SelectTrigger id="enrollmentMethod" className="w-full md:w-64">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ENROLLMENT_METHOD_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* 진행 방식 - 라디오 버튼 */}
+              <div className="space-y-3">
+                <Label>{getText('deliveryType')}</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(Object.entries(DELIVERY_TYPE_LABELS) as [DeliveryType, string][]).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className={cn(
+                        'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
+                        formData.deliveryType === value
+                          ? 'border-action-primary bg-bg-brand-active/10'
+                          : 'border-border hover:border-action-primary/50'
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="deliveryType"
+                        value={value}
+                        checked={formData.deliveryType === value}
+                        onChange={(e) => handleInputChange('deliveryType', e.target.value as DeliveryType)}
+                        className="mt-1"
+                      />
+                      <div>
+                        <span className="font-medium text-text-primary">{label}</span>
+                        <p className="text-sm text-text-secondary mt-0.5">
+                          {DELIVERY_TYPE_DESCRIPTIONS[value]}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
               </div>
 
-              {/* 상시모집 & 중간합류 옵션 */}
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 bg-bg-subtle rounded-lg p-4 border border-border">
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={isAlwaysOpen}
-                      onCheckedChange={handleAlwaysOpenToggle}
+              {/* 운영 정보: 정원 + 장소 */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="capacity">{getText('capacity')}</Label>
+                    <Input
+                      id="capacity"
+                      type="number"
+                      min="1"
+                      placeholder={getText('capacityPlaceholder')}
+                      value={formData.capacity ?? ''}
+                      onChange={(e) =>
+                        handleInputChange('capacity', e.target.value ? parseInt(e.target.value) : null)
+                      }
                     />
-                    <div>
-                      <span className="font-medium text-text-primary">{getText('alwaysOpen')}</span>
-                      <p className="text-sm text-text-secondary mt-0.5">{getText('alwaysOpenHint')}</p>
-                    </div>
+                    <p className="text-sm text-text-secondary">{getText('capacityHint')}</p>
                   </div>
+
+                  {/* 장소 (오프라인/블렌디드인 경우) */}
+                  {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
+                    <div className="space-y-2">
+                      <Label htmlFor="locationInfo">{getText('location')}</Label>
+                      <Input
+                        id="locationInfo"
+                        type="text"
+                        placeholder={getText('locationPlaceholder')}
+                        value={formData.locationInfo || ''}
+                        onChange={(e) => handleInputChange('locationInfo', e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1 bg-bg-subtle rounded-lg p-4 border border-border">
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={formData.allowLateEnrollment ?? false}
-                      onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
-                    />
-                    <div>
-                      <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
-                      <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
-                    </div>
-                  </div>
+              </div>
+
+              {/* 수강 신청 방식 - 라디오 버튼 */}
+              <div className="space-y-3">
+                <Label>{getText('enrollmentMethod')}</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {(Object.entries(ENROLLMENT_METHOD_LABELS) as [EnrollmentMethod, string][]).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className={cn(
+                        'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
+                        formData.enrollmentMethod === value
+                          ? 'border-action-primary bg-bg-brand-active/10'
+                          : 'border-border hover:border-action-primary/50'
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="enrollmentMethod"
+                        value={value}
+                        checked={formData.enrollmentMethod === value}
+                        onChange={(e) => handleInputChange('enrollmentMethod', e.target.value as EnrollmentMethod)}
+                        className="mt-1"
+                      />
+                      <div>
+                        <span className="font-medium text-text-primary">{label}</span>
+                        <p className="text-sm text-text-secondary mt-0.5">
+                          {ENROLLMENT_METHOD_DESCRIPTIONS[value]}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -722,7 +808,9 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
                   <div className="space-y-2">
-                    <Label htmlFor="enrollStartDate">{getText('enrollStartDate')} *</Label>
+                    <div className="flex items-center justify-between h-5">
+                      <Label htmlFor="enrollStartDate">{getText('enrollStartDate')} *</Label>
+                    </div>
                     <Input
                       id="enrollStartDate"
                       type="date"
@@ -735,9 +823,20 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="enrollEndDate">
-                      {getText('enrollEndDate')} {!isAlwaysOpen && '*'}
-                    </Label>
+                    <div className="flex items-center justify-between h-5">
+                      <Label htmlFor="enrollEndDate">
+                        {getText('enrollEndDate')} {!isAlwaysOpen && '*'}
+                      </Label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isAlwaysOpen}
+                          onChange={(e) => handleAlwaysOpenToggle(e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        <span className="text-text-secondary">{getText('alwaysOpen')}</span>
+                      </label>
+                    </div>
                     <Input
                       id="enrollEndDate"
                       type="date"
@@ -745,7 +844,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       onChange={(e) => handleInputChange('enrollEndDate', e.target.value)}
                       className={errors.enrollEndDate ? 'border-status-error' : ''}
                       disabled={isAlwaysOpen}
-                      placeholder={isAlwaysOpen ? '9999-12-31' : ''}
+                      placeholder={isAlwaysOpen ? getText('alwaysOpenHint') : ''}
                     />
                     {errors.enrollEndDate && (
                       <p className="text-sm text-status-error">{errors.enrollEndDate}</p>
@@ -756,43 +855,70 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
               {/* 학습 기간 */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-text-primary">
-                  <Clock size={20} />
-                  <h3 className="font-medium m-0">{getText('learningPeriod')}</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
-                  <div className="space-y-2">
-                    <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
-                    <Input
-                      id="classStartDate"
-                      type="date"
-                      value={formData.classStartDate}
-                      onChange={(e) => handleInputChange('classStartDate', e.target.value)}
-                      className={errors.classStartDate ? 'border-status-error' : ''}
-                    />
-                    {errors.classStartDate && (
-                      <p className="text-sm text-status-error">{errors.classStartDate}</p>
-                    )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-text-primary">
+                    <Clock size={20} />
+                    <h3 className="font-medium m-0">{getText('learningPeriod')}</h3>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="classEndDate">
-                      {getText('classEndDate')} {!isAlwaysOpen && '*'}
-                    </Label>
-                    <Input
-                      id="classEndDate"
-                      type="date"
-                      value={isAlwaysOpen ? '' : formData.classEndDate}
-                      onChange={(e) => handleInputChange('classEndDate', e.target.value)}
-                      className={errors.classEndDate ? 'border-status-error' : ''}
-                      disabled={isAlwaysOpen}
-                      placeholder={isAlwaysOpen ? '9999-12-31' : ''}
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={noLearningPeriod}
+                      onChange={(e) => handleNoLearningPeriodToggle(e.target.checked)}
+                      className="rounded border-border"
                     />
-                    {errors.classEndDate && (
-                      <p className="text-sm text-status-error">{errors.classEndDate}</p>
-                    )}
-                  </div>
+                    <span className="text-text-secondary">{getText('noLearningPeriod')}</span>
+                  </label>
                 </div>
+                {noLearningPeriod ? (
+                  <div className="pl-7 p-4 bg-bg-subtle rounded-lg border border-border">
+                    <p className="text-text-secondary text-sm">{getText('noLearningPeriodHint')}</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
+                    <div className="space-y-2">
+                      <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
+                      <Input
+                        id="classStartDate"
+                        type="date"
+                        value={formData.classStartDate}
+                        onChange={(e) => handleInputChange('classStartDate', e.target.value)}
+                        className={errors.classStartDate ? 'border-status-error' : ''}
+                      />
+                      {errors.classStartDate && (
+                        <p className="text-sm text-status-error">{errors.classStartDate}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="classEndDate">{getText('classEndDate')} *</Label>
+                      <Input
+                        id="classEndDate"
+                        type="date"
+                        value={formData.classEndDate}
+                        onChange={(e) => handleInputChange('classEndDate', e.target.value)}
+                        className={errors.classEndDate ? 'border-status-error' : ''}
+                      />
+                      {errors.classEndDate && (
+                        <p className="text-sm text-status-error">{errors.classEndDate}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* 중간 합류 허용 */}
+              {!noLearningPeriod && (
+                <div className="flex items-center gap-3 p-4 bg-bg-subtle rounded-lg border border-border">
+                  <Switch
+                    checked={formData.allowLateEnrollment ?? false}
+                    onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
+                  />
+                  <div>
+                    <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
+                    <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
+                  </div>
+                </div>
+              )}
 
               {/* 강사 일정 충돌 경고 */}
               {conflictInfo && (
@@ -832,90 +958,149 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
             </div>
           )}
 
-          {/* Step 3: 운영 설정 */}
+          {/* Step 3: 평가 기준 */}
           {currentStep === 3 && (
-            <div className="flex flex-col gap-6">
-              {/* 진행 방식 & 장소 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="deliveryType">{getText('deliveryType')}</Label>
-                  <Select
-                    value={formData.deliveryType}
-                    onValueChange={(value) => handleInputChange('deliveryType', value as DeliveryType)}
-                  >
-                    <SelectTrigger id="deliveryType">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(DELIVERY_TYPE_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <div className="flex flex-col gap-8">
+              {/* 수료 기준 */}
+              <div className="space-y-4">
+                <div>
+                  <Label>{getText('minProgress')} *</Label>
+                  <p className="text-sm text-text-secondary mt-1">{getText('minProgressHint')}</p>
                 </div>
 
-                {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
-                  <div className="space-y-2">
-                    <Label htmlFor="locationInfo">{getText('location')}</Label>
+                {/* 프리셋 버튼 */}
+                <div className="flex gap-2">
+                  {[80, 90, 100].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleInputChange('minProgressForCompletion', value)}
+                      className={cn(
+                        'px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
+                        formData.minProgressForCompletion === value
+                          ? 'border-action-primary bg-bg-brand-active/10 text-action-primary'
+                          : 'border-border text-text-secondary hover:border-action-primary/50'
+                      )}
+                    >
+                      {value}%
+                    </button>
+                  ))}
+                </div>
+
+                {/* 슬라이더 + 숫자 입력 */}
+                <div className="bg-bg-subtle rounded-lg p-4 border border-border">
+                  <div className="flex justify-between text-sm mb-3">
+                    <span className="text-text-secondary">{getText('completionRate')}</span>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        id="minProgressForCompletion"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={formData.minProgressForCompletion}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          handleInputChange('minProgressForCompletion', Math.min(100, Math.max(0, val)));
+                        }}
+                        className="w-16 h-8 text-center text-sm"
+                      />
+                      <span className="text-text-secondary">%</span>
+                    </div>
+                  </div>
+                  {/* 커스텀 슬라이더 */}
+                  <div className="relative h-5 flex items-center">
+                    {/* 트랙 배경 */}
+                    <div className="absolute inset-x-0 h-2 bg-border rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-btn-brand rounded-full"
+                        style={{ width: `${formData.minProgressForCompletion}%` }}
+                      />
+                    </div>
+                    {/* 슬라이더 핸들 */}
+                    <div
+                      className="absolute w-5 h-5 bg-btn-brand rounded-full shadow-md border-2 border-white pointer-events-none"
+                      style={{ left: `calc(${formData.minProgressForCompletion}% - 10px)` }}
+                    />
+                    {/* 투명 range input - 전체 영역 커버 */}
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={formData.minProgressForCompletion}
+                      onChange={(e) => handleInputChange('minProgressForCompletion', parseInt(e.target.value))}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 가격 설정 - TODO: 테넌트 옵션으로 ON/OFF */}
+              <div className="space-y-4">
+                <div>
+                  <Label>{getText('priceType')}</Label>
+                </div>
+
+                {/* 무료/유료 라디오 버튼 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <label
+                    className={cn(
+                      'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
+                      formData.isFree
+                        ? 'border-action-primary bg-bg-brand-active/10'
+                        : 'border-border hover:border-action-primary/50'
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="priceType"
+                      checked={formData.isFree}
+                      onChange={() => {
+                        handleInputChange('isFree', true);
+                        handleInputChange('price', '0');
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <span className="font-medium text-text-primary">{getText('free')}</span>
+                      <p className="text-sm text-text-secondary mt-0.5">{getText('freeHint')}</p>
+                    </div>
+                  </label>
+                  <label
+                    className={cn(
+                      'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
+                      !formData.isFree
+                        ? 'border-action-primary bg-bg-brand-active/10'
+                        : 'border-border hover:border-action-primary/50'
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="priceType"
+                      checked={!formData.isFree}
+                      onChange={() => handleInputChange('isFree', false)}
+                      className="mt-1"
+                    />
+                    <div>
+                      <span className="font-medium text-text-primary">{getText('paid')}</span>
+                      <p className="text-sm text-text-secondary mt-0.5">{getText('paidHint')}</p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* 유료 선택 시 금액 입력 */}
+                {!formData.isFree && (
+                  <div className="space-y-2 md:w-1/2 pl-7">
+                    <Label htmlFor="price">{getText('priceAmount')} *</Label>
                     <Input
-                      id="locationInfo"
-                      type="text"
-                      placeholder={getText('locationPlaceholder')}
-                      value={formData.locationInfo || ''}
-                      onChange={(e) => handleInputChange('locationInfo', e.target.value)}
+                      id="price"
+                      type="number"
+                      min="1"
+                      placeholder="10000"
+                      value={formData.price === '0' ? '' : formData.price}
+                      onChange={(e) => handleInputChange('price', e.target.value || '0')}
                     />
                   </div>
                 )}
-              </div>
-
-              {/* 정원 & 가격 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="capacity">{getText('capacity')}</Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    min="1"
-                    placeholder={getText('capacityPlaceholder')}
-                    value={formData.capacity ?? ''}
-                    onChange={(e) =>
-                      handleInputChange('capacity', e.target.value ? parseInt(e.target.value) : null)
-                    }
-                  />
-                  <p className="text-sm text-text-secondary">{getText('capacityHint')}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="price">{getText('price')} *</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min="0"
-                    placeholder={getText('pricePlaceholder')}
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', e.target.value || '0')}
-                  />
-                  <p className="text-sm text-text-secondary">{getText('priceHint')}</p>
-                </div>
-              </div>
-
-              {/* 수료 기준 */}
-              <div className="space-y-2 md:w-1/2">
-                <Label htmlFor="minProgressForCompletion">{getText('minProgress')} *</Label>
-                <Input
-                  id="minProgressForCompletion"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder={getText('minProgressPlaceholder')}
-                  value={formData.minProgressForCompletion}
-                  onChange={(e) =>
-                    handleInputChange('minProgressForCompletion', parseInt(e.target.value) || 0)
-                  }
-                />
-                <p className="text-sm text-text-secondary">{getText('minProgressHint')}</p>
               </div>
             </div>
           )}

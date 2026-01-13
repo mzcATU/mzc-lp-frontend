@@ -28,7 +28,6 @@ import {
   Users,
   Download,
   Library,
-  Search,
   FolderEdit,
   Layers,
   Calendar,
@@ -184,7 +183,7 @@ export const courseOperatorMenuData: MenuItem[] = [
   },
   {
     id: 'program-management',
-    label: { ko: '교육 운영 관리', en: 'Program Management' },
+    label: { ko: '운영 관리', en: 'Operations' },
     icon: Layers,
     subItems: [
       { id: 'time-management', label: { ko: '차수 운영', en: 'Course Time Operations' }, icon: Calendar, path: '/co/times' },

@@ -73,7 +73,7 @@ const t = {
   next: { ko: '다음', en: 'Next' },
   timeCount: { ko: '개의 차수', en: ' course times' },
   columnTitle: { ko: '차수명', en: 'Title' },
-  columnProgram: { ko: '프로그램', en: 'Program' },
+  columnProgram: { ko: '과정명', en: 'Course' },
   columnStatus: { ko: '상태', en: 'Status' },
   columnDelivery: { ko: '진행 방식', en: 'Delivery' },
   columnPeriod: { ko: '학습 기간', en: 'Period' },

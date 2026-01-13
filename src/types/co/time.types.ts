@@ -193,11 +193,26 @@ export const DELIVERY_TYPE_LABELS: Record<DeliveryType, string> = {
   LIVE: '실시간',
 };
 
+/** DeliveryType 설명 맵 */
+export const DELIVERY_TYPE_DESCRIPTIONS: Record<DeliveryType, string> = {
+  ONLINE: '녹화된 영상으로 자유롭게 학습',
+  OFFLINE: '지정된 장소에서 대면 학습',
+  BLENDED: '온라인과 오프라인 혼합 학습',
+  LIVE: '실시간 화상 강의',
+};
+
 /** EnrollmentMethod 라벨 맵 */
 export const ENROLLMENT_METHOD_LABELS: Record<EnrollmentMethod, string> = {
   FIRST_COME: '선착순',
   APPROVAL: '승인제',
-  INVITE_ONLY: '초대 전용',
+  INVITE_ONLY: '선발',
+};
+
+/** EnrollmentMethod 설명 맵 */
+export const ENROLLMENT_METHOD_DESCRIPTIONS: Record<EnrollmentMethod, string> = {
+  FIRST_COME: '신청 순서대로 등록',
+  APPROVAL: '운영자 승인 후 등록',
+  INVITE_ONLY: '운영자가 직접 선발하여 등록',
 };
 
 /** 상태 전이 가능 여부 */
