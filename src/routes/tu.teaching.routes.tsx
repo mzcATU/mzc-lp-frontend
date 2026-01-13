@@ -11,6 +11,7 @@ import {
   CourseApplyPage,
   TuContentCreatePage,
   ContentDetailPage,
+  ContentBulkUploadPage,
   MyAssignmentsPage,
   AssignmentDetailPage,
   MyProgramsPage,
@@ -56,6 +57,7 @@ export const tuTeachingRoutes = (
     <Route path="teaching/programs/:programId/edit" element={<TuProgramEditPage />} />
     <Route path="teaching/content" element={<MyContentPage />} />
     <Route path="teaching/content/create" element={<TuContentCreatePage />} />
+    <Route path="teaching/content/bulk-upload" element={<ContentBulkUploadPage />} />
     <Route path="teaching/content/:id" element={<ContentDetailPage />} />
     <Route path="teaching/assignments" element={<MyAssignmentsPage />} />
     <Route path="teaching/assignments/:id" element={<AssignmentDetailPage />} />
@@ -84,6 +86,7 @@ export const tuTeachingRoutes = (
     {/* 내 콘텐츠 */}
     <Route path="teaching/content" element={<MyContentPage />} />
     <Route path="teaching/content/create" element={<TuContentCreatePage />} />
+    <Route path="teaching/content/bulk-upload" element={<ContentBulkUploadPage />} />
     <Route path="teaching/content/:id" element={<ContentDetailPage />} />
 
     {/* 내 과제 */}

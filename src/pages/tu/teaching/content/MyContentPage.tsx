@@ -23,6 +23,7 @@ import {
   Folder,
   FolderInput,
   Download,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, ViewToggle, DataTable, DataTableColumnHeader, IconStatCard, Checkbox } from '@/components/common';
@@ -61,6 +62,7 @@ const t = {
   title: { ko: '내 콘텐츠', en: 'My Content' },
   subtitle: { ko: '등록한 콘텐츠를 관리하고 새로운 콘텐츠를 업로드하세요.', en: 'Manage your content and upload new materials.' },
   createContent: { ko: '콘텐츠 등록', en: 'Add Content' },
+  bulkUpload: { ko: '일괄 등록', en: 'Bulk Upload' },
   searchPlaceholder: { ko: '콘텐츠 검색...', en: 'Search content...' },
   filter: { ko: '필터', en: 'Filter' },
   contentType: { ko: '콘텐츠 유형', en: 'Content Type' },
@@ -428,6 +430,13 @@ export function MyContentPage({ language = 'ko' }: Readonly<MyContentPageProps>)
               <Button onClick={() => navigate(prefixPath('/tu/teaching/content/create'))}>
                 <Plus size={20} />
                 <span>{getText('createContent')}</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(prefixPath('/tu/teaching/content/bulk-upload'))}
+              >
+                <Upload size={20} />
+                <span>{getText('bulkUpload')}</span>
               </Button>
               <Button
                 variant="ghost"
