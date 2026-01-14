@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useState, ComponentType } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+
+/** NotificationsPage props */
+interface NotificationsPageProps {
+  /** 커스텀 헤더 컴포넌트 (B2B 등에서 사용) */
+  HeaderComponent?: ComponentType;
+  /** 알림 상세 페이지 기본 경로 (B2B: /tu/b2b/notifications) */
+  detailBasePath?: string;
+}
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications } from '@/hooks/tu';
 import type { NotificationType } from '@/types/tu';
 import { getNotificationDeepLink } from '@/types/tu';
@@ -57,7 +65,10 @@ const formatRelativeTime = (dateString: string): string => {
   return date.toLocaleDateString('ko-KR');
 };
 
-export function NotificationsPage() {
+export function NotificationsPage({
+  HeaderComponent = LandingHeader,
+  detailBasePath = '/tu/b2c/notifications'
+}: NotificationsPageProps = {}) {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
@@ -103,7 +114,7 @@ export function NotificationsPage() {
   if (!isAuthenticated) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="text-center py-20">
             <Bell className={`w-20 h-20 mx-auto mb-6 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
@@ -130,7 +141,7 @@ export function NotificationsPage() {
   if (isLoading) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
@@ -148,7 +159,7 @@ export function NotificationsPage() {
   if (error) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="text-center py-20">
             <p className={`text-lg ${isDark ? 'text-red-400' : 'text-red-500'}`}>
@@ -169,7 +180,7 @@ export function NotificationsPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-      <LandingHeader />
+      <HeaderComponent />
 
       <main className="w-full px-4 md:px-8 lg:px-16 py-12">
         {/* Header */}
@@ -268,7 +279,7 @@ export function NotificationsPage() {
                   onClick={() => {
                     markAsRead(notification.id);
                     // 딥링크가 있으면 해당 페이지로, 없으면 알림 상세로
-                    const targetPath = deepLink || `/tu/b2c/notifications/${notification.id}`;
+                    const targetPath = deepLink || `${detailBasePath}/${notification.id}`;
                     navigate(prefixPath(targetPath));
                   }}
                   className={`rounded-xl p-4 flex gap-4 cursor-pointer transition-all border ${
