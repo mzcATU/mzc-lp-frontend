@@ -40,6 +40,10 @@ export const tuB2cRoutes = (
     <Route path="/:subdomain/tu/b2c/times/:id" element={<CourseDetailPage />} />
     <Route path="/tu/b2c/times/:id" element={<CourseDetailPage />} />
 
+    {/* 차수별 커뮤니티 상세 */}
+    <Route path="/:subdomain/tu/b2c/times/:courseTimeId/community/:id" element={<CommunityDetailPage />} />
+    <Route path="/tu/b2c/times/:courseTimeId/community/:id" element={<CommunityDetailPage />} />
+
     {/* 로드맵 */}
     <Route path="/:subdomain/tu/b2c/roadmaps" element={<RoadmapExplorePage />} />
     <Route path="/:subdomain/tu/b2c/roadmaps/:id" element={<RoadmapDetailPage />} />

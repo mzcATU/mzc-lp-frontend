@@ -16,7 +16,7 @@ export interface NotificationMetadata {
   courseName?: string;
   courseId?: number;
   courseTimeId?: number;
-  enrollmentStatus?: 'APPROVED' | 'REJECTED';
+  enrollmentStatus?: 'APPROVED';
 
   // ASSIGNMENT 알림
   assignmentName?: string;
@@ -103,7 +103,6 @@ export type NotificationReferenceType =
 // COURSE 알림 서브타입
 export type CourseNotificationSubtype =
   | 'ENROLLMENT_APPROVED'   // 수강신청 승인
-  | 'ENROLLMENT_REJECTED'   // 수강신청 거절
   | 'COURSE_STARTED'        // 강의 시작
   | 'COURSE_ENDED';         // 강의 종료
 
@@ -149,20 +148,12 @@ export function getNotificationDeepLink(notification: NotificationItem): string 
 function getCourseNotificationLink(
   referenceType: string,
   referenceId: number,
-  message?: string,
+  _message?: string,
   metadata?: NotificationMetadata
 ): string | null {
   const courseTimeId = metadata?.courseTimeId;
 
-  // 수강신청 거절 시 강의 상세 페이지로 (재신청 유도)
-  if (message?.includes('거절') || message?.includes('반려')) {
-    if (courseTimeId) {
-      return `/tu/b2c/times/${courseTimeId}`;
-    }
-    return '/tu/b2c/courses';
-  }
-
-  // 승인/강의 시작/종료는 내 강의 페이지로
+  // courseTimeId가 있으면 해당 강의 페이지로
   if (courseTimeId) {
     return `/tu/b2c/times/${courseTimeId}`;
   }

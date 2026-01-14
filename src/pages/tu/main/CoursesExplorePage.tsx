@@ -6,6 +6,7 @@ import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { useCourseTimeCatalog, useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
 import { useAuthStore } from '@/store/common/authStore';
+import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import type {
   CourseTimeCatalogResponse,
@@ -75,6 +76,7 @@ function formatShortDate(dateString: string): string {
 function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+  const { prefixPath } = useSubdomainPath();
 
   // 찜 상태 확인 및 토글
   const { data: isWishlisted = false, isLoading: isWishlistChecking } = useCheckWishlistStatus(
@@ -91,7 +93,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
 
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/auth/login', { state: { from: `/tu/b2c/times/${courseTime.id}` } });
+      navigate('/login', { state: { from: prefixPath(`/tu/b2c/times/${courseTime.id}`) } });
       return;
     }
 
@@ -132,7 +134,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
     : null;
 
   return (
-    <Link to={`/tu/b2c/courses/${courseTime.id}`} className="group block h-full">
+    <Link to={prefixPath(`/tu/b2c/courses/${courseTime.id}`)} className="group block h-full">
       <div
         className={`h-full card-hover rounded-xl overflow-hidden border ${
           isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200 shadow-sm'
