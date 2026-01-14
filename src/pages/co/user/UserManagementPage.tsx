@@ -393,7 +393,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     const allTimes = timesData?.content ?? [];
     // 선택된 프로그램이 있으면 해당 프로그램의 차수만 필터링
     const filteredTimes = selectedProgramTitle
-      ? allTimes.filter((t) => t.programTitle === selectedProgramTitle)
+      ? allTimes.filter((t) => t.courseTitle === selectedProgramTitle)
       : allTimes;
     return filteredTimes.map((t) => ({
       value: String(t.id),
@@ -412,7 +412,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const enrollTimeOptions = useMemo(() => {
     const allTimes = timesData?.content ?? [];
     const filteredTimes = enrollProgramTitle
-      ? allTimes.filter((t) => t.programTitle === enrollProgramTitle)
+      ? allTimes.filter((t) => t.courseTitle === enrollProgramTitle)
       : [];
     return filteredTimes.map((t) => ({
       value: String(t.id),

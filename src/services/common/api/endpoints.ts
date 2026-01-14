@@ -133,6 +133,10 @@ export const API_ENDPOINTS = {
       `/courses/${courseId}/items/${itemId}/display-info`,
     // Course Folders
     FOLDERS: (courseId: number) => `/courses/${courseId}/folders`,
+    // Phase 3: 승인 워크플로우 (Program에서 이관)
+    READY: (id: number) => `/courses/${id}/ready`,
+    UNREADY: (id: number) => `/courses/${id}/unready`,
+    REGISTER: (id: number) => `/courses/${id}/register`,
   },
 
   // Content (TO, TU) - Legacy
@@ -179,16 +183,19 @@ export const API_ENDPOINTS = {
     MOVE: (id: number) => `/content-folders/${id}/move`,
   },
 
-  // Programs (TO)
+  /**
+   * @deprecated Phase 3: Program 엔티티 제거됨. COURSES 섹션 사용.
+   * 점진적 전환을 위해 유지하되, 새 코드에서는 COURSES 사용 권장.
+   */
   PROGRAMS: {
-    BASE: '/programs',
-    BY_ID: (id: number) => `/programs/${id}`,
-    SUBMIT: (id: number) => `/programs/${id}/submit`,
-    PENDING: '/programs/pending',
-    APPROVE: (id: number) => `/programs/${id}/approve`,
-    REJECT: (id: number) => `/programs/${id}/reject`,
-    CLOSE: (id: number) => `/programs/${id}/close`,
-    SNAPSHOT: (id: number) => `/programs/${id}/snapshot`,
+    BASE: '/courses', // /programs → /courses
+    BY_ID: (id: number) => `/courses/${id}`,
+    SUBMIT: (id: number) => `/courses/${id}/ready`, // submit → ready
+    PENDING: '/courses', // 별도 pending 엔드포인트 없음
+    APPROVE: (id: number) => `/courses/${id}/register`, // approve → register
+    REJECT: (id: number) => `/courses/${id}/unready`, // reject → unready
+    CLOSE: (id: number) => `/courses/${id}`, // close 개념 없음
+    SNAPSHOT: (id: number) => `/courses/${id}/snapshots`,
   },
 
   // Instructor Assignments (TU - 내 배정, TO - 전체 관리)

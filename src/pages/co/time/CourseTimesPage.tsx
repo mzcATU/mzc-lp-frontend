@@ -369,7 +369,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
           <div className="flex items-center gap-1.5 max-w-xs">
             <BookOpen size={14} className="text-text-secondary flex-shrink-0" />
             <span className="text-sm text-text-secondary truncate">
-              {row.original.programTitle || '-'}
+              {row.original.courseTitle || '-'}
             </span>
           </div>
         ),

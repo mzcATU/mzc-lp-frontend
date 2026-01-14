@@ -476,12 +476,12 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label className="text-text-secondary">{getText('programTitle')}</Label>
-                        <p className="text-text-primary font-medium">{courseTime.programTitle || '-'}</p>
+                        <p className="text-text-primary font-medium">{courseTime.courseTitle || '-'}</p>
                       </div>
-                      {courseTime.programDescription && (
+                      {courseTime.courseDescription && (
                         <div className="md:col-span-2">
                           <Label className="text-text-secondary">{getText('description')}</Label>
-                          <p className="text-text-primary whitespace-pre-wrap text-sm">{courseTime.programDescription}</p>
+                          <p className="text-text-primary whitespace-pre-wrap text-sm">{courseTime.courseDescription}</p>
                         </div>
                       )}
                     </div>
