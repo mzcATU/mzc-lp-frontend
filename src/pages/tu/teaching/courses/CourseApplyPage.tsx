@@ -14,19 +14,19 @@ interface CourseApplyPageProps {
 }
 
 const t = {
-  pageTitle: { ko: '프로그램 생성', en: 'Create Program' },
-  pageSubtitle: { ko: '강의를 프로그램으로 생성합니다. 정보를 확인하고 수정할 수 있습니다.', en: 'Create this course as a program. Review and edit information.' },
+  pageTitle: { ko: '과정 생성', en: 'Create Program' },
+  pageSubtitle: { ko: '강의를 과정으로 생성합니다. 정보를 확인하고 수정할 수 있습니다.', en: 'Create this course as a program. Review and edit information.' },
   back: { ko: '취소', en: 'Cancel' },
   loading: { ko: '강의 정보를 불러오는 중...', en: 'Loading course information...' },
   error: { ko: '강의를 불러오는데 실패했습니다.', en: 'Failed to load course.' },
   notFound: { ko: '강의를 찾을 수 없습니다.', en: 'Course not found.' },
-  create: { ko: '프로그램 생성', en: 'Create Program' },
+  create: { ko: '과정 생성', en: 'Create Program' },
   creating: { ko: '생성 중...', en: 'Creating...' },
-  createSuccess: { ko: '프로그램이 생성되었습니다. 내용을 확인하고 검토 신청해주세요.', en: 'Program created. Please review and submit for approval.' },
-  createFailed: { ko: '프로그램 생성에 실패했습니다.', en: 'Failed to create program.' },
-  titleRequired: { ko: '프로그램명을 입력해주세요.', en: 'Please enter a program title.' },
+  createSuccess: { ko: '과정이 생성되었습니다. 내용을 확인하고 검토 신청해주세요.', en: 'Program created. Please review and submit for approval.' },
+  createFailed: { ko: '과정 생성에 실패했습니다.', en: 'Failed to create program.' },
+  titleRequired: { ko: '과정명을 입력해주세요.', en: 'Please enter a program title.' },
   confirmCreate: {
-    ko: '이 강의를 프로그램으로 생성하시겠습니까?\n생성 후 수정 페이지에서 검토 신청할 수 있습니다.',
+    ko: '이 강의를 과정으로 생성하시겠습니까?\n생성 후 수정 페이지에서 검토 신청할 수 있습니다.',
     en: 'Create this course as a program?\nYou can submit for review from the edit page after creation.'
   },
   courseInfo: { ko: '원본 강의 정보', en: 'Original Course Information' },
@@ -74,7 +74,7 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
     setFormData((prev) => ({ ...prev, ...data }));
   };
 
-  // 프로그램 생성 핸들러 (DRAFT 상태로 생성, 제출은 수정 페이지에서)
+  // 과정 생성 핸들러 (DRAFT 상태로 생성, 제출은 수정 페이지에서)
   const handleCreate = async () => {
     // 유효성 검사
     if (!formData.title.trim()) {
@@ -108,7 +108,7 @@ export function CourseApplyPage({ language = 'ko' }: Readonly<CourseApplyPagePro
       });
 
       alert(getText('createSuccess'));
-      // 프로그램 상세 페이지로 이동
+      // 과정 상세 페이지로 이동
       navigate(prefixPath(`/tu/teaching/programs/${program.id}`));
     } catch (err) {
       console.error('Create failed:', err);

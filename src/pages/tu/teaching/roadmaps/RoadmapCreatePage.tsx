@@ -81,7 +81,7 @@ const t = {
   coursesRequired: { ko: '최소 1개 이상의 강의를 추가해주세요', en: 'Please add at least one course' },
   noAvailableCourses: { ko: '추가 가능한 강의가 없습니다', en: 'No available courses' },
   destructiveUpdateWarning: {
-    ko: '수강생이 있는 공개된 로드맵은 프로그램 삭제 또는 순서 변경이 불가능합니다',
+    ko: '수강생이 있는 공개된 로드맵은 과정 삭제 또는 순서 변경이 불가능합니다',
     en: 'Cannot delete or reorder programs in published roadmap with enrollments',
   },
   cannotDeleteRestricted: {
@@ -93,11 +93,11 @@ const t = {
     en: 'Cannot reorder (has enrollments)',
   },
   restrictedModeInfo: {
-    ko: '수강생이 있는 공개된 로드맵입니다. 기존 프로그램의 삭제 및 순서 변경이 제한됩니다.',
+    ko: '수강생이 있는 공개된 로드맵입니다. 기존 과정의 삭제 및 순서 변경이 제한됩니다.',
     en: 'This is a published roadmap with enrollments. Deletion and reordering of existing programs is restricted.',
   },
   newProgramsAllowed: {
-    ko: '새로운 프로그램 추가는 가능합니다.',
+    ko: '새로운 과정 추가는 가능합니다.',
     en: 'Adding new programs is allowed.',
   },
 };
@@ -489,12 +489,12 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
                 </p>
                 {destructiveValidation.changes.removed.length > 0 && (
                   <p className="text-sm text-text-secondary m-0 mt-1">
-                    • {destructiveValidation.changes.removed.length}개 프로그램 삭제 감지
+                    • {destructiveValidation.changes.removed.length}개 과정 삭제 감지
                   </p>
                 )}
                 {destructiveValidation.changes.reordered && (
                   <p className="text-sm text-text-secondary m-0 mt-1">
-                    • 프로그램 순서 변경 감지
+                    • 과정 순서 변경 감지
                   </p>
                 )}
               </div>
@@ -535,7 +535,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
   );
 }
 
-/** 정렬 가능한 프로그램 아이템 컴포넌트 */
+/** 정렬 가능한 과정 아이템 컴포넌트 */
 interface SortableProgramItemProps {
   program: SelectedProgram;
   index: number;

@@ -42,7 +42,7 @@ const getCategory = (activityType: ActivityType): string => {
   if (['LOGIN', 'LOGOUT', 'LOGIN_FAILED', 'PASSWORD_CHANGE'].includes(activityType)) return '인증';
   if (['USER_CREATE', 'USER_UPDATE', 'USER_DELETE', 'ROLE_CHANGE'].includes(activityType)) return '사용자';
   if (['COURSE_VIEW', 'COURSE_CREATE', 'COURSE_UPDATE', 'COURSE_DELETE'].includes(activityType)) return '강좌';
-  if (['PROGRAM_CREATE', 'PROGRAM_UPDATE', 'PROGRAM_APPROVE', 'PROGRAM_REJECT'].includes(activityType)) return '프로그램';
+  if (['PROGRAM_CREATE', 'PROGRAM_UPDATE', 'PROGRAM_APPROVE', 'PROGRAM_REJECT'].includes(activityType)) return '과정';
   if (['ENROLLMENT_CREATE', 'ENROLLMENT_COMPLETE', 'ENROLLMENT_DROP'].includes(activityType)) return '수강';
   if (['CONTENT_VIEW', 'CONTENT_COMPLETE'].includes(activityType)) return '콘텐츠';
   if (['SETTINGS_UPDATE', 'TENANT_CREATE', 'TENANT_UPDATE'].includes(activityType)) return '설정';

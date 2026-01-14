@@ -120,7 +120,7 @@ const t = {
   mainInstructor: { ko: '주강사', en: 'Main Instructor' },
   subInstructor: { ko: '보조강사', en: 'Sub Instructor' },
   assistant: { ko: '조교', en: 'Assistant' },
-  useOwnerAsInstructor: { ko: '프로그램 담당자를 주강사로 배정', en: 'Assign program owner as main instructor' },
+  useOwnerAsInstructor: { ko: '과정 담당자를 주강사로 배정', en: 'Assign program owner as main instructor' },
   instructorAssignmentOptional: { ko: '(선택사항)', en: '(Optional)' },
   // Error messages
   errorInstructorConflict: { ko: '강사 일정 충돌', en: 'Instructor Schedule Conflict' },

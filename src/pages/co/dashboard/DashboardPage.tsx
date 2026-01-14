@@ -119,7 +119,7 @@ export function DashboardPage() {
         ) : (
           <>
             <AdminStatsCard
-              title="검토 대기 프로그램"
+              title="검토 대기 과정"
               value={pendingTasks.programsPendingApproval}
               subtitle="승인 대기"
               icon={Clock}

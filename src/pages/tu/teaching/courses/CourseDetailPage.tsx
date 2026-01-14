@@ -165,7 +165,7 @@ export function CourseDetailPage() {
               onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/apply`))}
             >
               <Send size={16} />
-              프로그램 신청
+              과정 신청
             </Button>
             <Button
               variant="ghost"

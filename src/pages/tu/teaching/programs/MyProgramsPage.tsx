@@ -36,7 +36,7 @@ const DEFAULT_THUMBNAIL =
 const t = {
   title: { ko: '개설 신청 현황', en: 'Submission Status' },
   subtitle: {
-    ko: '디자인한 강의의 프로그램 개설 신청 및 승인 상태를 확인하세요',
+    ko: '디자인한 강의의 과정 개설 신청 및 승인 상태를 확인하세요',
     en: 'Check the submission and approval status of your designed courses',
   },
   all: { ko: '전체', en: 'All' },
@@ -48,14 +48,14 @@ const t = {
   sortBy: { ko: '정렬', en: 'Sort By' },
   recent: { ko: '최신순', en: 'Recent' },
   titleSort: { ko: '제목순', en: 'Title' },
-  noPrograms: { ko: '신청한 프로그램이 없습니다', en: 'No programs found' },
+  noPrograms: { ko: '신청한 과정이 없습니다', en: 'No programs found' },
   noProgramsDesc: {
-    ko: "'강의 디자인'에서 강의를 완성한 후 프로그램 개설을 신청하면 여기에 표시됩니다",
+    ko: "'강의 디자인'에서 강의를 완성한 후 과정 개설을 신청하면 여기에 표시됩니다",
     en: 'Complete your course in Course Design and submit for program creation to see it here',
   },
   goToCourses: { ko: '강의 디자인으로 이동', en: 'Go to Course Design' },
-  loading: { ko: '프로그램 목록을 불러오는 중...', en: 'Loading programs...' },
-  error: { ko: '프로그램 목록을 불러오는데 실패했습니다', en: 'Failed to load programs' },
+  loading: { ko: '과정 목록을 불러오는 중...', en: 'Loading programs...' },
+  error: { ko: '과정 목록을 불러오는데 실패했습니다', en: 'Failed to load programs' },
   retry: { ko: '다시 시도', en: 'Retry' },
   view: { ko: '상세보기', en: 'View' },
   edit: { ko: '수정', en: 'Edit' },
@@ -64,21 +64,21 @@ const t = {
   notSet: { ko: '미설정', en: 'Not set' },
   hours: { ko: '시간', en: 'hours' },
   confirmSubmit: {
-    ko: '이 프로그램을 검토 신청하시겠습니까?',
+    ko: '이 과정을 검토 신청하시겠습니까?',
     en: 'Submit this program for review?',
   },
   confirmDelete: {
-    ko: '이 프로그램을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+    ko: '이 과정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
     en: 'Delete this program? This action cannot be undone.',
   },
   submitSuccess: {
-    ko: '프로그램이 검토 신청되었습니다.',
+    ko: '과정이 검토 신청되었습니다.',
     en: 'Program submitted for review.',
   },
-  deleteSuccess: { ko: '프로그램이 삭제되었습니다.', en: 'Program deleted.' },
+  deleteSuccess: { ko: '과정이 삭제되었습니다.', en: 'Program deleted.' },
   flowGuideTitle: { ko: '강의 개설 절차', en: 'Course Creation Process' },
   flowStep1: { ko: "'강의 디자인'에서 강의 콘텐츠를 구성하세요", en: 'Design your course content in Course Design' },
-  flowStep2: { ko: '완성된 강의로 프로그램 개설을 신청하세요', en: 'Submit your completed course for program creation' },
+  flowStep2: { ko: '완성된 강의로 과정 개설을 신청하세요', en: 'Submit your completed course for program creation' },
   flowStep3: { ko: "관리자 승인 후 '강의 운영'에서 수강생을 관리할 수 있습니다", en: 'After approval, manage students in Course Operations' },
 };
 

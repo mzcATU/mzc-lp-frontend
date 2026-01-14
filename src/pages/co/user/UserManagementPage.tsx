@@ -131,10 +131,10 @@ const t = {
   subInstructor: { ko: '보조강사', en: 'Sub' },
   noAssignments: { ko: '강의 배정 이력이 없습니다.', en: 'No teaching assignments.' },
   // CourseRole
-  courseRoles: { ko: '프로그램 역할', en: 'Program Roles' },
-  ownedPrograms: { ko: '소유 프로그램', en: 'Owned Programs' },
+  courseRoles: { ko: '과정 역할', en: 'Program Roles' },
+  ownedPrograms: { ko: '소유 과정', en: 'Owned Programs' },
   revenueShare: { ko: '수익 분배', en: 'Revenue Share' },
-  noCourseRoles: { ko: '부여된 프로그램 역할이 없습니다.', en: 'No program roles assigned.' },
+  noCourseRoles: { ko: '부여된 과정 역할이 없습니다.', en: 'No program roles assigned.' },
   courseRoleDesigner: { ko: 'Designer', en: 'Designer' },
   courseRoleOwner: { ko: 'Owner', en: 'Owner' },
   courseRoleInstructor: { ko: 'Instructor', en: 'Instructor' },
@@ -1266,7 +1266,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
                 </section>
               )}
 
-              {/* 프로그램 역할 섹션 (CourseRole) */}
+              {/* 과정 역할 섹션 (CourseRole) */}
               {!isDetailLoading && userDetail?.courseRoles && userDetail.courseRoles.length > 0 && (
                 <section className="border-t border-border pt-6">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-5">

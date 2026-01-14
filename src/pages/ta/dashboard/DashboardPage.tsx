@@ -117,7 +117,7 @@ export function DashboardPage() {
               variant="success"
             />
             <AdminStatsCard
-              title="전체 프로그램"
+              title="전체 과정"
               value={programStats.total.toLocaleString()}
               subtitle={`승인 ${programStats.approved}개`}
               icon={BookOpen}
@@ -183,10 +183,10 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* 프로그램 현황 */}
+        {/* 과정 현황 */}
         <Card>
           <CardHeader>
-            <CardTitle>프로그램 현황</CardTitle>
+            <CardTitle>과정 현황</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (

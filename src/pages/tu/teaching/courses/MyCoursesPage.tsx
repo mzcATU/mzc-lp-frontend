@@ -62,7 +62,7 @@ const t = {
   loading: { ko: '강의 목록을 불러오는 중...', en: 'Loading courses...' },
   error: { ko: '강의 목록을 불러오는데 실패했습니다', en: 'Failed to load courses' },
   retry: { ko: '다시 시도', en: 'Retry' },
-  applyProgram: { ko: '프로그램 신청', en: 'Apply Program' },
+  applyProgram: { ko: '과정 신청', en: 'Apply Program' },
   applySelected: { ko: '선택 항목 일괄 신청', en: 'Apply Selected' },
   selected: { ko: '개 선택됨', en: ' selected' },
   selectAll: { ko: '전체 선택', en: 'Select All' },
@@ -113,7 +113,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       return;
     }
 
-    if (!confirm(`${selectedCourseIds.size}개의 강의를 프로그램으로 일괄 신청하시겠습니까?`)) return;
+    if (!confirm(`${selectedCourseIds.size}개의 강의를 과정으로 일괄 신청하시겠습니까?`)) return;
 
     const selectedResponses = (coursesData?.content || []).filter((c) =>
       selectedCourseIds.has(String(c.courseId))
@@ -128,7 +128,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       const failCount = results.filter((r) => !r.success).length;
 
       if (failCount === 0) {
-        alert(`${successCount}개의 프로그램 신청이 완료되었습니다.`);
+        alert(`${successCount}개의 과정 신청이 완료되었습니다.`);
       } else {
         const failedTitles = results
           .filter((r) => !r.success)

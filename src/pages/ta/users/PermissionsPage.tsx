@@ -56,7 +56,7 @@ const permissionMatrix: {
       { id: 'courses.create', name: '강좌 생성', description: '새 강좌 생성', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
       { id: 'courses.edit', name: '강좌 수정', description: '강좌 정보 수정', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
       { id: 'courses.delete', name: '강좌 삭제', description: '강좌 삭제', roles: { TENANT_ADMIN: true, OPERATOR: false, USER: false } },
-      { id: 'programs.approve', name: '프로그램 승인', description: '프로그램 승인/반려', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
+      { id: 'programs.approve', name: '과정 승인', description: '과정 승인/반려', roles: { TENANT_ADMIN: true, OPERATOR: true, USER: false } },
     ],
   },
   {
