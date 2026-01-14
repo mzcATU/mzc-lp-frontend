@@ -30,24 +30,24 @@ interface ProgramDetailPageProps {
 const t = {
   back: { ko: '목록으로', en: 'Back to List' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
-  error: { ko: '프로그램을 불러오는데 실패했습니다.', en: 'Failed to load program.' },
-  notFound: { ko: '프로그램을 찾을 수 없습니다.', en: 'Program not found.' },
+  error: { ko: '과정을 불러오는데 실패했습니다.', en: 'Failed to load program.' },
+  notFound: { ko: '과정을 찾을 수 없습니다.', en: 'Program not found.' },
   edit: { ko: '수정', en: 'Edit' },
   submit: { ko: '검토 신청', en: 'Submit for Review' },
   delete: { ko: '삭제', en: 'Delete' },
   confirmSubmit: {
-    ko: '이 프로그램을 검토 신청하시겠습니까?',
+    ko: '이 과정을 검토 신청하시겠습니까?',
     en: 'Submit this program for review?',
   },
   confirmDelete: {
-    ko: '이 프로그램을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+    ko: '이 과정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
     en: 'Delete this program? This action cannot be undone.',
   },
   submitSuccess: {
-    ko: '프로그램이 검토 신청되었습니다.',
+    ko: '과정이 검토 신청되었습니다.',
     en: 'Program submitted for review.',
   },
-  deleteSuccess: { ko: '프로그램이 삭제되었습니다.', en: 'Program deleted.' },
+  deleteSuccess: { ko: '과정이 삭제되었습니다.', en: 'Program deleted.' },
 };
 
 const statusBadgeVariant: Record<

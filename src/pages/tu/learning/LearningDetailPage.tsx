@@ -454,7 +454,7 @@ export function LearningDetailPage() {
               </div>
             ) : (
               <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                {snapshotId === 0 ? '프로그램에 스냅샷이 연결되지 않았습니다.' : '커리큘럼이 없습니다.'}
+                {snapshotId === 0 ? '과정에 스냅샷이 연결되지 않았습니다.' : '커리큘럼이 없습니다.'}
               </div>
             )}
           </CardContent>

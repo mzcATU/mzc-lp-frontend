@@ -66,7 +66,7 @@ const t = {
   reject: { ko: '반려', en: 'Reject' },
   approving: { ko: '승인 중...', en: 'Approving...' },
   rejecting: { ko: '반려 중...', en: 'Rejecting...' },
-  confirmApprove: { ko: '이 프로그램을 승인하시겠습니까?', en: 'Approve this program?' },
+  confirmApprove: { ko: '이 과정을 승인하시겠습니까?', en: 'Approve this program?' },
   confirmReject: { ko: '반려 사유를 입력하세요.', en: 'Enter rejection reason.' },
   rejectReasonRequired: { ko: '반려 사유를 입력해주세요.', en: 'Rejection reason is required.' },
   rejectReasonPlaceholder: { ko: '반려 사유를 입력하세요...', en: 'Enter rejection reason...' },

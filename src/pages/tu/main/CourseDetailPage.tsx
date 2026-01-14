@@ -857,7 +857,7 @@ export function CourseDetailPage() {
           {/* 강의 소개 탭 */}
           {activeTab === 'intro' && (
             <>
-              {/* 프로그램 설명 */}
+              {/* 과정 설명 */}
               {courseTime.program?.description && (
                 <section className="mb-12">
                   <h2

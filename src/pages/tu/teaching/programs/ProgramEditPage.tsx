@@ -19,28 +19,28 @@ interface ProgramEditPageProps {
 }
 
 const t = {
-  pageTitle: { ko: '프로그램 수정', en: 'Edit Program' },
-  pageSubtitle: { ko: '프로그램 정보를 수정하고 검토 신청할 수 있습니다', en: 'Edit program information and submit for review' },
+  pageTitle: { ko: '과정 수정', en: 'Edit Program' },
+  pageSubtitle: { ko: '과정 정보를 수정하고 검토 신청할 수 있습니다', en: 'Edit program information and submit for review' },
   back: { ko: '취소', en: 'Cancel' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
-  error: { ko: '프로그램을 불러오는데 실패했습니다.', en: 'Failed to load program.' },
-  notFound: { ko: '프로그램을 찾을 수 없습니다.', en: 'Program not found.' },
+  error: { ko: '과정을 불러오는데 실패했습니다.', en: 'Failed to load program.' },
+  notFound: { ko: '과정을 찾을 수 없습니다.', en: 'Program not found.' },
   notEditable: {
-    ko: '이 프로그램은 수정할 수 없는 상태입니다.',
+    ko: '이 과정은 수정할 수 없는 상태입니다.',
     en: 'This program cannot be edited.',
   },
   saveAndSubmit: { ko: '저장 후 신청', en: 'Save & Submit' },
   submit: { ko: '신청하기', en: 'Submit' },
   submitting: { ko: '신청 중...', en: 'Submitting...' },
   saving: { ko: '저장 중...', en: 'Saving...' },
-  submitSuccess: { ko: '프로그램이 검토 신청되었습니다.', en: 'Program submitted for review.' },
+  submitSuccess: { ko: '과정이 검토 신청되었습니다.', en: 'Program submitted for review.' },
   submitFailed: { ko: '신청에 실패했습니다.', en: 'Failed to submit.' },
-  titleRequired: { ko: '프로그램명을 입력해주세요.', en: 'Please enter a program title.' },
+  titleRequired: { ko: '과정명을 입력해주세요.', en: 'Please enter a program title.' },
   currentStatus: { ko: '현재 상태', en: 'Current Status' },
   statusDraft: { ko: '임시저장', en: 'Draft' },
   statusRejected: { ko: '반려됨', en: 'Rejected' },
   confirmSubmit: {
-    ko: '프로그램을 검토 신청하시겠습니까?\n신청 후에는 승인 전까지 수정이 불가능합니다.',
+    ko: '과정을 검토 신청하시겠습니까?\n신청 후에는 승인 전까지 수정이 불가능합니다.',
     en: 'Submit this program for review?\nYou cannot edit it until it is approved.'
   },
   saveFirst: { ko: '저장', en: 'Save' },
@@ -86,7 +86,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
   const updateSnapshotMutation = useUpdateSnapshot();
   const submitProgramMutation = useSubmitMyProgram();
 
-  // 프로그램 데이터로 폼 초기화
+  // 과정 데이터로 폼 초기화
   useEffect(() => {
     if (program) {
       setFormData({
@@ -133,7 +133,7 @@ export function ProgramEditPage({ language = 'ko' }: Readonly<ProgramEditPagePro
     }
 
     try {
-      // 프로그램 저장
+      // 과정 저장
       if (hasChanges) {
         await updateProgramMutation.mutateAsync({
           id,

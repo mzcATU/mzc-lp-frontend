@@ -39,8 +39,8 @@ const t = {
 
   // 개설 신청 현황
   programSectionTitle: { ko: '개설 신청 현황', en: 'Submission Status' },
-  programSectionSubtitle: { ko: '프로그램 신청 및 승인 상태', en: 'Program submission and approval status' },
-  emptyProgram: { ko: '신청한 프로그램이 없습니다', en: 'No program submissions' },
+  programSectionSubtitle: { ko: '과정 신청 및 승인 상태', en: 'Program submission and approval status' },
+  emptyProgram: { ko: '신청한 과정이 없습니다', en: 'No program submissions' },
   statusPending: { ko: '검토중', en: 'Pending' },
   statusApproved: { ko: '승인됨', en: 'Approved' },
   statusRejected: { ko: '반려됨', en: 'Rejected' },

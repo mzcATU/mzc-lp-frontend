@@ -22,7 +22,7 @@ const t = {
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   noAssignments: { ko: '진행 중인 강의가 없습니다', en: 'No active courses found' },
-  noAssignmentsDesc: { ko: '승인된 프로그램에 강사로 배정되면 여기에 표시됩니다', en: 'Courses will appear here when you are assigned as an instructor' },
+  noAssignmentsDesc: { ko: '승인된 과정에 강사로 배정되면 여기에 표시됩니다', en: 'Courses will appear here when you are assigned as an instructor' },
   goToCourseDesign: { ko: '강의 디자인으로 이동', en: 'Go to Course Design' },
   myAssignments: { ko: '진행 중인 강의', en: 'Active Courses' },
   courseStats: { ko: '차수별 통계', en: 'Course Statistics' },

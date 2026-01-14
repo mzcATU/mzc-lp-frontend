@@ -19,12 +19,12 @@ interface ProgramBasicInfoFormProps {
 
 const t = {
   basicInfo: { ko: '기본 정보', en: 'Basic Information' },
-  title: { ko: '프로그램명', en: 'Program Title' },
-  titlePlaceholder: { ko: '프로그램 제목을 입력하세요', en: 'Enter program title' },
+  title: { ko: '과정명', en: 'Program Title' },
+  titlePlaceholder: { ko: '과정 제목을 입력하세요', en: 'Enter program title' },
   titleRequired: { ko: '* 필수', en: '* Required' },
   description: { ko: '설명', en: 'Description' },
   descriptionPlaceholder: {
-    ko: '프로그램에 대한 설명을 입력하세요',
+    ko: '과정에 대한 설명을 입력하세요',
     en: 'Enter program description',
   },
   thumbnailUrl: { ko: '썸네일 URL', en: 'Thumbnail URL' },
@@ -61,7 +61,7 @@ export function ProgramBasicInfoForm({
         <h2 className="text-base font-medium text-text-primary mb-6">{getText('basicInfo')}</h2>
 
         <div className="space-y-5">
-          {/* 프로그램명 */}
+          {/* 과정명 */}
           <div>
             <Label className="text-text-primary mb-2 flex items-center gap-2">
               {getText('title')}

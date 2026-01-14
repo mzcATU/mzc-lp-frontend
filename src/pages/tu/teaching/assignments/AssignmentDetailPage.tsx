@@ -46,7 +46,7 @@ const t = {
   backToList: { ko: '목록으로', en: 'Back to List' },
   assignmentDetail: { ko: '배정 상세', en: 'Assignment Detail' },
   courseInfo: { ko: '차수 정보', en: 'Course Information' },
-  programName: { ko: '프로그램', en: 'Program' },
+  programName: { ko: '과정', en: 'Program' },
   timeName: { ko: '차수명', en: 'Session Name' },
   period: { ko: '교육 기간', en: 'Period' },
   stats: { ko: '수강 현황', en: 'Enrollment Statistics' },
