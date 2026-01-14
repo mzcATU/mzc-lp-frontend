@@ -3,7 +3,7 @@
  */
 
 // LO(Learning Object) 유형
-export type LOType = 'video' | 'image' | 'document' | 'external-link';
+export type LOType = 'video' | 'audio' | 'image' | 'document' | 'external-link';
 
 // 진도율 완료 기준
 export type CompletionCriteria = 'button-click' | '90-percent' | '100-percent';
