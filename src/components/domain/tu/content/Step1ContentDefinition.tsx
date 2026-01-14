@@ -1,5 +1,5 @@
 import { useState, useRef, DragEvent } from 'react';
-import { FileText, FileVideo, Link as LinkIcon, X, Tag, Image as ImageIcon, Upload, File, ExternalLink } from 'lucide-react';
+import { FileText, FileVideo, Link as LinkIcon, X, Tag, Image as ImageIcon, Upload, File, ExternalLink, Music } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Input, Textarea, NativeSelect } from '@/components/common';
 import { inputVariants } from '@/styles/form';
@@ -16,6 +16,12 @@ const loTypeCards = [
     icon: FileVideo,
     title: '비디오',
     description: '동영상 콘텐츠를 업로드합니다',
+  },
+  {
+    type: 'audio' as LOType,
+    icon: Music,
+    title: '오디오',
+    description: 'MP3, WAV 등 오디오를 업로드합니다',
   },
   {
     type: 'image' as LOType,
@@ -178,17 +184,21 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
     const acceptedFormats =
       data.loType === 'video'
         ? '.mp4,.mov,.avi,.mkv'
-        : data.loType === 'image'
-          ? '.jpg,.jpeg,.png,.gif,.webp'
-          : '.pdf,.txt,.doc,.docx,.ppt,.pptx';
+        : data.loType === 'audio'
+          ? '.mp3,.wav,.m4a,.flac'
+          : data.loType === 'image'
+            ? '.jpg,.jpeg,.png,.gif,.webp'
+            : '.pdf,.txt,.doc,.docx,.ppt,.pptx';
     const formatText =
       data.loType === 'video'
         ? 'MP4, MOV, AVI, MKV (최대 500MB)'
-        : data.loType === 'image'
-          ? 'JPG, PNG, GIF, WEBP (최대 20MB)'
-          : 'PDF, TXT, DOC, DOCX, PPT, PPTX (최대 100MB)';
+        : data.loType === 'audio'
+          ? 'MP3, WAV, M4A, FLAC (최대 100MB)'
+          : data.loType === 'image'
+            ? 'JPG, PNG, GIF, WEBP (최대 20MB)'
+            : 'PDF, TXT, DOC, DOCX, PPT, PPTX (최대 100MB)';
     const uploadTitle =
-      data.loType === 'video' ? '비디오 파일 업로드' : data.loType === 'image' ? '이미지 파일 업로드' : '문서 파일 업로드';
+      data.loType === 'video' ? '비디오 파일 업로드' : data.loType === 'audio' ? '오디오 파일 업로드' : data.loType === 'image' ? '이미지 파일 업로드' : '문서 파일 업로드';
 
     return (
       <div>
