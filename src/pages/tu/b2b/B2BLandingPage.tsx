@@ -57,7 +57,7 @@ function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
     instructor: instructorName,
     image: thumbnailUrl,
     tags,
-    category: courseTime.program?.categoryName,
+    category: courseTime.program?.categoryName ?? undefined,
     deliveryType: DELIVERY_TYPE_LABELS[courseTime.deliveryType] || courseTime.deliveryType,
     level: courseTime.program?.level ? PROGRAM_LEVEL_LABELS[courseTime.program.level] : undefined,
     studentCount: courseTime.currentEnrollment,
