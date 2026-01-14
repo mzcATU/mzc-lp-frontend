@@ -310,7 +310,7 @@ export function B2BLandingHeader() {
                         </div>
 
                         <div className={`py-2 border-t space-y-1 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-                          <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.landing.settings}</p>
+                          <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>설정</p>
                           <Link
                             to={prefixPath('/tu/b2b/mypage/profile')}
                             onClick={() => setShowDropdown(false)}
@@ -321,10 +321,10 @@ export function B2BLandingHeader() {
                             }`}
                           >
                             <Shield className="w-4 h-4" />
-                            {t.landing.profileSecurity}
+                            프로필
                           </Link>
                           <Link
-                            to={prefixPath('/tu/b2b/mypage/settings')}
+                            to={prefixPath('/tu/b2b/mypage/settings/preferences')}
                             onClick={() => setShowDropdown(false)}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                               isDark
@@ -333,7 +333,7 @@ export function B2BLandingHeader() {
                             }`}
                           >
                             <Bell className="w-4 h-4" />
-                            {t.landing.notifications}
+                            환경설정
                           </Link>
                         </div>
 
