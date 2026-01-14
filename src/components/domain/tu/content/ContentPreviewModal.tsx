@@ -183,6 +183,24 @@ export function ContentPreviewModal({
             </div>
           );
         }
+        // 텍스트 파일인 경우 iframe으로 표시
+        if (previewData?.contentType?.includes('text')) {
+          return (
+            <div className="flex flex-col space-y-3">
+              <iframe
+                src={blobUrl}
+                className="w-full h-[70vh] rounded-lg border border-border bg-bg-default"
+                title="텍스트 미리보기"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" className="border border-border" onClick={handleDownload}>
+                  <Download size={16} />
+                  다운로드
+                </Button>
+              </div>
+            </div>
+          );
+        }
         // 기타 문서는 다운로드 유도
         return (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
