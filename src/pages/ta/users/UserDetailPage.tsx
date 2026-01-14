@@ -36,8 +36,18 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/Avatar';
 import { Progress } from '@/components/common/Progress';
 import { Skeleton } from '@/components/common/Skeleton';
-import { useUser, useUpdateUser, useUpdateUserRole, useDeleteUser } from '@/hooks/ta';
+import { Checkbox } from '@/components/common/Checkbox';
+import { useUser, useUpdateUser, useUpdateUserRoles, useDeleteUser, useUserRoles } from '@/hooks/ta';
 import type { UserStatus, SystemRole, UserDetail, UserEnrollment, UserActivityLog } from '@/types/admin';
+
+// 역할 정의 (우선순위 순)
+const SYSTEM_ROLES: { value: SystemRole; label: string; description: string }[] = [
+  { value: 'TENANT_ADMIN', label: '테넌트 관리자', description: '테넌트의 모든 설정과 사용자를 관리' },
+  { value: 'OPERATOR', label: '운영자', description: '과정 및 차수 운영 관리' },
+  { value: 'DESIGNER', label: '강의 개설자', description: '강의 콘텐츠 제작 및 관리' },
+  { value: 'INSTRUCTOR', label: '강사', description: '배정된 강의 진행 및 학습자 관리' },
+  { value: 'USER', label: '일반 사용자', description: '기본 학습자 역할' },
+];
 
 // Mock 데이터
 const MOCK_USER: UserDetail = {
@@ -86,6 +96,7 @@ interface UserFormState {
   position: string;
   status: UserStatus;
   systemRole: SystemRole;
+  systemRoles: SystemRole[];  // 다중 역할 지원
   createdAt: string;
   lastLoginAt: string;
   stats: {
@@ -100,7 +111,7 @@ interface UserFormState {
 }
 
 // API 데이터를 폼 상태로 변환
-const toFormState = (data: UserDetail): UserFormState => ({
+const toFormState = (data: UserDetail, roles?: SystemRole[]): UserFormState => ({
   name: data.name,
   email: data.email,
   phone: data.phone || '',
@@ -108,6 +119,7 @@ const toFormState = (data: UserDetail): UserFormState => ({
   position: data.position || '',
   status: data.status,
   systemRole: data.systemRole,
+  systemRoles: roles || [data.systemRole],  // API에서 받은 roles 또는 기본 역할
   createdAt: data.createdAt,
   lastLoginAt: data.lastLoginAt || '',
   stats: data.stats || {
@@ -202,8 +214,9 @@ export function UserDetailPage() {
 
   // API 호출
   const { data: userData, isLoading, isError, error, refetch } = useUser(userId);
+  const { data: userRolesData, refetch: refetchRoles } = useUserRoles(userId);
   const updateMutation = useUpdateUser();
-  const updateRoleMutation = useUpdateUserRole();
+  const updateRoleMutation = useUpdateUserRoles();
   const deleteMutation = useDeleteUser();
 
   // 실제 데이터 또는 Mock 데이터
@@ -218,9 +231,9 @@ export function UserDetailPage() {
   // 데이터 로드 시 폼 상태 초기화
   useEffect(() => {
     if (effectiveData) {
-      setFormState(toFormState(effectiveData));
+      setFormState(toFormState(effectiveData, userRolesData));
     }
-  }, [effectiveData]);
+  }, [effectiveData, userRolesData]);
 
   const handleSave = async () => {
     if (!formState) return;
@@ -246,22 +259,40 @@ export function UserDetailPage() {
     if (formState) setFormState({ ...formState, status });
   };
 
-  const handleRoleChange = async (role: SystemRole) => {
-    if (formState) {
-      const previousRole = formState.systemRole;
-      setFormState({ ...formState, systemRole: role });
-      try {
-        await updateRoleMutation.mutateAsync({
-          id: userId,
-          request: { systemRole: role },
-        });
-        toast.success('역할이 성공적으로 변경되었습니다.');
-        refetch(); // 데이터 다시 가져오기
-      } catch {
-        // 실패 시 이전 역할로 롤백
-        setFormState({ ...formState, systemRole: previousRole });
-        toast.error('역할 변경에 실패했습니다.');
+  // 역할 토글 핸들러 (체크박스용)
+  const handleRoleToggle = async (role: SystemRole, checked: boolean) => {
+    if (!formState) return;
+
+    const previousRoles = [...formState.systemRoles];
+    let newRoles: SystemRole[];
+
+    if (checked) {
+      // 역할 추가
+      newRoles = [...formState.systemRoles, role];
+    } else {
+      // 역할 제거 (최소 1개는 유지)
+      if (formState.systemRoles.length <= 1) {
+        toast.error('최소 하나의 역할이 필요합니다.');
+        return;
       }
+      newRoles = formState.systemRoles.filter(r => r !== role);
+    }
+
+    // 낙관적 업데이트
+    setFormState({ ...formState, systemRoles: newRoles });
+
+    try {
+      await updateRoleMutation.mutateAsync({
+        id: userId,
+        request: { roles: newRoles },
+      });
+      toast.success('역할이 성공적으로 변경되었습니다.');
+      refetch();
+      refetchRoles();
+    } catch {
+      // 실패 시 롤백
+      setFormState({ ...formState, systemRoles: previousRoles });
+      toast.error('역할 변경에 실패했습니다.');
     }
   };
 
@@ -333,10 +364,12 @@ export function UserDetailPage() {
               <AvatarFallback className="text-2xl">{formState.name.slice(0, 2)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h2 className="text-xl font-bold">{formState.name}</h2>
                 <StatusBadge status={formState.status} />
-                <RoleBadge role={formState.systemRole} />
+                {formState.systemRoles.map((role) => (
+                  <RoleBadge key={role} role={role} />
+                ))}
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div className="flex items-center gap-2 text-text-secondary">
@@ -483,26 +516,41 @@ export function UserDetailPage() {
 
               <div className="border-t pt-6">
                 <h4 className="font-medium mb-4">권한 설정</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="role">시스템 역할</Label>
-                    <Select value={formState.systemRole} onValueChange={(v) => handleRoleChange(v as SystemRole)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USER">일반 사용자</SelectItem>
-                        <SelectItem value="INSTRUCTOR">강사</SelectItem>
-                        <SelectItem value="DESIGNER">강의 개설자</SelectItem>
-                        <SelectItem value="OPERATOR">운영자</SelectItem>
-                        <SelectItem value="TENANT_ADMIN">테넌트 관리자</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-text-secondary">
-                      역할에 따라 접근 가능한 기능이 달라집니다.
-                    </p>
-                  </div>
+                <p className="text-sm text-text-secondary mb-4">
+                  사용자에게 여러 역할을 부여할 수 있습니다. 역할에 따라 접근 가능한 기능이 달라집니다.
+                </p>
+                <div className="space-y-3">
+                  {SYSTEM_ROLES.map((role) => (
+                    <div
+                      key={role.value}
+                      className="flex items-start gap-3 p-3 rounded-lg border hover:bg-bg-secondary transition-colors"
+                    >
+                      <Checkbox
+                        id={`role-${role.value}`}
+                        checked={formState.systemRoles.includes(role.value)}
+                        onCheckedChange={(checked) => handleRoleToggle(role.value, checked === true)}
+                        disabled={updateRoleMutation.isPending}
+                      />
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`role-${role.value}`}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          {role.label}
+                        </label>
+                        <p className="text-xs text-text-secondary mt-0.5">
+                          {role.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                {updateRoleMutation.isPending && (
+                  <div className="flex items-center gap-2 mt-3 text-sm text-text-secondary">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    역할 변경 중...
+                  </div>
+                )}
               </div>
 
               {/* 위험 영역 */}

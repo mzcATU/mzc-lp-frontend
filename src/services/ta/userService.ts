@@ -11,8 +11,11 @@ import type {
   UserStats,
   UpdateUserDetailRequest,
   UpdateUserRoleRequest,
+  UpdateUserRolesRequest,
+  UserRolesResponse,
   BulkCreateUsersRequest,
   BulkCreateUsersResponse,
+  SystemRole,
 } from '@/types/admin';
 
 export const userService = {
@@ -63,12 +66,49 @@ export const userService = {
     return data;
   },
 
-  /** 사용자 역할 변경 */
+  /** 사용자 역할 변경 (단일 역할 - 기존 API) */
   async updateRole(id: number, request: UpdateUserRoleRequest): Promise<AdminUser> {
     // 백엔드는 PUT 메서드와 { role: TenantRole } 형식을 기대
     const { data } = await axiosInstance.put<AdminUser>(
       API_ENDPOINTS.USERS.ROLE(id),
       { role: request.systemRole }
+    );
+    return data;
+  },
+
+  // ============================================
+  // User Roles (1:N 다중 역할)
+  // ============================================
+
+  /** 사용자 역할 목록 조회 */
+  async getUserRoles(id: number): Promise<SystemRole[]> {
+    const { data } = await axiosInstance.get<SystemRole[]>(
+      API_ENDPOINTS.USERS.ROLES(id)
+    );
+    return data;
+  },
+
+  /** 사용자 역할 전체 업데이트 (1:N) */
+  async updateUserRoles(id: number, request: UpdateUserRolesRequest): Promise<UserRolesResponse> {
+    const { data } = await axiosInstance.put<UserRolesResponse>(
+      API_ENDPOINTS.USERS.ROLES(id),
+      request
+    );
+    return data;
+  },
+
+  /** 사용자에게 역할 추가 */
+  async addUserRole(id: number, role: SystemRole): Promise<UserRolesResponse> {
+    const { data } = await axiosInstance.post<UserRolesResponse>(
+      API_ENDPOINTS.USERS.ROLE_BY_NAME(id, role)
+    );
+    return data;
+  },
+
+  /** 사용자에서 역할 제거 */
+  async removeUserRole(id: number, role: SystemRole): Promise<UserRolesResponse> {
+    const { data } = await axiosInstance.delete<UserRolesResponse>(
+      API_ENDPOINTS.USERS.ROLE_BY_NAME(id, role)
     );
     return data;
   },

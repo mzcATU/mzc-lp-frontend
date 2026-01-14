@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MoreHorizontal, Eye, Edit, Trash2, Mail, UserPlus, Users, Loader2, Upload, FileSpreadsheet, Download, AlertCircle, CheckCircle2, X, FileDown } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
@@ -51,13 +51,15 @@ import { Skeleton } from '@/components/common/Skeleton';
 import { Progress } from '@/components/common/Progress';
 import { Badge } from '@/components/common/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/common/Tabs';
+import { Checkbox } from '@/components/common/Checkbox';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
   useUsers,
   useUpdateUser,
-  useUpdateUserRole,
+  useUpdateUserRoles,
   useDeleteUser,
   useBulkCreateUsers,
+  useUserRoles,
 } from '@/hooks/ta';
 import type { AdminUser, UserStatus, SystemRole, UpdateUserDetailRequest, BulkCreateUsersRequest, BulkCreateUsersResponse } from '@/types/admin';
 import { userService } from '@/services/ta/userService';
@@ -68,8 +70,18 @@ interface UserFormData {
   department?: string;
   position?: string;
   systemRole: SystemRole;
+  systemRoles: SystemRole[];  // 다중 역할 지원
   status?: UserStatus;
 }
+
+// 역할 정의 (우선순위 순)
+const SYSTEM_ROLES: { value: SystemRole; label: string; description: string }[] = [
+  { value: 'TENANT_ADMIN', label: '테넌트 관리자', description: '테넌트의 모든 설정과 사용자를 관리' },
+  { value: 'OPERATOR', label: '운영자', description: '과정 및 차수 운영 관리' },
+  { value: 'DESIGNER', label: '강의 개설자', description: '강의 콘텐츠 제작 및 관리' },
+  { value: 'INSTRUCTOR', label: '강사', description: '배정된 강의 진행 및 학습자 관리' },
+  { value: 'USER', label: '일반 사용자', description: '기본 학습자 역할' },
+];
 
 interface BulkCreateFormData {
   emailPrefix: string;
@@ -136,13 +148,17 @@ export function UsersPage() {
   });
 
   const updateMutation = useUpdateUser();
-  const updateRoleMutation = useUpdateUserRole();
+  const updateRolesMutation = useUpdateUserRoles();
   const deleteMutation = useDeleteUser();
   const bulkCreateMutation = useBulkCreateUsers();
+
+  // 선택한 사용자의 역할 조회 (다이얼로그 열릴 때)
+  const { data: selectedUserRoles, refetch: refetchUserRoles } = useUserRoles(selectedUser?.id || 0);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<UserFormData>({
     defaultValues: {
       systemRole: 'USER',
+      systemRoles: ['USER'],
     },
   });
 
@@ -163,6 +179,13 @@ export function UsersPage() {
   });
 
   const users = usersData?.content || [];
+
+  // 사용자 역할 데이터가 로드되면 form에 반영
+  useEffect(() => {
+    if (selectedUserRoles && selectedUserRoles.length > 0 && isEditDialogOpen) {
+      setValue('systemRoles', selectedUserRoles);
+    }
+  }, [selectedUserRoles, isEditDialogOpen, setValue]);
 
   const columns: ColumnDef<AdminUser>[] = [
     {
@@ -191,7 +214,16 @@ export function UsersPage() {
     {
       accessorKey: 'systemRole',
       header: '역할',
-      cell: ({ row }) => <RoleBadge role={row.original.systemRole} />,
+      cell: ({ row }) => {
+        const roles = row.original.roles || [row.original.systemRole];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {roles.map((role) => (
+              <RoleBadge key={role} role={role} />
+            ))}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'organizationName',
@@ -266,8 +298,11 @@ export function UsersPage() {
     setValue('name', user.name);
     setValue('email', user.email);
     setValue('systemRole', user.systemRole);
+    setValue('systemRoles', [user.systemRole]);  // 초기값으로 현재 역할 설정
     setValue('status', user.status);
     setIsEditDialogOpen(true);
+    // 다이얼로그 열리면 사용자의 실제 역할 목록 조회
+    setTimeout(() => refetchUserRoles(), 100);
   };
 
   const handleDelete = async () => {
@@ -295,11 +330,19 @@ export function UsersPage() {
       };
       await updateMutation.mutateAsync({ id: selectedUser.id, request: updateData });
 
-      // 역할이 변경된 경우
-      if (data.systemRole !== selectedUser.systemRole) {
-        await updateRoleMutation.mutateAsync({
+      // 다중 역할 업데이트
+      const currentRoles = selectedUserRoles || [selectedUser.systemRole];
+      const newRoles = data.systemRoles;
+
+      // 역할이 변경된 경우에만 업데이트
+      const rolesChanged =
+        currentRoles.length !== newRoles.length ||
+        !currentRoles.every((r: SystemRole) => newRoles.includes(r));
+
+      if (rolesChanged) {
+        await updateRolesMutation.mutateAsync({
           id: selectedUser.id,
-          request: { systemRole: data.systemRole },
+          request: { roles: newRoles },
         });
       }
 
@@ -765,27 +808,55 @@ export function UsersPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">역할</Label>
-                <Select
-                  value={watch('systemRole')}
-                  onValueChange={(v) => setValue('systemRole', v as SystemRole)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="역할 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USER">일반 사용자</SelectItem>
-                    <SelectItem value="INSTRUCTOR">강사</SelectItem>
-                    <SelectItem value="DESIGNER">강의 개설자</SelectItem>
-                    <SelectItem value="OPERATOR">운영자</SelectItem>
-                    <SelectItem value="TENANT_ADMIN">테넌트 관리자</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>역할</Label>
+                <p className="text-xs text-text-secondary mb-2">
+                  여러 역할을 선택할 수 있습니다. 최소 1개 역할은 필수입니다.
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                  {SYSTEM_ROLES.map((role) => {
+                    const currentRoles = watch('systemRoles') || [];
+                    const isChecked = currentRoles.includes(role.value);
+                    return (
+                      <div
+                        key={role.value}
+                        className="flex items-start gap-3 p-2 rounded hover:bg-bg-secondary transition-colors"
+                      >
+                        <Checkbox
+                          id={`edit-role-${role.value}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setValue('systemRoles', [...currentRoles, role.value]);
+                            } else {
+                              // 최소 1개 역할 유지
+                              if (currentRoles.length <= 1) {
+                                toast.error('최소 하나의 역할이 필요합니다.');
+                                return;
+                              }
+                              setValue('systemRoles', currentRoles.filter((r: SystemRole) => r !== role.value));
+                            }
+                          }}
+                        />
+                        <div className="flex-1">
+                          <label
+                            htmlFor={`edit-role-${role.value}`}
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {role.label}
+                          </label>
+                          <p className="text-xs text-text-secondary">
+                            {role.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">상태</Label>
                 <Select
-                  value={watch('status')}
+                  value={watch('status') || ''}
                   onValueChange={(v) => setValue('status', v as UserStatus)}
                 >
                   <SelectTrigger>
@@ -806,9 +877,9 @@ export function UsersPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={updateMutation.isPending || updateRoleMutation.isPending}
+                disabled={updateMutation.isPending || updateRolesMutation.isPending}
               >
-                {(updateMutation.isPending || updateRoleMutation.isPending) && (
+                {(updateMutation.isPending || updateRolesMutation.isPending) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 수정
