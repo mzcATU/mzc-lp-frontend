@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, Shield, Globe } from 'lucide-react';
+import { Search, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -296,7 +296,7 @@ export function B2BLandingHeader() {
 
                         <div className="py-2 space-y-1">
                           <Link
-                            to={prefixPath('/tu/b2c/mypage')}
+                            to={prefixPath('/tu/b2b/mypage')}
                             onClick={() => setShowDropdown(false)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                               isDark
@@ -310,9 +310,9 @@ export function B2BLandingHeader() {
                         </div>
 
                         <div className={`py-2 border-t space-y-1 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-                          <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.landing.settings}</p>
+                          <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>설정</p>
                           <Link
-                            to={prefixPath('/tu/b2c/mypage/profile')}
+                            to={prefixPath('/tu/b2b/mypage/profile')}
                             onClick={() => setShowDropdown(false)}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                               isDark
@@ -321,10 +321,10 @@ export function B2BLandingHeader() {
                             }`}
                           >
                             <Shield className="w-4 h-4" />
-                            {t.landing.profileSecurity}
+                            프로필
                           </Link>
                           <Link
-                            to={prefixPath('/tu/b2c/mypage/notifications')}
+                            to={prefixPath('/tu/b2b/mypage/settings/preferences')}
                             onClick={() => setShowDropdown(false)}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                               isDark
@@ -333,19 +333,7 @@ export function B2BLandingHeader() {
                             }`}
                           >
                             <Bell className="w-4 h-4" />
-                            {t.landing.notifications}
-                          </Link>
-                          <Link
-                            to={prefixPath('/tu/b2c/mypage/language')}
-                            onClick={() => setShowDropdown(false)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
-                              isDark
-                                ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
-                          >
-                            <Globe className="w-4 h-4" />
-                            {t.landing.languageRegion}
+                            환경설정
                           </Link>
                         </div>
 

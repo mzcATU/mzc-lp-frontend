@@ -1,9 +1,9 @@
 /**
- * MyCommentsPage
- * 내 댓글 목록 페이지 (내가 댓글 단 게시글 목록)
+ * B2BMyActivityPage
+ * B2B 내 활동 페이지 (내가 댓글 단 게시글 목록)
  */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   MessageSquare,
   Heart,
@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Loader2,
   User,
-  MessageCircle,
   ArrowRight,
   Sparkles,
 } from 'lucide-react';
@@ -25,8 +24,7 @@ import { POST_TYPE_LABELS } from '@/types/tu/community.types';
 
 const PAGE_SIZE = 10;
 
-export function MyCommentsPage() {
-  const navigate = useNavigate();
+export function B2BMyActivityPage() {
   const { theme } = useThemeStore();
   const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
@@ -38,7 +36,6 @@ export function MyCommentsPage() {
   const totalPages = data?.totalPages || 0;
   const totalCount = data?.totalCount || 0;
 
-  // 통계 계산
   const totalInteractions = posts.reduce(
     (sum, post) => sum + (post.likeCount || 0) + (post.commentCount || 0),
     0
@@ -84,19 +81,12 @@ export function MyCommentsPage() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                내 댓글
+                내 활동
               </h1>
               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                내가 댓글을 작성한 게시글을 확인하세요
+                내가 작성한 댓글과 활동을 확인하세요
               </p>
             </div>
-            <Button
-              onClick={() => navigate(prefixPath('/tu/b2c/community'))}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              커뮤니티 가기
-            </Button>
           </div>
 
           {/* 통계 카드들 */}
@@ -199,18 +189,11 @@ export function MyCommentsPage() {
             <MessageSquare className={`w-10 h-10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
           </div>
           <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            아직 댓글을 작성한 게시글이 없어요
+            아직 활동 내역이 없어요
           </h3>
-          <p className={`text-sm mb-6 max-w-sm mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            커뮤니티에서 다양한 글에 의견을 남겨보세요
+          <p className={`text-sm max-w-sm mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            강의에서 다양한 활동에 참여해보세요
           </p>
-          <Button
-            onClick={() => navigate(prefixPath('/tu/b2c/community'))}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            커뮤니티 둘러보기
-          </Button>
         </div>
       ) : (
         <div
@@ -222,7 +205,7 @@ export function MyCommentsPage() {
             {posts.map((post) => (
               <Link
                 key={post.id}
-                to={`/tu/b2c/community/${post.id}`}
+                to={prefixPath(`/tu/b2b/courses/${post.id}`)}
                 className={`block p-5 transition-all group ${
                   isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
                 }`}
@@ -406,4 +389,4 @@ export function MyCommentsPage() {
   );
 }
 
-export default MyCommentsPage;
+export default B2BMyActivityPage;

@@ -10,3 +10,6 @@
 
 export { B2BLandingPage } from './B2BLandingPage';
 export { B2BCourseDetailPage } from './B2BCourseDetailPage';
+export { B2BSettingsPage } from './B2BSettingsPage';
+export { B2BPreferencesPage } from './B2BPreferencesPage';
+export { B2BMyActivityPage } from './B2BMyActivityPage';
