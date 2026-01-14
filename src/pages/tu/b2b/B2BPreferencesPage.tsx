@@ -1,6 +1,6 @@
 import { Sun, Moon, Globe, Bell } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
-import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
+import { useLanguageStore } from '@/store/common/languageStore';
 
 interface SettingItemProps {
   icon: React.ReactNode;
@@ -69,7 +69,6 @@ function ToggleSwitch({ checked, onChange, isDark }: ToggleSwitchProps) {
 export function B2BPreferencesPage() {
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
-  const { t } = useTranslation();
   const isDark = theme === 'dark';
 
   return (
