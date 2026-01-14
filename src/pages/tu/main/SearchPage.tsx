@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, ComponentType } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Search,
@@ -16,16 +16,100 @@ import {
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+
+/** 강의 카드 props 인터페이스 */
+interface CourseCardProps {
+  id: number;
+  title: string;
+  instructor: string;
+  image: string;
+  tags: string[];
+  category: string;
+  studentCount: number;
+  // LandingCourseCard 전용
+  price?: string | null;
+  rating?: number;
+  reviewCount?: number;
+  courseBasePath?: string;
+  // 공통 옵션
+  deliveryType?: string;
+  level?: string;
+  classStartDate?: string;
+  isOnDemand?: boolean;
+}
+
+/** SearchPage props */
+interface SearchPageProps {
+  /** 커스텀 헤더 컴포넌트 (B2B 등에서 사용) */
+  HeaderComponent?: ComponentType;
+  /** 로드맵/커뮤니티 탭 표시 여부 (B2B에서는 false) */
+  showRoadmapAndCommunity?: boolean;
+  /** 가격 표시 여부 (B2B에서는 false) */
+  showPrice?: boolean;
+  /** 가격 필터 표시 여부 (B2B에서는 false) */
+  showPriceFilter?: boolean;
+  /** 강의 상세 페이지 기본 경로 (B2B: /tu/b2b/courses) */
+  courseBasePath?: string;
+  /** 페이지 제목 (기본: 통합 검색) */
+  pageTitle?: string;
+  /** 페이지 설명 (기본: 강의, 로드맵, 커뮤니티를 한 번에 검색하세요) */
+  pageDescription?: string;
+  /** 검색 입력란 플레이스홀더 */
+  searchPlaceholder?: string;
+  /** 커스텀 강의 카드 컴포넌트 (B2B에서 B2BCourseCard 사용) */
+  CourseCardComponent?: ComponentType<CourseCardProps>;
+}
 import { LandingCourseCard } from '@/components/landing';
 import { useCourseTimeCatalog, useRoadmapExplore, useCommunityPosts } from '@/hooks/tu';
 import { useSubdomainPath } from '@/hooks/common';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import type { RoadmapExploreItem } from '@/types/tu/roadmapExplore.types';
 import type { CommunityPost } from '@/types/tu/community.types';
+import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
 import { ROADMAP_LEVEL_LABELS } from '@/types/tu/roadmapExplore.types';
+import { DELIVERY_TYPE_LABELS, PROGRAM_LEVEL_LABELS } from '@/types/tu/courseTimeCatalog.types';
 
 // API 사용 여부 (false면 더미 데이터 사용)
-const USE_API = false;
+const USE_API = true;
+
+/**
+ * CourseTime API 데이터를 카드 컴포넌트 props로 변환
+ */
+function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse): CourseCardProps {
+  const mainInstructor = courseTime.instructors.find((i) => i.role === 'MAIN');
+  const instructorName = mainInstructor?.name || courseTime.instructors[0]?.name || '';
+
+  const tags: string[] = [];
+  if (courseTime.isOnDemand) {
+    tags.push('상시모집');
+  } else if (courseTime.status === 'RECRUITING') {
+    tags.push('모집중');
+  } else if (courseTime.status === 'ONGOING') {
+    tags.push('진행중');
+  }
+
+  const thumbnailUrl =
+    courseTime.program?.thumbnailUrl ||
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
+
+  return {
+    id: courseTime.id,
+    title: courseTime.title,
+    instructor: instructorName,
+    image: thumbnailUrl,
+    tags,
+    category: courseTime.program?.categoryName ?? '',
+    deliveryType: DELIVERY_TYPE_LABELS[courseTime.deliveryType] || courseTime.deliveryType,
+    level: courseTime.program?.level ? PROGRAM_LEVEL_LABELS[courseTime.program.level] : undefined,
+    studentCount: courseTime.currentEnrollment,
+    classStartDate: courseTime.classStartDate,
+    isOnDemand: courseTime.isOnDemand,
+    // LandingCourseCard 전용 (선택적)
+    rating: 0,
+    reviewCount: 0,
+    price: null,
+  };
+}
 
 // 더미 강의 카드 데이터 (LandingCourseCard용)
 interface MockCourseCard {
@@ -867,7 +951,19 @@ const DEFAULT_FILTERS: Filters = {
   communityCategory: 'all',
 };
 
-export function SearchPage() {
+export function SearchPage({
+  HeaderComponent = LandingHeader,
+  showRoadmapAndCommunity = true,
+  showPrice = true,
+  showPriceFilter = true,
+  courseBasePath,
+  pageTitle = '통합 검색',
+  pageDescription = '강의, 로드맵, 커뮤니티를 한 번에 검색하세요',
+  searchPlaceholder = '강의, 로드맵, 커뮤니티 글을 검색하세요',
+  CourseCardComponent,
+}: SearchPageProps = {}) {
+  // 사용할 카드 컴포넌트 결정 (커스텀 또는 기본 LandingCourseCard)
+  const CardComponent = CourseCardComponent || LandingCourseCard;
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<SearchTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1103,26 +1199,31 @@ export function SearchPage() {
     setSearchParams({});
   };
 
-  // 탭 데이터
-  const tabs = [
-    { id: 'all' as const, label: '전체', count: totalResults },
-    { id: 'courses' as const, label: '강의', count: totalCourses, icon: BookOpen },
-    { id: 'roadmaps' as const, label: '로드맵', count: totalRoadmaps, icon: Map },
-    { id: 'community' as const, label: '커뮤니티', count: totalCommunity, icon: MessageSquare },
-  ];
+  // 탭 데이터 (B2B에서는 로드맵/커뮤니티 제외)
+  const tabs = showRoadmapAndCommunity
+    ? [
+        { id: 'all' as const, label: '전체', count: totalResults },
+        { id: 'courses' as const, label: '강의', count: totalCourses, icon: BookOpen },
+        { id: 'roadmaps' as const, label: '로드맵', count: totalRoadmaps, icon: Map },
+        { id: 'community' as const, label: '커뮤니티', count: totalCommunity, icon: MessageSquare },
+      ]
+    : [
+        { id: 'all' as const, label: '전체', count: totalCourses },
+        { id: 'courses' as const, label: '강의', count: totalCourses, icon: BookOpen },
+      ];
 
   return (
     <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-      <LandingHeader />
+      <HeaderComponent />
 
       <main className="w-full px-4 md:px-8 lg:px-16 py-12">
         {/* 검색 헤더 */}
         <div className="mb-8">
           <h1 className={`text-3xl md:text-4xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            통합 검색
+            {pageTitle}
           </h1>
           <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            강의, 로드맵, 커뮤니티를 한 번에 검색하세요
+            {pageDescription}
           </p>
 
           {/* 검색바 */}
@@ -1136,7 +1237,7 @@ export function SearchPage() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="강의, 로드맵, 커뮤니티 글을 검색하세요"
+              placeholder={searchPlaceholder}
               className={`w-full rounded-xl pl-12 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-[#6778ff] focus:border-transparent transition-all ${
                 isDark
                   ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500'
@@ -1251,8 +1352,8 @@ export function SearchPage() {
                   />
                 )}
 
-                {/* 강의: 가격 */}
-                {activeTab === 'courses' && (
+                {/* 강의: 가격 (B2B에서는 숨김) */}
+                {showPriceFilter && activeTab === 'courses' && (
                   <FilterDropdown
                     label="가격"
                     value={filters.price}
@@ -1361,27 +1462,37 @@ export function SearchPage() {
                       </div>
                     )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                      {(courses as MockCourseCard[]).map((course) => (
-                        <LandingCourseCard
-                          key={course.id}
-                          id={course.id}
-                          title={course.title}
-                          instructor={course.instructor}
-                          price={paidModeEnabled ? course.price : null}
-                          rating={course.rating}
-                          reviewCount={course.reviewCount}
-                          studentCount={course.studentCount}
-                          image={course.image}
-                          tags={course.tags}
-                          category={course.category}
-                        />
-                      ))}
+                      {(USE_API ? courses : (courses as MockCourseCard[])).map((course) => {
+                        // API 데이터인 경우 변환, 더미 데이터는 그대로 사용
+                        const cardProps = USE_API
+                          ? convertCourseTimeToCardProps(course as CourseTimeCatalogResponse)
+                          : {
+                              id: (course as MockCourseCard).id,
+                              title: (course as MockCourseCard).title,
+                              instructor: (course as MockCourseCard).instructor,
+                              price: showPrice && paidModeEnabled ? (course as MockCourseCard).price : null,
+                              rating: (course as MockCourseCard).rating,
+                              reviewCount: (course as MockCourseCard).reviewCount,
+                              studentCount: (course as MockCourseCard).studentCount,
+                              image: (course as MockCourseCard).image,
+                              tags: (course as MockCourseCard).tags,
+                              category: (course as MockCourseCard).category,
+                            };
+
+                        return (
+                          <CardComponent
+                            key={cardProps.id}
+                            {...cardProps}
+                            courseBasePath={courseBasePath}
+                          />
+                        );
+                      })}
                     </div>
                   </section>
                 )}
 
-                {/* 로드맵 섹션 */}
-                {(activeTab === 'all' || activeTab === 'roadmaps') && roadmaps.length > 0 && (
+                {/* 로드맵 섹션 (B2B에서는 숨김) */}
+                {showRoadmapAndCommunity && (activeTab === 'all' || activeTab === 'roadmaps') && roadmaps.length > 0 && (
                   <section>
                     {activeTab === 'all' && (
                       <div className="flex items-center justify-between mb-6">
@@ -1407,8 +1518,8 @@ export function SearchPage() {
                   </section>
                 )}
 
-                {/* 커뮤니티 섹션 */}
-                {(activeTab === 'all' || activeTab === 'community') && communityPosts.length > 0 && (
+                {/* 커뮤니티 섹션 (B2B에서는 숨김) */}
+                {showRoadmapAndCommunity && (activeTab === 'all' || activeTab === 'community') && communityPosts.length > 0 && (
                   <section>
                     {activeTab === 'all' && (
                       <div className="flex items-center justify-between mb-6">

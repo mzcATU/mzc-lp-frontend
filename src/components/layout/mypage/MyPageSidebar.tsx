@@ -41,11 +41,12 @@ interface MyPageSidebarProps {
   isDarkMode?: boolean;
   language?: 'ko' | 'en';
   subdomain?: string;
+  menuData?: MenuItem[];
 }
 
 type ViewMode = 'instructor' | 'learner';
 
-export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
+export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: MyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
@@ -62,6 +63,9 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
 
   // 브랜딩 설정 + 기능 설정을 기반으로 메뉴 필터링
   const filteredMenuData = useMemo((): MenuItem[] => {
+    // 외부에서 메뉴 데이터가 전달된 경우 해당 데이터 사용
+    const baseMenuData = externalMenuData || myPageMenuData;
+
     // 1. 브랜딩 설정에서 visible: false인 항목 찾기
     const hiddenIds = new Set<string>();
     if (sidebarSettings?.items && sidebarSettings.items.length > 0) {
@@ -90,13 +94,13 @@ export function MyPageSidebar({ onMenuItemClick }: MyPageSidebarProps) {
     }
 
     // 3. 숨겨진 항목 필터링
-    return myPageMenuData
+    return baseMenuData
       .filter((item) => !hiddenIds.has(item.id))
       .map((item) => ({
         ...item,
         subItems: item.subItems?.filter((sub) => !hiddenIds.has(sub.id)),
       }));
-  }, [sidebarSettings, communityEnabled, userCourseCreationEnabled]);
+  }, [sidebarSettings, communityEnabled, userCourseCreationEnabled, externalMenuData]);
 
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();

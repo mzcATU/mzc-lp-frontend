@@ -20,6 +20,7 @@ export { TenantUserSidebar } from './tu/TenantUserSidebar';
 
 // MyPage (B2C)
 export { MyPageLayout } from './mypage/MyPageLayout';
+export { B2BMyPageLayout } from './mypage/B2BMyPageLayout';
 export { MyPageSidebar } from './mypage/MyPageSidebar';
 
 // MyPage (B2B)

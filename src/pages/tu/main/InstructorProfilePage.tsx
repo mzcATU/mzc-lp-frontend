@@ -2,7 +2,7 @@
  * InstructorProfilePage
  * 강사 프로필 상세 페이지
  */
-import { useState } from 'react';
+import { useState, ComponentType } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Star,
@@ -24,6 +24,18 @@ import {
 import { LandingHeader, LandingFooter } from '@/components/landing';
 import { Button } from '@/components/common';
 import { useThemeStore } from '@/store/common/themeStore';
+
+/** InstructorProfilePage props */
+interface InstructorProfilePageProps {
+  /** 커스텀 헤더 컴포넌트 (B2B 등에서 사용) */
+  HeaderComponent?: ComponentType;
+  /** 가격 표시 여부 (B2B에서는 false) */
+  showPrice?: boolean;
+  /** 강의 상세 페이지 기본 경로 (B2B: /tu/b2b/courses) */
+  courseBasePath?: string;
+  /** 로드맵 상세 페이지 기본 경로 */
+  roadmapBasePath?: string;
+}
 import {
   useInstructorProfile,
   useInstructorCourses,
@@ -198,7 +210,12 @@ const dummyReviews: InstructorReview[] = [
 
 type TabType = 'about' | 'courses' | 'roadmaps' | 'reviews';
 
-export function InstructorProfilePage() {
+export function InstructorProfilePage({
+  HeaderComponent = LandingHeader,
+  showPrice = true,
+  courseBasePath = '/tu/b2c/courses',
+  roadmapBasePath = '/tu/b2c/roadmaps'
+}: InstructorProfilePageProps = {}) {
   const { instructorId } = useParams<{ instructorId: string }>();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -272,7 +289,7 @@ export function InstructorProfilePage() {
   if (isLoading) {
     return (
       <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
         </div>
@@ -284,7 +301,7 @@ export function InstructorProfilePage() {
   if (!instructor) {
     return (
       <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>강사를 찾을 수 없습니다.</p>
           <Link to="/tu/b2c" className="mt-4 text-[#6778ff] hover:underline">
@@ -305,7 +322,7 @@ export function InstructorProfilePage() {
 
   return (
     <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
-      <LandingHeader />
+      <HeaderComponent />
 
       {/* 커버 이미지 */}
       <div className="relative h-48 md:h-64 lg:h-80">
@@ -484,7 +501,7 @@ export function InstructorProfilePage() {
                   return (
                     <Link
                       key={course.id}
-                      to={`/tu/b2c/courses/${course.id}`}
+                      to={`${courseBasePath}/${course.id}`}
                       className="group block h-full"
                     >
                       <div className={`h-full card-hover rounded-xl overflow-hidden border ${
@@ -566,9 +583,11 @@ export function InstructorProfilePage() {
                           </div>
 
                           <div className="pt-2 flex items-center justify-between">
-                            <span className={`font-bold text-lg ${isDark ? 'text-[#6bc2f0]' : 'text-[#4C2D9A]'}`}>
-                              ₩{course.price.toLocaleString()}
-                            </span>
+                            {showPrice && (
+                              <span className={`font-bold text-lg ${isDark ? 'text-[#6bc2f0]' : 'text-[#4C2D9A]'}`}>
+                                ₩{course.price.toLocaleString()}
+                              </span>
+                            )}
                             <div className="flex gap-1.5">
                               <span className={`text-[10px] px-2 py-1 rounded-full ${
                                 isDark
@@ -595,7 +614,7 @@ export function InstructorProfilePage() {
             {roadmaps?.map((roadmap) => (
               <Link
                 key={roadmap.id}
-                to={`/tu/b2c/roadmaps/${roadmap.id}`}
+                to={`${roadmapBasePath}/${roadmap.id}`}
                 className={`block rounded-2xl p-6 card-hover cursor-pointer group border transition-all ${
                   isDark
                     ? 'glass border-white/10'
