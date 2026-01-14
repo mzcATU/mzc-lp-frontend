@@ -23,8 +23,8 @@ export interface TenantIdentifier {
 export function extractSubdomainFromPath(): string | null {
   const pathname = window.location.pathname;
 
-  // 경로 기반 서브도메인 패턴: /{subdomain}/(tu|ta|to)/...
-  const regex = /^\/([^/]+)\/(tu|ta|to)(\/|$)/;
+  // 경로 기반 서브도메인 패턴: /{subdomain}/(tu|ta|co)/...
+  const regex = /^\/([^/]+)\/(tu|ta|co)(\/|$)/;
   const match = regex.exec(pathname);
   const subdomain = match?.[1];
 

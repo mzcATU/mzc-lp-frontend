@@ -18,7 +18,7 @@ import type { ApiResponse, PageResponse } from '@/types/common';
 function getSubdomainFromUrl(): string | null {
   const pathname = window.location.pathname;
   // 패턴: /:subdomain/tu/... 또는 /:subdomain/ta/... 등
-  const match = pathname.match(/^\/([^/]+)\/(?:tu|ta|to|sa)\//);
+  const match = pathname.match(/^\/([^/]+)\/(?:tu|ta|co)\//);
   if (match) {
     return match[1];
   }

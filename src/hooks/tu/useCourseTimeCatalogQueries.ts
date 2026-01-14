@@ -4,14 +4,22 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { courseTimeCatalogService } from '@/services/tu/courseTimeCatalogService';
+import { extractTenantIdentifier } from '@/utils/tenantUtils';
 import type { CourseTimeCatalogParams } from '@/types/tu/courseTimeCatalog.types';
 
-// Query Keys
+// 현재 서브도메인 가져오기
+function getCurrentSubdomain(): string | null {
+  const tenant = extractTenantIdentifier();
+  return tenant?.type === 'subdomain' ? tenant.identifier : null;
+}
+
+// Query Keys (서브도메인 포함)
 export const courseTimeCatalogKeys = {
   all: ['courseTimeCatalog'] as const,
-  catalog: (params?: CourseTimeCatalogParams) =>
-    [...courseTimeCatalogKeys.all, 'catalog', params] as const,
-  detail: (id: number) => [...courseTimeCatalogKeys.all, 'detail', id] as const,
+  catalog: (params?: CourseTimeCatalogParams, subdomain?: string | null) =>
+    [...courseTimeCatalogKeys.all, 'catalog', subdomain, params] as const,
+  detail: (id: number, subdomain?: string | null) =>
+    [...courseTimeCatalogKeys.all, 'detail', subdomain, id] as const,
 };
 
 /**
@@ -20,8 +28,9 @@ export const courseTimeCatalogKeys = {
  * @param enabled 쿼리 활성화 여부
  */
 export function useCourseTimeCatalog(params?: CourseTimeCatalogParams, enabled = true) {
+  const subdomain = getCurrentSubdomain();
   return useQuery({
-    queryKey: courseTimeCatalogKeys.catalog(params),
+    queryKey: courseTimeCatalogKeys.catalog(params, subdomain),
     queryFn: () => courseTimeCatalogService.getCatalog(params),
     enabled,
     staleTime: 1000 * 60 * 5, // 5분
@@ -34,8 +43,9 @@ export function useCourseTimeCatalog(params?: CourseTimeCatalogParams, enabled =
  * @param enabled 쿼리 활성화 여부
  */
 export function useCourseTimeDetail(id: number, enabled = true) {
+  const subdomain = getCurrentSubdomain();
   return useQuery({
-    queryKey: courseTimeCatalogKeys.detail(id),
+    queryKey: courseTimeCatalogKeys.detail(id, subdomain),
     queryFn: () => courseTimeCatalogService.getDetail(id),
     enabled: enabled && !!id,
     staleTime: 1000 * 60 * 5, // 5분
