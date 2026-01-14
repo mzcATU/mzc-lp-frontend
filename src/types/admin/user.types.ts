@@ -203,3 +203,17 @@ export interface EmployeeMatchResult {
   matchType?: 'email' | 'name_and_department';  // 매칭 방식
   confidence?: number;              // 매칭 신뢰도 (0-100)
 }
+
+// 다중 역할 관리 (1:N)
+export interface UpdateUserRolesRequest {
+  roles: SystemRole[];
+}
+
+export interface UserRolesResponse {
+  userId: number;
+  email: string;
+  name: string;
+  roles: SystemRole[];
+  primaryRole: SystemRole;
+  updatedAt: string;
+}

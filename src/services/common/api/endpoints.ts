@@ -21,6 +21,8 @@ export const API_ENDPOINTS = {
     ME_LEARNING_STATS: '/users/me/learning-stats',
     BY_ID: (id: number) => `/users/${id}`,
     ROLE: (id: number) => `/users/${id}/role`,
+    ROLES: (id: number) => `/users/${id}/roles`,
+    ROLE_BY_NAME: (id: number, role: string) => `/users/${id}/roles/${role}`,
     STATUS: (id: number) => `/users/${id}/status`,
     COURSE_ROLES: (id: number) => `/users/${id}/course-roles`,
     COURSE_ROLE_BY_ID: (userId: number, roleId: number) => `/users/${userId}/course-roles/${roleId}`,

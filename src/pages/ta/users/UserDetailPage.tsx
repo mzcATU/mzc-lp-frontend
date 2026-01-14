@@ -36,8 +36,20 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/common/Avatar';
 import { Progress } from '@/components/common/Progress';
 import { Skeleton } from '@/components/common/Skeleton';
-import { useUser, useUpdateUser, useUpdateUserRole, useDeleteUser } from '@/hooks/ta';
+// TODO: 다중 역할 UI 구현 시 사용
+// import { Checkbox } from '@/components/common/Checkbox';
+import { useUser, useUpdateUser, useUpdateUserRoles, useDeleteUser } from '@/hooks/ta';
 import type { UserStatus, SystemRole, UserDetail, UserEnrollment, UserActivityLog } from '@/types/admin';
+
+// TODO: 다중 역할 UI 구현 시 사용
+// 역할 정의 (우선순위 순)
+// const SYSTEM_ROLES: { value: SystemRole; label: string; description: string }[] = [
+//   { value: 'TENANT_ADMIN', label: '테넌트 관리자', description: '테넌트의 모든 설정과 사용자를 관리' },
+//   { value: 'OPERATOR', label: '운영자', description: '과정 및 차수 운영 관리' },
+//   { value: 'DESIGNER', label: '강의 개설자', description: '강의 콘텐츠 제작 및 관리' },
+//   { value: 'INSTRUCTOR', label: '강사', description: '배정된 강의 진행 및 학습자 관리' },
+//   { value: 'USER', label: '일반 사용자', description: '기본 학습자 역할' },
+// ];
 
 // Mock 데이터
 const MOCK_USER: UserDetail = {
@@ -203,7 +215,7 @@ export function UserDetailPage() {
   // API 호출
   const { data: userData, isLoading, isError, error, refetch } = useUser(userId);
   const updateMutation = useUpdateUser();
-  const updateRoleMutation = useUpdateUserRole();
+  const updateRoleMutation = useUpdateUserRoles();
   const deleteMutation = useDeleteUser();
 
   // 실제 데이터 또는 Mock 데이터
@@ -253,7 +265,7 @@ export function UserDetailPage() {
       try {
         await updateRoleMutation.mutateAsync({
           id: userId,
-          request: { systemRole: role },
+          request: { roles: [role] },
         });
         toast.success('역할이 성공적으로 변경되었습니다.');
         refetch(); // 데이터 다시 가져오기
