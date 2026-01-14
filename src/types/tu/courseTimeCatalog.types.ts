@@ -101,6 +101,13 @@ export interface CourseTimeCatalogResponse {
   instructors: InstructorSummaryResponse[];
 }
 
+/** 강의(Course) 요약 응답 */
+export interface CourseSummaryResponse {
+  id: number;
+  title: string;
+  description: string | null;
+}
+
 /** 차수 상세 응답 */
 export interface CourseTimePublicDetailResponse {
   id: number;
@@ -122,6 +129,7 @@ export interface CourseTimePublicDetailResponse {
   minProgressForCompletion: number | null;
   locationInfo: string | null;
   program: ProgramSummaryResponse | null;
+  course: CourseSummaryResponse | null;
   curriculum: CurriculumItemResponse[];
   instructors: InstructorSummaryResponse[];
 }
