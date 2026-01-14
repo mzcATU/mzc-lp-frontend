@@ -19,7 +19,6 @@ import {
   InstructorProfilePage,
 } from '@/pages/tu';
 import {
-  SettingsPage,
   SettingsSecurityPage,
   SettingsNotificationsPage,
   SettingsAppearancePage,
