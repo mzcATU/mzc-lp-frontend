@@ -11,6 +11,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { usePopularInstructors, useCourseTimeCatalog, usePublicLayout } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
+import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import { useBrandingApply } from '@/hooks/tu/useBrandingApply';
 import { useAuth } from '@/hooks/common/auth/useAuth';
 import { useSubdomainPath } from '@/hooks/common';
@@ -90,15 +91,17 @@ const CATEGORY_OPTIONS: CategoryOption[] = [
 
 /**
  * CourseTime 데이터를 LandingCourseCard props로 변환
+ * @param courseTime CourseTime 데이터
+ * @param paidModeEnabled 유료 모드 활성화 여부 (false면 가격 숨김)
  */
-function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse) {
+function convertCourseTimeToCardProps(courseTime: CourseTimeCatalogResponse, paidModeEnabled: boolean = true) {
   // 주강사 찾기
   const mainInstructor = courseTime.instructors.find((i) => i.role === 'MAIN');
   const instructorName = mainInstructor?.name || courseTime.instructors[0]?.name || '';
 
-  // 가격 포맷팅 (유료 → 금액, 무료 → 표시 안함)
+  // 가격 포맷팅 (유료 모드 + 유료 강의 → 금액, 그 외 → 표시 안함)
   const price = courseTime.isFree ? 0 : parseFloat(courseTime.price);
-  const priceDisplay = (!courseTime.isFree && price > 0) ? `₩${price.toLocaleString()}` : null;
+  const priceDisplay = (paidModeEnabled && !courseTime.isFree && price > 0) ? `₩${price.toLocaleString()}` : null;
 
   // 태그 생성 (무료 태그 제거)
   const tags: string[] = [];
@@ -147,6 +150,10 @@ export function LandingPage() {
   const isDark = theme === 'dark';
   const { branding } = useTenantBranding();
 
+  // 기능 설정
+  const { isFeatureEnabled } = useTenantFeatures();
+  const paidModeEnabled = isFeatureEnabled('paidModeEnabled');
+
   // 브랜딩 CSS 적용
   useBrandingApply(branding);
 
@@ -179,9 +186,9 @@ export function LandingPage() {
   const { data: instructorsData, isLoading: isInstructorsLoading } = usePopularInstructors(4, USE_INSTRUCTOR_API);
   const popularInstructors = USE_INSTRUCTOR_API ? (instructorsData?.instructors ?? []) : dummyPopularInstructors;
 
-  // CourseTime 데이터를 카드 props로 변환
+  // CourseTime 데이터를 카드 props로 변환 (paidModeEnabled 전달)
   const courseTimes = courseTimeData?.content || [];
-  const courses = courseTimes.map(convertCourseTimeToCardProps);
+  const courses = courseTimes.map((ct) => convertCourseTimeToCardProps(ct, paidModeEnabled));
 
   // 현재 선택된 카테고리 정보 가져오기
   const activeCategory = categoryOptions.find((c) => c.id === activeCategoryId);

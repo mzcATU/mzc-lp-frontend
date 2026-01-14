@@ -37,6 +37,25 @@ interface UploadFileOptions {
   downloadable?: boolean;
 }
 
+// 일괄 업로드 옵션
+interface BulkUploadOptions {
+  folderId?: number;
+  completionCriteria?: CompletionCriteria;
+  downloadable?: boolean;
+}
+
+// 일괄 업로드 응답
+interface BulkUploadResponse {
+  totalCount: number;
+  successCount: number;
+  failCount: number;
+  successItems: ContentResponse[];
+  failedItems: {
+    fileName: string;
+    errorMessage: string;
+  }[];
+}
+
 export const contentService = {
   // 파일 업로드
   async uploadFile(file: File, options?: UploadFileOptions): Promise<ContentResponse> {
@@ -86,6 +105,36 @@ export const contentService = {
     const { data } = await axiosInstance.post<ContentResponse>(
       API_ENDPOINTS.CONTENTS.EXTERNAL_LINK,
       request
+    );
+    return data;
+  },
+
+  // 다중 파일 일괄 업로드 (최대 10개)
+  async bulkUploadFiles(files: File[], options?: BulkUploadOptions): Promise<BulkUploadResponse> {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    if (options?.folderId) {
+      formData.append('folderId', String(options.folderId));
+    }
+    if (options?.completionCriteria) {
+      formData.append('completionCriteria', options.completionCriteria);
+    }
+    if (options?.downloadable !== undefined) {
+      formData.append('downloadable', String(options.downloadable));
+    }
+
+    const { data } = await axiosInstance.post<BulkUploadResponse>(
+      API_ENDPOINTS.CONTENTS.BULK_UPLOAD,
+      formData,
+      {
+        headers: {
+          'Content-Type': undefined,
+        },
+        timeout: 600000, // 10분 (대용량 파일 다중 업로드용)
+      }
     );
     return data;
   },

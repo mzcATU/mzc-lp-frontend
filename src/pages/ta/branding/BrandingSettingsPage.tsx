@@ -54,6 +54,12 @@ import {
   CheckCircle,
   Circle,
   Square,
+  Globe,
+  Megaphone,
+  Library,
+  UserCheck,
+  Zap,
+  CreditCard,
   type LucideIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
@@ -69,7 +75,9 @@ import {
   useUpdateLayoutSettings,
   useUpdateExtendedBrandingSettings,
 } from '@/hooks/ta/useBrandingQueries';
+import { myPageMenuData, courseOperatorMenuData } from '@/config/sidebar-menus';
 import type { UpdateTenantFeaturesRequest } from '@/services/ta/tenantFeaturesService';
+import type { MenuItem } from '@/types';
 
 // 사용 가능한 아이콘 목록
 const availableIcons = [
@@ -103,6 +111,11 @@ const availableIcons = [
   { value: 'check-circle', label: 'Check Circle' },
   { value: 'circle', label: 'Circle' },
   { value: 'square', label: 'Square' },
+  { value: 'globe', label: 'Globe' },
+  { value: 'megaphone', label: 'Megaphone' },
+  { value: 'library', label: 'Library' },
+  { value: 'user-check', label: 'User Check' },
+  { value: 'zap', label: 'Zap' },
 ];
 
 // 아이콘 문자열 -> 컴포넌트 매핑
@@ -137,6 +150,103 @@ const iconMap: Record<string, LucideIcon> = {
   'check-circle': CheckCircle,
   'circle': Circle,
   'square': Square,
+  'globe': Globe,
+  'megaphone': Megaphone,
+  'library': Library,
+  'user-check': UserCheck,
+  'zap': Zap,
+};
+
+// LucideIcon -> 문자열 역매핑
+const iconToString = (icon: LucideIcon): string => {
+  for (const [key, value] of Object.entries(iconMap)) {
+    if (value === icon) return key;
+  }
+  return 'circle'; // fallback
+};
+
+// MenuItem을 브랜딩 사이드바 아이템으로 변환
+const convertMenuToBrandingItem = (item: MenuItem): {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  visible: boolean;
+  children?: { id: string; label: string; url: string; icon?: string; visible: boolean }[];
+} => ({
+  id: item.id,
+  label: item.label.ko,
+  url: item.path || '',
+  icon: iconToString(item.icon),
+  visible: true,
+  children: item.subItems?.map(sub => ({
+    id: sub.id,
+    label: sub.label.ko,
+    url: sub.path || '',
+    icon: sub.icon ? iconToString(sub.icon) : undefined,
+    visible: true,
+  })),
+});
+
+// 실제 메뉴 데이터로부터 사이드바 기본값 생성
+const generateSidebarTUDefault = () => ({
+  enabled: true,
+  items: myPageMenuData.map(convertMenuToBrandingItem),
+});
+
+const generateSidebarCODefault = () => ({
+  enabled: true,
+  items: courseOperatorMenuData.map(convertMenuToBrandingItem),
+});
+
+// 서버에서 저장된 visible 상태를 실제 메뉴 데이터에 병합
+type SidebarItem = {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  visible: boolean;
+  children?: { id: string; label: string; url: string; icon?: string; visible: boolean }[];
+};
+
+const mergeSidebarSettings = (
+  baseItems: SidebarItem[],
+  savedSettings: { enabled?: boolean; items?: SidebarItem[] } | null | undefined
+): { enabled: boolean; items: SidebarItem[] } => {
+  if (!savedSettings) {
+    return { enabled: true, items: baseItems };
+  }
+
+  // 저장된 visible 상태를 ID로 매핑
+  const savedVisibility = new Map<string, boolean>();
+  const collectVisibility = (items: SidebarItem[]) => {
+    for (const item of items) {
+      savedVisibility.set(item.id, item.visible);
+      if (item.children) {
+        for (const child of item.children) {
+          savedVisibility.set(child.id, child.visible);
+        }
+      }
+    }
+  };
+  if (savedSettings.items) {
+    collectVisibility(savedSettings.items);
+  }
+
+  // 기본 메뉴에 저장된 visible 상태 적용
+  const mergedItems = baseItems.map(item => ({
+    ...item,
+    visible: savedVisibility.has(item.id) ? savedVisibility.get(item.id)! : true,
+    children: item.children?.map(child => ({
+      ...child,
+      visible: savedVisibility.has(child.id) ? savedVisibility.get(child.id)! : true,
+    })),
+  }));
+
+  return {
+    enabled: savedSettings.enabled ?? true,
+    items: mergedItems,
+  };
 };
 
 // 브랜딩 설정 타입
@@ -324,59 +434,13 @@ const defaultBrandingSettings: BrandingSettings = {
       github: { enabled: false, url: '' },
     },
   },
-  sidebarTU: {
-    enabled: true,
-    items: [
-      { id: 'tu-1', label: '마이페이지', url: '/tu/b2c/mypage', icon: 'home', visible: true },
-      {
-        id: 'tu-2',
-        label: '내 수강 강의',
-        url: '',
-        icon: 'book-open',
-        visible: true,
-        children: [
-          { id: 'tu-2-1', label: '수강 중인 강의', url: '/tu/b2c/mypage/learning', visible: true },
-          { id: 'tu-2-2', label: '완료한 강의', url: '/tu/b2c/mypage/completed', visible: true },
-          { id: 'tu-2-3', label: '수료증', url: '/tu/b2c/mypage/certificates', visible: true },
-        ],
-      },
-      {
-        id: 'tu-3',
-        label: '내 강의 관리',
-        url: '',
-        icon: 'pen-tool',
-        visible: true,
-        children: [
-          { id: 'tu-3-1', label: '내 강의', url: '/tu/b2c/mypage/teaching', visible: true },
-          { id: 'tu-3-2', label: '강의 개설하기', url: '/tu/teaching/courses/create', visible: true },
-        ],
-      },
-      { id: 'tu-4', label: '설정', url: '/tu/b2c/mypage/settings', icon: 'settings', visible: true },
-    ],
-  },
-  sidebarCO: {
-    enabled: true,
-    items: [
-      { id: 'co-1', label: '대시보드', url: '/co/dashboard', icon: 'layout-dashboard', visible: true },
-      {
-        id: 'co-2',
-        label: '교육 과정 탐색',
-        url: '',
-        icon: 'search',
-        visible: true,
-        children: [
-          { id: 'co-2-1', label: '과정 검색', url: '/co/courses', visible: true },
-          { id: 'co-2-2', label: '과정 등록/수정', url: '/co/courses/pending', visible: true },
-        ],
-      },
-      { id: 'co-3', label: '사용자 관리', url: '/co/users', icon: 'users', visible: true },
-      { id: 'co-4', label: '설정', url: '/co/settings', icon: 'settings', visible: true },
-    ],
-  },
+  sidebarTU: generateSidebarTUDefault(),
+  sidebarCO: generateSidebarCODefault(),
 };
 
 // 기능 설정 항목
 const FEATURES = [
+  { key: 'paidModeEnabled' as const, label: '유료 모드', description: '비활성화 시 모든 강좌가 무료로 표시됩니다 (가격 숨김)', icon: CreditCard },
   { key: 'communityEnabled' as const, label: '커뮤니티 기능', description: '사용자들이 커뮤니티에서 질문하고 토론할 수 있습니다', icon: MessageCircle },
   { key: 'userCourseCreationEnabled' as const, label: '사용자 강좌 생성', description: '일반 사용자가 직접 강좌를 생성할 수 있습니다', icon: BookOpen },
   { key: 'cartEnabled' as const, label: '장바구니 기능', description: '사용자가 강좌를 장바구니에 담을 수 있습니다', icon: ShoppingCart },
@@ -404,7 +468,17 @@ export function BrandingSettingsPage() {
   const [draggedLegalLinkIndex, setDraggedLegalLinkIndex] = useState<number | null>(null);
   const [draggedLandingCategoryIndex, setDraggedLandingCategoryIndex] = useState<number | null>(null);
   const [draggedCourseSectionIndex, setDraggedCourseSectionIndex] = useState<number | null>(null);
-  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(['tu-2', 'tu-3', 'co-2']));
+  // 하위 메뉴가 있는 항목들의 ID를 자동으로 수집
+const getExpandableItemIds = () => {
+    const ids: string[] = [];
+    [...myPageMenuData, ...courseOperatorMenuData].forEach(item => {
+      if (item.subItems && item.subItems.length > 0) {
+        ids.push(item.id);
+      }
+    });
+    return ids;
+  };
+  const [expandedSidebarItems, setExpandedSidebarItems] = useState<Set<string>>(new Set(getExpandableItemIds()));
   const [expandedMenuItems, setExpandedMenuItems] = useState<Set<string>>(new Set(['mypage-home']));
 
   // 브랜딩 설정 API 관련
@@ -417,6 +491,7 @@ export function BrandingSettingsPage() {
   const { data: features, isLoading: featuresLoading } = useTenantFeatures();
   const updateFeaturesMutation = useUpdateTenantFeatures();
   const [featureFormData, setFeatureFormData] = useState<UpdateTenantFeaturesRequest>({
+    paidModeEnabled: true,
     communityEnabled: true,
     userCourseCreationEnabled: false,
     cartEnabled: true,
@@ -428,6 +503,7 @@ export function BrandingSettingsPage() {
   useEffect(() => {
     if (features) {
       setFeatureFormData({
+        paidModeEnabled: features.paidModeEnabled,
         communityEnabled: features.communityEnabled,
         userCourseCreationEnabled: features.userCourseCreationEnabled,
         cartEnabled: features.cartEnabled,
@@ -463,12 +539,15 @@ export function BrandingSettingsPage() {
           landingCategory: (tenantSettings.landingPageSettings as { landingCategory?: typeof prev.landingCategory }).landingCategory || prev.landingCategory,
           courseSections: (tenantSettings.landingPageSettings as { courseSections?: typeof prev.courseSections }).courseSections || prev.courseSections,
         }),
-        ...(tenantSettings.sidebarTUSettings && {
-          sidebarTU: tenantSettings.sidebarTUSettings as typeof prev.sidebarTU,
-        }),
-        ...(tenantSettings.sidebarCOSettings && {
-          sidebarCO: tenantSettings.sidebarCOSettings as typeof prev.sidebarCO,
-        }),
+        // 사이드바 설정: 실제 메뉴 데이터를 기준으로 하고 서버의 visible 상태만 병합
+        sidebarTU: mergeSidebarSettings(
+          generateSidebarTUDefault().items,
+          tenantSettings.sidebarTUSettings as { enabled?: boolean; items?: SidebarItem[] } | null
+        ),
+        sidebarCO: mergeSidebarSettings(
+          generateSidebarCODefault().items,
+          tenantSettings.sidebarCOSettings as { enabled?: boolean; items?: SidebarItem[] } | null
+        ),
         // 헤더 설정 로드
         ...(tenantSettings.headerSettings && {
           header: {
@@ -1836,7 +1915,15 @@ export function BrandingSettingsPage() {
                             </div>
                             <Switch
                               checked={isEnabled}
-                              onCheckedChange={(checked) => setFeatureFormData(prev => ({ ...prev, [feature.key]: checked }))}
+                              disabled={feature.key === 'cartEnabled' && !featureFormData.paidModeEnabled}
+                              onCheckedChange={(checked) => {
+                                // 유료 모드 비활성화 시 장바구니도 함께 비활성화
+                                if (feature.key === 'paidModeEnabled' && !checked) {
+                                  setFeatureFormData(prev => ({ ...prev, [feature.key]: checked, cartEnabled: false }));
+                                } else {
+                                  setFeatureFormData(prev => ({ ...prev, [feature.key]: checked }));
+                                }
+                              }}
                             />
                           </div>
                           {index < FEATURES.length - 1 && <hr className="border-gray-100" />}
