@@ -15,6 +15,7 @@ export interface AdminUser {
   profileImageUrl?: string;
   status: UserStatus;
   systemRole: SystemRole;
+  roles?: SystemRole[];  // 다중 역할 (1:N)
   courseRoles: CourseRoleAssignment[];
   tenantId: number;
   organizationId?: number;

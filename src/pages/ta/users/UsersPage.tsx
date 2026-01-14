@@ -214,7 +214,16 @@ export function UsersPage() {
     {
       accessorKey: 'systemRole',
       header: '역할',
-      cell: ({ row }) => <RoleBadge role={row.original.systemRole} />,
+      cell: ({ row }) => {
+        const roles = row.original.roles || [row.original.systemRole];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {roles.map((role) => (
+              <RoleBadge key={role} role={role} />
+            ))}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'organizationName',
