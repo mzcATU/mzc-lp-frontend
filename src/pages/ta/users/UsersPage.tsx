@@ -856,7 +856,7 @@ export function UsersPage() {
               <div className="space-y-2">
                 <Label htmlFor="status">상태</Label>
                 <Select
-                  value={watch('status')}
+                  value={watch('status') || ''}
                   onValueChange={(v) => setValue('status', v as UserStatus)}
                 >
                   <SelectTrigger>
