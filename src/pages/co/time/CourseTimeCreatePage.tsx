@@ -173,7 +173,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   // Form State
   const [formData, setFormData] = useState<CreateCourseTimeRequest>({
-    programId: 0,
+    courseId: 0, // Phase 3: programId → courseId
     title: '',
     description: '',
     deliveryType: 'ONLINE',
@@ -207,7 +207,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     const newErrors: Partial<Record<keyof CreateCourseTimeRequest, string>> = {};
 
     if (step === 1) {
-      if (!formData.programId) newErrors.programId = getText('required');
+      // Phase 3: programId → courseId
+      if (!formData.courseId) newErrors.courseId = getText('required');
       if (!formData.title.trim()) newErrors.title = getText('required');
     } else if (step === 2) {
       if (!formData.enrollStartDate) newErrors.enrollStartDate = getText('required');
@@ -280,27 +281,27 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
   };
 
-  // 프로그램 선택 핸들러
-  const handleProgramSelect = (programIdStr: string) => {
-    const programId = parseInt(programIdStr);
-    if (!programId) {
+  // 프로그램 선택 핸들러 (Phase 3: programId → courseId)
+  const handleProgramSelect = (courseIdStr: string) => {
+    const courseId = parseInt(courseIdStr);
+    if (!courseId) {
       setSelectedProgram(null);
-      setFormData((prev) => ({ ...prev, programId: 0 }));
+      setFormData((prev) => ({ ...prev, courseId: 0 }));
       return;
     }
 
-    const program = approvedPrograms.find((p) => p.id === programId);
+    const program = approvedPrograms.find((p) => p.id === courseId);
     if (program) {
       setSelectedProgram(program);
       setFormData((prev) => ({
         ...prev,
-        programId: program.id,
+        courseId: program.id,
         // 차수명이 비어있으면 교육 과정명으로 자동 설정
         title: prev.title || program.title,
       }));
       // 에러 클리어
-      if (errors.programId) {
-        setErrors((prev) => ({ ...prev, programId: undefined }));
+      if (errors.courseId) {
+        setErrors((prev) => ({ ...prev, courseId: undefined }));
       }
     }
   };
@@ -565,12 +566,12 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   </div>
                 ) : (
                   <Select
-                    value={formData.programId ? formData.programId.toString() : ''}
+                    value={formData.courseId ? formData.courseId.toString() : ''}
                     onValueChange={handleProgramSelect}
                   >
                     <SelectTrigger
                       id="programSelect"
-                      className={errors.programId ? 'border-status-error' : ''}
+                      className={errors.courseId ? 'border-status-error' : ''}
                     >
                       <SelectValue placeholder={getText('selectProgramPlaceholder')} />
                     </SelectTrigger>
@@ -583,8 +584,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     </SelectContent>
                   </Select>
                 )}
-                {errors.programId && (
-                  <p className="text-sm text-status-error">{errors.programId}</p>
+                {errors.courseId && (
+                  <p className="text-sm text-status-error">{errors.courseId}</p>
                 )}
               </div>
 

@@ -1,5 +1,9 @@
 /**
  * Program API 서비스 (TO - Tenant Operator)
+ *
+ * @deprecated Phase 3: Program 엔티티가 제거되었습니다.
+ * 이 서비스는 내부적으로 Course API를 호출합니다.
+ * 점진적 전환을 위해 유지되며, 새 코드에서는 Course 관련 서비스 사용을 권장합니다.
  */
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
@@ -96,13 +100,17 @@ export const programService = {
     return data;
   },
 
-  /** 검토 대기 프로그램 목록 조회 (OPERATOR용) */
+  /**
+   * 검토 대기 프로그램 목록 조회 (OPERATOR용)
+   * @deprecated Phase 3: Course API의 status 필터 사용
+   */
   async getPendingPrograms(
     params?: Pick<ProgramFilterParams, 'page' | 'size' | 'sort'>
   ): Promise<PageResponse<PendingProgramResponse>> {
+    // Phase 3: /programs/pending → /courses?status=READY
     const { data } = await axiosInstance.get<PageResponse<PendingProgramResponse>>(
-      API_ENDPOINTS.PROGRAMS.PENDING,
-      { params }
+      API_ENDPOINTS.PROGRAMS.BASE,
+      { params: { ...params, status: 'READY' } }
     );
     return data;
   },

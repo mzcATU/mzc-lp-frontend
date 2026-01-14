@@ -1,5 +1,9 @@
 /**
  * TO(Tenant Operator) 프로그램(Program) React Query Hooks
+ *
+ * @deprecated Phase 3: Program 엔티티가 제거되었습니다.
+ * 이 hooks는 내부적으로 Course API를 호출합니다.
+ * 점진적 전환을 위해 유지됩니다.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
@@ -36,13 +40,17 @@ export const usePrograms = (params?: ProgramFilterParams) => {
   });
 };
 
-/** 승인된 프로그램 목록 조회 (차수 생성용) */
+/**
+ * 승인된 프로그램 목록 조회 (차수 생성용)
+ * @deprecated Phase 3: status 'APPROVED' → 'REGISTERED'
+ */
 export const useApprovedPrograms = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
-    queryKey: programKeys.list({ status: 'APPROVED' }),
-    queryFn: () => programService.getPrograms({ status: 'APPROVED', size: 100 }),
+    // Phase 3: APPROVED → REGISTERED (Course의 등록 완료 상태)
+    queryKey: programKeys.list({ status: 'REGISTERED' as ProgramFilterParams['status'] }),
+    queryFn: () => programService.getPrograms({ status: 'REGISTERED' as ProgramFilterParams['status'], size: 100 }),
     enabled: isAuthenticated,
   });
 };

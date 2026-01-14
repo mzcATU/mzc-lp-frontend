@@ -3,6 +3,10 @@
  *
  * TO의 programService와 snapshotService를 사용하여
  * 현재 사용자가 생성한 프로그램을 관리합니다.
+ *
+ * @deprecated Phase 3: Program 엔티티가 제거되었습니다.
+ * 이 hooks는 내부적으로 Course API를 호출합니다.
+ * 점진적 전환을 위해 유지됩니다.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';

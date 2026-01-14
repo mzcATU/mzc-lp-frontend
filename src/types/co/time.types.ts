@@ -53,7 +53,7 @@ export interface CourseTimeResponse {
   allowLateEnrollment: boolean;
   createdAt: string;
   instructors: CourseTimeInstructor[];
-  programTitle: string | null; // 프로그램명
+  courseTitle: string | null; // Phase 3: programTitle → courseTitle
 }
 
 /** 강사 정보 (상세 조회용) */
@@ -68,9 +68,9 @@ export interface CourseTimeInstructor {
 
 /** 차수 상세 조회 응답 (백엔드 CourseTimeDetailResponse 매칭) */
 export interface CourseTimeDetailResponse extends CourseTimeResponse {
-  programId: number | null;
-  programTitle: string | null;
-  programDescription: string | null;
+  courseId: number | null; // Phase 3: programId → courseId
+  courseTitle: string | null; // Phase 3: programTitle → courseTitle
+  courseDescription: string | null; // Phase 3: programDescription → courseDescription
   maxWaitingCount: number | null;
   minProgressForCompletion: number | null;
   locationInfo: string | null;
@@ -101,9 +101,7 @@ export interface PriceResponse {
 
 /** 차수 생성 요청 (백엔드 CreateCourseTimeRequest 매칭) */
 export interface CreateCourseTimeRequest {
-  programId: number;
-  cmCourseId?: number; // deprecated
-  cmCourseVersionId?: number; // deprecated
+  courseId: number; // Phase 3: programId → courseId
   title: string;
   description?: string; // 차수 설명
   deliveryType: DeliveryType;
@@ -152,8 +150,7 @@ export interface CloneCourseTimeRequest {
 
 /** 차수 목록 조회 필터 */
 export interface CourseTimeFilterParams {
-  programId?: number;
-  cmCourseId?: number;
+  courseId?: number; // Phase 3: programId → courseId
   status?: CourseTimeStatus;
   page?: number;
   size?: number;
