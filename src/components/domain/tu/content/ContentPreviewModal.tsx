@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Loader2, ExternalLink, Download, AlertCircle, FileText } from 'lucide-react';
+import { Loader2, ExternalLink, Download, AlertCircle, FileText, Music } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -136,7 +136,7 @@ export function ContentPreviewModal({
         return (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <div className="w-24 h-24 rounded-full bg-bg-secondary flex items-center justify-center">
-              <span className="text-4xl">🎵</span>
+              <Music size={48} className="text-text-secondary" />
             </div>
             <audio src={blobUrl} controls className="w-full max-w-md">
               브라우저가 오디오를 지원하지 않습니다.

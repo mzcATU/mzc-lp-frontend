@@ -53,7 +53,7 @@ export function ContentRegistrationWizard({
     }
 
     // 파일 업로드 검증
-    if (formData.loType === 'video' || formData.loType === 'image' || formData.loType === 'document') {
+    if (formData.loType === 'video' || formData.loType === 'audio' || formData.loType === 'image' || formData.loType === 'document') {
       if (!formData.uploadedFile) {
         alert('파일을 업로드해주세요.');
         return;
