@@ -43,6 +43,7 @@ import {
   FolderTree,
   Map,
   UserSquare2,
+  Bell,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -120,6 +121,7 @@ export const tenantAdminMenuData: MenuItem[] = [
     icon: Server,
     subItems: [
       { id: 'domain-ssl', label: { ko: '도메인 및 SSL 설정', en: 'Domain & SSL Setup' }, icon: Globe, path: '/ta/system/domain' },
+      { id: 'notification-templates', label: { ko: '알림 템플릿 관리', en: 'Notification Templates' }, icon: Bell, path: '/ta/system/notification-templates' },
     ],
   },
   {
