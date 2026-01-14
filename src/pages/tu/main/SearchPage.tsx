@@ -17,7 +17,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 
-/** 강의 카드 props 인터페이스 */
+/** 강의 카드 props 인터페이스 - LandingCourseCard와 B2BCourseCard 공통 */
 interface CourseCardProps {
   id: number;
   title: string;
@@ -26,10 +26,10 @@ interface CourseCardProps {
   tags: string[];
   category: string;
   studentCount: number;
-  // LandingCourseCard 전용
-  price?: string | null;
-  rating?: number;
-  reviewCount?: number;
+  // LandingCourseCard 전용 (필수)
+  price: string | null;
+  rating: number;
+  reviewCount: number;
   courseBasePath?: string;
   // 공통 옵션
   deliveryType?: string;
