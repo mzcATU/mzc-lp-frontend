@@ -451,9 +451,9 @@ export function CourseDetailPage() {
               </h1>
 
               {/* Description */}
-              {courseTime.program?.description && (
+              {(courseTime.course?.description || courseTime.program?.description) && (
                 <p className={`mb-6 leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {courseTime.program.description}
+                  {courseTime.course?.description || courseTime.program?.description}
                 </p>
               )}
 
@@ -858,7 +858,7 @@ export function CourseDetailPage() {
           {activeTab === 'intro' && (
             <>
               {/* 과정 설명 */}
-              {courseTime.program?.description && (
+              {(courseTime.course?.description || courseTime.program?.description) && (
                 <section className="mb-12">
                   <h2
                     className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
@@ -871,7 +871,7 @@ export function CourseDetailPage() {
                     }`}
                   >
                     <p className={`leading-relaxed whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {courseTime.program.description}
+                      {courseTime.course?.description || courseTime.program?.description}
                     </p>
                   </div>
                 </section>
