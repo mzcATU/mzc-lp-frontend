@@ -1,8 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Download,
-  Eye,
   Edit2,
   Save,
   X,
@@ -21,6 +20,7 @@ import {
   AlertCircle,
   Check,
   History,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, BackButton } from '@/components/common';
@@ -34,10 +34,10 @@ import {
   useDeleteContent,
   useContentVersions,
   useRestoreVersion,
+  useContentPreview,
 } from '@/hooks/tu';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { contentService } from '@/services/tu';
-import { ContentPreviewModal } from '@/components/domain/tu/content';
 import type { ContentType, ContentVersionResponse } from '@/types/tu';
 
 // 콘텐츠 타입별 아이콘
@@ -209,8 +209,8 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   const [editFileName, setEditFileName] = useState('');
   const [newFile, setNewFile] = useState<File | null>(null);
 
-  // 미리보기 모달 상태
-  const [previewModal, setPreviewModal] = useState(false);
+  // 인라인 뷰어를 위한 Blob URL 상태
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   // React Query hooks
   const { data: content, isLoading, error } = useContent(contentId);
@@ -221,6 +221,26 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
   const restoreContent = useRestoreContent();
   const deleteContent = useDeleteContent();
   const restoreVersion = useRestoreVersion();
+
+  // 외부 링크 여부 확인
+  const isExternalLink = content?.contentType === 'EXTERNAL_LINK';
+
+  // 외부 링크가 아닌 경우 미리보기 데이터 로드
+  const { data: previewData, isLoading: previewLoading } = useContentPreview(
+    !isExternalLink && content ? contentId : null
+  );
+
+  // Blob URL 생성 및 정리
+  useEffect(() => {
+    if (previewData?.blob) {
+      const url = URL.createObjectURL(previewData.blob);
+      setBlobUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
+        setBlobUrl(null);
+      };
+    }
+  }, [previewData]);
 
   // 편집 모드 시작
   const handleStartEdit = () => {
@@ -378,7 +398,6 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
 
   const IconComponent = contentTypeIcon[content.contentType] || FileText;
   const isArchived = content.status === 'ARCHIVED';
-  const isExternalLink = content.contentType === 'EXTERNAL_LINK';
 
   return (
     <div className="h-full flex flex-col bg-[#FAFAFA]">
@@ -423,29 +442,18 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
               {/* Action Buttons */}
               <div className="flex items-center gap-2">
                 {!isExternalLink && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-gray-600 border-gray-200 hover:bg-gray-50"
-                      onClick={() => setPreviewModal(true)}
-                    >
-                      <Eye size={16} className="mr-2" />
-                      {getText('preview')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-gray-600 border-gray-200 hover:bg-gray-50"
-                      onClick={handleDownload}
-                    >
-                      <Download size={16} className="mr-2" />
-                      {getText('download')}
-                    </Button>
-                  </>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                    onClick={handleDownload}
+                  >
+                    <Download size={16} className="mr-2" />
+                    {getText('download')}
+                  </Button>
                 )}
 
-                <div className="h-6 w-px bg-gray-200 mx-1" />
+                {!isExternalLink && <div className="h-6 w-px bg-gray-200 mx-1" />}
 
                 {isArchived ? (
                   <Button
@@ -492,6 +500,128 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column - Metadata */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Inline Viewer Section */}
+              {!isExternalLink && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="font-semibold text-[#2A2A2A] flex items-center gap-2">
+                      <IconComponent size={18} className="text-gray-400" />
+                      콘텐츠 미리보기
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    {previewLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                        <span className="ml-2 text-gray-500">로딩 중...</span>
+                      </div>
+                    ) : blobUrl ? (
+                      <div>
+                        {content.contentType === 'VIDEO' && (
+                          <video
+                            src={blobUrl}
+                            controls
+                            className="w-full max-h-[60vh] bg-black rounded-lg"
+                          >
+                            브라우저가 비디오를 지원하지 않습니다.
+                          </video>
+                        )}
+                        {content.contentType === 'AUDIO' && (
+                          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
+                              <Music size={48} className="text-gray-400" />
+                            </div>
+                            <audio src={blobUrl} controls className="w-full max-w-md">
+                              브라우저가 오디오를 지원하지 않습니다.
+                            </audio>
+                          </div>
+                        )}
+                        {content.contentType === 'IMAGE' && (
+                          <div className="flex items-center justify-center">
+                            <img
+                              src={blobUrl}
+                              alt={content.originalFileName}
+                              className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                            />
+                          </div>
+                        )}
+                        {content.contentType === 'DOCUMENT' && (
+                          <>
+                            {previewData?.contentType?.includes('pdf') ? (
+                              <object
+                                data={`${blobUrl}#toolbar=1&view=FitH`}
+                                type="application/pdf"
+                                className="w-full h-[70vh] rounded-lg bg-gray-50"
+                              >
+                                <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
+                                  <FileText className="w-16 h-16 text-gray-400" />
+                                  <p className="text-gray-500">PDF를 표시할 수 없습니다.</p>
+                                  <Button onClick={handleDownload}>
+                                    <Download size={16} />
+                                    다운로드
+                                  </Button>
+                                </div>
+                              </object>
+                            ) : previewData?.contentType?.includes('text') ? (
+                              <div className="w-full">
+                                <iframe
+                                  src={blobUrl}
+                                  className="w-full h-[70vh] rounded-lg border border-gray-200 bg-white"
+                                  title="텍스트 미리보기"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                                <FileText className="w-16 h-16 text-gray-400" />
+                                <p className="text-gray-700 text-lg font-medium">{content.originalFileName}</p>
+                                <p className="text-gray-500 text-sm">
+                                  이 문서 형식은 미리보기를 지원하지 않습니다.
+                                </p>
+                                <Button onClick={handleDownload}>
+                                  <Download size={16} />
+                                  다운로드
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-12">
+                        <p className="text-gray-500">콘텐츠를 불러올 수 없습니다.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* External Link Display */}
+              {isExternalLink && content.externalUrl && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="font-semibold text-[#2A2A2A] flex items-center gap-2">
+                      <ExternalLink size={18} className="text-gray-400" />
+                      외부 링크
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                      <ExternalLink className="w-16 h-16 text-gray-400" />
+                      <p className="text-gray-700 text-center">외부 링크 콘텐츠입니다.</p>
+                      <p className="text-sm text-gray-500 text-center break-all max-w-md">
+                        {content.externalUrl}
+                      </p>
+                      <Button
+                        onClick={() => content.externalUrl && window.open(content.externalUrl, '_blank', 'noopener,noreferrer')}
+                      >
+                        <ExternalLink size={16} className="mr-2" />
+                        외부 링크 열기
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Basic Info Card */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -720,15 +850,6 @@ export function ContentDetailPage({ language = 'ko' }: Readonly<ContentDetailPag
           </div>
         </div>
       </div>
-
-      {/* Preview Modal */}
-      <ContentPreviewModal
-        isOpen={previewModal}
-        onClose={() => setPreviewModal(false)}
-        contentId={contentId}
-        contentType={content.contentType}
-        fileName={content.originalFileName}
-      />
     </div>
   );
 }
