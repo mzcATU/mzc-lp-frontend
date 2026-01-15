@@ -18,6 +18,10 @@ export { CourseOperatorSidebar } from './co/CourseOperatorSidebar';
 export { TenantUserLayout } from './tu/TenantUserLayout';
 export { TenantUserSidebar } from './tu/TenantUserSidebar';
 
-// MyPage
+// MyPage (B2C)
 export { MyPageLayout } from './mypage/MyPageLayout';
 export { MyPageSidebar } from './mypage/MyPageSidebar';
+
+// MyPage (B2B)
+export { B2BMyPageLayout } from './mypage/B2BMyPageLayout';
+export { B2BMyPageSidebar } from './mypage/B2BMyPageSidebar';

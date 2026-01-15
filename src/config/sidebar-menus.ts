@@ -37,13 +37,13 @@ import {
   Home,
   Award,
   PenTool,
-  CheckSquare,
   Briefcase,
   MessageSquare,
   Zap,
   FolderTree,
   Map,
   UserSquare2,
+  Bell,
 } from 'lucide-react';
 import type { MenuItem } from '@/types';
 
@@ -121,6 +121,7 @@ export const tenantAdminMenuData: MenuItem[] = [
     icon: Server,
     subItems: [
       { id: 'domain-ssl', label: { ko: '도메인 및 SSL 설정', en: 'Domain & SSL Setup' }, icon: Globe, path: '/ta/system/domain' },
+      { id: 'notification-templates', label: { ko: '알림 템플릿 관리', en: 'Notification Templates' }, icon: Bell, path: '/ta/system/notification-templates' },
     ],
   },
   {
@@ -226,6 +227,10 @@ export const courseOperatorMenuData: MenuItem[] = [
 
 /**
  * Tenant User (TU) 메뉴 - 강사/콘텐츠 제작자 공간
+ *
+ * 역할별 메뉴 구성:
+ * - 강사(INSTRUCTOR): 대시보드 + 내 교수 관리
+ * - 디자이너(DESIGNER): 내 과정(과정 관리) + 내 콘텐츠 (대시보드 없음)
  */
 export const tenantUserMenuData: MenuItem[] = [
   {
@@ -233,28 +238,37 @@ export const tenantUserMenuData: MenuItem[] = [
     label: { ko: '대시보드', en: 'Dashboard' },
     icon: LayoutDashboard,
     path: '/tu/dashboard',
+    roles: ['INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
   },
   {
     id: 'my-teaching',
-    label: { ko: '내 강의', en: 'My Teaching' },
+    label: { ko: '내 교수 관리', en: 'My Teaching' },
     icon: Briefcase,
+    path: '/tu/teaching/assignments',
+    roles: ['INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
+  },
+  {
+    id: 'my-courses',
+    label: { ko: '내 과정', en: 'My Courses' },
+    icon: BookOpen,
     subItems: [
-      { id: 'my-courses', label: { ko: '강의 디자인', en: 'Course Design' }, icon: BookOpen, path: '/tu/teaching/courses' },
-      { id: 'my-assignments', label: { ko: '강의 운영', en: 'Course Operations' }, icon: CheckSquare, path: '/tu/teaching/assignments' },
-      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'] },
+      { id: 'course-management', label: { ko: '과정 관리', en: 'Course Management' }, icon: FolderEdit, path: '/tu/teaching/courses' },
+      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER'] },
     ],
+    roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'],
   },
   {
     id: 'my-content',
     label: { ko: '내 콘텐츠', en: 'My Content' },
     icon: PenTool,
     path: '/tu/teaching/content',
+    roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'],
   },
   // '과정 둘러보기' 메뉴 제거 - 모드 스위처의 '학습자 모드'로 대체
 ];
 
 /**
- * MyPage 메뉴 (일반 사용자용 - 학습자 개인 공간)
+ * MyPage 메뉴 (B2C 일반 사용자용 - 학습자 개인 공간)
  */
 export const myPageMenuData: MenuItem[] = [
   {
@@ -268,7 +282,7 @@ export const myPageMenuData: MenuItem[] = [
     label: { ko: '내 수강 강의', en: 'My Enrollments' },
     icon: BookOpen,
     subItems: [
-      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
+      { id: 'enrolled-courses', label: { ko: '수강중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
       { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2c/mypage/completed' },
       { id: 'certificates', label: { ko: '수료증', en: 'Certificates' }, icon: Award, path: '/tu/b2c/mypage/certificates' },
     ],
@@ -301,6 +315,54 @@ export const myPageMenuData: MenuItem[] = [
       { id: 'language-region', label: { ko: '언어 및 지역', en: 'Language & Region' }, icon: Globe, path: '/tu/b2c/mypage/settings/language' },
       { id: 'notifications', label: { ko: '알림', en: 'Notifications' }, icon: Megaphone, path: '/tu/b2c/mypage/settings/notifications' },
     ],
+  },
+];
+
+/**
+ * B2B MyPage 메뉴 (기업용 학습자 공간)
+ *
+ * B2C와의 차이점:
+ * - 커뮤니티 → 내 활동 (내 댓글만, 레벨 1)
+ * - 설정 → 카드 형식 페이지로 이동 (프로필/환경설정)
+ */
+export const b2bMyPageMenuData: MenuItem[] = [
+  {
+    id: 'mypage-home',
+    label: { ko: '홈', en: 'Home' },
+    icon: Home,
+    path: '/tu/b2b/mypage',
+  },
+  {
+    id: 'my-enrollments',
+    label: { ko: '내 수강 강의', en: 'My Enrollments' },
+    icon: BookOpen,
+    subItems: [
+      { id: 'enrolled-courses', label: { ko: '수강중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2b/mypage/learning' },
+      { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2b/mypage/completed' },
+      { id: 'certificates', label: { ko: '수료증', en: 'Certificates' }, icon: Award, path: '/tu/b2b/mypage/certificates' },
+    ],
+  },
+  {
+    id: 'my-teaching',
+    label: { ko: '내 강의 관리', en: 'My Teaching' },
+    icon: Briefcase,
+    subItems: [
+      { id: 'my-courses', label: { ko: '내 강의', en: 'My Courses' }, icon: BookOpen, path: '/tu/b2b/mypage/teaching' },
+      { id: 'create-course', label: { ko: '강의 디자인 시작하기', en: 'Start Course Design' }, icon: FolderEdit, path: '/tu/teaching/courses/create', roles: ['USER', 'DESIGNER'] },
+      { id: 'teaching-stats', label: { ko: '내 강의 통계', en: 'Teaching Stats' }, icon: TrendingUp, path: '/tu/b2b/mypage/teaching/stats' },
+    ],
+  },
+  {
+    id: 'my-activity',
+    label: { ko: '내 활동', en: 'My Activity' },
+    icon: MessageSquare,
+    path: '/tu/b2b/mypage/comments',
+  },
+  {
+    id: 'mypage-settings',
+    label: { ko: '설정', en: 'Settings' },
+    icon: Settings,
+    path: '/tu/b2b/mypage/settings',
   },
 ];
 

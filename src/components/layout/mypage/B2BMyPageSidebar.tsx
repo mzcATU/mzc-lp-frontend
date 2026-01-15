@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2, BookOpen, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
-import { myPageMenuData } from '@/config/sidebar-menus';
+import { b2bMyPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
-import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
+import { useLanguageStore } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
@@ -24,7 +24,6 @@ import {
 } from '@/components/common';
 import type { MenuItem } from '@/types';
 
-// 브랜딩 설정의 visible 속성을 기반으로 메뉴 필터링
 interface BrandingSidebarItem {
   id: string;
   label: string;
@@ -34,39 +33,30 @@ interface BrandingSidebarItem {
   children?: BrandingSidebarItem[];
 }
 
-interface MyPageSidebarProps {
+interface B2BMyPageSidebarProps {
   isExpanded: boolean;
   onToggle: () => void;
   onMenuItemClick?: (itemId: string) => void;
   isDarkMode?: boolean;
   language?: 'ko' | 'en';
   subdomain?: string;
-  menuData?: MenuItem[];
 }
 
 type ViewMode = 'instructor' | 'learner';
 
-export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: MyPageSidebarProps) {
+export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
 
-  // 브랜딩 설정에서 사이드바 설정 가져오기
   const { data: layoutData } = usePublicLayout();
   const sidebarSettings = layoutData?.sidebarTUSettings as { enabled?: boolean; items?: BrandingSidebarItem[] } | undefined;
 
-  // 기능 설정 가져오기
   const { isFeatureEnabled } = useTenantFeatures();
-  const communityEnabled = isFeatureEnabled('communityEnabled');
   const userCourseCreationEnabled = isFeatureEnabled('userCourseCreationEnabled');
   const instructorTabEnabled = isFeatureEnabled('instructorTabEnabled');
 
-  // 브랜딩 설정 + 기능 설정을 기반으로 메뉴 필터링
   const filteredMenuData = useMemo((): MenuItem[] => {
-    // 외부에서 메뉴 데이터가 전달된 경우 해당 데이터 사용
-    const baseMenuData = externalMenuData || myPageMenuData;
-
-    // 1. 브랜딩 설정에서 visible: false인 항목 찾기
     const hiddenIds = new Set<string>();
     if (sidebarSettings?.items && sidebarSettings.items.length > 0) {
       const collectHiddenIds = (items: BrandingSidebarItem[]) => {
@@ -82,39 +72,29 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
       collectHiddenIds(sidebarSettings.items);
     }
 
-    // 2. 기능 설정에 따라 추가로 숨길 항목
-    // 커뮤니티 비활성화 시 커뮤니티 메뉴 숨김
-    if (!communityEnabled) {
-      hiddenIds.add('my-community');
-    }
-    // 사용자 강의 생성 비활성화 시 강의 디자인 관련 메뉴 숨김
     if (!userCourseCreationEnabled) {
       hiddenIds.add('my-teaching');
       hiddenIds.add('create-course');
     }
 
-    // 3. 숨겨진 항목 필터링
-    return baseMenuData
+    return b2bMyPageMenuData
       .filter((item) => !hiddenIds.has(item.id))
       .map((item) => ({
         ...item,
         subItems: item.subItems?.filter((sub) => !hiddenIds.has(sub.id)),
       }));
-  }, [sidebarSettings, communityEnabled, userCourseCreationEnabled, externalMenuData]);
+  }, [sidebarSettings, userCourseCreationEnabled]);
 
-  const { theme, toggleTheme } = useThemeStore();
-  const { language, toggleLanguage } = useLanguageStore();
-  const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const { language } = useLanguageStore();
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching']);
   const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
-  // USER: 권한 없음, INSTRUCTOR: 강사, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
   const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OWNER'>('USER');
 
-  // CourseRole API로 역할 확인
   useEffect(() => {
     const checkCourseRole = async () => {
       try {
@@ -139,16 +119,13 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
     checkCourseRole();
   }, []);
 
-  // 사용자가 강사/디자이너 역할을 가지고 있는지 확인 (CourseRole 기준)
   const isDesigner = courseRoleStatus !== 'USER';
 
-  // 강의 개설하기 클릭 핸들러
   const handleCreateCourseClick = () => {
     setShowCreateCourseDialog(true);
   };
 
   const handleCreateCourseConfirm = async () => {
-    // 이미 DESIGNER인 경우 바로 이동
     if (isDesigner) {
       setShowCreateCourseDialog(false);
       onMenuItemClick?.('create-course');
@@ -157,17 +134,14 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
     setIsGrantingRole(true);
     try {
-      // DESIGNER 역할 부여 API 호출
       await userService.applyDesignerRole();
 
-      // 토큰 갱신 (CourseRole이 반영된 새 토큰 발급)
       const refreshToken = useAuthStore.getState().refreshToken;
       if (refreshToken) {
         const tokenResponse = await authService.refresh(refreshToken);
         useAuthStore.getState().setTokens(tokenResponse.accessToken, tokenResponse.refreshToken);
       }
 
-      // 사용자 정보 다시 조회하여 역할 업데이트
       const updatedUser = await userService.getMe();
       updateUser({ role: updatedUser.role });
 
@@ -175,10 +149,8 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
       setShowCreateCourseDialog(false);
       onMenuItemClick?.('create-course');
     } catch (error) {
-      // 409 Conflict = 이미 DESIGNER 역할을 가지고 있음
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 409) {
-        // 토큰 갱신 (이미 권한이 있어도 토큰에 반영 필요)
         const refreshToken = useAuthStore.getState().refreshToken;
         if (refreshToken) {
           const tokenResponse = await authService.refresh(refreshToken);
@@ -199,7 +171,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
     }
   };
 
-  // 강의 디자인 다이얼로그 설명 텍스트
   const getCreateCourseDialogDescription = () => {
     if (courseRoleStatus === 'OWNER') {
       return language === 'ko'
@@ -216,7 +187,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
       : 'Designer permission will be granted for course design. Would you like to proceed to the course design page?';
   };
 
-  // 현재 유저 롤로 subItem 필터링
   const filterSubItemsByRole = (subItems?: MenuItem['subItems']) => {
     if (!subItems) return [];
     return subItems.filter((item) => {
@@ -231,15 +201,20 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
     );
   };
 
-  const isActive = (path?: string) => {
+  const isActive = (path?: string, isExactMatch?: boolean) => {
     if (!path) return false;
+    if (isExactMatch) {
+      return location.pathname === path;
+    }
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   const renderMenuItem = (item: MenuItem) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedMenus.includes(item.id);
-    const active = isActive(item.path);
+    // 홈 메뉴는 정확히 일치할 때만 활성화
+    const isHomeMenu = item.id === 'mypage-home';
+    const active = isActive(item.path, isHomeMenu);
     const Icon = item.icon;
 
     return (
@@ -275,7 +250,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
           )}
         </button>
 
-        {/* Sub Items */}
         {hasSubItems && isExpanded && (
           <div className="mt-1 ml-4 pl-4 border-l-2" style={{ borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb' }}>
             {filterSubItemsByRole(item.subItems).map((subItem) => {
@@ -285,7 +259,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
                 <button
                   key={subItem.id}
                   onClick={() => {
-                    // 강의 개설하기 클릭 시 확인 다이얼로그 표시
                     if (subItem.id === 'create-course') {
                       handleCreateCourseClick();
                       return;
@@ -315,13 +288,12 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
   return (
     <aside
-      className={`w-72 flex-shrink-0 p-4 ${
+      className={`w-72 flex-shrink-0 p-4 sticky top-0 h-[calc(100vh-64px)] ${
         isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'
       }`}
     >
-      {/* 카드형 사이드바 */}
       <div
-        className={`rounded-2xl p-4 h-full flex flex-col ${
+        className={`rounded-2xl p-4 h-full flex flex-col overflow-y-auto ${
           isDark
             ? 'bg-white/5 border border-white/10 backdrop-blur-sm'
             : 'bg-white border border-gray-200 shadow-sm'
@@ -361,7 +333,7 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
                 <button
                   onClick={() => {
                     setCurrentMode('learner');
-                    navigate(prefixPath('/tu/b2c/mypage'));
+                    navigate(prefixPath('/tu/b2b/mypage'));
                   }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
@@ -381,7 +353,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
                 </button>
               </div>
             </div>
-            {/* 구분선 */}
             <div
               className="mb-3"
               style={{
@@ -395,66 +366,8 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
         <nav className="space-y-1 flex-1">
           {filteredMenuData.map(renderMenuItem)}
         </nav>
-
-        {/* 설정 토글 영역 */}
-        <div className={`mt-4 pt-4 border-t space-y-2 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-          {/* 테마 토글 */}
-          <button
-            onClick={toggleTheme}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {isDark ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              <span className="font-medium text-sm">
-                {isDark ? t.common.darkMode : t.common.lightMode}
-              </span>
-            </div>
-            <div
-              className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                isDark ? 'bg-[#6778ff]' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform ${
-                  isDark ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </div>
-          </button>
-
-          {/* 언어 토글 */}
-          <button
-            onClick={toggleLanguage}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5" />
-              <span className="font-medium text-sm">
-                {t.settings.language}
-              </span>
-            </div>
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                isDark
-                  ? 'bg-[#6778ff]/20 text-[#6778ff]'
-                  : 'bg-blue-100 text-blue-600'
-              }`}
-            >
-              {language === 'ko' ? '한국어' : 'EN'}
-            </div>
-          </button>
-        </div>
       </div>
 
-      {/* 강의 디자인 확인 다이얼로그 */}
       <AlertDialog open={showCreateCourseDialog} onOpenChange={setShowCreateCourseDialog}>
         <AlertDialogContent className={isDark ? 'bg-[#2a2a2a] border-white/10' : ''}>
           <AlertDialogHeader>

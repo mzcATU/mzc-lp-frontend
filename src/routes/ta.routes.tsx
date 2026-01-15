@@ -28,6 +28,7 @@ import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
 import { AutoEnrollmentRulesPage } from '@/pages/ta/automation/AutoEnrollmentRulesPage';
 import { MemberPoolPage } from '@/pages/ta/automation/MemberPoolPage';
 import { DepartmentManagementPage } from '@/pages/ta/users/DepartmentManagementPage';
+import { NotificationTemplatesPage } from '@/pages/ta/system/NotificationTemplatesPage';
 
 function TenantAdminWrapper() {
   return (
@@ -46,6 +47,7 @@ const taChildRoutes = (
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
+    <Route path="system/notification-templates" element={<NotificationTemplatesPage />} />
     {/* 브랜딩 설정 (통합) */}
     <Route path="branding" element={<BrandingSettingsPage />} />
     {/* 사용자 및 권한 */}

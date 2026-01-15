@@ -416,4 +416,15 @@ export const API_ENDPOINTS = {
     TU_BY_ID: (id: number) => `/tu/notices/${id}`,
     TU_COUNT: '/tu/notices/count',
   },
+  // Notification Templates (알림 템플릿) - TA 관리
+  NOTIFICATION_TEMPLATES: {
+    BASE: "/ta/notification-templates",
+    BY_ID: (id: number) => `/ta/notification-templates/${id}`,
+    INITIALIZE: "/ta/notification-templates/initialize",
+    ACTIVATE: (id: number) => `/ta/notification-templates/${id}/activate`,
+    DEACTIVATE: (id: number) => `/ta/notification-templates/${id}/deactivate`,
+    TRIGGERS: "/ta/notification-templates/triggers",
+    CATEGORIES: "/ta/notification-templates/categories",
+  },
 } as const;
+

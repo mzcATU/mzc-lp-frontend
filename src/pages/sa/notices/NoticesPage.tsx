@@ -390,8 +390,8 @@ export function NoticesPage() {
               <Label>만료일 (선택)</Label>
               <Input
                 type="datetime-local"
-                value={formData.expiredAt || ''}
-                onChange={(e) => setFormData({ ...formData, expiredAt: e.target.value || undefined })}
+                value={formData.expiredAt ? formData.expiredAt.slice(0, 16) : ''}
+                onChange={(e) => setFormData({ ...formData, expiredAt: e.target.value ? new Date(e.target.value).toISOString() : undefined })}
               />
               <p className="text-xs text-text-secondary">설정하지 않으면 무기한 게시됩니다.</p>
             </div>
@@ -465,8 +465,8 @@ export function NoticesPage() {
               <Label>만료일 (선택)</Label>
               <Input
                 type="datetime-local"
-                value={formData.expiredAt || ''}
-                onChange={(e) => setFormData({ ...formData, expiredAt: e.target.value || undefined })}
+                value={formData.expiredAt ? formData.expiredAt.slice(0, 16) : ''}
+                onChange={(e) => setFormData({ ...formData, expiredAt: e.target.value ? new Date(e.target.value).toISOString() : undefined })}
               />
               <p className="text-xs text-text-secondary">설정하지 않으면 무기한 게시됩니다.</p>
             </div>

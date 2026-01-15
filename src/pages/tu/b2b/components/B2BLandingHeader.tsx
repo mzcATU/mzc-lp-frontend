@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, Shield, Globe } from 'lucide-react';
+import { Search, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, Shield, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -17,9 +17,9 @@ const BANNER_DISMISSED_KEY = 'tu_b2b_top_banner_dismissed';
 /**
  * B2B 전용 랜딩 헤더
  * - 장바구니 없음
- * - 위시리스트 없음
  * - 로드맵 메뉴 없음
  * - 커뮤니티 메뉴 없음
+ * - 위시리스트(찜) 아이콘 표시
  */
 export function B2BLandingHeader() {
   const [showBanner, setShowBanner] = useState(() => {
@@ -218,7 +218,7 @@ export function B2BLandingHeader() {
               </form>
             )}
 
-            {/* Right: Actions (장바구니, 위시리스트 제외) */}
+            {/* Right: Actions (장바구니 제외, 위시리스트 포함) */}
             <div className="flex items-center gap-3 md:gap-5 mr-2 md:mr-4">
               <div className="flex items-center gap-2">
                 {showThemeToggle && (
@@ -234,7 +234,18 @@ export function B2BLandingHeader() {
                     {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                   </button>
                 )}
-                {/* 장바구니, 위시리스트 제외 - B2B에서는 표시 안함 */}
+                {/* 위시리스트 (찜) - B2B에서도 표시 */}
+                <Link
+                  to={prefixPath('/tu/b2b/mypage/wishlist')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark
+                      ? 'text-gray-400 hover:text-white hover:bg-white/10'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                  aria-label="찜 목록"
+                >
+                  <Heart className="h-5 w-5" />
+                </Link>
                 {showNotifications && (
                   <Link
                     to={prefixPath('/tu/b2b/notifications')}
@@ -296,7 +307,7 @@ export function B2BLandingHeader() {
 
                         <div className="py-2 space-y-1">
                           <Link
-                            to={prefixPath('/tu/b2c/mypage')}
+                            to={prefixPath('/tu/b2b/mypage')}
                             onClick={() => setShowDropdown(false)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
                               isDark
@@ -310,9 +321,9 @@ export function B2BLandingHeader() {
                         </div>
 
                         <div className={`py-2 border-t space-y-1 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-                          <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{t.landing.settings}</p>
+                          <p className={`px-3 py-1 text-xs font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>설정</p>
                           <Link
-                            to={prefixPath('/tu/b2c/mypage/profile')}
+                            to={prefixPath('/tu/b2b/mypage/profile')}
                             onClick={() => setShowDropdown(false)}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                               isDark
@@ -321,10 +332,10 @@ export function B2BLandingHeader() {
                             }`}
                           >
                             <Shield className="w-4 h-4" />
-                            {t.landing.profileSecurity}
+                            프로필
                           </Link>
                           <Link
-                            to={prefixPath('/tu/b2c/mypage/notifications')}
+                            to={prefixPath('/tu/b2b/mypage/settings/preferences')}
                             onClick={() => setShowDropdown(false)}
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
                               isDark
@@ -333,19 +344,7 @@ export function B2BLandingHeader() {
                             }`}
                           >
                             <Bell className="w-4 h-4" />
-                            {t.landing.notifications}
-                          </Link>
-                          <Link
-                            to={prefixPath('/tu/b2c/mypage/language')}
-                            onClick={() => setShowDropdown(false)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
-                              isDark
-                                ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
-                          >
-                            <Globe className="w-4 h-4" />
-                            {t.landing.languageRegion}
+                            환경설정
                           </Link>
                         </div>
 

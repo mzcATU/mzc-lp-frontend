@@ -9,6 +9,7 @@ export interface MenuItem {
   icon: LucideIcon;
   path?: string;
   subItems?: SubMenuItem[];
+  roles?: string[]; // 특정 롤에만 표시 (예: ['INSTRUCTOR', 'DESIGNER'])
 }
 
 export interface SubMenuItem {
