@@ -5,7 +5,7 @@
 
 export type TenantNoticeType = 'GENERAL' | 'IMPORTANT' | 'URGENT' | 'EVENT';
 export type TenantNoticeStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-export type NoticeTargetAudience = 'OPERATOR' | 'USER';
+export type NoticeTargetAudience = 'ALL' | 'OPERATOR' | 'USER' | 'DESIGNER' | 'INSTRUCTOR';
 
 export interface TenantNotice {
   id: number;

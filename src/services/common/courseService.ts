@@ -22,7 +22,6 @@ import type {
   CourseRegistrationDetailResponse,
   ReadyCourseResponse,
   RegisterCourseRequest,
-  UnreadyCourseRequest,
 } from '@/types/common/course.types';
 
 // Spring Page 응답 타입
@@ -113,16 +112,25 @@ export const courseService = {
     await axiosInstance.delete(API_ENDPOINTS.COURSES.BY_ID(id));
   },
 
-  /** 강의 발행 */
+  /**
+   * @deprecated 백엔드에서 deprecated됨. ready() 또는 register() 사용 권장.
+   * 임시저장: create/update 사용
+   * 작성완료: ready() 사용
+   * 등록: register() 사용
+   */
   async publish(id: number): Promise<CourseResponse> {
+    console.warn('[courseService] publish()는 deprecated되었습니다. ready() 또는 register()를 사용하세요.');
     const { data } = await axiosInstance.post<CourseResponse>(
       `${API_ENDPOINTS.COURSES.BY_ID(id)}/publish`
     );
     return data;
   },
 
-  /** 강의 발행 취소 */
+  /**
+   * @deprecated 백엔드에서 deprecated됨. unready() 사용 권장.
+   */
   async unpublish(id: number): Promise<CourseResponse> {
+    console.warn('[courseService] unpublish()는 deprecated되었습니다. unready()를 사용하세요.');
     const { data } = await axiosInstance.post<CourseResponse>(
       `${API_ENDPOINTS.COURSES.BY_ID(id)}/unpublish`
     );
@@ -303,15 +311,12 @@ export const courseService = {
   },
 
   /**
-   * 과정 반려 (READY → REJECTED)
+   * 과정 작성중으로 되돌리기 (READY → DRAFT)
+   * TU가 자신의 과정을 다시 수정할 때 사용
    */
-  async unready(
-    id: number,
-    request: UnreadyCourseRequest
-  ): Promise<CourseRegistrationResponse> {
-    const { data } = await axiosInstance.post<CourseRegistrationResponse>(
-      API_ENDPOINTS.COURSES.UNREADY(id),
-      request
+  async unready(id: number): Promise<CourseResponse> {
+    const { data } = await axiosInstance.post<CourseResponse>(
+      API_ENDPOINTS.COURSES.UNREADY(id)
     );
     return data;
   },

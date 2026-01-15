@@ -10,7 +10,6 @@ import type {
 import type {
   UpdateCourseRequest,
   RegisterCourseRequest,
-  UnreadyCourseRequest,
 } from '@/types/common/course.types';
 
 // Query Keys
@@ -177,17 +176,16 @@ export const useRegisterCourse = () => {
 };
 
 /**
- * 과정 반려 (READY → REJECTED)
- * @deprecated useRejectProgram 대체
+ * 과정 작성중으로 되돌리기 (READY → DRAFT)
+ * TU가 자신의 과정을 다시 수정할 때 사용
  */
 export const useUnreadyCourse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, request }: { id: number; request: UnreadyCourseRequest }) =>
-      courseService.unready(id, request),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.detail(variables.id) });
+    mutationFn: (id: number) => courseService.unready(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.lists() });
       queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.readyLists() });
     },

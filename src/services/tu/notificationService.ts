@@ -84,4 +84,14 @@ export const notificationService = {
     );
     return response.data;
   },
+
+  /**
+   * 최신 읽지 않은 알림 1개 조회 (배너용)
+   */
+  getLatestUnread: async (): Promise<NotificationItem | null> => {
+    const response = await axiosInstance.get<NotificationListResponse>(
+      `${BASE_URL}?isRead=false&pageSize=1&page=0`
+    );
+    return response.data.notifications[0] || null;
+  },
 };

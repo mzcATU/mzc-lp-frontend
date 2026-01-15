@@ -226,10 +226,8 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
       return;
     }
     try {
-      await unreadyCourse.mutateAsync({
-        id: selectedCourse.id,
-        request: { reason: rejectReason },
-      });
+      // TODO: 백엔드에서 반려 사유 저장 기능 추가 시 reason 전달
+      await unreadyCourse.mutateAsync(selectedCourse.id);
       setShowRejectModal(false);
       setSelectedCourse(null);
       setRejectReason('');

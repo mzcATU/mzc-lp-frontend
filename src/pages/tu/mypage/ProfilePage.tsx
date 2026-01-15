@@ -33,6 +33,7 @@ import {
   useWithdraw,
 } from '@/hooks/common';
 import { userService } from '@/services/common/userService';
+import type { TenantRole } from '@/types/common/auth.types';
 
 export function ProfilePage() {
   const { theme } = useThemeStore();
@@ -84,30 +85,25 @@ export function ProfilePage() {
     }
   }, [profile, apiBaseUrl]);
 
-  // Fetch course roles on mount
+  // 시스템 역할(TenantRole) 기반으로 강의 개설 권한 상태 설정
   useEffect(() => {
-    const fetchCourseRoles = async () => {
-      try {
-        const roles = await userService.getMyCourseRoles();
-        console.log('CourseRoles API response:', roles);
+    if (profile) {
+      // profile.roles (다중 역할) 또는 profile.role (단일 역할) 사용
+      const userRoles: TenantRole[] = profile.roles || [profile.role];
+      console.log('User system roles:', userRoles);
 
-        if (Array.isArray(roles) && roles.length > 0) {
-          // OWNER > DESIGNER 우선순위로 체크
-          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
-          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+      // DESIGNER 역할이 있으면 강의 개설 권한 있음
+      // TENANT_ADMIN, OPERATOR도 강의 개설 권한 있는 것으로 처리
+      const designerRoles: TenantRole[] = ['DESIGNER', 'TENANT_ADMIN', 'OPERATOR'];
+      const hasDesignerRole = userRoles.some((r) => designerRoles.includes(r));
 
-          if (hasOwner) {
-            setDesignAuthStatus('OWNER');
-          } else if (hasDesigner) {
-            setDesignAuthStatus('DESIGNER');
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch course roles:', error);
+      if (hasDesignerRole) {
+        setDesignAuthStatus('DESIGNER');
+      } else {
+        setDesignAuthStatus('USER');
       }
-    };
-    fetchCourseRoles();
-  }, []);
+    }
+  }, [profile]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
