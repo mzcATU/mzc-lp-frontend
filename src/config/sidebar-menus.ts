@@ -282,7 +282,7 @@ export const myPageMenuData: MenuItem[] = [
     label: { ko: '내 수강 강의', en: 'My Enrollments' },
     icon: BookOpen,
     subItems: [
-      { id: 'enrolled-courses', label: { ko: '수강중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
+      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
       { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2c/mypage/completed' },
       { id: 'certificates', label: { ko: '수료증', en: 'Certificates' }, icon: Award, path: '/tu/b2c/mypage/certificates' },
     ],
@@ -337,7 +337,7 @@ export const b2bMyPageMenuData: MenuItem[] = [
     label: { ko: '내 수강 강의', en: 'My Enrollments' },
     icon: BookOpen,
     subItems: [
-      { id: 'enrolled-courses', label: { ko: '수강중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2b/mypage/learning' },
+      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2b/mypage/learning' },
       { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2b/mypage/completed' },
       { id: 'certificates', label: { ko: '수료증', en: 'Certificates' }, icon: Award, path: '/tu/b2b/mypage/certificates' },
     ],

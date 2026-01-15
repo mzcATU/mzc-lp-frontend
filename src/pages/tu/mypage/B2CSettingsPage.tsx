@@ -1,7 +1,8 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { User, Settings, ChevronRight } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useLanguageStore } from '@/store/common/languageStore';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 
 interface SettingsCardProps {
   icon: React.ReactNode;
@@ -55,19 +56,12 @@ function SettingsCard({ icon, title, description, onClick, isDark }: SettingsCar
   );
 }
 
-export function B2BSettingsPage() {
+export function B2CSettingsPage() {
   const navigate = useNavigate();
-  const { subdomain } = useParams<{ subdomain: string }>();
+  const { prefixPath } = useSubdomainPath();
   const { theme } = useThemeStore();
   const { language } = useLanguageStore();
   const isDark = theme === 'dark';
-
-  const prefixPath = (path: string) => {
-    if (subdomain) {
-      return `/${subdomain}${path}`;
-    }
-    return path;
-  };
 
   const settingsCards = [
     {
@@ -78,7 +72,7 @@ export function B2BSettingsPage() {
         language === 'ko'
           ? '이름, 이메일, 프로필 사진 등 개인 정보를 관리합니다.'
           : 'Manage your personal information like name, email, and profile picture.',
-      path: '/tu/b2b/mypage/profile',
+      path: '/tu/b2c/mypage/profile',
     },
     {
       id: 'preferences',
@@ -88,7 +82,7 @@ export function B2BSettingsPage() {
         language === 'ko'
           ? '언어, 알림, 테마 등 앱 환경을 설정합니다.'
           : 'Configure app settings like language, notifications, and theme.',
-      path: '/tu/b2b/mypage/settings/preferences',
+      path: '/tu/b2c/mypage/settings/preferences',
     },
   ];
 

@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
-import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
+import { useLanguageStore } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
@@ -98,9 +98,8 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
       }));
   }, [sidebarSettings, communityEnabled, userCourseCreationEnabled, externalMenuData]);
 
-  const { theme, toggleTheme } = useThemeStore();
-  const { language, toggleLanguage } = useLanguageStore();
-  const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const { language } = useLanguageStore();
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
@@ -310,13 +309,12 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
   return (
     <aside
-      className={`w-72 flex-shrink-0 p-4 ${
+      className={`flex-shrink-0 py-4 pl-6 md:pl-12 lg:pl-16 pr-4 sticky top-0 h-[calc(100vh-64px)] w-[calc(theme(spacing.72)+theme(spacing.6))] md:w-[calc(theme(spacing.72)+theme(spacing.12))] lg:w-[calc(theme(spacing.72)+theme(spacing.16))] ${
         isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'
       }`}
     >
-      {/* 카드형 사이드바 */}
       <div
-        className={`rounded-2xl p-4 h-full flex flex-col ${
+        className={`rounded-2xl p-4 h-full flex flex-col overflow-y-auto ${
           isDark
             ? 'bg-white/5 border border-white/10 backdrop-blur-sm'
             : 'bg-white border border-gray-200 shadow-sm'
@@ -366,63 +364,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
         <nav className="space-y-1 flex-1">
           {filteredMenuData.map(renderMenuItem)}
         </nav>
-
-        {/* 설정 토글 영역 */}
-        <div className={`mt-4 pt-4 border-t space-y-2 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-          {/* 테마 토글 */}
-          <button
-            onClick={toggleTheme}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {isDark ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              <span className="font-medium text-sm">
-                {isDark ? t.common.darkMode : t.common.lightMode}
-              </span>
-            </div>
-            <div
-              className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                isDark ? 'bg-[#6778ff]' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform ${
-                  isDark ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </div>
-          </button>
-
-          {/* 언어 토글 */}
-          <button
-            onClick={toggleLanguage}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5" />
-              <span className="font-medium text-sm">
-                {t.settings.language}
-              </span>
-            </div>
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                isDark
-                  ? 'bg-[#6778ff]/20 text-[#6778ff]'
-                  : 'bg-blue-100 text-blue-600'
-              }`}
-            >
-              {language === 'ko' ? '한국어' : 'EN'}
-            </div>
-          </button>
-        </div>
       </div>
 
       {/* 강의 디자인 확인 다이얼로그 */}

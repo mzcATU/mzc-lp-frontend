@@ -283,7 +283,7 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
 
   return (
     <aside
-      className={`w-72 flex-shrink-0 p-4 sticky top-0 h-[calc(100vh-64px)] ${
+      className={`flex-shrink-0 py-4 pl-6 md:pl-12 lg:pl-16 pr-4 sticky top-0 h-[calc(100vh-64px)] w-[calc(theme(spacing.72)+theme(spacing.6))] md:w-[calc(theme(spacing.72)+theme(spacing.12))] lg:w-[calc(theme(spacing.72)+theme(spacing.16))] ${
         isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'
       }`}
     >

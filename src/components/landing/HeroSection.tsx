@@ -163,22 +163,22 @@ export function HeroSection() {
           </div>
         )}
 
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows - 카테고리 버튼 시작점과 동일한 위치에 배치 */}
         {totalSlides > 1 && (
           <>
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full glass hover:bg-white/20 transition-all z-20"
+              className="absolute left-6 md:left-12 lg:left-16 top-1/2 -translate-y-1/2 p-2 md:p-3 rounded-full glass hover:bg-white/20 transition-all z-20"
               aria-label={t.hero.prevSlide}
             >
-              <ChevronLeft className="w-6 h-6 text-white" />
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full glass hover:bg-white/20 transition-all z-20"
+              className="absolute right-6 md:right-12 lg:right-16 top-1/2 -translate-y-1/2 p-2 md:p-3 rounded-full glass hover:bg-white/20 transition-all z-20"
               aria-label={t.hero.nextSlide}
             >
-              <ChevronRight className="w-6 h-6 text-white" />
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </button>
           </>
         )}
