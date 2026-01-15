@@ -309,3 +309,25 @@ export {
   useUserNotice,
   useUnreadNoticeCount,
 } from './useUserNoticeQueries';
+
+// Course Community Hooks (코스 커뮤니티)
+export {
+  courseCommunityKeys,
+  useCourseCommunityPosts,
+  useCourseCommunityPost,
+  useCreateCourseCommunityPost,
+  useUpdateCourseCommunityPost,
+  useDeleteCourseCommunityPost,
+  useLikeCourseCommunityPost,
+  useUnlikeCourseCommunityPost,
+  useCourseCommunityComments,
+  useCreateCourseCommunityComment,
+  useUpdateCourseCommunityComment,
+  useDeleteCourseCommunityComment,
+  useLikeCourseCommunityComment,
+  useUnlikeCourseCommunityComment,
+} from './useCourseCommunityQueries';
+
+// Question Section Hook (질문 섹션 공통 로직)
+export { useQuestionSection } from './useQuestionSection';
+export type { TabType, SortType } from './useQuestionSection';
