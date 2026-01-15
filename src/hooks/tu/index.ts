@@ -143,6 +143,7 @@ export {
   useNotifications,
   useNotification,
   useUnreadNotificationCount,
+  useLatestUnreadNotification,
   useMarkAsRead,
   useMarkAllAsRead,
   useDeleteNotification,
@@ -308,6 +309,7 @@ export {
   useUserNotices,
   useUserNotice,
   useUnreadNoticeCount,
+  useLatestUserNotice,
 } from './useUserNoticeQueries';
 
 // Course Community Hooks (코스 커뮤니티)

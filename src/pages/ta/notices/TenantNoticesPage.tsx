@@ -64,8 +64,11 @@ const statusConfig: Record<TenantNoticeStatus, { label: string; color: string }>
 };
 
 const audienceConfig: Record<NoticeTargetAudience, { label: string; icon: typeof Users }> = {
+  ALL: { label: '전체', icon: Users },
   OPERATOR: { label: '운영자', icon: Users },
   USER: { label: '사용자', icon: Users },
+  DESIGNER: { label: '설계자', icon: Users },
+  INSTRUCTOR: { label: '강사', icon: Users },
 };
 
 export function TenantNoticesPage() {
@@ -223,6 +226,8 @@ export function TenantNoticesPage() {
                   <SelectItem value="ALL">전체 대상</SelectItem>
                   <SelectItem value="OPERATOR">운영자</SelectItem>
                   <SelectItem value="USER">사용자</SelectItem>
+                  <SelectItem value="DESIGNER">설계자</SelectItem>
+                  <SelectItem value="INSTRUCTOR">강사</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -381,8 +386,11 @@ export function TenantNoticesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="ALL">전체</SelectItem>
                     <SelectItem value="USER">사용자</SelectItem>
                     <SelectItem value="OPERATOR">운영자</SelectItem>
+                    <SelectItem value="DESIGNER">설계자</SelectItem>
+                    <SelectItem value="INSTRUCTOR">강사</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -462,8 +470,11 @@ export function TenantNoticesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="ALL">전체</SelectItem>
                     <SelectItem value="USER">사용자</SelectItem>
                     <SelectItem value="OPERATOR">운영자</SelectItem>
+                    <SelectItem value="DESIGNER">설계자</SelectItem>
+                    <SelectItem value="INSTRUCTOR">강사</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

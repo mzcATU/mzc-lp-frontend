@@ -62,6 +62,7 @@ export interface UserDetailResponse {
   name: string;
   phone?: string;
   role: TenantRole;
+  roles?: TenantRole[];  // 다중 역할 (1:N) - TA에서 부여된 시스템 역할
   status: UserStatus;
   profileImageUrl?: string;
   department?: string;    // 부서 (개발팀, 회계팀 등)

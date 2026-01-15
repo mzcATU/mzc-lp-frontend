@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Bell, Menu, X, LogOut, User, Sun, Moon, BookOpen, PlusCircle, Shield, Globe, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
-import { useUnreadNotificationCount, usePublicNavigation, usePublicLayout } from '@/hooks/tu';
+import { useUnreadNotificationCount, useLatestUserNotice, usePublicNavigation, usePublicLayout } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import type { NavigationItemResponse } from '@/types/tu/branding.types';
@@ -18,6 +18,7 @@ const DEFAULT_NAV_ITEMS: NavigationItemResponse[] = [
 ];
 
 const BANNER_DISMISSED_KEY = 'tu_top_banner_dismissed';
+const DISMISSED_NOTICE_ID_KEY = 'tu_dismissed_notice_id';
 
 export function LandingHeader() {
   // 배너 닫힘 상태를 localStorage에서 읽어서 초기화
@@ -36,6 +37,20 @@ export function LandingHeader() {
   const isDark = theme === 'dark';
   const { data: unreadCountData } = useUnreadNotificationCount(isAuthenticated);
   const unreadCount = unreadCountData?.count || 0;
+  const { data: latestNotice } = useLatestUserNotice(isAuthenticated);
+
+  // 새 공지가 오면 배너를 다시 표시 (이전에 닫은 공지 ID와 다르면)
+  useEffect(() => {
+    if (latestNotice?.id) {
+      const dismissedNoticeId = localStorage.getItem(DISMISSED_NOTICE_ID_KEY);
+      if (dismissedNoticeId !== String(latestNotice.id)) {
+        // 새 공지가 왔으므로 배너 다시 표시
+        setShowBanner(true);
+        localStorage.removeItem(BANNER_DISMISSED_KEY);
+      }
+    }
+  }, [latestNotice?.id]);
+
   const { branding } = useTenantBranding();
   const { data: navigationItems } = usePublicNavigation();
   const { data: layoutData } = usePublicLayout();
@@ -109,19 +124,29 @@ export function LandingHeader() {
   // 상단 배너 설정 (TA에서 설정 가능)
   const topBannerSettings = (layoutData?.headerSettings as { topBanner?: { enabled?: boolean; text?: string; linkUrl?: string; linkText?: string } })?.topBanner;
   const topBannerEnabled = topBannerSettings?.enabled !== false; // 기본값 true
-  const topBannerText = topBannerSettings?.text || t.landing.banner;
-  const topBannerLinkUrl = topBannerSettings?.linkUrl;
-  const topBannerLinkText = topBannerSettings?.linkText;
 
-  // 배너 닫기 핸들러 (localStorage에 저장)
+  // 최신 공지사항이 있으면 공지 내용을 표시, 없으면 기본 배너 텍스트 사용
+  const topBannerText = latestNotice
+    ? `📢 ${latestNotice.title}`
+    : (topBannerSettings?.text || t.landing.banner);
+  // 공지사항 클릭 시 알림 페이지 공지사항 탭으로 이동
+  const topBannerLinkUrl = latestNotice ? `/tu/b2c/notifications?tab=SYSTEM` : topBannerSettings?.linkUrl;
+  const topBannerLinkText = latestNotice ? '자세히 보기' : topBannerSettings?.linkText;
+
+  // 배너 닫기 핸들러 (localStorage에 저장 + 공지 ID 기록)
   const handleCloseBanner = useCallback(() => {
     localStorage.setItem(BANNER_DISMISSED_KEY, 'true');
+    // 공지사항이 있으면 해당 공지 ID를 저장 (새 공지가 오면 다시 표시)
+    if (latestNotice?.id) {
+      localStorage.setItem(DISMISSED_NOTICE_ID_KEY, String(latestNotice.id));
+    }
     setShowBanner(false);
-  }, []);
+  }, [latestNotice?.id]);
 
   const handleLogout = () => {
     // 로그아웃 시 배너 닫힘 상태 리셋
     localStorage.removeItem(BANNER_DISMISSED_KEY);
+    localStorage.removeItem(DISMISSED_NOTICE_ID_KEY);
     logout();
     setShowDropdown(false);
   };
@@ -140,14 +165,23 @@ export function LandingHeader() {
         <div className="bg-gradient-to-r from-[#6778ff] via-[#a855f7] to-[#6bc2f0] text-white text-xs md:text-sm py-2.5 px-4 text-center font-medium flex justify-center items-center gap-2 relative">
           <span>{topBannerText}</span>
           {topBannerLinkUrl && topBannerLinkText && (
-            <a
-              href={topBannerLinkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:no-underline ml-1"
-            >
-              {topBannerLinkText}
-            </a>
+            topBannerLinkUrl.startsWith('http') ? (
+              <a
+                href={topBannerLinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline ml-1"
+              >
+                {topBannerLinkText}
+              </a>
+            ) : (
+              <Link
+                to={prefixPath(topBannerLinkUrl)}
+                className="underline hover:no-underline ml-1"
+              >
+                {topBannerLinkText}
+              </Link>
+            )
           )}
           <button
             onClick={handleCloseBanner}
