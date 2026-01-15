@@ -23,14 +23,14 @@ export function ModeSwitcher({
 }: ModeSwitcherProps) {
   const modes: { id: ViewMode; label: { ko: string; en: string }; icon: typeof BookOpen }[] = [
     {
-      id: 'instructor',
-      label: { ko: '강사', en: 'Instructor' },
-      icon: BookOpen,
-    },
-    {
       id: 'learner',
       label: { ko: '학습자', en: 'Learner' },
       icon: GraduationCap,
+    },
+    {
+      id: 'instructor',
+      label: { ko: '강사', en: 'Instructor' },
+      icon: BookOpen,
     },
   ];
 

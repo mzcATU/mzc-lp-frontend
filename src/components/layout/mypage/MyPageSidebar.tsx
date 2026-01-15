@@ -339,27 +339,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
               <div className="flex gap-1">
                 <button
                   onClick={() => {
-                    setCurrentMode('instructor');
-                    navigate(prefixPath('/tu/dashboard'));
-                  }}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
-                  )}
-                  style={{
-                    backgroundColor: currentMode === 'instructor'
-                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
-                      : 'transparent',
-                    color: currentMode === 'instructor'
-                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
-                      : (isDark ? '#9E9E9E' : '#666666'),
-                  }}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
-                </button>
-                <button
-                  onClick={() => {
                     setCurrentMode('learner');
                     navigate(prefixPath('/tu/b2c/mypage'));
                   }}
@@ -378,6 +357,27 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
                 >
                   <GraduationCap className="w-4 h-4" />
                   <span>{language === 'ko' ? '학습자' : 'Learner'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentMode('instructor');
+                    navigate(prefixPath('/tu/dashboard'));
+                  }}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
+                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
+                  )}
+                  style={{
+                    backgroundColor: currentMode === 'instructor'
+                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
+                      : 'transparent',
+                    color: currentMode === 'instructor'
+                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
+                      : (isDark ? '#9E9E9E' : '#666666'),
+                  }}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
                 </button>
               </div>
             </div>

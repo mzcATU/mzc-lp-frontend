@@ -38,7 +38,8 @@ export function BaseSidebar({
   currentMode = 'instructor',
   roleType = 'tu',
   showBackToTA = false,
-}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType }) {
+  showLogout = true,
+}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType; showLogout?: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -537,43 +538,45 @@ export function BaseSidebar({
           )}
 
           {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
-            style={{
-              width: isExpanded ? '100%' : '44px',
-              height: '44px',
-              padding: isExpanded ? '0 16px' : '0',
-              justifyContent: 'center',
-              color: colors.textPrimary,
-              margin: isExpanded ? '0' : '0 auto',
-              opacity: isLoggingOut ? 0.5 : 1,
-              cursor: isLoggingOut ? 'not-allowed' : 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              if (!isLoggingOut) {
-                e.currentTarget.style.backgroundColor = colors.hover;
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            title={language === 'ko' ? '로그아웃' : 'Logout'}
-          >
-            <LogOut
-              className="w-5 h-5 flex-shrink-0"
-              style={{ color: colors.textSecondary }}
-            />
-            {isExpanded && (
-              <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
-                {isLoggingOut
-                  ? (language === 'ko' ? '로그아웃 중...' : 'Logging out...')
-                  : (language === 'ko' ? '로그아웃' : 'Logout')
+          {showLogout && (
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+              style={{
+                width: isExpanded ? '100%' : '44px',
+                height: '44px',
+                padding: isExpanded ? '0 16px' : '0',
+                justifyContent: 'center',
+                color: colors.textPrimary,
+                margin: isExpanded ? '0' : '0 auto',
+                opacity: isLoggingOut ? 0.5 : 1,
+                cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoggingOut) {
+                  e.currentTarget.style.backgroundColor = colors.hover;
                 }
-              </span>
-            )}
-          </button>
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+              title={language === 'ko' ? '로그아웃' : 'Logout'}
+            >
+              <LogOut
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: colors.textSecondary }}
+              />
+              {isExpanded && (
+                <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
+                  {isLoggingOut
+                    ? (language === 'ko' ? '로그아웃 중...' : 'Logging out...')
+                    : (language === 'ko' ? '로그아웃' : 'Logout')
+                  }
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Collapse Toggle */}
           <button
