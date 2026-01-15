@@ -136,6 +136,13 @@ export const translations = {
   // 페이지네이션
   prev: { ko: '이전', en: 'Prev' },
   pageInfo: { ko: '{current} / {total} 페이지', en: 'Page {current} of {total}' },
+  // 미리보기
+  preview: { ko: '미리보기', en: 'Preview' },
+  previewTitle: { ko: '강의 미리보기', en: 'Course Preview' },
+  previewDesc: { ko: '수강생이 보게 될 강의 모습입니다.', en: 'This is how learners will see this course.' },
+  previewMode: { ko: '미리보기 모드', en: 'Preview Mode' },
+  closePreview: { ko: '미리보기 닫기', en: 'Close Preview' },
+  noPreviewData: { ko: '미리보기 데이터가 없습니다.', en: 'No preview data available.' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

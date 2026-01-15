@@ -354,6 +354,23 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
+  /**
+   * 미리보기 - 새 탭에서 수강생 뷰로 강의 정보 표시
+   * sessionStorage에 formData를 저장하고 미리보기 페이지를 새 탭으로 열기
+   */
+  const handlePreview = () => {
+    // formData와 categories 정보를 sessionStorage에 저장
+    const previewData = {
+      formData,
+      categories,
+      language,
+    };
+    sessionStorage.setItem('course-preview-data', JSON.stringify(previewData));
+
+    // 새 탭에서 미리보기 페이지 열기
+    window.open(prefixPath('/tu/teaching/courses/preview'), '_blank');
+  };
+
   const stepLabels = [getText('step1'), getText('step2'), getText('step3')];
 
   // 로딩 중일 때
@@ -458,6 +475,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
               formData={formData}
               categories={categories}
               onGoToStep={handleGoToStep}
+              onPreview={handlePreview}
             />
           )}
         </div>
