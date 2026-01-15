@@ -1,7 +1,7 @@
 /**
  * TU(Tenant User) 내 프로그램(Program) React Query Hooks
  *
- * TO의 programService와 snapshotService를 사용하여
+ * TO의 courseService와 snapshotService를 사용하여
  * 현재 사용자가 생성한 프로그램을 관리합니다.
  *
  * @deprecated Phase 3: Program 엔티티가 제거되었습니다.
@@ -10,7 +10,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
-import { programService, type ProgramFilterParams } from '@/services/co/programService';
+import { courseService, type CourseFilterParams } from '@/services/co/courseService';
 import { snapshotService } from '@/services/co/snapshotService';
 import type {
   UpdateProgramRequest,
@@ -27,7 +27,7 @@ import type {
 export const myProgramKeys = {
   all: ['my-programs'] as const,
   lists: () => [...myProgramKeys.all, 'list'] as const,
-  list: (params?: MyProgramFilterParams) => [...myProgramKeys.lists(), params] as const,
+  list: (params?: MyCourseFilterParams) => [...myProgramKeys.lists(), params] as const,
   details: () => [...myProgramKeys.all, 'detail'] as const,
   detail: (id: number) => [...myProgramKeys.details(), id] as const,
   snapshot: (snapshotId: number) => [...myProgramKeys.all, 'snapshot', snapshotId] as const,
@@ -39,7 +39,7 @@ export const myProgramKeys = {
 // Types
 // ============================================
 
-export interface MyProgramFilterParams {
+export interface MyCourseFilterParams {
   status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED';
   keyword?: string;
   page?: number;
@@ -52,17 +52,17 @@ export interface MyProgramFilterParams {
 // ============================================
 
 /** 내 프로그램 목록 조회 (createdBy 필터) */
-export const useMyPrograms = (params?: MyProgramFilterParams) => {
+export const useMyPrograms = (params?: MyCourseFilterParams) => {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: myProgramKeys.list(params),
     queryFn: () =>
-      programService.getPrograms({
+      courseService.getPrograms({
         ...params,
         createdBy: user?.id,
-      } as ProgramFilterParams),
+      } as CourseFilterParams),
     enabled: isAuthenticated && !!user?.id,
   });
 };
@@ -73,7 +73,7 @@ export const useMyProgram = (id: number) => {
 
   return useQuery({
     queryKey: myProgramKeys.detail(id),
-    queryFn: () => programService.getProgram(id),
+    queryFn: () => courseService.getProgram(id),
     enabled: isAuthenticated && !!id,
   });
 };
@@ -110,7 +110,7 @@ export const useUpdateMyProgram = () => {
 
   return useMutation({
     mutationFn: ({ id, request }: { id: number; request: UpdateProgramRequest }) =>
-      programService.updateProgram(id, request),
+      courseService.updateProgram(id, request),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: myProgramKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: myProgramKeys.lists() });
@@ -123,7 +123,7 @@ export const useDeleteMyProgram = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => programService.deleteProgram(id),
+    mutationFn: (id: number) => courseService.deleteProgram(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: myProgramKeys.lists() });
     },
@@ -135,7 +135,7 @@ export const useSubmitMyProgram = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => programService.submitProgram(id),
+    mutationFn: (id: number) => courseService.submitProgram(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: myProgramKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: myProgramKeys.lists() });

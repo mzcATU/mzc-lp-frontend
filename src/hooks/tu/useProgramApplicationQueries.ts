@@ -4,7 +4,7 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { snapshotService } from '@/services/co/snapshotService';
-import { programService } from '@/services/co/programService';
+import { courseService } from '@/services/co/courseService';
 import type { CourseDetailResponse, CourseResponse } from '@/types/common/course.types';
 import type { ProgramLevel, ProgramType } from '@/types/common/program.types';
 
@@ -65,7 +65,7 @@ export const useApplyProgram = () => {
         });
 
         // 2. Program 생성
-        const program = await programService.createProgram({
+        const program = await courseService.createProgram({
           title: course.title,
           description: course.description ?? undefined,
           thumbnailUrl: course.thumbnailUrl ?? undefined,
@@ -76,7 +76,7 @@ export const useApplyProgram = () => {
         });
 
         // 3. Program 제출 (PENDING 상태로)
-        await programService.submitProgram(program.id);
+        await courseService.submitProgram(program.id);
 
         return {
           courseId: course.courseId,
@@ -119,7 +119,7 @@ export const useApplyProgramsBulk = () => {
           });
 
           // 2. Program 생성
-          const program = await programService.createProgram({
+          const program = await courseService.createProgram({
             title: course.title,
             description: course.description ?? undefined,
             thumbnailUrl: course.thumbnailUrl ?? undefined,
@@ -130,7 +130,7 @@ export const useApplyProgramsBulk = () => {
           });
 
           // 3. Program 제출
-          await programService.submitProgram(program.id);
+          await courseService.submitProgram(program.id);
 
           results.push({
             courseId: course.courseId,

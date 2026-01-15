@@ -17,7 +17,7 @@ import {
   Textarea,
 } from '@/components/common';
 import { useCreateTime } from '@/hooks/co/useTimeQueries';
-import { useApprovedPrograms } from '@/hooks/co/useProgramQueries';
+import { useApprovedPrograms } from '@/hooks/co/useCourseQueries';
 import { useUsers } from '@/hooks/co/useUserQueries';
 import { instructorAssignmentService } from '@/services/co/instructorAssignmentService';
 import type {

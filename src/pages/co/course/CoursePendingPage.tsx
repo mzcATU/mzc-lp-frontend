@@ -30,14 +30,14 @@ import {
   usePendingPrograms,
   useApproveProgram,
   useRejectProgram,
-} from '@/hooks/co/useProgramQueries';
+} from '@/hooks/co/useCourseQueries';
 import type { PendingProgramResponse } from '@/types/common';
 import {
   PROGRAM_LEVEL_LABELS,
   PROGRAM_TYPE_LABELS,
 } from '@/types/common';
 
-interface ProgramPendingPageProps {
+interface CoursePendingPageProps {
   language?: 'ko' | 'en';
 }
 
@@ -111,7 +111,7 @@ function StatCard({
   );
 }
 
-export function ProgramPendingPage({ language = 'ko' }: Readonly<ProgramPendingPageProps>) {
+export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPageProps>) {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');

@@ -7,7 +7,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
-import { programService, type ProgramFilterParams } from '@/services/co/programService';
+import { courseService, type CourseFilterParams } from '@/services/co/courseService';
 import type { ApproveRequest, RejectRequest } from '@/types/common';
 
 // ============================================
@@ -17,11 +17,11 @@ import type { ApproveRequest, RejectRequest } from '@/types/common';
 export const programKeys = {
   all: ['programs'] as const,
   lists: () => [...programKeys.all, 'list'] as const,
-  list: (params?: ProgramFilterParams) => [...programKeys.lists(), params] as const,
+  list: (params?: CourseFilterParams) => [...programKeys.lists(), params] as const,
   details: () => [...programKeys.all, 'detail'] as const,
   detail: (id: number) => [...programKeys.details(), id] as const,
   pending: () => [...programKeys.all, 'pending'] as const,
-  pendingList: (params?: Pick<ProgramFilterParams, 'page' | 'size' | 'sort'>) =>
+  pendingList: (params?: Pick<CourseFilterParams, 'page' | 'size' | 'sort'>) =>
     [...programKeys.pending(), params] as const,
 };
 
@@ -30,12 +30,12 @@ export const programKeys = {
 // ============================================
 
 /** 프로그램 목록 조회 */
-export const usePrograms = (params?: ProgramFilterParams) => {
+export const usePrograms = (params?: CourseFilterParams) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: programKeys.list(params),
-    queryFn: () => programService.getPrograms(params),
+    queryFn: () => courseService.getPrograms(params),
     enabled: isAuthenticated,
   });
 };
@@ -49,8 +49,8 @@ export const useApprovedPrograms = () => {
 
   return useQuery({
     // Phase 3: APPROVED → REGISTERED (Course의 등록 완료 상태)
-    queryKey: programKeys.list({ status: 'REGISTERED' as ProgramFilterParams['status'] }),
-    queryFn: () => programService.getPrograms({ status: 'REGISTERED' as ProgramFilterParams['status'], size: 100 }),
+    queryKey: programKeys.list({ status: 'REGISTERED' as CourseFilterParams['status'] }),
+    queryFn: () => courseService.getPrograms({ status: 'REGISTERED' as CourseFilterParams['status'], size: 100 }),
     enabled: isAuthenticated,
   });
 };
@@ -59,20 +59,20 @@ export const useApprovedPrograms = () => {
 export const useProgram = (id: number) => {
   return useQuery({
     queryKey: programKeys.detail(id),
-    queryFn: () => programService.getProgram(id),
+    queryFn: () => courseService.getProgram(id),
     enabled: !!id,
   });
 };
 
 /** 검토 대기 프로그램 목록 조회 */
 export const usePendingPrograms = (
-  params?: Pick<ProgramFilterParams, 'page' | 'size' | 'sort'>
+  params?: Pick<CourseFilterParams, 'page' | 'size' | 'sort'>
 ) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
     queryKey: programKeys.pendingList(params),
-    queryFn: () => programService.getPendingPrograms(params),
+    queryFn: () => courseService.getPendingPrograms(params),
     enabled: isAuthenticated,
   });
 };
@@ -87,7 +87,7 @@ export const useApproveProgram = () => {
 
   return useMutation({
     mutationFn: ({ id, request }: { id: number; request?: ApproveRequest }) =>
-      programService.approveProgram(id, request),
+      courseService.approveProgram(id, request),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: programKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: programKeys.lists() });
@@ -102,7 +102,7 @@ export const useRejectProgram = () => {
 
   return useMutation({
     mutationFn: ({ id, request }: { id: number; request: RejectRequest }) =>
-      programService.rejectProgram(id, request),
+      courseService.rejectProgram(id, request),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: programKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: programKeys.lists() });
@@ -116,7 +116,7 @@ export const useCloseProgram = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => programService.closeProgram(id),
+    mutationFn: (id: number) => courseService.closeProgram(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: programKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: programKeys.lists() });
