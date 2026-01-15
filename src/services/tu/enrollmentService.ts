@@ -5,7 +5,7 @@ import type {
   EnrollmentWithCurriculumResponse,
   EnrollmentPlayerData,
 } from '@/types/tu';
-import type { ProgramDetailResponse } from '@/types/common';
+import type { CourseRegistrationDetailResponse } from '@/types/common/course.types';
 
 /**
  * 수강 신청 상태
@@ -304,12 +304,12 @@ export const enrollmentService = {
 
     if (courseTime.programId) {
       try {
-        const programRes = await axiosInstance.get<ProgramDetailResponse>(
+        const courseRes = await axiosInstance.get<CourseRegistrationDetailResponse>(
           API_ENDPOINTS.PROGRAMS.BY_ID(courseTime.programId)
         );
-        const program = programRes.data;
-        snapshotId = program.snapshotId ?? 0;
-        programTitle = program.title ?? programTitle;
+        const course = courseRes.data;
+        snapshotId = course.snapshotId ?? 0;
+        programTitle = course.title ?? programTitle;
       } catch {
         // 프로그램 조회 실패 시 snapshotId는 0으로 유지
         console.warn('Failed to fetch program for player:', courseTime.programId);

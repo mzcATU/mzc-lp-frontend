@@ -16,6 +16,13 @@ import type {
   UpdateItemNameRequest,
   UpdateLearningObjectRequest,
   UpdateDisplayInfoRequest,
+  // CO 워크플로우 타입
+  CourseRegistrationStatus,
+  CourseRegistrationResponse,
+  CourseRegistrationDetailResponse,
+  ReadyCourseResponse,
+  RegisterCourseRequest,
+  UnreadyCourseRequest,
 } from '@/types/common/course.types';
 
 // Spring Page 응답 타입
@@ -31,6 +38,15 @@ interface PageResponse<T> {
 export interface CourseFilterParams {
   keyword?: string;
   categoryId?: number;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+// CO 과정 등록 필터 파라미터
+export interface CourseRegistrationFilterParams {
+  keyword?: string;
+  status?: CourseRegistrationStatus;
   page?: number;
   size?: number;
   sort?: string;
@@ -213,6 +229,117 @@ export const courseService = {
     const { data } = await axiosInstance.patch<CourseItemResponse>(
       API_ENDPOINTS.COURSES.ITEM_DISPLAY_INFO(courseId, itemId),
       request
+    );
+    return data;
+  },
+
+  // ============================================
+  // CO 과정 등록 워크플로우
+  // ============================================
+
+  /**
+   * 등록된 과정 목록 조회 (CO용)
+   * 상태별 필터링 지원 (DRAFT, READY, REGISTERED, REJECTED)
+   */
+  async getCourseRegistrations(
+    params?: CourseRegistrationFilterParams
+  ): Promise<PageResponse<CourseRegistrationResponse>> {
+    const { data } = await axiosInstance.get<PageResponse<CourseRegistrationResponse>>(
+      API_ENDPOINTS.COURSES.BASE,
+      { params }
+    );
+    return data;
+  },
+
+  /**
+   * 검토 대기(READY) 과정 목록 조회
+   */
+  async getReadyCourses(
+    params?: Omit<CourseRegistrationFilterParams, 'status'>
+  ): Promise<PageResponse<ReadyCourseResponse>> {
+    const { data } = await axiosInstance.get<PageResponse<ReadyCourseResponse>>(
+      API_ENDPOINTS.COURSES.BASE,
+      { params: { ...params, status: 'READY' } }
+    );
+    return data;
+  },
+
+  /**
+   * 승인된(REGISTERED) 과정 목록 조회
+   * 차수 생성 시 선택 가능한 과정 목록
+   */
+  async getRegisteredCourses(
+    params?: Omit<CourseRegistrationFilterParams, 'status'>
+  ): Promise<PageResponse<CourseRegistrationResponse>> {
+    const { data } = await axiosInstance.get<PageResponse<CourseRegistrationResponse>>(
+      API_ENDPOINTS.COURSES.BASE,
+      { params: { ...params, status: 'REGISTERED' } }
+    );
+    return data;
+  },
+
+  /**
+   * 과정 등록 상세 조회 (CO용)
+   */
+  async getCourseRegistration(id: number): Promise<CourseRegistrationDetailResponse> {
+    const { data } = await axiosInstance.get<CourseRegistrationDetailResponse>(
+      API_ENDPOINTS.COURSES.BY_ID(id)
+    );
+    return data;
+  },
+
+  /**
+   * 과정 승인 (READY → REGISTERED)
+   */
+  async register(
+    id: number,
+    request?: RegisterCourseRequest
+  ): Promise<CourseRegistrationResponse> {
+    const { data } = await axiosInstance.post<CourseRegistrationResponse>(
+      API_ENDPOINTS.COURSES.REGISTER(id),
+      request
+    );
+    return data;
+  },
+
+  /**
+   * 과정 반려 (READY → REJECTED)
+   */
+  async unready(
+    id: number,
+    request: UnreadyCourseRequest
+  ): Promise<CourseRegistrationResponse> {
+    const { data } = await axiosInstance.post<CourseRegistrationResponse>(
+      API_ENDPOINTS.COURSES.UNREADY(id),
+      request
+    );
+    return data;
+  },
+
+  // ============================================
+  // TU 과정 신청 워크플로우
+  // ============================================
+
+  /**
+   * 과정 신청 (DRAFT → READY)
+   * TU가 과정을 CO에게 검토 요청
+   */
+  async ready(id: number): Promise<CourseResponse> {
+    const { data } = await axiosInstance.post<CourseResponse>(
+      API_ENDPOINTS.COURSES.READY(id)
+    );
+    return data;
+  },
+
+  /**
+   * 스냅샷 연결
+   * 과정에 스냅샷을 연결
+   */
+  async linkSnapshot(courseId: number, snapshotId: number): Promise<CourseResponse> {
+    const { data } = await axiosInstance.post<CourseResponse>(
+      `${API_ENDPOINTS.COURSES.BY_ID(courseId)}/snapshots`,
+      null,
+      { params: { snapshotId } }
     );
     return data;
   },

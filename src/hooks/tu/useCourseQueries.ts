@@ -5,8 +5,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { courseService } from '@/services/common/courseService';
 import type {
   CourseFilterParams,
+  CourseRegistrationFilterParams,
 } from '@/services/common/courseService';
-import type { UpdateCourseRequest } from '@/types/common/course.types';
+import type {
+  UpdateCourseRequest,
+  RegisterCourseRequest,
+  UnreadyCourseRequest,
+} from '@/types/common/course.types';
 
 // Query Keys
 export const courseKeys = {
@@ -78,6 +83,113 @@ export const useDeleteCourse = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
       queryClient.invalidateQueries({ queryKey: courseKeys.myLists() });
+    },
+  });
+};
+
+// ============================================
+// CO 과정 등록 워크플로우 (Program 대체)
+// ============================================
+
+// CO 과정 등록 Query Keys
+export const courseRegistrationKeys = {
+  all: ['courseRegistrations'] as const,
+  lists: () => [...courseRegistrationKeys.all, 'list'] as const,
+  list: (params?: CourseRegistrationFilterParams) =>
+    [...courseRegistrationKeys.lists(), params] as const,
+  readyLists: () => [...courseRegistrationKeys.all, 'ready'] as const,
+  readyList: (params?: Omit<CourseRegistrationFilterParams, 'status'>) =>
+    [...courseRegistrationKeys.readyLists(), params] as const,
+  registeredLists: () => [...courseRegistrationKeys.all, 'registered'] as const,
+  registeredList: (params?: Omit<CourseRegistrationFilterParams, 'status'>) =>
+    [...courseRegistrationKeys.registeredLists(), params] as const,
+  details: () => [...courseRegistrationKeys.all, 'detail'] as const,
+  detail: (id: number) => [...courseRegistrationKeys.details(), id] as const,
+};
+
+/**
+ * 등록된 과정 목록 조회 (CO용)
+ * @deprecated useApprovedPrograms 대체
+ */
+export const useCourseRegistrations = (params?: CourseRegistrationFilterParams) => {
+  return useQuery({
+    queryKey: courseRegistrationKeys.list(params),
+    queryFn: () => courseService.getCourseRegistrations(params),
+  });
+};
+
+/**
+ * 검토 대기(READY) 과정 목록 조회
+ * @deprecated usePendingPrograms 대체
+ */
+export const useReadyCourses = (
+  params?: Omit<CourseRegistrationFilterParams, 'status'>
+) => {
+  return useQuery({
+    queryKey: courseRegistrationKeys.readyList(params),
+    queryFn: () => courseService.getReadyCourses(params),
+  });
+};
+
+/**
+ * 승인된(REGISTERED) 과정 목록 조회
+ * 차수 생성 시 선택 가능한 과정 목록
+ * @deprecated useApprovedPrograms 대체
+ */
+export const useRegisteredCourses = (
+  params?: Omit<CourseRegistrationFilterParams, 'status'>
+) => {
+  return useQuery({
+    queryKey: courseRegistrationKeys.registeredList(params),
+    queryFn: () => courseService.getRegisteredCourses(params),
+  });
+};
+
+/**
+ * 과정 등록 상세 조회 (CO용)
+ * @deprecated useProgram 대체
+ */
+export const useCourseRegistration = (id: number) => {
+  return useQuery({
+    queryKey: courseRegistrationKeys.detail(id),
+    queryFn: () => courseService.getCourseRegistration(id),
+    enabled: !!id,
+  });
+};
+
+/**
+ * 과정 승인 (READY → REGISTERED)
+ * @deprecated useApproveProgram 대체
+ */
+export const useRegisterCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, request }: { id: number; request?: RegisterCourseRequest }) =>
+      courseService.register(id, request),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.readyLists() });
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.registeredLists() });
+    },
+  });
+};
+
+/**
+ * 과정 반려 (READY → REJECTED)
+ * @deprecated useRejectProgram 대체
+ */
+export const useUnreadyCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, request }: { id: number; request: UnreadyCourseRequest }) =>
+      courseService.unready(id, request),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.readyLists() });
     },
   });
 };
