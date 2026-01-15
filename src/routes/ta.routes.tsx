@@ -40,7 +40,7 @@ function TenantAdminWrapper() {
   );
 }
 
-// TA 하위 라우트
+// TA 하위 라우트 (Admin 메뉴)
 const taChildRoutes = (
   <>
     <Route index element={<DashboardPage />} />

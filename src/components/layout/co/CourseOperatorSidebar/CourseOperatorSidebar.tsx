@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { BaseSidebar } from '../../common/BaseSidebar';
 import { courseOperatorMenuData, roleLabels } from '@/config/sidebar-menus';
 import { usePublicLayout } from '@/hooks/tu';
+import { useAuthStore } from '@/store/common/authStore';
 import type { MenuItem } from '@/types';
 
 interface CourseOperatorSidebarProps {
@@ -25,6 +26,12 @@ interface BrandingSidebarItem {
 export function CourseOperatorSidebar(props: CourseOperatorSidebarProps) {
   const { data: layoutData } = usePublicLayout();
   const sidebarSettings = layoutData?.sidebarCOSettings as { enabled?: boolean; items?: BrandingSidebarItem[] } | undefined;
+
+  // 사용자 역할 가져오기
+  const userRole = useAuthStore((state) => state.user?.role);
+
+  // TENANT_ADMIN만 글로벌 역할 스위처 표시
+  const showGlobalRoleSwitcher = userRole === 'TENANT_ADMIN';
 
   // 브랜딩 설정을 기반으로 메뉴 필터링
   const filteredMenuData = useMemo((): MenuItem[] => {
@@ -60,6 +67,7 @@ export function CourseOperatorSidebar(props: CourseOperatorSidebarProps) {
       {...props}
       menuData={filteredMenuData}
       roleLabel={roleLabels.courseOperator}
+      showGlobalRoleSwitcher={showGlobalRoleSwitcher}
       roleType="co"
     />
   );

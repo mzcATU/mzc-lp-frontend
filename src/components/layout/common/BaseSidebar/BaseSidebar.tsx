@@ -8,6 +8,7 @@ import {
   PanelLeft,
   GraduationCap,
   LogOut,
+  ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
@@ -15,6 +16,7 @@ import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
+import { GlobalRoleSwitcher, type GlobalRole } from '../GlobalRoleSwitcher';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 import { useSubdomainPath } from '@/hooks/common';
@@ -31,9 +33,11 @@ export function BaseSidebar({
   menuData,
   roleLabel,
   showModeSwitcher = false,
+  showGlobalRoleSwitcher = false,
   currentMode = 'instructor',
   roleType = 'tu',
-}: BaseSidebarProps & { showModeSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType }) {
+  showBackToTA = false,
+}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType }) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -82,6 +86,15 @@ export function BaseSidebar({
 
   // 어드민 역할 여부 (SA, TA, CO)
   const isAdminRole = roleType === 'sa' || roleType === 'ta' || roleType === 'co';
+
+  // 글로벌 역할 타입 매핑
+  const globalRoleMap: Record<RoleType, GlobalRole> = {
+    sa: 'TA', // SA는 TA로 매핑 (SA에서는 글로벌 스위처 안 씀)
+    ta: 'TA',
+    co: 'CO',
+    tu: 'TU',
+  };
+  const currentGlobalRole = globalRoleMap[roleType];
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
@@ -227,8 +240,8 @@ export function BaseSidebar({
               >
                 {platformName}
               </h1>
-              {/* TU는 모드 스위처로 대체, 나머지 역할은 라벨 표시 */}
-              {!showModeSwitcher && (
+              {/* 모드 스위처나 글로벌 역할 스위처가 없을 때만 라벨 표시 */}
+              {!showModeSwitcher && !showGlobalRoleSwitcher && (
                 <p
                   className="text-xs whitespace-nowrap"
                   style={{ color: colors.textSecondary }}
@@ -249,6 +262,19 @@ export function BaseSidebar({
               language={language}
               colors={colors}
               onModeChange={handleModeChange}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+        )}
+
+        {/* Global Role Switcher (TA, CO, TU 간 전환) */}
+        {showGlobalRoleSwitcher && (
+          <div className={cn('mb-3', !isExpanded && 'flex justify-center')}>
+            <GlobalRoleSwitcher
+              currentRole={currentGlobalRole}
+              isExpanded={isExpanded}
+              language={language}
+              colors={colors}
               isDarkMode={isDarkMode}
             />
           </div>
@@ -471,6 +497,44 @@ export function BaseSidebar({
             borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : colors.border}`,
           }}
         >
+          {/* Back to TA Button (TENANT_ADMIN이 TU/CO 페이지 접근 시) */}
+          {showBackToTA && (
+            <button
+              onClick={() => navigate(prefixPath('/ta/dashboard'))}
+              className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+              style={{
+                width: isExpanded ? '100%' : '44px',
+                height: '44px',
+                padding: isExpanded ? '0 16px' : '0',
+                justifyContent: 'center',
+                color: colors.textPrimary,
+                margin: isExpanded ? '0' : '0 auto',
+                backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
+                border: `1px solid ${isDarkMode ? 'rgba(99, 102, 241, 0.4)' : 'rgba(99, 102, 241, 0.3)'}`,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)';
+              }}
+              title={language === 'ko' ? 'TA로 돌아가기' : 'Back to TA'}
+            >
+              <ArrowLeft
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: isDarkMode ? '#a5b4fc' : '#6366f1' }}
+              />
+              {isExpanded && (
+                <span
+                  className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3"
+                  style={{ color: isDarkMode ? '#a5b4fc' : '#6366f1' }}
+                >
+                  {language === 'ko' ? 'TA로 돌아가기' : 'Back to TA'}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}

@@ -31,6 +31,9 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
   // 사용자 역할 가져오기
   const userRole = useAuthStore((state) => state.user?.role);
 
+  // TENANT_ADMIN만 글로벌 역할 스위처 표시
+  const showGlobalRoleSwitcher = userRole === 'TENANT_ADMIN';
+
   // 기능 설정 가져오기
   const { isFeatureEnabled } = useTenantFeatures();
   const instructorTabEnabled = isFeatureEnabled('instructorTabEnabled');
@@ -83,6 +86,7 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
       menuData={filteredMenuData}
       roleLabel={roleLabels.tenantUser}
       showModeSwitcher={instructorTabEnabled}
+      showGlobalRoleSwitcher={showGlobalRoleSwitcher}
       currentMode="instructor"
       roleType="tu"
     />
