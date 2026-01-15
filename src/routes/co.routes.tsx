@@ -35,8 +35,9 @@ function CourseOperatorWrapper() {
   );
 }
 
-export const coRoutes = (
-  <Route path="/:subdomain/co" element={<CourseOperatorWrapper />}>
+// CO 하위 라우트
+const coChildRoutes = (
+  <>
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}
@@ -68,5 +69,18 @@ export const coRoutes = (
     <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
     <Route path="settings/appearance" element={<SettingsAppearancePage />} />
     <Route path="settings/content-defaults" element={<PlaceholderPage title="콘텐츠 기본 설정" />} />
-  </Route>
+  </>
+);
+
+export const coRoutes = (
+  <>
+    {/* 기본 테넌트용 (subdomain 없음) */}
+    <Route path="/co" element={<CourseOperatorWrapper />}>
+      {coChildRoutes}
+    </Route>
+    {/* 특정 테넌트용 (subdomain 있음) */}
+    <Route path="/:subdomain/co" element={<CourseOperatorWrapper />}>
+      {coChildRoutes}
+    </Route>
+  </>
 );

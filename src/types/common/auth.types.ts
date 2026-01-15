@@ -83,6 +83,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role: TenantRole;
+  roles?: TenantRole[];  // 1:N 역할 지원 (향후 확장용)
   tenantId?: number;
   tenantSubdomain?: string;
 }

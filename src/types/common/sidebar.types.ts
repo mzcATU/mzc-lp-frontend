@@ -46,6 +46,8 @@ export interface BaseSidebarProps {
   language?: 'ko' | 'en';
   menuData: MenuItem[];
   roleLabel: { ko: string; en: string };
+  /** TA로 돌아가기 버튼 표시 여부 (TENANT_ADMIN이 TU/CO 페이지 접근 시) */
+  showBackToTA?: boolean;
 }
 
 /**
