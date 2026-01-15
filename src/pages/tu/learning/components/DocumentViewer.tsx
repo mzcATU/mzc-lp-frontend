@@ -381,6 +381,7 @@ export function DocumentViewer({
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
               <div className="w-full h-full" style={{ maxWidth: pdfViewMode === 'dual' ? '100%' : '800px' }}>
                 <Viewer
+                  key={`pdf-viewer-${pdfViewMode}`}
                   fileUrl={documentUrl}
                   defaultScale={SpecialZoomLevel.PageFit}
                   scrollMode={ScrollMode.Page}
