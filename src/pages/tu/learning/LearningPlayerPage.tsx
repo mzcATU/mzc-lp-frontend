@@ -285,6 +285,14 @@ export function LearningPlayerPage() {
     }
   }, [orderedCurriculumItems, itemId]);
 
+  // 현재 아이템의 완료 상태 동기화
+  useEffect(() => {
+    if (currentItemId && progressRecords.length > 0) {
+      const itemProgress = progressRecords.find((r) => r.itemId === currentItemId);
+      setIsCompleted(itemProgress?.completed ?? false);
+    }
+  }, [currentItemId, progressRecords]);
+
   // 진도 저장 (임시 비활성화)
   const saveProgress = useCallback(async () => {
     // TODO: 테스트 후 다시 활성화

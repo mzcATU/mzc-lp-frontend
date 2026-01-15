@@ -104,7 +104,6 @@ export function MyPageHome() {
     const fetchCourseRoles = async () => {
       try {
         const roles = await userService.getMyCourseRoles();
-        console.log('MyPageHome - CourseRoles API response:', roles);
 
         if (Array.isArray(roles) && roles.length > 0) {
           // OWNER가 있으면 → 강의 소유자 (승인된 강의 있음)

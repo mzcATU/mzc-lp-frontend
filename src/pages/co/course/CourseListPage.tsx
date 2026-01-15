@@ -14,7 +14,6 @@ import {
   LayoutGrid,
   Eye,
   MoreHorizontal,
-  Archive,
   AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -31,18 +30,20 @@ import {
   DropdownMenuItem,
 } from '@/components/common';
 import {
-  usePrograms,
-  useApproveProgram,
-  useRejectProgram,
-  useCloseProgram,
-} from '@/hooks/co/useCourseQueries';
-import type { ProgramResponse, ProgramStatus } from '@/types/common';
+  useCourseRegistrations,
+  useRegisterCourse,
+  useUnreadyCourse,
+} from '@/hooks/tu/useCourseQueries';
+import type {
+  CourseRegistrationResponse,
+  CourseRegistrationStatus,
+} from '@/types/common/course.types';
 import {
-  PROGRAM_STATUS_LABELS,
-  PROGRAM_LEVEL_LABELS,
-  PROGRAM_TYPE_LABELS,
-} from '@/types/common';
-import type { CourseFilterParams } from '@/services/co/courseService';
+  COURSE_REGISTRATION_STATUS_LABELS,
+  COURSE_LEVEL_LABELS,
+  COURSE_TYPE_LABELS,
+} from '@/types/common/course.types';
+import type { CourseRegistrationFilterParams } from '@/services/common/courseService';
 
 interface CourseListPageProps {
   language?: 'ko' | 'en';
@@ -56,13 +57,12 @@ const t = {
   status: { ko: '상태', en: 'Status' },
   all: { ko: '전체', en: 'All' },
   DRAFT: { ko: '작성 중', en: 'Draft' },
-  PENDING: { ko: '검토 대기', en: 'Pending' },
-  APPROVED: { ko: '승인됨', en: 'Approved' },
+  READY: { ko: '검토 대기', en: 'Ready' },
+  REGISTERED: { ko: '승인됨', en: 'Registered' },
   REJECTED: { ko: '반려됨', en: 'Rejected' },
-  CLOSED: { ko: '종료됨', en: 'Closed' },
   totalCourses: { ko: '전체 과정', en: 'Total Courses' },
-  pendingCourses: { ko: '검토 대기', en: 'Pending' },
-  approvedCourses: { ko: '승인됨', en: 'Approved' },
+  readyCourses: { ko: '검토 대기', en: 'Ready' },
+  registeredCourses: { ko: '승인됨', en: 'Registered' },
   rejectedCourses: { ko: '반려됨', en: 'Rejected' },
   noResults: { ko: '검색 결과가 없습니다.', en: 'No results found.' },
   noCourses: { ko: '등록된 과정이 없습니다.', en: 'No courses registered.' },
@@ -81,30 +81,26 @@ const t = {
   columnActions: { ko: '액션', en: 'Actions' },
   view: { ko: '상세보기', en: 'View Details' },
   notSet: { ko: '미설정', en: 'Not set' },
-  approve: { ko: '승인', en: 'Approve' },
+  register: { ko: '승인', en: 'Register' },
   reject: { ko: '반려', en: 'Reject' },
-  close: { ko: '종료', en: 'Close' },
-  approving: { ko: '승인 중...', en: 'Approving...' },
+  registering: { ko: '승인 중...', en: 'Registering...' },
   rejecting: { ko: '반려 중...', en: 'Rejecting...' },
-  closing: { ko: '종료 중...', en: 'Closing...' },
-  confirmApprove: { ko: '이 과정을 승인하시겠습니까?', en: 'Approve this program?' },
+  confirmRegister: { ko: '이 과정을 승인하시겠습니까?', en: 'Register this course?' },
   confirmReject: { ko: '반려 사유를 입력하세요.', en: 'Enter rejection reason.' },
-  confirmClose: { ko: '이 과정을 종료하시겠습니까?', en: 'Close this program?' },
   rejectReasonRequired: { ko: '반려 사유를 입력해주세요.', en: 'Rejection reason is required.' },
   rejectReasonPlaceholder: { ko: '반려 사유를 입력하세요...', en: 'Enter rejection reason...' },
-  approveCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Approval comment (optional)' },
-  approvalComment: { ko: '승인 코멘트', en: 'Approval Comment' },
+  registerCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Registration comment (optional)' },
+  registerComment: { ko: '승인 코멘트', en: 'Registration Comment' },
   rejectionReason: { ko: '반려 사유', en: 'Rejection Reason' },
   cancel: { ko: '취소', en: 'Cancel' },
   confirm: { ko: '확인', en: 'Confirm' },
 };
 
-const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
+const statusBadgeVariant: Record<CourseRegistrationStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
   DRAFT: 'secondary',
-  PENDING: 'warning',
-  APPROVED: 'success',
+  READY: 'warning',
+  REGISTERED: 'success',
   REJECTED: 'destructive',
-  CLOSED: 'default',
 };
 
 // 아이콘 색상별 스타일 (디자인 토큰 기반)
@@ -146,49 +142,48 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ProgramStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<CourseRegistrationStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
   // Modal states
-  const [selectedProgram, setSelectedProgram] = useState<ProgramResponse | null>(null);
-  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<CourseRegistrationResponse | null>(null);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [approveComment, setApproveComment] = useState('');
+  const [registerComment, setRegisterComment] = useState('');
   const [rejectReason, setRejectReason] = useState('');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   // API 파라미터 구성
-  const params: CourseFilterParams = {
+  const params: CourseRegistrationFilterParams = {
     page,
     size: 10,
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
 
   // React Query 훅 사용
-  const { data, isLoading, error } = usePrograms(params);
-  const approveProgram = useApproveProgram();
-  const rejectProgram = useRejectProgram();
-  const closeProgram = useCloseProgram();
+  const { data, isLoading, error } = useCourseRegistrations(params);
+  const registerCourse = useRegisterCourse();
+  const unreadyCourse = useUnreadyCourse();
 
-  const programs = data?.content ?? [];
+  const courses = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
 
   // 검색 필터링 (클라이언트 사이드)
-  const filteredPrograms = useMemo(() => {
-    if (!searchQuery) return programs;
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery) return courses;
     const query = searchQuery.toLowerCase();
-    return programs.filter((program) => program.title.toLowerCase().includes(query));
-  }, [programs, searchQuery]);
+    return courses.filter((course) => course.title.toLowerCase().includes(query));
+  }, [courses, searchQuery]);
 
   // 통계 계산
-  const programStats = useMemo(() => ({
+  const courseStats = useMemo(() => ({
     total: totalElements,
-    pending: programs.filter((p) => p.status === 'PENDING').length,
-    approved: programs.filter((p) => p.status === 'APPROVED').length,
-    rejected: programs.filter((p) => p.status === 'REJECTED').length,
-  }), [programs, totalElements]);
+    ready: courses.filter((c) => c.status === 'READY').length,
+    registered: courses.filter((c) => c.status === 'REGISTERED').length,
+    rejected: courses.filter((c) => c.status === 'REJECTED').length,
+  }), [courses, totalElements]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -199,98 +194,72 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   };
 
   // Action handlers
-  const handleApproveClick = (program: ProgramResponse) => {
-    setSelectedProgram(program);
-    setShowApproveModal(true);
+  const handleRegisterClick = (course: CourseRegistrationResponse) => {
+    setSelectedCourse(course);
+    setShowRegisterModal(true);
   };
 
-  const handleRejectClick = (program: ProgramResponse) => {
-    setSelectedProgram(program);
+  const handleRejectClick = (course: CourseRegistrationResponse) => {
+    setSelectedCourse(course);
     setShowRejectModal(true);
   };
 
-  const handleApprove = async () => {
-    if (!selectedProgram) return;
+  const handleRegister = async () => {
+    if (!selectedCourse) return;
     try {
-      await approveProgram.mutateAsync({
-        id: selectedProgram.id,
-        request: approveComment ? { comment: approveComment } : undefined,
+      await registerCourse.mutateAsync({
+        id: selectedCourse.id,
+        request: registerComment ? { comment: registerComment } : undefined,
       });
-      setShowApproveModal(false);
-      setSelectedProgram(null);
-      setApproveComment('');
+      setShowRegisterModal(false);
+      setSelectedCourse(null);
+      setRegisterComment('');
     } catch (err) {
-      console.error('Approve failed:', err);
+      console.error('Register failed:', err);
     }
   };
 
   const handleReject = async () => {
-    if (!selectedProgram) return;
+    if (!selectedCourse) return;
     if (!rejectReason.trim()) {
       alert(getText('rejectReasonRequired'));
       return;
     }
     try {
-      await rejectProgram.mutateAsync({
-        id: selectedProgram.id,
+      await unreadyCourse.mutateAsync({
+        id: selectedCourse.id,
         request: { reason: rejectReason },
       });
       setShowRejectModal(false);
-      setSelectedProgram(null);
+      setSelectedCourse(null);
       setRejectReason('');
     } catch (err) {
       console.error('Reject failed:', err);
     }
   };
 
-  const handleClose = async (program: ProgramResponse) => {
-    if (!confirm(getText('confirmClose'))) return;
-    try {
-      await closeProgram.mutateAsync(program.id);
-    } catch (err) {
-      console.error('Close failed:', err);
-    }
-  };
-
   // 상태별 Primary Action 렌더링
-  // - PENDING: 승인 버튼 (운영자 주요 액션)
-  // - APPROVED: 종료 버튼
-  // - DRAFT, REJECTED, CLOSED: Primary Action 없음 (Row Click으로 상세보기)
-  const renderPrimaryAction = (item: ProgramResponse) => {
+  // - READY: 승인 버튼 (운영자 주요 액션)
+  // - 그 외: Primary Action 없음 (Row Click으로 상세보기)
+  const renderPrimaryAction = (item: CourseRegistrationResponse) => {
     switch (item.status) {
-      case 'PENDING':
+      case 'READY':
         return (
           <Button
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              handleApproveClick(item);
+              handleRegisterClick(item);
             }}
-            disabled={approveProgram.isPending}
+            disabled={registerCourse.isPending}
             className="h-8"
           >
             <CheckCircle size={14} />
-            {getText('approve')}
-          </Button>
-        );
-      case 'APPROVED':
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose(item);
-            }}
-            disabled={closeProgram.isPending}
-            className="h-8 border border-border"
-          >
-            <Archive size={14} />
-            {getText('close')}
+            {getText('register')}
           </Button>
         );
       default:
-        // DRAFT, REJECTED, CLOSED: Primary Action 없음
+        // DRAFT, REGISTERED, REJECTED: Primary Action 없음
         return null;
     }
   };
@@ -298,10 +267,9 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   // 더보기 메뉴 렌더링
   // 모든 상태에 ... 메뉴 표시 (시각적 일관성)
   // 상태별 메뉴 아이템:
-  // - PENDING: 반려, 상세보기
-  // - APPROVED: 상세보기
-  // - DRAFT, REJECTED, CLOSED: 상세보기
-  const renderMoreMenu = (item: ProgramResponse) => {
+  // - READY: 반려, 상세보기
+  // - 그 외: 상세보기
+  const renderMoreMenu = (item: CourseRegistrationResponse) => {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -319,8 +287,8 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
             {getText('view')}
           </DropdownMenuItem>
 
-          {/* 반려 - PENDING 상태만 */}
-          {item.status === 'PENDING' && (
+          {/* 반려 - READY 상태만 */}
+          {item.status === 'READY' && (
             <DropdownMenuItem
               onClick={() => handleRejectClick(item)}
               variant="destructive"
@@ -335,7 +303,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   };
 
   // 리스트뷰 컬럼 정의
-  const columns: ColumnDef<ProgramResponse>[] = useMemo(
+  const columns: ColumnDef<CourseRegistrationResponse>[] = useMemo(
     () => [
       {
         accessorKey: 'title',
@@ -360,7 +328,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
         ),
         cell: ({ row }) => (
           <Badge variant={statusBadgeVariant[row.original.status]}>
-            {PROGRAM_STATUS_LABELS[row.original.status]}
+            {COURSE_REGISTRATION_STATUS_LABELS[row.original.status]}
           </Badge>
         ),
       },
@@ -371,7 +339,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
         ),
         cell: ({ row }) => (
           <span className="text-sm text-text-secondary whitespace-nowrap">
-            {row.original.level ? PROGRAM_LEVEL_LABELS[row.original.level] : getText('notSet')}
+            {row.original.level ? COURSE_LEVEL_LABELS[row.original.level] : getText('notSet')}
           </span>
         ),
       },
@@ -382,7 +350,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
         ),
         cell: ({ row }) => (
           <span className="text-sm text-text-secondary whitespace-nowrap">
-            {row.original.type ? PROGRAM_TYPE_LABELS[row.original.type] : getText('notSet')}
+            {row.original.type ? COURSE_TYPE_LABELS[row.original.type] : getText('notSet')}
           </span>
         ),
       },
@@ -426,7 +394,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
         size: 130,
       },
     ],
-    [language, navigate, approveProgram.isPending, closeProgram.isPending]
+    [language, navigate, registerCourse.isPending]
   );
 
   if (error) {
@@ -488,7 +456,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
                 {getText('status')}
               </label>
               <div className="flex flex-wrap gap-2">
-                {(['all', 'DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'CLOSED'] as const).map(
+                {(['all', 'DRAFT', 'READY', 'REGISTERED', 'REJECTED'] as const).map(
                   (status) => (
                     <button
                       key={status}
@@ -521,25 +489,25 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
             <StatCard
               icon={<LayoutGrid size={20} />}
               label={getText('totalCourses')}
-              value={programStats.total}
+              value={courseStats.total}
               iconColor="blue"
             />
             <StatCard
               icon={<Clock size={20} />}
-              label={getText('pendingCourses')}
-              value={programStats.pending}
+              label={getText('readyCourses')}
+              value={courseStats.ready}
               iconColor="yellow"
             />
             <StatCard
               icon={<CheckCircle size={20} />}
-              label={getText('approvedCourses')}
-              value={programStats.approved}
+              label={getText('registeredCourses')}
+              value={courseStats.registered}
               iconColor="green"
             />
             <StatCard
               icon={<XCircle size={20} />}
               label={getText('rejectedCourses')}
-              value={programStats.rejected}
+              value={courseStats.rejected}
               iconColor="red"
             />
           </div>
@@ -547,7 +515,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           {/* Count */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
-              {filteredPrograms.length}
+              {filteredCourses.length}
               {getText('courseCount')}
             </p>
           </div>
@@ -570,7 +538,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           )}
 
           {/* Empty Search Results */}
-          {!isLoading && filteredPrograms.length === 0 && (searchQuery || statusFilter !== 'all') && (
+          {!isLoading && filteredCourses.length === 0 && (searchQuery || statusFilter !== 'all') && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -578,10 +546,10 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           )}
 
           {/* Data Table */}
-          {!isLoading && filteredPrograms.length > 0 && (
+          {!isLoading && filteredCourses.length > 0 && (
             <DataTable
               columns={columns}
-              data={filteredPrograms}
+              data={filteredCourses}
               showColumnToggle={false}
               showPagination={true}
               manualPagination={true}
@@ -601,23 +569,23 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
         </div>
       </div>
 
-      {/* Approve Modal */}
-      {showApproveModal && selectedProgram && (
+      {/* Register Modal */}
+      {showRegisterModal && selectedCourse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
               <CheckCircle size={20} className="text-status-success" />
-              {getText('confirmApprove')}
+              {getText('confirmRegister')}
             </h3>
             <p className="text-sm text-text-secondary mb-4">
-              {selectedProgram.title}
+              {selectedCourse.title}
             </p>
             <div className="mb-4">
-              <Label className="text-text-secondary mb-2">{getText('approvalComment')}</Label>
+              <Label className="text-text-secondary mb-2">{getText('registerComment')}</Label>
               <Textarea
-                value={approveComment}
-                onChange={(e) => setApproveComment(e.target.value)}
-                placeholder={getText('approveCommentPlaceholder')}
+                value={registerComment}
+                onChange={(e) => setRegisterComment(e.target.value)}
+                placeholder={getText('registerCommentPlaceholder')}
                 rows={3}
               />
             </div>
@@ -625,15 +593,15 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setShowApproveModal(false);
-                  setSelectedProgram(null);
-                  setApproveComment('');
+                  setShowRegisterModal(false);
+                  setSelectedCourse(null);
+                  setRegisterComment('');
                 }}
               >
                 {getText('cancel')}
               </Button>
-              <Button onClick={handleApprove} disabled={approveProgram.isPending}>
-                {approveProgram.isPending ? getText('approving') : getText('confirm')}
+              <Button onClick={handleRegister} disabled={registerCourse.isPending}>
+                {registerCourse.isPending ? getText('registering') : getText('confirm')}
               </Button>
             </div>
           </div>
@@ -641,7 +609,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
       )}
 
       {/* Reject Modal */}
-      {showRejectModal && selectedProgram && (
+      {showRejectModal && selectedCourse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
@@ -649,7 +617,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
               {getText('confirmReject')}
             </h3>
             <p className="text-sm text-text-secondary mb-4">
-              {selectedProgram.title}
+              {selectedCourse.title}
             </p>
             <div className="mb-4">
               <Label className="text-text-secondary mb-2">{getText('rejectionReason')} *</Label>
@@ -665,7 +633,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
                 variant="ghost"
                 onClick={() => {
                   setShowRejectModal(false);
-                  setSelectedProgram(null);
+                  setSelectedCourse(null);
                   setRejectReason('');
                 }}
               >
@@ -673,10 +641,10 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
               </Button>
               <Button
                 onClick={handleReject}
-                disabled={rejectProgram.isPending || !rejectReason.trim()}
+                disabled={unreadyCourse.isPending || !rejectReason.trim()}
                 className="bg-status-error hover:bg-status-error/90 text-white"
               >
-                {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
+                {unreadyCourse.isPending ? getText('rejecting') : getText('reject')}
               </Button>
             </div>
           </div>
