@@ -210,23 +210,23 @@ export {
   type ApplicationResult,
 } from './useProgramApplicationQueries';
 
-// My Program Hooks (TU 내 프로그램 관리)
-export {
-  myProgramKeys,
-  useMyPrograms,
-  useMyProgram,
-  useMyProgramSnapshot,
-  useSnapshotItems,
-  useUpdateMyProgram,
-  useDeleteMyProgram,
-  useSubmitMyProgram,
-  useUpdateSnapshot,
-  useAddSnapshotItem,
-  useUpdateSnapshotItem,
-  useMoveSnapshotItem,
-  useDeleteSnapshotItem,
-  type MyProgramFilterParams,
-} from './useMyProgramQueries';
+// My Program Hooks - DEPRECATED Phase 3: Program 엔티티 제거됨 (TU 내 프로그램 관리)
+// export {
+//   myProgramKeys,
+//   useMyPrograms,
+//   useMyProgram,
+//   useMyProgramSnapshot,
+//   useSnapshotItems,
+//   useUpdateMyProgram,
+//   useDeleteMyProgram,
+//   useSubmitMyProgram,
+//   useUpdateSnapshot,
+//   useAddSnapshotItem,
+//   useUpdateSnapshotItem,
+//   useMoveSnapshotItem,
+//   useDeleteSnapshotItem,
+//   type MyProgramFilterParams,
+// } from './useMyProgramQueries';
 
 // CourseTime Catalog Hooks (학습자용 차수 카탈로그)
 export {
@@ -311,3 +311,25 @@ export {
   useUnreadNoticeCount,
   useLatestUserNotice,
 } from './useUserNoticeQueries';
+
+// Course Community Hooks (코스 커뮤니티)
+export {
+  courseCommunityKeys,
+  useCourseCommunityPosts,
+  useCourseCommunityPost,
+  useCreateCourseCommunityPost,
+  useUpdateCourseCommunityPost,
+  useDeleteCourseCommunityPost,
+  useLikeCourseCommunityPost,
+  useUnlikeCourseCommunityPost,
+  useCourseCommunityComments,
+  useCreateCourseCommunityComment,
+  useUpdateCourseCommunityComment,
+  useDeleteCourseCommunityComment,
+  useLikeCourseCommunityComment,
+  useUnlikeCourseCommunityComment,
+} from './useCourseCommunityQueries';
+
+// Question Section Hook (질문 섹션 공통 로직)
+export { useQuestionSection } from './useQuestionSection';
+export type { TabType, SortType } from './useQuestionSection';

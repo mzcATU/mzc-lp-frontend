@@ -1,9 +1,11 @@
 /**
- * LearningPlayerPage
- * 학습 플레이어 메인 페이지
+ * B2BLearningPlayerPage
+ * B2B 전용 학습 플레이어 페이지
+ * - 16:9 비율 고정 플레이어
+ * - 커뮤니티 섹션 포함
  */
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import {
   ArrowLeft,
@@ -12,8 +14,6 @@ import {
   CheckCircle,
   Loader2,
   BookOpen,
-  X,
-  AlertTriangle,
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react';
@@ -27,7 +27,8 @@ import {
 } from '@/hooks/tu';
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
-import { VideoPlayer, CurriculumSidebar, DocumentViewer, ExternalLinkViewer } from './components';
+import { VideoPlayer, CurriculumSidebar, DocumentViewer, ExternalLinkViewer } from '../learning/components';
+import { B2BCommentSection } from './components/B2BCommentSection';
 import {
   AUTO_SAVE_INTERVAL,
   type PlayerContentType,
@@ -48,50 +49,13 @@ const mapItemTypeToContentType = (itemType: string | null | undefined): PlayerCo
   return typeMap[itemType.toUpperCase()] || 'VIDEO';
 };
 
-// ============================================
-// Demo Mode Mock Data
-// ============================================
-const DEMO_ENROLLMENT = {
-  enrollmentId: 0,
-  programId: 1,
-  programTitle: '[데모] React 기초 강의',
-  timeId: 1,
-  snapshotId: 999,
-  startDate: '2024-01-01',
-  endDate: '2024-12-31',
-  progressRate: 30,
-  status: 'IN_PROGRESS' as const,
-  enrolledAt: '2024-01-15T10:00:00Z',
-};
-
-// 데모 비디오 URL 목록 (Google 샘플 비디오)
-const DEMO_VIDEO_URLS: Record<number, string> = {
-  1: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  2: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-  3: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-  4: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-  5: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-};
-
-const DEMO_CURRICULUM_ITEMS = [
-  { itemId: 1, itemName: '1. React란 무엇인가?', contentId: 1, contentType: 'VIDEO' as PlayerContentType, duration: 600 },
-  { itemId: 2, itemName: '2. JSX 문법 이해하기', contentId: 2, contentType: 'VIDEO' as PlayerContentType, duration: 900 },
-  { itemId: 3, itemName: '3. 컴포넌트와 Props', contentId: 3, contentType: 'VIDEO' as PlayerContentType, duration: 1200 },
-  { itemId: 4, itemName: '4. State 관리하기', contentId: 4, contentType: 'VIDEO' as PlayerContentType, duration: 1500 },
-  { itemId: 5, itemName: '5. useEffect 훅 활용', contentId: 5, contentType: 'VIDEO' as PlayerContentType, duration: 1100 },
-];
-
-export function LearningPlayerPage() {
+export function B2BLearningPlayerPage() {
   const { enrollmentId, itemId } = useParams<{ enrollmentId: string; itemId?: string }>();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const { t } = useTranslation();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
-
-  // 데모 모드 확인 (URL이 /demo 이거나 ?demo=true)
-  const isDemoMode = enrollmentId === 'demo' || searchParams.get('demo') === 'true';
 
   // 상태
   const [currentItemId, setCurrentItemId] = useState<number | null>(itemId ? Number(itemId) : null);
@@ -102,20 +66,16 @@ export function LearningPlayerPage() {
   const [playedPercent, setPlayedPercent] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showDemoBanner, setShowDemoBanner] = useState(true);
 
   // Refs
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Queries & Mutations (데모 모드에서는 비활성화)
-  const { data: playerData, isLoading, isError } = useEnrollmentForPlayer(
-    isDemoMode ? 0 : Number(enrollmentId),
-    { enabled: !isDemoMode }
-  );
+  // Queries & Mutations
+  const { data: playerData, isLoading, isError } = useEnrollmentForPlayer(Number(enrollmentId));
   const markItemComplete = useMarkItemComplete();
 
-  // 데모 모드 또는 API 데이터 사용
-  const enrollment = isDemoMode ? DEMO_ENROLLMENT : playerData ? {
+  // API 데이터 사용
+  const enrollment = playerData ? {
     enrollmentId: playerData.enrollmentId,
     programId: playerData.programId,
     programTitle: playerData.programTitle,
@@ -131,10 +91,10 @@ export function LearningPlayerPage() {
   // 진도 기록 상태
   const [progressRecords, setProgressRecords] = useState<ProgressRecordResponse[]>([]);
 
-  // snapshotId (데모 모드에서는 mock 사용, 실제 모드에서는 playerData에서 가져옴)
-  const snapshotId = isDemoMode ? 999 : (enrollment?.snapshotId ?? 0);
+  // snapshotId
+  const snapshotId = enrollment?.snapshotId ?? 0;
 
-  // 아이템별 진도 조회 (실제 모드에서만)
+  // 아이템별 진도 조회
   const { data: itemsProgressData } = useQuery({
     queryKey: ['enrollment', 'items', 'progress', enrollmentId],
     queryFn: async () => {
@@ -143,7 +103,7 @@ export function LearningPlayerPage() {
       );
       return response.data;
     },
-    enabled: !isDemoMode && !!enrollmentId,
+    enabled: !!enrollmentId,
   });
 
   // API에서 가져온 진도 데이터를 progressRecords에 반영
@@ -160,8 +120,7 @@ export function LearningPlayerPage() {
     }
   }, [itemsProgressData]);
 
-  // 스냅샷 아이템 조회 (실제 모드에서만)
-  // axiosInstance가 ApiResponse wrapper를 자동으로 언래핑하므로 .data만 사용
+  // 스냅샷 아이템 조회
   const { data: snapshotItems } = useQuery({
     queryKey: ['snapshot', 'items', snapshotId],
     queryFn: async () => {
@@ -170,10 +129,10 @@ export function LearningPlayerPage() {
       );
       return response.data;
     },
-    enabled: !isDemoMode && snapshotId > 0,
+    enabled: snapshotId > 0,
   });
 
-  // 스냅샷 관계(순서) 조회 (실제 모드에서만)
+  // 스냅샷 관계(순서) 조회
   const { data: relationsData } = useQuery({
     queryKey: ['snapshot', 'relations', 'ordered', snapshotId],
     queryFn: async () => {
@@ -182,13 +141,28 @@ export function LearningPlayerPage() {
       );
       return response.data;
     },
-    enabled: !isDemoMode && snapshotId > 0,
+    enabled: snapshotId > 0,
   });
 
-  // 데모 커리큘럼 아이템 (사이드바용)
-  const demoCurriculumItems = useMemo(() => DEMO_CURRICULUM_ITEMS, []);
+  // 강사 목록 조회 (배지 표시용)
+  const { data: instructorsData } = useQuery({
+    queryKey: ['times', 'instructors', enrollment?.timeId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<{ id: number; userId: number; name?: string }[]>(
+        API_ENDPOINTS.TIMES.INSTRUCTORS(enrollment!.timeId)
+      );
+      return response.data;
+    },
+    enabled: !!enrollment?.timeId,
+  });
 
-  // 순서가 있는 커리큘럼 아이템 목록 (실제 API 또는 데모)
+  // 강사 ID 목록
+  const instructorIds = useMemo(() => {
+    if (!instructorsData) return [];
+    return instructorsData.map((i) => i.userId);
+  }, [instructorsData]);
+
+  // 순서가 있는 커리큘럼 아이템 목록
   interface OrderedCurriculumItem {
     itemId: number;
     itemName: string;
@@ -200,26 +174,14 @@ export function LearningPlayerPage() {
   }
 
   const orderedCurriculumItems = useMemo((): OrderedCurriculumItem[] => {
-    // 데모 모드
-    if (isDemoMode) {
-      return demoCurriculumItems.map((item, index) => ({
-        ...item,
-        seq: index + 1,
-      }));
-    }
-
-    // 실제 모드 - API 데이터
     if (!snapshotItems) return [];
 
-    // 아이템을 평탄화하면서 콘텐츠만 추출
     const flatItems: OrderedCurriculumItem[] = [];
     let seq = 1;
 
     const flattenItems = (items: SnapshotItemResponse[]) => {
       items.forEach((item) => {
-        // 폴더가 아니고 contentId가 있는 경우만 추가
         if (!item.isFolder && item.snapshotLearningObject?.contentId) {
-          // displayName이 있으면 우선 사용, 없으면 itemName(파일명) 사용
           const displayName = item.snapshotLearningObject.displayName || item.itemName;
           flatItems.push({
             itemId: item.itemId,
@@ -238,7 +200,6 @@ export function LearningPlayerPage() {
     };
     flattenItems(snapshotItems);
 
-    // relationsData가 있으면 순서대로, 없으면 평탄화된 순서대로 반환
     if (relationsData?.orderedItems && relationsData.orderedItems.length > 0) {
       const itemsMap = new Map<number, OrderedCurriculumItem>();
       flatItems.forEach(item => itemsMap.set(item.itemId, item));
@@ -253,7 +214,7 @@ export function LearningPlayerPage() {
     }
 
     return flatItems;
-  }, [isDemoMode, demoCurriculumItems, snapshotItems, relationsData]);
+  }, [snapshotItems, relationsData]);
 
   // 현재 아이템 인덱스 및 이전/다음 아이템 계산
   const { hasPrevious, hasNext, previousItem, nextItem } = useMemo(() => {
@@ -268,13 +229,12 @@ export function LearningPlayerPage() {
     };
   }, [orderedCurriculumItems, currentItemId]);
 
-  // 첫 번째 아이템 자동 선택 또는 URL의 itemId로 선택 (데모/실제 공통)
+  // 첫 번째 아이템 자동 선택 또는 URL의 itemId로 선택
   useEffect(() => {
     if (orderedCurriculumItems.length > 0) {
       const targetItemId = itemId ? Number(itemId) : orderedCurriculumItems[0].itemId;
       const targetItem = orderedCurriculumItems.find(item => item.itemId === targetItemId) || orderedCurriculumItems[0];
 
-      // 현재 선택된 아이템과 다르면 업데이트
       if (currentItemId !== targetItem.itemId || currentContentId !== targetItem.contentId || currentContentType !== targetItem.contentType) {
         setCurrentItemId(targetItem.itemId);
         setCurrentContentId(targetItem.contentId);
@@ -285,60 +245,26 @@ export function LearningPlayerPage() {
     }
   }, [orderedCurriculumItems, itemId]);
 
-  // 현재 아이템의 완료 상태 동기화
-  useEffect(() => {
-    if (currentItemId && progressRecords.length > 0) {
-      const itemProgress = progressRecords.find((r) => r.itemId === currentItemId);
-      setIsCompleted(itemProgress?.completed ?? false);
-    }
-  }, [currentItemId, progressRecords]);
-
   // 진도 저장 (임시 비활성화)
   const saveProgress = useCallback(async () => {
-    // TODO: 테스트 후 다시 활성화
     return;
-
-    // if (!currentItemId || playedPercent <= 0) return;
-
-    // // 데모 모드에서는 로컬만 업데이트
-    // if (isDemoMode) {
-    //   setLastSaveTime(Date.now());
-    //   return;
-    // }
-
-    // if (!enrollmentId) return;
-
-    // try {
-    //   await updateProgress.mutateAsync({
-    //     enrollmentId: Number(enrollmentId),
-    //     request: {
-    //       itemId: currentItemId,
-    //       progressPercent: Math.round(playedPercent * 100),
-    //     },
-    //   });
-    //   setLastSaveTime(Date.now());
-    // } catch (error) {
-    //   console.error('Failed to save progress:', error);
-    // }
   }, []);
 
   // 차시 완료 처리
   const handleComplete = useCallback(async () => {
     if (!currentItemId || isCompleted) return;
 
-    // 백엔드 API 호출 (데모 모드가 아닐 때만)
-    if (!isDemoMode && enrollmentId) {
+    if (enrollmentId) {
       try {
         await axiosInstance.post(
           API_ENDPOINTS.ENROLLMENTS.ITEM_COMPLETE(Number(enrollmentId), currentItemId)
         );
       } catch (error) {
-        console.error('[LearningPlayer] Failed to mark item complete:', error);
-        return; // API 실패 시 로컬 상태 업데이트 안 함
+        console.error('[B2BLearningPlayer] Failed to mark item complete:', error);
+        return;
       }
     }
 
-    // 로컬 진도 기록 업데이트
     setIsCompleted(true);
     setProgressRecords((prev) => {
       const existing = prev.find((r) => r.itemId === currentItemId);
@@ -360,12 +286,11 @@ export function LearningPlayerPage() {
         },
       ];
     });
-  }, [currentItemId, isCompleted, isDemoMode, enrollmentId]);
+  }, [currentItemId, isCompleted, enrollmentId]);
 
   // 비디오 진도 핸들러 (임시 비활성화)
   const handleVideoProgress = useCallback((_state: { played: number }) => {
     // TODO: 테스트 후 다시 활성화
-    // setPlayedPercent(_state.played);
   }, []);
 
   // 자동 저장 설정
@@ -380,17 +305,14 @@ export function LearningPlayerPage() {
       if (saveIntervalRef.current) {
         clearInterval(saveIntervalRef.current);
       }
-      // 언마운트 시 저장
       saveProgress();
     };
   }, [playedPercent, saveProgress]);
 
   // 아이템 선택 핸들러
   const handleItemSelect = useCallback((itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null, downloadable?: boolean | null) => {
-    // 현재 진도 저장
     saveProgress();
 
-    // 새 아이템으로 이동
     setCurrentItemId(itemId);
     setCurrentContentId(contentId);
     setCurrentContentType(contentType);
@@ -399,20 +321,15 @@ export function LearningPlayerPage() {
     setPlayedPercent(0);
     setIsCompleted(progressRecords.some((r) => r.itemId === itemId && r.completed));
 
-    // URL 업데이트
-    const basePath = isDemoMode ? '/tu/b2c/mypage/learning/demo/player' : `/tu/b2c/mypage/learning/${enrollmentId}/player`;
-    navigate(prefixPath(`${basePath}/${itemId}`), { replace: true });
-  }, [enrollmentId, navigate, progressRecords, saveProgress, isDemoMode]);
+    // URL 업데이트 (B2B 경로)
+    navigate(prefixPath(`/tu/b2b/player/${enrollmentId}/${itemId}`), { replace: true });
+  }, [enrollmentId, navigate, progressRecords, saveProgress, prefixPath]);
 
-  // 뒤로가기
+  // 뒤로가기 (B2B: 코스 상세 페이지로)
   const handleBack = useCallback(() => {
     saveProgress();
-    if (isDemoMode) {
-      navigate(prefixPath('/tu/b2c/mypage/learning'));
-    } else {
-      navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
-    }
-  }, [enrollmentId, navigate, saveProgress, isDemoMode, prefixPath]);
+    navigate(prefixPath(`/tu/b2b/times/${enrollment?.timeId}`));
+  }, [enrollment?.timeId, navigate, saveProgress, prefixPath]);
 
   // 이전 아이템으로 이동
   const handlePrevious = useCallback(() => {
@@ -426,8 +343,8 @@ export function LearningPlayerPage() {
     handleItemSelect(nextItem.itemId, nextItem.contentId, nextItem.contentType, nextItem.externalUrl, nextItem.downloadable);
   }, [nextItem, handleItemSelect]);
 
-  // 로딩 상태 (데모 모드에서는 스킵)
-  if (!isDemoMode && isLoading) {
+  // 로딩 상태
+  if (isLoading) {
     return (
       <div className={`flex items-center justify-center min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -435,15 +352,15 @@ export function LearningPlayerPage() {
     );
   }
 
-  // 에러 상태 (데모 모드에서는 스킵)
-  if (!isDemoMode && (isError || !enrollment)) {
+  // 에러 상태
+  if (isError || !enrollment) {
     return (
       <div className={`flex flex-col items-center justify-center min-h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
         <BookOpen className={`w-16 h-16 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
+        <Button onClick={() => navigate(prefixPath('/tu/b2b'))}>
           {t.learning.backToLearning}
         </Button>
       </div>
@@ -452,23 +369,6 @@ export function LearningPlayerPage() {
 
   return (
     <div className={`flex flex-col h-screen ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      {/* 데모 모드 배너 */}
-      {isDemoMode && showDemoBanner && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 relative">
-          <AlertTriangle className="w-4 h-4" />
-          <span className="text-sm font-medium">
-            {t.player.demoModeBanner}
-          </span>
-          <button
-            onClick={() => setShowDemoBanner(false)}
-            className="absolute right-3 p-1 rounded hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
-            aria-label="배너 닫기"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* 헤더 */}
       <header
         className={`flex items-center px-4 py-3 border-b shrink-0 ${
@@ -493,7 +393,6 @@ export function LearningPlayerPage() {
               {t.player.completed}
             </Badge>
           )}
-          {/* 사이드바 토글 버튼 - 항상 표시 */}
           <Button
             variant="ghost"
             size="sm"
@@ -512,91 +411,135 @@ export function LearningPlayerPage() {
 
       {/* 메인 콘텐츠 */}
       <div className="flex flex-1 overflow-hidden min-h-0">
-        {/* 플레이어 영역 */}
-        <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
-          {/* 플레이어 컨테이너 */}
-          <div className={`flex-1 min-h-0 ${isDark ? 'bg-[#0a0a0a]' : 'bg-gray-900'}`}>
-            {/* 비디오 플레이어 */}
-            {currentContentId && currentContentType === 'VIDEO' && (
-              <div key={`video-${currentContentId}`} className="w-full h-full flex items-center justify-center bg-black">
-                <VideoPlayer
-                  contentId={currentContentId}
-                  externalUrl={isDemoMode ? DEMO_VIDEO_URLS[currentContentId] : undefined}
-                  initialProgress={
-                    progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent
-                      ? (progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent || 0) / 100
-                      : 0
-                  }
-                  onProgress={handleVideoProgress}
-                  isLearnerMode={!isDemoMode}
-                />
-              </div>
-            )}
+        {/* 플레이어 + 커뮤니티 영역 */}
+        <main className={`flex-1 flex flex-col min-w-0 transition-all duration-300 overflow-auto ${isDark ? 'bg-[#1e1e1e] dark-scrollbar' : 'bg-gray-50 landing-light'}`}>
+          {/* 플레이어 컨테이너 - 16:9 비율 고정 */}
+          <div className={`w-full shrink-0 ${isDark ? 'bg-[#0a0a0a]' : 'bg-gray-900'}`}>
+            <div className="w-full aspect-video">
+              {/* 비디오 플레이어 */}
+              {currentContentId && currentContentType === 'VIDEO' && (
+                <div key={`video-${currentContentId}`} className="w-full h-full flex items-center justify-center bg-black">
+                  <VideoPlayer
+                    contentId={currentContentId}
+                    initialProgress={
+                      progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent
+                        ? (progressRecords.find((r) => r.itemId === currentItemId)?.progressPercent || 0) / 100
+                        : 0
+                    }
+                    onProgress={handleVideoProgress}
+                    isLearnerMode={true}
+                  />
+                </div>
+              )}
 
-            {/* 문서 뷰어 */}
-            {currentContentId && currentContentType === 'DOCUMENT' && (
-              <div key={`doc-${currentContentId}`} className="w-full h-full">
-                <DocumentViewer
-                  contentId={currentContentId}
-                  contentType="DOCUMENT"
-                  isLearnerMode={!isDemoMode}
-                  downloadable={currentDownloadable}
-                />
-              </div>
-            )}
+              {/* 문서 뷰어 */}
+              {currentContentId && currentContentType === 'DOCUMENT' && (
+                <div key={`doc-${currentContentId}`} className="w-full h-full">
+                  <DocumentViewer
+                    contentId={currentContentId}
+                    contentType="DOCUMENT"
+                    isLearnerMode={true}
+                    downloadable={currentDownloadable}
+                  />
+                </div>
+              )}
 
-            {/* 이미지 뷰어 */}
-            {currentContentId && currentContentType === 'IMAGE' && (
-              <div key={`img-${currentContentId}`} className="w-full h-full">
-                <DocumentViewer
-                  contentId={currentContentId}
-                  contentType="IMAGE"
-                  isLearnerMode={!isDemoMode}
-                  downloadable={currentDownloadable}
-                />
-              </div>
-            )}
+              {/* 이미지 뷰어 */}
+              {currentContentId && currentContentType === 'IMAGE' && (
+                <div key={`img-${currentContentId}`} className="w-full h-full">
+                  <DocumentViewer
+                    contentId={currentContentId}
+                    contentType="IMAGE"
+                    isLearnerMode={true}
+                    downloadable={currentDownloadable}
+                  />
+                </div>
+              )}
 
-            {/* 외부 링크 뷰어 */}
-            {currentContentType === 'EXTERNAL_LINK' && currentExternalUrl && (
-              <div className="w-full h-full">
-                <ExternalLinkViewer
-                  url={currentExternalUrl}
-                />
-              </div>
-            )}
+              {/* 외부 링크 뷰어 */}
+              {currentContentType === 'EXTERNAL_LINK' && currentExternalUrl && (
+                <div className="w-full h-full">
+                  <ExternalLinkViewer
+                    url={currentExternalUrl}
+                  />
+                </div>
+              )}
 
-            {/* 콘텐츠가 없는 경우 */}
-            {!currentContentId && (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-black">
-                <BookOpen className="w-16 h-16 mb-4 text-gray-600" />
-                <p className="text-gray-400">
-                  {t.player.selectContent}
-                </p>
-              </div>
-            )}
+              {/* 콘텐츠가 없는 경우 */}
+              {!currentContentId && (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-black">
+                  <BookOpen className="w-16 h-16 mb-4 text-gray-600" />
+                  <p className="text-gray-400">
+                    {t.player.selectContent}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* 댓글 섹션 (B2B 전용 - 댓글/질문 탭) */}
+          {enrollment?.timeId && (
+            <B2BCommentSection
+              timeId={enrollment.timeId}
+              isDark={isDark}
+              currentItemName={orderedCurriculumItems.find(item => item.itemId === currentItemId)?.itemName}
+              instructorIds={instructorIds}
+            />
+          )}
         </main>
 
-        {/* 사이드바 - 토글 가능 */}
-        <aside
-          className={`shrink-0 border-l transition-all duration-300 overflow-hidden ${
-            sidebarOpen ? 'w-80' : 'w-0'
-          } ${isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-gray-200'}`}
-        >
-          <div className="w-80 h-full">
-            <CurriculumSidebar
-              snapshotId={snapshotId}
-              currentItemId={currentItemId}
-              progressRecords={progressRecords}
-              onItemSelect={handleItemSelect}
-              demoItems={isDemoMode ? demoCurriculumItems : undefined}
+        {/* 사이드바 - 모바일: 전체화면 오버레이, 데스크탑: 토글 가능 */}
+        {sidebarOpen && (
+          <>
+            {/* 모바일 오버레이 배경 */}
+            <div
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              onClick={() => setSidebarOpen(false)}
             />
-          </div>
-        </aside>
+            {/* 사이드바 */}
+            <aside
+              className={`
+                fixed inset-0 z-50 md:relative md:z-auto
+                md:shrink-0 md:border-l transition-all duration-300
+                ${isDark ? 'bg-[#12121a] md:border-white/10' : 'bg-white md:border-gray-200'}
+              `}
+            >
+              {/* 모바일 닫기 헤더 */}
+              <div className={`flex items-center justify-between px-4 py-3 border-b md:hidden ${
+                isDark ? 'border-white/10' : 'border-gray-200'
+              }`}>
+                <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  커리큘럼
+                </h3>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+                >
+                  <PanelRightClose className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="w-full md:w-80 h-[calc(100%-56px)] md:h-full overflow-auto">
+                <CurriculumSidebar
+                  snapshotId={snapshotId}
+                  currentItemId={currentItemId}
+                  progressRecords={progressRecords}
+                  onItemSelect={(itemId, contentId, contentType, externalUrl, downloadable) => {
+                    handleItemSelect(itemId, contentId, contentType, externalUrl, downloadable);
+                    // 모바일에서 아이템 선택 시 사이드바 닫기
+                    if (window.innerWidth < 768) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                />
+              </div>
+            </aside>
+          </>
+        )}
+        {/* 데스크탑에서 사이드바 닫혔을 때 공간 유지 안함 */}
+        {!sidebarOpen && <div className="hidden md:block w-0" />}
       </div>
 
-      {/* 하단 컨트롤 바 - 전체 너비 */}
+      {/* 하단 컨트롤 바 */}
       <div className={`shrink-0 px-4 py-3 border-t ${
         isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-gray-800 border-gray-700'
       }`}>
@@ -604,7 +547,7 @@ export function LearningPlayerPage() {
           {/* 현재 콘텐츠 정보 */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <h2 className="text-white font-medium truncate text-sm sm:text-base">
-              {orderedCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || '콘텐츠'}
+              {orderedCurriculumItems.find(item => item.itemId === currentItemId)?.itemName || ''}
             </h2>
             {isCompleted && (
               <Badge variant="green" className="gap-1 shrink-0">

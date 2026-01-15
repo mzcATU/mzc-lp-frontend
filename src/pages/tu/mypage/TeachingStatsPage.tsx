@@ -1,5 +1,5 @@
-import { BarChart3, Users, BookOpen, GraduationCap, TrendingUp, AlertCircle, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { BarChart3, Users, BookOpen, GraduationCap, TrendingUp, AlertCircle } from 'lucide-react';
+
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
 import { Card, CardHeader, CardTitle, CardContent, Skeleton, EmptyState } from '@/components/common';
@@ -7,7 +7,6 @@ import { useMyOwnerStats } from '@/hooks/tu';
 import { designTokens } from '@/styles/admin-design-tokens';
 
 export function TeachingStatsPage() {
-  const navigate = useNavigate();
   const { theme } = useThemeStore();
   const { t } = useTranslation();
   const isDark = theme === 'dark';
@@ -298,8 +297,7 @@ export function TeachingStatsPage() {
                 {stats.programStats.map((program, index) => (
                   <div
                     key={program.programId}
-                    onClick={() => navigate(`/tu/teaching/programs/${program.programId}`)}
-                    className={`p-4 rounded-lg cursor-pointer transition-all ${
+                    className={`p-4 rounded-lg transition-all ${
                       isDark
                         ? 'bg-white/5 hover:bg-white/10'
                         : 'bg-gray-50 hover:bg-gray-100'
@@ -309,7 +307,6 @@ export function TeachingStatsPage() {
                       <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         {program.programName}
                       </h4>
-                      <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     </div>
                     <div className="flex items-center gap-4 text-sm mb-3">
                       <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>

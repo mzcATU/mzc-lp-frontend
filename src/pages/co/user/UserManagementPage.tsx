@@ -50,7 +50,7 @@ import {
   SelectValue,
 } from '@/components/common';
 import { useUsers, useUser, useChangeUserStatus, useUserEnrollmentStats, useUserInstructorStats } from '@/hooks/co/useUserQueries';
-import { useApprovedPrograms } from '@/hooks/co/useProgramQueries';
+import { useRegisteredCourses } from '@/hooks/tu/useCourseQueries';
 import { useTimes } from '@/hooks/co/useTimeQueries';
 import { useEnrollmentsByCourseTime, useForceEnroll } from '@/hooks/co/useEnrollmentQueries';
 import type { UserListResponse, TenantRole, UserStatus, UserFilterParams } from '@/types/co';
@@ -297,7 +297,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const changeStatus = useChangeUserStatus();
 
   // 과정 목록 조회 (승인된 과정만)
-  const { data: programsData } = useApprovedPrograms();
+  const { data: programsData } = useRegisteredCourses();
 
   // 전체 차수 목록 조회 (필터용 - 클라이언트에서 프로그램별 필터링)
   const { data: timesData } = useTimes({ page: 0, size: 500 });

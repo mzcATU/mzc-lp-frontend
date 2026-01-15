@@ -660,9 +660,9 @@ export function CommunityPage() {
                       이 태그를 관심 태그에 추가할까요?
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {pendingTags.map((tag) => (
+                      {pendingTags.map((tag, index) => (
                         <div
-                          key={tag}
+                          key={`pending-${tag}-${index}`}
                           className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${
                             isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
                           }`}
@@ -703,9 +703,9 @@ export function CommunityPage() {
                       <Hash className="w-3 h-3" /> 나의 관심 태그
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {userInterestTags.map((tag) => (
+                      {userInterestTags.map((tag, index) => (
                         <div
-                          key={tag}
+                          key={`interest-${tag}-${index}`}
                           className={`group flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             isDark
                               ? 'bg-[#6778ff]/20 text-[#6778ff]'
@@ -750,9 +750,9 @@ export function CommunityPage() {
                               {post.title}
                             </span>
                             <div className="flex items-center gap-2 mt-1">
-                              {post.tags?.slice(0, 2).map((tag) => (
+                              {post.tags?.slice(0, 2).map((tag, tagIndex) => (
                                 <span
-                                  key={tag}
+                                  key={`${post.id}-tag-${tagIndex}`}
                                   className={`text-[10px] px-1.5 py-0.5 rounded ${
                                     userInterestTags.includes(tag)
                                       ? isDark ? 'bg-[#6778ff]/20 text-[#6778ff]' : 'bg-[#6778ff]/10 text-[#6778ff]'
