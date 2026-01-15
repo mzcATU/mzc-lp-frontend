@@ -5,7 +5,7 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useSubdomainPath } from '@/hooks/common';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useCommunityPosts, useCommunityCategories, useCreatePost, useMyPosts, useCommentedPosts } from '@/hooks/tu';
+import { useCommunityPosts, useCommunityCategories, useCreatePost, useMyPosts, useCommentedPosts, usePopularPosts } from '@/hooks/tu';
 import { WritePostModal } from '@/components/domain/community';
 import { useAuth } from '@/hooks/common/auth';
 import type { CommunityPost, CommunityCategory, CreatePostRequest } from '@/types/tu';
@@ -56,11 +56,6 @@ const MOCK_POPULAR_POSTS = {
     { id: 18, title: '프리랜서 vs 정규직 비교', commentCount: 134, category: '연봉·단가' },
     { id: 19, title: '스타트업 3년차 회고', commentCount: 78, category: '사는 얘기' },
     { id: 20, title: '개발자 커리어 로드맵', commentCount: 201, category: '학습 팁' },
-  ],
-  notice: [
-    { id: 21, title: '[공지] 커뮤니티 이용 가이드라인 업데이트', commentCount: 0, category: '공지사항' },
-    { id: 22, title: '[이벤트] 2024년 연말 회고 이벤트', commentCount: 23, category: '공지사항' },
-    { id: 23, title: '[안내] 서비스 점검 일정 안내', commentCount: 5, category: '공지사항' },
   ],
 };
 
@@ -161,7 +156,7 @@ const stripMarkdownImages = (content: string): string => {
 };
 
 // 인기글 탭 타입
-type PopularTab = 'today' | 'week' | 'month' | 'notice';
+type PopularTab = 'today' | 'week' | 'month';
 
 export function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -191,6 +186,9 @@ export function CommunityPage() {
   // 내 게시글 및 참여한 게시글 (로그인 시에만)
   const { data: myPostsData } = useMyPosts(0, 5, USE_API && isAuthenticated);
   const { data: commentedPostsData } = useCommentedPosts(0, 5, USE_API && isAuthenticated);
+
+  // 인기글 (API)
+  const { data: apiPopularData } = usePopularPosts(10, USE_API);
 
   // 사용자의 관심 태그 추출 (내가 쓴 글 + 참여한 글에서 태그 수집)
   const suggestedTags = (() => {
@@ -297,6 +295,59 @@ export function CommunityPage() {
 
   // 인기글 데이터 가져오기
   const getPopularPosts = (tab: PopularTab) => {
+    // API 데이터 사용
+    if (USE_API && apiPopularData?.posts) {
+      const posts = apiPopularData.posts;
+      const now = new Date();
+
+      // 기간별 필터링 함수
+      const filterByPeriod = (post: CommunityPost, days: number) => {
+        const postDate = new Date(post.createdAt);
+        const diffTime = now.getTime() - postDate.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+        return diffDays <= days;
+      };
+
+      // 기간별 필터링
+      let filteredByPeriod: CommunityPost[];
+      switch (tab) {
+        case 'today':
+          filteredByPeriod = posts.filter(p => filterByPeriod(p, 1));
+          break;
+        case 'week':
+          filteredByPeriod = posts.filter(p => filterByPeriod(p, 7));
+          break;
+        case 'month':
+          filteredByPeriod = posts.filter(p => filterByPeriod(p, 30));
+          break;
+        default:
+          filteredByPeriod = posts;
+      }
+
+      // 복합 점수로 정렬: (좋아요 × 3) + (댓글 × 2) + (조회수 × 0.1)
+      const getPopularityScore = (p: CommunityPost) =>
+        (p.likeCount * 3) + (p.commentCount * 2) + (p.viewCount * 0.1);
+      const sortedPosts = [...filteredByPeriod].sort((a, b) =>
+        getPopularityScore(b) - getPopularityScore(a)
+      );
+
+      return {
+        left: sortedPosts.slice(0, 5).map(p => ({
+          id: p.id,
+          title: p.title,
+          commentCount: p.commentCount,
+          category: p.category
+        })),
+        right: sortedPosts.slice(5, 10).map(p => ({
+          id: p.id,
+          title: p.title,
+          commentCount: p.commentCount,
+          category: p.category
+        })),
+      };
+    }
+
+    // Mock 데이터 폴백
     switch (tab) {
       case 'today':
         return { left: MOCK_POPULAR_POSTS.today, right: MOCK_POPULAR_POSTS.todayRight };
@@ -304,8 +355,6 @@ export function CommunityPage() {
         return { left: MOCK_POPULAR_POSTS.week, right: MOCK_POPULAR_POSTS.todayRight };
       case 'month':
         return { left: MOCK_POPULAR_POSTS.month, right: MOCK_POPULAR_POSTS.todayRight };
-      case 'notice':
-        return { left: MOCK_POPULAR_POSTS.notice, right: [] };
       default:
         return { left: [], right: [] };
     }
@@ -402,7 +451,6 @@ export function CommunityPage() {
                 { key: 'today', label: '오늘의 인기글' },
                 { key: 'week', label: '이번주 인기글' },
                 { key: 'month', label: '이달의 인기글' },
-                { key: 'notice', label: '공지사항' },
               ].map((tab) => (
                 <button
                   key={tab.key}
