@@ -72,3 +72,28 @@ export const useUnreadNoticeCount = () => {
     },
   });
 };
+
+/**
+ * 최신 공지사항 1개 조회 (배너용)
+ */
+export const useLatestUserNotice = (enabled = true) => {
+  return useQuery({
+    queryKey: [...userNoticeKeys.all, 'latest'] as const,
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<PageResponse<TenantNotice>>(
+        API_ENDPOINTS.TENANT_NOTICES.TU_BASE,
+        {
+          params: {
+            page: 0,
+            size: 1,
+            targetAudience: 'USER',
+          },
+        }
+      );
+      return data.content[0] || null;
+    },
+    enabled,
+    staleTime: 1000 * 60, // 1분
+    refetchInterval: 1000 * 60 * 5, // 5분마다 자동 갱신
+  });
+};

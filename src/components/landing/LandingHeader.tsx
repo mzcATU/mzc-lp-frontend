@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/common/auth';
 import { useMyProfile, useSubdomainPath } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation } from '@/store/common/languageStore';
-import { useUnreadNotificationCount, usePublicNavigation, usePublicLayout } from '@/hooks/tu';
+import { useUnreadNotificationCount, useLatestUserNotice, usePublicNavigation, usePublicLayout } from '@/hooks/tu';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import type { NavigationItemResponse } from '@/types/tu/branding.types';
@@ -36,6 +36,7 @@ export function LandingHeader() {
   const isDark = theme === 'dark';
   const { data: unreadCountData } = useUnreadNotificationCount(isAuthenticated);
   const unreadCount = unreadCountData?.count || 0;
+  const { data: latestNotice } = useLatestUserNotice(isAuthenticated);
   const { branding } = useTenantBranding();
   const { data: navigationItems } = usePublicNavigation();
   const { data: layoutData } = usePublicLayout();
@@ -109,9 +110,13 @@ export function LandingHeader() {
   // 상단 배너 설정 (TA에서 설정 가능)
   const topBannerSettings = (layoutData?.headerSettings as { topBanner?: { enabled?: boolean; text?: string; linkUrl?: string; linkText?: string } })?.topBanner;
   const topBannerEnabled = topBannerSettings?.enabled !== false; // 기본값 true
-  const topBannerText = topBannerSettings?.text || t.landing.banner;
-  const topBannerLinkUrl = topBannerSettings?.linkUrl;
-  const topBannerLinkText = topBannerSettings?.linkText;
+
+  // 최신 공지사항이 있으면 공지 내용을 표시, 없으면 기본 배너 텍스트 사용
+  const topBannerText = latestNotice
+    ? `📢 ${latestNotice.title}`
+    : (topBannerSettings?.text || t.landing.banner);
+  const topBannerLinkUrl = latestNotice ? `/tu/b2c/notices/${latestNotice.id}` : topBannerSettings?.linkUrl;
+  const topBannerLinkText = latestNotice ? '자세히 보기' : topBannerSettings?.linkText;
 
   // 배너 닫기 핸들러 (localStorage에 저장)
   const handleCloseBanner = useCallback(() => {
@@ -140,14 +145,23 @@ export function LandingHeader() {
         <div className="bg-gradient-to-r from-[#6778ff] via-[#a855f7] to-[#6bc2f0] text-white text-xs md:text-sm py-2.5 px-4 text-center font-medium flex justify-center items-center gap-2 relative">
           <span>{topBannerText}</span>
           {topBannerLinkUrl && topBannerLinkText && (
-            <a
-              href={topBannerLinkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:no-underline ml-1"
-            >
-              {topBannerLinkText}
-            </a>
+            topBannerLinkUrl.startsWith('http') ? (
+              <a
+                href={topBannerLinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline ml-1"
+              >
+                {topBannerLinkText}
+              </a>
+            ) : (
+              <Link
+                to={prefixPath(topBannerLinkUrl)}
+                className="underline hover:no-underline ml-1"
+              >
+                {topBannerLinkText}
+              </Link>
+            )
           )}
           <button
             onClick={handleCloseBanner}

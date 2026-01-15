@@ -143,6 +143,7 @@ export {
   useNotifications,
   useNotification,
   useUnreadNotificationCount,
+  useLatestUnreadNotification,
   useMarkAsRead,
   useMarkAllAsRead,
   useDeleteNotification,
@@ -308,4 +309,5 @@ export {
   useUserNotices,
   useUserNotice,
   useUnreadNoticeCount,
+  useLatestUserNotice,
 } from './useUserNoticeQueries';
