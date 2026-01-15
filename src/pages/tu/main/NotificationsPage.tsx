@@ -1,5 +1,5 @@
-import { useState, ComponentType } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, ComponentType } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -73,8 +73,17 @@ export function NotificationsPage({
   const isDark = theme === 'dark';
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
   const [activeType, setActiveType] = useState<NotificationType | 'all'>('all');
   const { isAuthenticated } = useAuthStore();
+
+  // URL 쿼리 파라미터로 탭 설정 (예: ?tab=SYSTEM)
+  useEffect(() => {
+    if (tabParam && ['COMMENT', 'LIKE', 'COURSE', 'SYSTEM', 'ASSIGNMENT'].includes(tabParam)) {
+      setActiveType(tabParam as NotificationType);
+    }
+  }, [tabParam]);
 
   // React Query 훅
   const filter = activeType === 'all' ? undefined : { type: activeType };

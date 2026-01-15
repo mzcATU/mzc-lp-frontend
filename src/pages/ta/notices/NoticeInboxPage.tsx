@@ -86,8 +86,11 @@ const statusConfig: Record<TenantNoticeStatus, { label: string; color: string }>
 };
 
 const audienceConfig: Record<NoticeTargetAudience, { label: string }> = {
+  ALL: { label: '전체' },
   OPERATOR: { label: '운영자' },
   USER: { label: '사용자' },
+  DESIGNER: { label: '설계자' },
+  INSTRUCTOR: { label: '강사' },
 };
 
 export function NoticeInboxPage() {
@@ -388,6 +391,8 @@ export function NoticeInboxPage() {
                       <SelectItem value="ALL">전체 대상</SelectItem>
                       <SelectItem value="OPERATOR">운영자</SelectItem>
                       <SelectItem value="USER">사용자</SelectItem>
+                      <SelectItem value="DESIGNER">설계자</SelectItem>
+                      <SelectItem value="INSTRUCTOR">강사</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select
@@ -603,8 +608,11 @@ export function NoticeInboxPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="ALL">전체</SelectItem>
                     <SelectItem value="USER">사용자</SelectItem>
                     <SelectItem value="OPERATOR">운영자</SelectItem>
+                    <SelectItem value="DESIGNER">설계자</SelectItem>
+                    <SelectItem value="INSTRUCTOR">강사</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -684,8 +692,11 @@ export function NoticeInboxPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="ALL">전체</SelectItem>
                     <SelectItem value="USER">사용자</SelectItem>
                     <SelectItem value="OPERATOR">운영자</SelectItem>
+                    <SelectItem value="DESIGNER">설계자</SelectItem>
+                    <SelectItem value="INSTRUCTOR">강사</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -1,5 +1,6 @@
 /**
- * TU용 공지사항 조회 React Query Hooks (TA/TO가 USER 대상으로 보낸 공지)
+ * TU용 공지사항 조회 React Query Hooks
+ * 백엔드에서 사용자 역할에 따라 자동으로 해당 역할 대상 + ALL 대상 공지를 조회함
  */
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/services/common/api/axiosInstance';
@@ -22,7 +23,8 @@ export const userNoticeKeys = {
 };
 
 /**
- * TU가 받은 공지 목록 조회 (TA/TO가 USER 대상으로 발송한 공지)
+ * TU가 받은 공지 목록 조회
+ * 백엔드에서 사용자 역할에 따라 자동으로 대상 필터링 (해당 역할 + ALL)
  */
 export const useUserNotices = (params?: UserNoticeListParams) => {
   return useQuery({
@@ -30,12 +32,7 @@ export const useUserNotices = (params?: UserNoticeListParams) => {
     queryFn: async () => {
       const { data } = await axiosInstance.get<PageResponse<TenantNotice>>(
         API_ENDPOINTS.TENANT_NOTICES.TU_BASE,
-        {
-          params: {
-            ...params,
-            targetAudience: 'USER',
-          },
-        }
+        { params }
       );
       return data;
     },
@@ -75,6 +72,7 @@ export const useUnreadNoticeCount = () => {
 
 /**
  * 최신 공지사항 1개 조회 (배너용)
+ * 백엔드에서 사용자 역할에 따라 자동으로 대상 필터링 (해당 역할 + ALL)
  */
 export const useLatestUserNotice = (enabled = true) => {
   return useQuery({
@@ -86,7 +84,6 @@ export const useLatestUserNotice = (enabled = true) => {
           params: {
             page: 0,
             size: 1,
-            targetAudience: 'USER',
           },
         }
       );
