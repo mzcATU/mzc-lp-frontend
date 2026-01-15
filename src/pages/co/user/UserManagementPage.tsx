@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -250,6 +251,7 @@ function EnrollmentStatsCell({ userId, field }: { userId: number; field: 'inProg
 type CompletionFilter = 'all' | 'COMPLETED' | 'ENROLLED' | 'NOT_COMPLETED';
 
 export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementPageProps>) {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -259,6 +261,9 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
   const [selectedTimeId, setSelectedTimeId] = useState<number | null>(null);
   const [completionFilter, setCompletionFilter] = useState<CompletionFilter>('all');
+
+  // URL 파라미터에서 초기 필터값 적용 여부 추적
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 행 선택 상태 (사용자 ID 기반)
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
@@ -301,6 +306,30 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
   // 전체 차수 목록 조회 (필터용 - 클라이언트에서 프로그램별 필터링)
   const { data: timesData } = useTimes({ page: 0, size: 500 });
+
+  // URL 파라미터에서 courseTimeId를 읽어 자동 선택
+  useEffect(() => {
+    if (isInitialized || !timesData?.content || !programsData?.content) return;
+
+    const courseTimeIdParam = searchParams.get('courseTimeId');
+    if (courseTimeIdParam) {
+      const courseTimeId = parseInt(courseTimeIdParam);
+      const selectedTime = timesData.content.find((t) => t.id === courseTimeId);
+
+      if (selectedTime) {
+        // 해당 차수의 과정을 찾아서 먼저 선택
+        const matchingProgram = programsData.content.find(
+          (p) => p.title === selectedTime.courseTitle
+        );
+        if (matchingProgram) {
+          setSelectedProgramId(matchingProgram.id);
+        }
+        // 차수 선택
+        setSelectedTimeId(courseTimeId);
+      }
+    }
+    setIsInitialized(true);
+  }, [timesData, programsData, searchParams, isInitialized]);
 
   // 강제 배정 모달용 - 동일한 timesData 사용하고 클라이언트에서 필터링
 
