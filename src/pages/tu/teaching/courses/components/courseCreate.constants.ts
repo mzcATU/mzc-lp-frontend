@@ -113,7 +113,19 @@ export const translations = {
   // 공통
   cancel: { ko: '취소', en: 'Cancel' },
   processing: { ko: '처리 중...', en: 'Processing...' },
-  // 발행
+  // 작성완료 (DRAFT → READY)
+  completeWriting: { ko: '작성완료', en: 'Complete' },
+  completing: { ko: '작성완료 처리 중...', en: 'Completing...' },
+  completeSuccess: { ko: '작성완료 되었습니다. 추후 리스트에서 등록할 수 있습니다.', en: 'Course marked as complete. You can register it later from the list.' },
+  completeError: { ko: '작성완료 처리에 실패했습니다. 다시 시도해주세요.', en: 'Failed to mark as complete. Please try again.' },
+  completeConfirm: { ko: '작성완료 하시겠습니까? 완료 후에도 수정이 가능합니다.', en: 'Mark as complete? You can still edit it later.' },
+  // 등록 (READY → REGISTERED)
+  register: { ko: '등록', en: 'Register' },
+  registering: { ko: '등록 중...', en: 'Registering...' },
+  registerSuccess: { ko: '등록되었습니다. 운영자가 차수를 개설할 수 있습니다.', en: 'Course has been registered. Operators can now create sessions.' },
+  registerError: { ko: '등록에 실패했습니다. 다시 시도해주세요.', en: 'Failed to register. Please try again.' },
+  registerConfirm: { ko: '등록하시겠습니까? 등록 후에는 운영자가 차수를 개설할 수 있습니다.', en: 'Register this course? After registration, operators can create course sessions.' },
+  // 발행 (deprecated)
   publish: { ko: '발행하기', en: 'Publish' },
   publishing: { ko: '발행 중...', en: 'Publishing...' },
   publishSuccess: { ko: '강의가 발행되었습니다.', en: 'Course has been published.' },
