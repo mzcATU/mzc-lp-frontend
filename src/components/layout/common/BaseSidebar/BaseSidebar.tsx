@@ -18,6 +18,7 @@ import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 import { useSubdomainPath } from '@/hooks/common';
+import { getLoginPath, getAdminLoginPath } from '@/utils/tenantUtils';
 
 // 역할 타입
 type RoleType = 'sa' | 'ta' | 'co' | 'tu';
@@ -101,11 +102,11 @@ export function BaseSidebar({
       queryClient.clear();
       toast.success(language === 'ko' ? '로그아웃되었습니다.' : 'Logged out successfully.');
 
-      // 어드민 역할은 어드민 로그인 페이지로, 그 외는 일반 로그인 페이지로
+      // 어드민 역할은 어드민 로그인 페이지로, 그 외는 서브도메인 유지하여 로그인 페이지로
       if (isAdminRole) {
-        navigate('/admin/login');
+        navigate(getAdminLoginPath());
       } else {
-        navigate('/login');
+        navigate(getLoginPath());
       }
       setIsLoggingOut(false);
     }

@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 import { toast } from 'sonner';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 const CHECK_INTERVAL = 60 * 1000; // 1분마다 체크
 
@@ -32,7 +33,7 @@ export const useTokenExpirationCheck = () => {
     logout();
     queryClient.clear();
     toast.error(message);
-    navigate('/login');
+    navigate(getLoginPath());
   }, [logout, queryClient, navigate]);
 
   const tryRefreshToken = useCallback(async () => {

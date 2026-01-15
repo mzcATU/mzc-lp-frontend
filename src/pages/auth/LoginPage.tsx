@@ -4,6 +4,7 @@ import { Eye, EyeOff, LogIn, Sun, Moon } from 'lucide-react';
 import { Checkbox } from '@/components/common/Checkbox';
 import { useLogin } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
+import { extractSubdomainFromPath } from '@/utils/tenantUtils';
 
 /**
  * 로그인 페이지
@@ -18,6 +19,11 @@ export const LoginPage = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const { theme, toggleTheme } = useThemeStore();
   const isDark = theme === 'dark';
+
+  // 서브도메인 추출 (URL 경로에서)
+  const subdomain = extractSubdomainFromPath();
+  const homePath = subdomain ? `/${subdomain}/tu/b2c` : '/';
+  const registerPath = subdomain ? `/${subdomain}/register` : '/register';
 
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
@@ -77,9 +83,12 @@ export const LoginPage = () => {
       }`}>
         {/* 로고 영역 */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center bg-gradient-to-r from-[#6778ff] to-[#a855f7]">
+          <Link
+            to={homePath}
+            className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center bg-gradient-to-r from-[#6778ff] to-[#a855f7] hover:opacity-90 transition-opacity cursor-pointer"
+          >
             <LogIn className="w-6 h-6 text-white" />
-          </div>
+          </Link>
           <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             로그인
           </h1>
@@ -196,7 +205,7 @@ export const LoginPage = () => {
           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             계정이 없으신가요?{' '}
             <Link
-              to="/register"
+              to={registerPath}
               className="font-medium text-[#6778ff] hover:underline"
             >
               회원가입

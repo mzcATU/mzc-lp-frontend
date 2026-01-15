@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 import { userService } from '@/services/common/userService';
 import type { LoginRequest, RegisterRequest } from '@/types/common/auth.types';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 // Query Keys
 export const authKeys = {
@@ -122,13 +123,13 @@ export const useLogout = () => {
     onSuccess: () => {
       logout();
       queryClient.clear();
-      navigate('/login');
+      navigate(getLoginPath());
     },
     onError: () => {
       // 서버 에러가 나더라도 로컬 상태는 초기화
       logout();
       queryClient.clear();
-      navigate('/login');
+      navigate(getLoginPath());
     },
   });
 };
