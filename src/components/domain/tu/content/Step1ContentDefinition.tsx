@@ -386,7 +386,7 @@ export function Step1ContentDefinition({ data, onUpdate }: Readonly<Step1Props>)
               <button
                 key={card.type}
                 type="button"
-                onClick={() => onUpdate({ loType: card.type })}
+                onClick={() => onUpdate({ loType: card.type, uploadedFile: undefined, externalUrl: undefined })}
                 className={cn(
                   'p-6 border-2 rounded-lg transition-all hover:border-action-primary cursor-pointer bg-bg-default',
                   isSelected ? 'border-action-primary bg-bg-secondary' : 'border-border'
