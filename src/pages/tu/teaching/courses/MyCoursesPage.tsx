@@ -54,7 +54,7 @@ const t = {
   students: { ko: '수강생', en: 'Students' },
   courseCompletion: { ko: '콘텐츠 완성도', en: 'Course Completion' },
   lessons: { ko: '차시', en: 'Lessons' },
-  manageCourse: { ko: '과정 관리', en: 'Manage Course' },
+  manageCourse: { ko: '과정 설계', en: 'Course Design' },
   editCourse: { ko: '수정', en: 'Edit' },
   noCourses: { ko: '작성한 강의 계획서가 없습니다', en: 'No course plans yet' },
   noCoursesDesc: { ko: '새로운 강의 계획서를 설계하여 학습 여정을 구성하세요', en: 'Design a new course plan to structure the learning journey' },

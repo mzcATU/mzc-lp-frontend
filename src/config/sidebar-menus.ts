@@ -241,21 +241,21 @@ export const tenantUserMenuData: MenuItem[] = [
     roles: ['INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
   },
   {
+    id: 'my-courses',
+    label: { ko: '내 과정 관리', en: 'My Courses' },
+    icon: BookOpen,
+    subItems: [
+      { id: 'course-management', label: { ko: '과정 설계', en: 'Course Design' }, icon: FolderEdit, path: '/tu/teaching/courses' },
+      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER'] },
+    ],
+    roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'],
+  },
+  {
     id: 'my-teaching',
     label: { ko: '내 교수 관리', en: 'My Teaching' },
     icon: Briefcase,
     path: '/tu/teaching/assignments',
     roles: ['INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
-  },
-  {
-    id: 'my-courses',
-    label: { ko: '내 과정', en: 'My Courses' },
-    icon: BookOpen,
-    subItems: [
-      { id: 'course-management', label: { ko: '과정 관리', en: 'Course Management' }, icon: FolderEdit, path: '/tu/teaching/courses' },
-      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER'] },
-    ],
-    roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'],
   },
   {
     id: 'my-content',

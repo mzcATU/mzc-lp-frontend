@@ -46,7 +46,7 @@ const LEVEL_LABELS: Record<CourseLevel, string> = {
 const TYPE_LABELS: Record<CourseType, string> = {
   ONLINE: '온라인',
   OFFLINE: '오프라인',
-  BLENDED: '블렌디드',
+  BLENDED: '혼합',
 };
 
 export function CourseDetailPage() {
