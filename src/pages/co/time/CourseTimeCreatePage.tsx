@@ -153,9 +153,14 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  // 승인된 프로그램 목록
+  // 승인된 프로그램 목록 (백엔드 courseId를 id로 매핑)
   const approvedPrograms = useMemo(() => {
-    return approvedProgramsData?.content ?? [];
+    const content = approvedProgramsData?.content ?? [];
+    // 백엔드에서 courseId로 반환되므로, id 필드가 없으면 courseId를 id로 매핑
+    return content.map((item) => ({
+      ...item,
+      id: item.id ?? (item as unknown as { courseId?: number }).courseId,
+    }));
   }, [approvedProgramsData]);
 
   // DESIGNER 역할 사용자 목록 (강사 후보)
