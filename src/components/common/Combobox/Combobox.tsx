@@ -56,29 +56,32 @@ function Combobox({
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  disabled={option.disabled}
-                  onSelect={(selectedValue) => {
-                    handleValueChange(
-                      selectedValue === currentValue ? "" : selectedValue
-                    );
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      currentValue === option.value
-                        ? "opacity-100"
-                        : "opacity-0"
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
+              {options.map((option) => {
+                const optionValue = option.value;
+                const optionLabel = option.label;
+                return (
+                  <CommandItem
+                    key={optionValue}
+                    value={optionLabel}
+                    disabled={option.disabled}
+                    onSelect={() => {
+                      const newValue = optionValue === currentValue ? "" : optionValue;
+                      handleValueChange(newValue);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        currentValue === optionValue
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                    {optionLabel}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

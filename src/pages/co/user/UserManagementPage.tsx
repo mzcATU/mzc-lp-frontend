@@ -428,7 +428,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   // 과정 옵션
   const courseOptions = useMemo(() => {
     return (coursesData?.content ?? []).map((c) => ({
-      value: String(c.id),
+      value: String(c.courseId),
       label: c.title,
     }));
   }, [coursesData]);
@@ -436,7 +436,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   // 선택된 과정의 title 조회
   const selectedCourseTitle = useMemo(() => {
     if (!selectedCourseId) return null;
-    const course = coursesData?.content?.find((c) => c.id === selectedCourseId);
+    const course = coursesData?.content?.find((c) => c.courseId === selectedCourseId);
     return course?.title ?? null;
   }, [selectedCourseId, coursesData]);
 
@@ -456,7 +456,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   // 강제 배정 모달용 과정 title 조회
   const enrollCourseTitle = useMemo(() => {
     if (!enrollCourseId) return null;
-    const course = coursesData?.content?.find((c) => c.id === enrollCourseId);
+    const course = coursesData?.content?.find((c) => c.courseId === enrollCourseId);
     return course?.title ?? null;
   }, [enrollCourseId, coursesData]);
 
