@@ -151,3 +151,17 @@ export {
   useSystemNotice,
   useMarkSystemNoticeAsRead,
 } from './useSystemNoticeQueries';
+
+export {
+  notificationTemplateKeys,
+  useNotificationTemplates,
+  useNotificationTemplate,
+  useTriggerTypes,
+  useCategories,
+  useCreateNotificationTemplate,
+  useUpdateNotificationTemplate,
+  useDeleteNotificationTemplate,
+  useActivateNotificationTemplate,
+  useDeactivateNotificationTemplate,
+  useInitializeDefaultTemplates,
+} from './useNotificationTemplateQueries';
