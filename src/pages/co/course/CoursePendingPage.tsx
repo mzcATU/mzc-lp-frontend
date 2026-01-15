@@ -27,15 +27,15 @@ import {
   DropdownMenuItem,
 } from '@/components/common';
 import {
-  usePendingPrograms,
-  useApproveProgram,
-  useRejectProgram,
-} from '@/hooks/co/useCourseQueries';
-import type { PendingProgramResponse } from '@/types/common';
+  useReadyCourses,
+  useRegisterCourse,
+  useUnreadyCourse,
+} from '@/hooks/tu/useCourseQueries';
+import type { ReadyCourseResponse } from '@/types/common/course.types';
 import {
-  PROGRAM_LEVEL_LABELS,
-  PROGRAM_TYPE_LABELS,
-} from '@/types/common';
+  COURSE_LEVEL_LABELS,
+  COURSE_TYPE_LABELS,
+} from '@/types/common/course.types';
 
 interface CoursePendingPageProps {
   language?: 'ko' | 'en';
@@ -45,10 +45,10 @@ const t = {
   title: { ko: '과정 등록/수정', en: 'Course Registration & Edit' },
   subtitle: { ko: '개설 신청된 과정을 검토하고 승인/반려 처리합니다.', en: 'Review and approve/reject course applications.' },
   searchPlaceholder: { ko: '과정명 검색...', en: 'Search course...' },
-  pendingCourses: { ko: '검토 대기 과정', en: 'Pending Courses' },
+  readyCourses: { ko: '검토 대기 과정', en: 'Ready Courses' },
   noResults: { ko: '검색 결과가 없습니다.', en: 'No results found.' },
-  noPending: { ko: '검토 대기 중인 과정이 없습니다.', en: 'No pending courses.' },
-  noPendingDescription: { ko: 'TU가 개설 신청을 하면 여기에 표시됩니다.', en: 'Pending courses will appear here when TU submits them.' },
+  noReady: { ko: '검토 대기 중인 과정이 없습니다.', en: 'No courses waiting for review.' },
+  noReadyDescription: { ko: 'TU가 개설 신청을 하면 여기에 표시됩니다.', en: 'Courses will appear here when TU submits them for review.' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   prev: { ko: '이전', en: 'Prev' },
@@ -62,16 +62,16 @@ const t = {
   columnActions: { ko: '액션', en: 'Actions' },
   view: { ko: '상세보기', en: 'View Details' },
   notSet: { ko: '미설정', en: 'Not set' },
-  approve: { ko: '승인', en: 'Approve' },
+  register: { ko: '승인', en: 'Register' },
   reject: { ko: '반려', en: 'Reject' },
-  approving: { ko: '승인 중...', en: 'Approving...' },
+  registering: { ko: '승인 중...', en: 'Registering...' },
   rejecting: { ko: '반려 중...', en: 'Rejecting...' },
-  confirmApprove: { ko: '이 과정을 승인하시겠습니까?', en: 'Approve this program?' },
+  confirmRegister: { ko: '이 과정을 승인하시겠습니까?', en: 'Register this course?' },
   confirmReject: { ko: '반려 사유를 입력하세요.', en: 'Enter rejection reason.' },
   rejectReasonRequired: { ko: '반려 사유를 입력해주세요.', en: 'Rejection reason is required.' },
   rejectReasonPlaceholder: { ko: '반려 사유를 입력하세요...', en: 'Enter rejection reason...' },
-  approveCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Approval comment (optional)' },
-  approvalComment: { ko: '승인 코멘트', en: 'Approval Comment' },
+  registerCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Registration comment (optional)' },
+  registerComment: { ko: '승인 코멘트', en: 'Registration Comment' },
   rejectionReason: { ko: '반려 사유', en: 'Rejection Reason' },
   cancel: { ko: '취소', en: 'Cancel' },
   confirm: { ko: '확인', en: 'Confirm' },
@@ -118,28 +118,28 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
   const [page, setPage] = useState(0);
 
   // Modal states
-  const [selectedProgram, setSelectedProgram] = useState<PendingProgramResponse | null>(null);
-  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<ReadyCourseResponse | null>(null);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [approveComment, setApproveComment] = useState('');
+  const [registerComment, setRegisterComment] = useState('');
   const [rejectReason, setRejectReason] = useState('');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  // React Query 훅 사용 - PENDING 상태만 조회
-  const { data, isLoading, error } = usePendingPrograms({ page, size: 10 });
-  const approveProgram = useApproveProgram();
-  const rejectProgram = useRejectProgram();
+  // React Query 훅 사용 - READY 상태만 조회
+  const { data, isLoading, error } = useReadyCourses({ page, size: 10 });
+  const registerCourse = useRegisterCourse();
+  const unreadyCourse = useUnreadyCourse();
 
-  const programs = data?.content ?? [];
+  const courses = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
 
   // 검색 필터링 (클라이언트 사이드)
-  const filteredPrograms = useMemo(() => {
-    if (!searchQuery) return programs;
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery) return courses;
     const query = searchQuery.toLowerCase();
-    return programs.filter((program) => program.title.toLowerCase().includes(query));
-  }, [programs, searchQuery]);
+    return courses.filter((course) => course.title.toLowerCase().includes(query));
+  }, [courses, searchQuery]);
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '-';
@@ -153,44 +153,44 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
   };
 
   // Action handlers
-  const handleApproveClick = (program: PendingProgramResponse) => {
-    setSelectedProgram(program);
-    setShowApproveModal(true);
+  const handleRegisterClick = (course: ReadyCourseResponse) => {
+    setSelectedCourse(course);
+    setShowRegisterModal(true);
   };
 
-  const handleRejectClick = (program: PendingProgramResponse) => {
-    setSelectedProgram(program);
+  const handleRejectClick = (course: ReadyCourseResponse) => {
+    setSelectedCourse(course);
     setShowRejectModal(true);
   };
 
-  const handleApprove = async () => {
-    if (!selectedProgram) return;
+  const handleRegister = async () => {
+    if (!selectedCourse) return;
     try {
-      await approveProgram.mutateAsync({
-        id: selectedProgram.id,
-        request: approveComment ? { comment: approveComment } : undefined,
+      await registerCourse.mutateAsync({
+        id: selectedCourse.id,
+        request: registerComment ? { comment: registerComment } : undefined,
       });
-      setShowApproveModal(false);
-      setSelectedProgram(null);
-      setApproveComment('');
+      setShowRegisterModal(false);
+      setSelectedCourse(null);
+      setRegisterComment('');
     } catch (err) {
-      console.error('Approve failed:', err);
+      console.error('Register failed:', err);
     }
   };
 
   const handleReject = async () => {
-    if (!selectedProgram) return;
+    if (!selectedCourse) return;
     if (!rejectReason.trim()) {
       alert(getText('rejectReasonRequired'));
       return;
     }
     try {
-      await rejectProgram.mutateAsync({
-        id: selectedProgram.id,
+      await unreadyCourse.mutateAsync({
+        id: selectedCourse.id,
         request: { reason: rejectReason },
       });
       setShowRejectModal(false);
-      setSelectedProgram(null);
+      setSelectedCourse(null);
       setRejectReason('');
     } catch (err) {
       console.error('Reject failed:', err);
@@ -198,25 +198,25 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
   };
 
   // Primary Action 렌더링 (승인 버튼)
-  const renderPrimaryAction = (item: PendingProgramResponse) => {
+  const renderPrimaryAction = (item: ReadyCourseResponse) => {
     return (
       <Button
         size="sm"
         onClick={(e) => {
           e.stopPropagation();
-          handleApproveClick(item);
+          handleRegisterClick(item);
         }}
-        disabled={approveProgram.isPending}
+        disabled={registerCourse.isPending}
         className="h-8"
       >
         <CheckCircle size={14} />
-        {getText('approve')}
+        {getText('register')}
       </Button>
     );
   };
 
   // 더보기 메뉴 렌더링
-  const renderMoreMenu = (item: PendingProgramResponse) => {
+  const renderMoreMenu = (item: ReadyCourseResponse) => {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -245,7 +245,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
   };
 
   // 리스트뷰 컬럼 정의
-  const columns: ColumnDef<PendingProgramResponse>[] = useMemo(
+  const columns: ColumnDef<ReadyCourseResponse>[] = useMemo(
     () => [
       {
         accessorKey: 'title',
@@ -270,7 +270,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
         ),
         cell: ({ row }) => (
           <span className="text-sm text-text-secondary whitespace-nowrap">
-            {row.original.level ? PROGRAM_LEVEL_LABELS[row.original.level] : getText('notSet')}
+            {row.original.level ? COURSE_LEVEL_LABELS[row.original.level] : getText('notSet')}
           </span>
         ),
       },
@@ -281,7 +281,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
         ),
         cell: ({ row }) => (
           <span className="text-sm text-text-secondary whitespace-nowrap">
-            {row.original.type ? PROGRAM_TYPE_LABELS[row.original.type] : getText('notSet')}
+            {row.original.type ? COURSE_TYPE_LABELS[row.original.type] : getText('notSet')}
           </span>
         ),
       },
@@ -325,7 +325,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
         size: 130,
       },
     ],
-    [language, navigate, approveProgram.isPending]
+    [language, navigate, registerCourse.isPending]
   );
 
   if (error) {
@@ -377,7 +377,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <StatCard
               icon={<Clock size={20} />}
-              label={getText('pendingCourses')}
+              label={getText('readyCourses')}
               value={totalElements}
               iconColor="yellow"
             />
@@ -399,7 +399,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
               <Badge variant="warning" className="mr-2">검토 대기</Badge>
-              {filteredPrograms.length}
+              {filteredCourses.length}
               {getText('courseCount')}
             </p>
           </div>
@@ -416,13 +416,13 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
           {!isLoading && totalElements === 0 && !searchQuery && (
             <div className="text-center py-12 text-text-secondary">
               <CheckCircle size={48} className="mx-auto mb-3 text-status-success" />
-              <p className="mb-1">{getText('noPending')}</p>
-              <p className="text-sm">{getText('noPendingDescription')}</p>
+              <p className="mb-1">{getText('noReady')}</p>
+              <p className="text-sm">{getText('noReadyDescription')}</p>
             </div>
           )}
 
           {/* Empty Search Results */}
-          {!isLoading && filteredPrograms.length === 0 && searchQuery && (
+          {!isLoading && filteredCourses.length === 0 && searchQuery && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -430,10 +430,10 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
           )}
 
           {/* Data Table */}
-          {!isLoading && filteredPrograms.length > 0 && (
+          {!isLoading && filteredCourses.length > 0 && (
             <DataTable
               columns={columns}
-              data={filteredPrograms}
+              data={filteredCourses}
               showColumnToggle={false}
               showPagination={true}
               manualPagination={true}
@@ -453,23 +453,23 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
         </div>
       </div>
 
-      {/* Approve Modal */}
-      {showApproveModal && selectedProgram && (
+      {/* Register Modal */}
+      {showRegisterModal && selectedCourse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
               <CheckCircle size={20} className="text-status-success" />
-              {getText('confirmApprove')}
+              {getText('confirmRegister')}
             </h3>
             <p className="text-sm text-text-secondary mb-4">
-              {selectedProgram.title}
+              {selectedCourse.title}
             </p>
             <div className="mb-4">
-              <Label className="text-text-secondary mb-2">{getText('approvalComment')}</Label>
+              <Label className="text-text-secondary mb-2">{getText('registerComment')}</Label>
               <Textarea
-                value={approveComment}
-                onChange={(e) => setApproveComment(e.target.value)}
-                placeholder={getText('approveCommentPlaceholder')}
+                value={registerComment}
+                onChange={(e) => setRegisterComment(e.target.value)}
+                placeholder={getText('registerCommentPlaceholder')}
                 rows={3}
               />
             </div>
@@ -477,15 +477,15 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setShowApproveModal(false);
-                  setSelectedProgram(null);
-                  setApproveComment('');
+                  setShowRegisterModal(false);
+                  setSelectedCourse(null);
+                  setRegisterComment('');
                 }}
               >
                 {getText('cancel')}
               </Button>
-              <Button onClick={handleApprove} disabled={approveProgram.isPending}>
-                {approveProgram.isPending ? getText('approving') : getText('confirm')}
+              <Button onClick={handleRegister} disabled={registerCourse.isPending}>
+                {registerCourse.isPending ? getText('registering') : getText('confirm')}
               </Button>
             </div>
           </div>
@@ -493,7 +493,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
       )}
 
       {/* Reject Modal */}
-      {showRejectModal && selectedProgram && (
+      {showRejectModal && selectedCourse && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
@@ -501,7 +501,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
               {getText('confirmReject')}
             </h3>
             <p className="text-sm text-text-secondary mb-4">
-              {selectedProgram.title}
+              {selectedCourse.title}
             </p>
             <div className="mb-4">
               <Label className="text-text-secondary mb-2">{getText('rejectionReason')} *</Label>
@@ -517,7 +517,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
                 variant="ghost"
                 onClick={() => {
                   setShowRejectModal(false);
-                  setSelectedProgram(null);
+                  setSelectedCourse(null);
                   setRejectReason('');
                 }}
               >
@@ -525,10 +525,10 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
               </Button>
               <Button
                 onClick={handleReject}
-                disabled={rejectProgram.isPending || !rejectReason.trim()}
+                disabled={unreadyCourse.isPending || !rejectReason.trim()}
                 className="bg-status-error hover:bg-status-error/90 text-white"
               >
-                {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
+                {unreadyCourse.isPending ? getText('rejecting') : getText('reject')}
               </Button>
             </div>
           </div>

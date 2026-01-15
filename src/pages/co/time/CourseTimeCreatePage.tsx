@@ -17,7 +17,7 @@ import {
   Textarea,
 } from '@/components/common';
 import { useCreateTime } from '@/hooks/co/useTimeQueries';
-import { useApprovedPrograms } from '@/hooks/co/useCourseQueries';
+import { useRegisteredCourses } from '@/hooks/tu/useCourseQueries';
 import { useUsers } from '@/hooks/co/useUserQueries';
 import { instructorAssignmentService } from '@/services/co/instructorAssignmentService';
 import type {
@@ -26,8 +26,8 @@ import type {
   EnrollmentMethod,
 } from '@/types/co/time.types';
 import { DELIVERY_TYPE_LABELS, DELIVERY_TYPE_DESCRIPTIONS, ENROLLMENT_METHOD_LABELS, ENROLLMENT_METHOD_DESCRIPTIONS } from '@/types/co/time.types';
-import { PROGRAM_LEVEL_LABELS, PROGRAM_TYPE_LABELS } from '@/types/common/program.types';
-import type { ProgramResponse } from '@/types/common/program.types';
+import { COURSE_LEVEL_LABELS, COURSE_TYPE_LABELS } from '@/types/common/course.types';
+import type { CourseRegistrationResponse } from '@/types/common/course.types';
 import type { InstructorRole } from '@/types/tu/instructorAssignment.types';
 import { INSTRUCTOR_ROLE_LABELS } from '@/types/tu/instructorAssignment.types';
 
@@ -143,7 +143,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const [searchParams] = useSearchParams();
   const { prefixPath } = useSubdomainPath();
   const createTime = useCreateTime();
-  const { data: approvedProgramsData, isLoading: isLoadingPrograms } = useApprovedPrograms();
+  const { data: registeredCoursesData, isLoading: isLoadingCourses } = useRegisteredCourses({ size: 100 });
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'DESIGNER', size: 100 });
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -153,23 +153,23 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  // 승인된 프로그램 목록 (백엔드 courseId를 id로 매핑)
-  const approvedPrograms = useMemo(() => {
-    const content = approvedProgramsData?.content ?? [];
+  // 승인된(REGISTERED) 과정 목록 (백엔드 courseId를 id로 매핑)
+  const registeredCourses = useMemo(() => {
+    const content = registeredCoursesData?.content ?? [];
     // 백엔드에서 courseId로 반환되므로, id 필드가 없으면 courseId를 id로 매핑
     return content.map((item) => ({
       ...item,
       id: item.id ?? (item as unknown as { courseId?: number }).courseId,
     }));
-  }, [approvedProgramsData]);
+  }, [registeredCoursesData]);
 
   // DESIGNER 역할 사용자 목록 (강사 후보)
   const availableInstructors = useMemo(() => {
     return usersData?.content ?? [];
   }, [usersData]);
 
-  // 선택된 프로그램 정보
-  const [selectedProgram, setSelectedProgram] = useState<ProgramResponse | null>(null);
+  // 선택된 과정 정보
+  const [selectedCourse, setSelectedCourse] = useState<CourseRegistrationResponse | null>(null);
 
   // 수시 모집 상태 (모집 종료일 없음)
   const [isAlwaysOpen, setIsAlwaysOpen] = useState(false);
@@ -286,23 +286,23 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
   };
 
-  // 프로그램 선택 핸들러 (Phase 3: programId → courseId)
-  const handleProgramSelect = (courseIdStr: string) => {
+  // 과정 선택 핸들러
+  const handleCourseSelect = (courseIdStr: string) => {
     const courseId = parseInt(courseIdStr);
     if (!courseId) {
-      setSelectedProgram(null);
+      setSelectedCourse(null);
       setFormData((prev) => ({ ...prev, courseId: 0 }));
       return;
     }
 
-    const program = approvedPrograms.find((p) => p.id === courseId);
-    if (program) {
-      setSelectedProgram(program);
+    const course = registeredCourses.find((c) => c.id === courseId);
+    if (course) {
+      setSelectedCourse(course);
       setFormData((prev) => ({
         ...prev,
-        courseId: program.id,
+        courseId: course.id,
         // 차수명이 비어있으면 교육 과정명으로 자동 설정
-        title: prev.title || program.title,
+        title: prev.title || course.title,
       }));
       // 에러 클리어
       if (errors.courseId) {
@@ -461,44 +461,44 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     setAssignedInstructors((prev) => prev.filter((i) => i.userId !== userId));
   };
 
-  // URL에서 전달된 programId로 초기 선택
+  // URL에서 전달된 courseId로 초기 선택
   useEffect(() => {
-    if (initialProgramId && approvedPrograms.length > 0 && !selectedProgram) {
-      const programId = parseInt(initialProgramId);
-      const program = approvedPrograms.find((p) => p.id === programId);
-      if (program) {
-        setSelectedProgram(program);
+    if (initialProgramId && registeredCourses.length > 0 && !selectedCourse) {
+      const courseId = parseInt(initialProgramId);
+      const course = registeredCourses.find((c) => c.id === courseId);
+      if (course) {
+        setSelectedCourse(course);
         setFormData((prev) => ({
           ...prev,
-          programId: program.id,
-          title: prev.title || program.title,
+          courseId: course.id,
+          title: prev.title || course.title,
         }));
       }
     }
-  }, [initialProgramId, approvedPrograms, selectedProgram]);
+  }, [initialProgramId, registeredCourses, selectedCourse]);
 
   // Owner를 주강사로 자동 추가
   const handleUseOwnerToggle = (checked: boolean) => {
     setUseOwnerAsInstructor(checked);
-    if (checked && selectedProgram?.ownerId) {
+    if (checked && selectedCourse?.ownerId) {
       // Owner가 이미 목록에 있는지 확인
-      const ownerExists = assignedInstructors.some((i) => i.userId === selectedProgram.ownerId);
+      const ownerExists = assignedInstructors.some((i) => i.userId === selectedCourse.ownerId);
       if (!ownerExists) {
         // MAIN이 이미 있으면 제거
         const withoutMain = assignedInstructors.filter((i) => i.role !== 'MAIN');
         setAssignedInstructors([
           ...withoutMain,
           {
-            userId: selectedProgram.ownerId,
-            userName: selectedProgram.ownerName || '',
-            userEmail: selectedProgram.ownerEmail || '',
+            userId: selectedCourse.ownerId,
+            userName: selectedCourse.ownerName || '',
+            userEmail: selectedCourse.ownerEmail || '',
             role: 'MAIN',
           },
         ]);
       }
-    } else if (!checked && selectedProgram?.ownerId) {
+    } else if (!checked && selectedCourse?.ownerId) {
       // Owner 제거
-      setAssignedInstructors((prev) => prev.filter((i) => i.userId !== selectedProgram.ownerId));
+      setAssignedInstructors((prev) => prev.filter((i) => i.userId !== selectedCourse.ownerId));
     }
   };
 
@@ -558,13 +558,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
             <div className="flex flex-col gap-6">
               {/* 교육 과정 선택 */}
               <div className="space-y-2">
-                <Label htmlFor="programSelect">{getText('selectProgram')} *</Label>
-                {isLoadingPrograms ? (
+                <Label htmlFor="courseSelect">{getText('selectProgram')} *</Label>
+                {isLoadingCourses ? (
                   <div className="flex items-center gap-2 text-text-secondary py-2">
                     <Loader2 size={16} className="animate-spin" />
                     <span className="text-sm">{getText('loadingPrograms')}</span>
                   </div>
-                ) : approvedPrograms.length === 0 ? (
+                ) : registeredCourses.length === 0 ? (
                   <div className="flex items-center gap-2 text-text-secondary py-2">
                     <Info size={16} />
                     <span className="text-sm">{getText('noApprovedPrograms')}</span>
@@ -572,18 +572,18 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 ) : (
                   <Select
                     value={formData.courseId ? formData.courseId.toString() : ''}
-                    onValueChange={handleProgramSelect}
+                    onValueChange={handleCourseSelect}
                   >
                     <SelectTrigger
-                      id="programSelect"
+                      id="courseSelect"
                       className={errors.courseId ? 'border-status-error' : ''}
                     >
                       <SelectValue placeholder={getText('selectProgramPlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {approvedPrograms.map((program) => (
-                        <SelectItem key={program.id} value={program.id.toString()}>
-                          {program.title}
+                      {registeredCourses.map((course) => (
+                        <SelectItem key={course.id} value={course.id.toString()}>
+                          {course.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -594,8 +594,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 )}
               </div>
 
-              {/* 선택된 프로그램 정보 표시 */}
-              {selectedProgram && (
+              {/* 선택된 과정 정보 표시 */}
+              {selectedCourse && (
                 <div className="bg-bg-subtle rounded-lg p-4 border border-border">
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpen size={18} className="text-text-secondary" />
@@ -606,10 +606,10 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   <div className="flex gap-4">
                     {/* 썸네일 이미지 */}
                     <div className="flex-shrink-0">
-                      {selectedProgram.thumbnailUrl ? (
+                      {selectedCourse.thumbnailUrl ? (
                         <img
-                          src={selectedProgram.thumbnailUrl}
-                          alt={selectedProgram.title}
+                          src={selectedCourse.thumbnailUrl}
+                          alt={selectedCourse.title}
                           className="w-24 h-16 object-cover rounded-lg border border-border"
                         />
                       ) : (
@@ -618,30 +618,30 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                         </div>
                       )}
                     </div>
-                    {/* 프로그램 정보 */}
+                    {/* 과정 정보 */}
                     <div className="flex-1">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        {selectedProgram.level && (
+                        {selectedCourse.level && (
                           <div>
                             <span className="text-text-secondary">{getText('programLevel')}: </span>
                             <span className="text-text-primary">
-                              {PROGRAM_LEVEL_LABELS[selectedProgram.level]}
+                              {COURSE_LEVEL_LABELS[selectedCourse.level]}
                             </span>
                           </div>
                         )}
-                        {selectedProgram.type && (
+                        {selectedCourse.type && (
                           <div>
                             <span className="text-text-secondary">{getText('programType')}: </span>
                             <span className="text-text-primary">
-                              {PROGRAM_TYPE_LABELS[selectedProgram.type]}
+                              {COURSE_TYPE_LABELS[selectedCourse.type]}
                             </span>
                           </div>
                         )}
-                        {selectedProgram.estimatedHours && (
+                        {selectedCourse.estimatedHours && (
                           <div>
                             <span className="text-text-secondary">{getText('estimatedHours')}: </span>
                             <span className="text-text-primary">
-                              {selectedProgram.estimatedHours} {getText('hours')}
+                              {selectedCourse.estimatedHours} {getText('hours')}
                             </span>
                           </div>
                         )}
@@ -649,24 +649,24 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                         <div>
                           <span className="text-text-secondary">{getText('owner')}: </span>
                           <span className="text-text-primary">
-                            {selectedProgram.ownerName || getText('noOwner')}
+                            {selectedCourse.ownerName || getText('noOwner')}
                           </span>
                         </div>
                       </div>
                       {/* 권장 운영기간 */}
-                      {(selectedProgram.courseStartDate || selectedProgram.courseEndDate) && (
+                      {(selectedCourse.courseStartDate || selectedCourse.courseEndDate) && (
                         <div className="mt-3 pt-3 border-t border-border">
                           <span className="text-text-secondary">{getText('recommendedPeriod')}: </span>
                           <span className="text-text-primary font-medium">
-                            {selectedProgram.courseStartDate && selectedProgram.courseEndDate
-                              ? `${selectedProgram.courseStartDate} ~ ${selectedProgram.courseEndDate}`
-                              : selectedProgram.courseStartDate || selectedProgram.courseEndDate || getText('noRecommendedPeriod')}
+                            {selectedCourse.courseStartDate && selectedCourse.courseEndDate
+                              ? `${selectedCourse.courseStartDate} ~ ${selectedCourse.courseEndDate}`
+                              : selectedCourse.courseStartDate || selectedCourse.courseEndDate || getText('noRecommendedPeriod')}
                           </span>
                         </div>
                       )}
-                      {selectedProgram.description && (
+                      {selectedCourse.description && (
                         <p className="mt-2 text-sm text-text-secondary line-clamp-2">
-                          {selectedProgram.description}
+                          {selectedCourse.description}
                         </p>
                       )}
                     </div>
@@ -1126,7 +1126,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               </p>
 
               {/* Owner를 주강사로 배정 옵션 */}
-              {selectedProgram?.ownerId && (
+              {selectedCourse?.ownerId && (
                 <div className="bg-bg-subtle rounded-lg p-4 border border-border">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1137,7 +1137,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       <div>
                         <span className="font-medium text-text-primary">{getText('useOwnerAsInstructor')}</span>
                         <p className="text-sm text-text-secondary mt-0.5">
-                          {selectedProgram.ownerName} ({selectedProgram.ownerEmail})
+                          {selectedCourse.ownerName} ({selectedCourse.ownerEmail})
                         </p>
                       </div>
                     </div>

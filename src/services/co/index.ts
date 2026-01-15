@@ -1,4 +1,3 @@
-export * from './courseService';
 export * from './snapshotService';
 export * from './timeService';
 export * from './instructorAssignmentService';

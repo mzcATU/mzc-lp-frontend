@@ -1,6 +1,5 @@
 export * from './useTimeQueries';
 export * from './useInstructorAssignmentQueries';
-export * from './useCourseQueries';
 export * from './useUserQueries';
 export * from './useEnrollmentQueries';
 export * from './useDashboardQueries';

@@ -4,7 +4,6 @@ import { useSubdomainPath } from '@/hooks/common';
 import {
   CheckCircle,
   XCircle,
-  Archive,
   FileText,
   Calendar,
   User,
@@ -17,17 +16,16 @@ import {
 } from 'lucide-react';
 import { Button, Badge, Card, Label, Textarea, BackButton } from '@/components/common';
 import {
-  useProgram,
-  useApproveProgram,
-  useRejectProgram,
-  useCloseProgram,
-} from '@/hooks/co/useCourseQueries';
-import type { ProgramStatus } from '@/types/common';
+  useCourseRegistration,
+  useRegisterCourse,
+  useUnreadyCourse,
+} from '@/hooks/tu/useCourseQueries';
+import type { CourseRegistrationStatus } from '@/types/common/course.types';
 import {
-  PROGRAM_STATUS_LABELS,
-  PROGRAM_LEVEL_LABELS,
-  PROGRAM_TYPE_LABELS,
-} from '@/types/common';
+  COURSE_REGISTRATION_STATUS_LABELS,
+  COURSE_LEVEL_LABELS,
+  COURSE_TYPE_LABELS,
+} from '@/types/common/course.types';
 
 interface CourseDetailPageProps {
   language?: 'ko' | 'en';
@@ -36,8 +34,8 @@ interface CourseDetailPageProps {
 const t = {
   back: { ko: '목록으로', en: 'Back to List' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
-  error: { ko: '과정을 불러오는데 실패했습니다.', en: 'Failed to load program.' },
-  notFound: { ko: '과정을 찾을 수 없습니다.', en: 'Program not found.' },
+  error: { ko: '과정을 불러오는데 실패했습니다.', en: 'Failed to load course.' },
+  notFound: { ko: '과정을 찾을 수 없습니다.', en: 'Course not found.' },
   basicInfo: { ko: '기본 정보', en: 'Basic Information' },
   title: { ko: '과정명', en: 'Title' },
   description: { ko: '설명', en: 'Description' },
@@ -51,7 +49,7 @@ const t = {
   approvalInfo: { ko: '승인 정보', en: 'Approval Info' },
   approvedBy: { ko: '승인자', en: 'Approved By' },
   approvedAt: { ko: '승인일', en: 'Approved At' },
-  approvalComment: { ko: '승인 코멘트', en: 'Approval Comment' },
+  registerComment: { ko: '승인 코멘트', en: 'Registration Comment' },
   rejectionInfo: { ko: '반려 정보', en: 'Rejection Info' },
   rejectedAt: { ko: '반려일', en: 'Rejected At' },
   rejectionReason: { ko: '반려 사유', en: 'Rejection Reason' },
@@ -59,18 +57,15 @@ const t = {
   snapshotId: { ko: '스냅샷 ID', en: 'Snapshot ID' },
   snapshotName: { ko: '스냅샷명', en: 'Snapshot Name' },
   actions: { ko: '액션', en: 'Actions' },
-  approve: { ko: '승인', en: 'Approve' },
+  register: { ko: '승인', en: 'Register' },
   reject: { ko: '반려', en: 'Reject' },
-  close: { ko: '종료', en: 'Close' },
-  approving: { ko: '승인 중...', en: 'Approving...' },
+  registering: { ko: '승인 중...', en: 'Registering...' },
   rejecting: { ko: '반려 중...', en: 'Rejecting...' },
-  closing: { ko: '종료 중...', en: 'Closing...' },
-  confirmApprove: { ko: '이 과정을 승인하시겠습니까?', en: 'Approve this program?' },
+  confirmRegister: { ko: '이 과정을 승인하시겠습니까?', en: 'Register this course?' },
   confirmReject: { ko: '반려 사유를 입력하세요.', en: 'Enter rejection reason.' },
-  confirmClose: { ko: '이 과정을 종료하시겠습니까?', en: 'Close this program?' },
   rejectReasonRequired: { ko: '반려 사유를 입력해주세요.', en: 'Rejection reason is required.' },
   rejectReasonPlaceholder: { ko: '반려 사유를 입력하세요...', en: 'Enter rejection reason...' },
-  approveCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Approval comment (optional)' },
+  registerCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Registration comment (optional)' },
   cancel: { ko: '취소', en: 'Cancel' },
   confirm: { ko: '확인', en: 'Confirm' },
   notSet: { ko: '미설정', en: 'Not set' },
@@ -82,31 +77,29 @@ const t = {
   createCourseTime: { ko: '차수 생성', en: 'Create Course Time' },
 };
 
-const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
+const statusBadgeVariant: Record<CourseRegistrationStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
   DRAFT: 'secondary',
-  PENDING: 'warning',
-  APPROVED: 'success',
+  READY: 'warning',
+  REGISTERED: 'success',
   REJECTED: 'destructive',
-  CLOSED: 'default',
 };
 
 export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
-  const programId = Number(id);
+  const courseId = Number(id);
 
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [approveComment, setApproveComment] = useState('');
+  const [registerComment, setRegisterComment] = useState('');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
-  const { data: program, isLoading, error } = useProgram(programId);
-  const approveProgram = useApproveProgram();
-  const rejectProgram = useRejectProgram();
-  const closeProgram = useCloseProgram();
+  const { data: course, isLoading, error } = useCourseRegistration(courseId);
+  const registerCourse = useRegisterCourse();
+  const unreadyCourse = useUnreadyCourse();
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return getText('notSet');
@@ -119,16 +112,16 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
     });
   };
 
-  const handleApprove = async () => {
+  const handleRegister = async () => {
     try {
-      await approveProgram.mutateAsync({
-        id: programId,
-        request: approveComment ? { comment: approveComment } : undefined,
+      await registerCourse.mutateAsync({
+        id: courseId,
+        request: registerComment ? { comment: registerComment } : undefined,
       });
-      setShowApproveModal(false);
-      setApproveComment('');
+      setShowRegisterModal(false);
+      setRegisterComment('');
     } catch (err) {
-      console.error('Approve failed:', err);
+      console.error('Register failed:', err);
     }
   };
 
@@ -138,23 +131,14 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
       return;
     }
     try {
-      await rejectProgram.mutateAsync({
-        id: programId,
+      await unreadyCourse.mutateAsync({
+        id: courseId,
         request: { reason: rejectReason },
       });
       setShowRejectModal(false);
       setRejectReason('');
     } catch (err) {
       console.error('Reject failed:', err);
-    }
-  };
-
-  const handleClose = async () => {
-    if (!confirm(getText('confirmClose'))) return;
-    try {
-      await closeProgram.mutateAsync(programId);
-    } catch (err) {
-      console.error('Close failed:', err);
     }
   };
 
@@ -167,7 +151,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
     );
   }
 
-  if (error || !program) {
+  if (error || !course) {
     return (
       <div className="h-full flex items-center justify-center bg-bg-app">
         <div className="text-center">
@@ -198,69 +182,45 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
         <div className="flex items-start justify-between mb-8">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-text-primary mb-0">{program.title}</h1>
-              <Badge variant={statusBadgeVariant[program.status]} className="text-sm">
-                {PROGRAM_STATUS_LABELS[program.status]}
+              <h1 className="text-text-primary mb-0">{course.title}</h1>
+              <Badge variant={statusBadgeVariant[course.status]} className="text-sm">
+                {COURSE_REGISTRATION_STATUS_LABELS[course.status]}
               </Badge>
             </div>
-            <p className="text-text-secondary m-0">ID: {program.id}</p>
+            <p className="text-text-secondary m-0">ID: {course.id}</p>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            {program.status === 'PENDING' && (
+            {course.status === 'READY' && (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowRejectModal(true)}
-                  disabled={rejectProgram.isPending}
+                  disabled={unreadyCourse.isPending}
                   className="border border-status-error text-status-error hover:bg-status-error-bg"
                 >
                   <XCircle size={16} />
-                  {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
+                  {unreadyCourse.isPending ? getText('rejecting') : getText('reject')}
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => setShowApproveModal(true)}
-                  disabled={approveProgram.isPending}
+                  onClick={() => setShowRegisterModal(true)}
+                  disabled={registerCourse.isPending}
                 >
                   <CheckCircle size={16} />
-                  {approveProgram.isPending ? getText('approving') : getText('approve')}
+                  {registerCourse.isPending ? getText('registering') : getText('register')}
                 </Button>
               </>
             )}
-            {program.status === 'APPROVED' && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClose}
-                  disabled={closeProgram.isPending}
-                  className="border border-border"
-                >
-                  <Archive size={16} />
-                  {closeProgram.isPending ? getText('closing') : getText('close')}
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => navigate(prefixPath(`/co/times/create?programId=${program.id}`))}
-                >
-                  <Plus size={16} />
-                  {getText('createCourseTime')}
-                </Button>
-              </>
-            )}
-            {program.status === 'DRAFT' && (
+            {course.status === 'REGISTERED' && (
               <Button
-                variant="ghost"
                 size="sm"
-                onClick={handleClose}
-                disabled={closeProgram.isPending}
-                className="border border-border"
+                onClick={() => navigate(prefixPath(`/co/times/create?courseId=${course.id}`))}
               >
-                <Archive size={16} />
-                {closeProgram.isPending ? getText('closing') : getText('close')}
+                <Plus size={16} />
+                {getText('createCourseTime')}
               </Button>
             )}
           </div>
@@ -270,11 +230,11 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
         <div className="space-y-6">
 
           {/* Description */}
-          {program.description && (
+          {course.description && (
             <Card>
               <div className="p-5">
                 <p className="text-text-primary whitespace-pre-wrap leading-relaxed">
-                  {program.description}
+                  {course.description}
                 </p>
               </div>
             </Card>
@@ -293,7 +253,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                     {getText('level')}
                   </Label>
                   <p className="text-text-primary mt-1 font-medium">
-                    {program.level ? PROGRAM_LEVEL_LABELS[program.level] : getText('notSet')}
+                    {course.level ? COURSE_LEVEL_LABELS[course.level] : getText('notSet')}
                   </p>
                 </div>
                 <div>
@@ -301,7 +261,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                     {getText('type')}
                   </Label>
                   <p className="text-text-primary mt-1 font-medium">
-                    {program.type ? PROGRAM_TYPE_LABELS[program.type] : getText('notSet')}
+                    {course.type ? COURSE_TYPE_LABELS[course.type] : getText('notSet')}
                   </p>
                 </div>
                 <div>
@@ -310,8 +270,8 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                   </Label>
                   <p className="text-text-primary mt-1 font-medium flex items-center gap-1">
                     <Clock size={14} className="text-text-secondary" />
-                    {program.estimatedHours
-                      ? `${program.estimatedHours} ${getText('hours')}`
+                    {course.estimatedHours
+                      ? `${course.estimatedHours} ${getText('hours')}`
                       : getText('notSet')}
                   </p>
                 </div>
@@ -321,7 +281,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                   </Label>
                   <p className="text-text-primary mt-1 font-medium flex items-center gap-1">
                     <User size={14} className="text-text-secondary" />
-                    {program.creatorName || (program.creatorId ? `ID: ${program.creatorId}` : '-')}
+                    {course.creatorName || (course.creatorId ? `ID: ${course.creatorId}` : '-')}
                   </p>
                 </div>
               </div>
@@ -341,7 +301,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                     {getText('createdAt')}
                   </Label>
                   <p className="text-text-primary mt-1 text-sm">
-                    {formatDate(program.createdAt)}
+                    {formatDate(course.createdAt)}
                   </p>
                 </div>
                 <div>
@@ -349,16 +309,16 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                     {getText('updatedAt')}
                   </Label>
                   <p className="text-text-primary mt-1 text-sm">
-                    {formatDate(program.updatedAt)}
+                    {formatDate(course.updatedAt)}
                   </p>
                 </div>
-                {program.submittedAt && (
+                {course.submittedAt && (
                   <div>
                     <Label className="text-text-secondary text-xs uppercase tracking-wide">
                       {getText('submittedAt')}
                     </Label>
                     <p className="text-text-primary mt-1 text-sm">
-                      {formatDate(program.submittedAt)}
+                      {formatDate(course.submittedAt)}
                     </p>
                   </div>
                 )}
@@ -373,20 +333,20 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                 <Layers size={18} className="text-text-secondary" />
                 {getText('snapshotInfo')}
               </h2>
-              {program.snapshotId ? (
+              {course.snapshotId ? (
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <Label className="text-text-secondary text-xs uppercase tracking-wide">
                       {getText('snapshotId')}
                     </Label>
-                    <p className="text-text-primary mt-1 font-medium">{program.snapshotId}</p>
+                    <p className="text-text-primary mt-1 font-medium">{course.snapshotId}</p>
                   </div>
-                  {program.snapshotName && (
+                  {course.snapshotName && (
                     <div>
                       <Label className="text-text-secondary text-xs uppercase tracking-wide">
                         {getText('snapshotName')}
                       </Label>
-                      <p className="text-text-primary mt-1 font-medium">{program.snapshotName}</p>
+                      <p className="text-text-primary mt-1 font-medium">{course.snapshotName}</p>
                     </div>
                   )}
                 </div>
@@ -397,7 +357,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
           </Card>
 
           {/* Approval Info */}
-          {program.status === 'APPROVED' && program.approvedAt && (
+          {course.status === 'REGISTERED' && course.approvedAt && (
             <Card className="border-l-4 border-l-status-success">
               <div className="p-5">
                 <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
@@ -410,7 +370,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                       {getText('approvedBy')}
                     </Label>
                     <p className="text-text-primary mt-1">
-                      {program.approvedByName || (program.approvedBy ? `ID: ${program.approvedBy}` : getText('notSet'))}
+                      {course.approvedByName || (course.approvedBy ? `ID: ${course.approvedBy}` : getText('notSet'))}
                     </p>
                   </div>
                   <div>
@@ -418,17 +378,17 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                       {getText('approvedAt')}
                     </Label>
                     <p className="text-text-primary mt-1 text-sm">
-                      {formatDate(program.approvedAt)}
+                      {formatDate(course.approvedAt)}
                     </p>
                   </div>
                 </div>
-                {program.approvalComment && (
+                {course.approvalComment && (
                   <div className="mt-4 pt-4 border-t border-border">
                     <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                      {getText('approvalComment')}
+                      {getText('registerComment')}
                     </Label>
                     <p className="text-text-primary mt-1 whitespace-pre-wrap">
-                      {program.approvalComment}
+                      {course.approvalComment}
                     </p>
                   </div>
                 )}
@@ -437,7 +397,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
           )}
 
           {/* Rejection Info */}
-          {program.status === 'REJECTED' && program.rejectedAt && (
+          {course.status === 'REJECTED' && course.rejectedAt && (
             <Card className="border-l-4 border-l-status-error">
               <div className="p-5">
                 <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
@@ -449,7 +409,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                     {getText('rejectedAt')}
                   </Label>
                   <p className="text-text-primary mt-1 text-sm">
-                    {formatDate(program.rejectedAt)}
+                    {formatDate(course.rejectedAt)}
                   </p>
                 </div>
                 <div className="pt-4 border-t border-border">
@@ -457,7 +417,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                     {getText('rejectionReason')}
                   </Label>
                   <p className="text-text-primary mt-1 whitespace-pre-wrap">
-                    {program.rejectionReason || getText('notSet')}
+                    {course.rejectionReason || getText('notSet')}
                   </p>
                 </div>
               </div>
@@ -466,20 +426,20 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
         </div>
       </div>
 
-      {/* Approve Modal */}
-      {showApproveModal && (
+      {/* Register Modal */}
+      {showRegisterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <h3 className="text-lg font-medium text-text-primary mb-4 flex items-center gap-2">
               <CheckCircle size={20} className="text-status-success" />
-              {getText('confirmApprove')}
+              {getText('confirmRegister')}
             </h3>
             <div className="mb-4">
-              <Label className="text-text-secondary mb-2">{getText('approvalComment')}</Label>
+              <Label className="text-text-secondary mb-2">{getText('registerComment')}</Label>
               <Textarea
-                value={approveComment}
-                onChange={(e) => setApproveComment(e.target.value)}
-                placeholder={getText('approveCommentPlaceholder')}
+                value={registerComment}
+                onChange={(e) => setRegisterComment(e.target.value)}
+                placeholder={getText('registerCommentPlaceholder')}
                 rows={3}
               />
             </div>
@@ -487,14 +447,14 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setShowApproveModal(false);
-                  setApproveComment('');
+                  setShowRegisterModal(false);
+                  setRegisterComment('');
                 }}
               >
                 {getText('cancel')}
               </Button>
-              <Button onClick={handleApprove} disabled={approveProgram.isPending}>
-                {approveProgram.isPending ? getText('approving') : getText('confirm')}
+              <Button onClick={handleRegister} disabled={registerCourse.isPending}>
+                {registerCourse.isPending ? getText('registering') : getText('confirm')}
               </Button>
             </div>
           </div>
@@ -530,10 +490,10 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
               </Button>
               <Button
                 onClick={handleReject}
-                disabled={rejectProgram.isPending || !rejectReason.trim()}
+                disabled={unreadyCourse.isPending || !rejectReason.trim()}
                 className="bg-status-error hover:bg-status-error/90 text-white"
               >
-                {rejectProgram.isPending ? getText('rejecting') : getText('reject')}
+                {unreadyCourse.isPending ? getText('rejecting') : getText('reject')}
               </Button>
             </div>
           </div>
