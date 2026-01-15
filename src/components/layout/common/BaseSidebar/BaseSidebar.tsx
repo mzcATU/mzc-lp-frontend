@@ -15,7 +15,6 @@ import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
-import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
 import { GlobalRoleSwitcher, type GlobalRole } from '../GlobalRoleSwitcher';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
@@ -35,11 +34,10 @@ export function BaseSidebar({
   roleLabel,
   showModeSwitcher = false,
   showGlobalRoleSwitcher = false,
-  currentMode = 'instructor',
   roleType = 'tu',
   showBackToTA = false,
   showLogout = true,
-}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType; showLogout?: boolean }) {
+}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; roleType?: RoleType; showLogout?: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -130,14 +128,6 @@ export function BaseSidebar({
   const isSuperAdmin = roleType === 'sa';
   const logoUrl = isSuperAdmin ? null : (isDarkMode ? branding?.darkLogoUrl : branding?.logoUrl) || branding?.logoUrl;
   const platformName = isSuperAdmin ? 'Learning Hub' : (branding?.tenantName || 'Learning Hub');
-
-  const handleModeChange = (mode: ViewMode) => {
-    if (mode === 'learner') {
-      navigate(prefixPath('/tu/b2c/mypage'));
-    } else {
-      navigate(prefixPath('/tu/dashboard'));
-    }
-  };
 
   // Color tokens - Dynamic based on theme
   const colors: SidebarColors = isDarkMode
@@ -255,21 +245,7 @@ export function BaseSidebar({
           )}
         </div>
 
-        {/* Mode Switcher (TU only) */}
-        {showModeSwitcher && (
-          <div className={cn('mb-3', !isExpanded && 'flex justify-center')}>
-            <ModeSwitcher
-              currentMode={currentMode}
-              isExpanded={isExpanded}
-              language={language}
-              colors={colors}
-              onModeChange={handleModeChange}
-              isDarkMode={isDarkMode}
-            />
-          </div>
-        )}
-
-        {/* Global Role Switcher (TA, CO, TU 간 전환) */}
+        {/* Global Role Switcher (TA, CO, TU, USER 간 전환) */}
         {showGlobalRoleSwitcher && (
           <div className={cn('mb-3', !isExpanded && 'flex justify-center')}>
             <GlobalRoleSwitcher

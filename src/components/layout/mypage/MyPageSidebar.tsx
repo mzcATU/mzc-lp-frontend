@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -8,10 +8,10 @@ import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
-import { useSubdomainPath } from '@/hooks/common';
 import { usePublicLayout } from '@/hooks/tu';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
-import { cn } from '@/utils/cn';
+import { GlobalRoleSwitcher } from '../common/GlobalRoleSwitcher';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,12 +44,8 @@ interface MyPageSidebarProps {
   menuData?: MenuItem[];
 }
 
-type ViewMode = 'instructor' | 'learner';
-
 export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: MyPageSidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { prefixPath } = useSubdomainPath();
 
   // 브랜딩 설정에서 사이드바 설정 가져오기
   const { data: layoutData } = usePublicLayout();
@@ -108,7 +104,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
-  const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
   // USER: 권한 없음, INSTRUCTOR: 강사, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
@@ -327,59 +322,35 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
-        {/* 모드 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
+        {/* 글로벌 역할 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
         {isDesigner && instructorTabEnabled && (
           <>
-            <div
-              className="relative rounded-lg p-1 mb-3"
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <div className="flex gap-1">
-                <button
-                  onClick={() => {
-                    setCurrentMode('learner');
-                    navigate(prefixPath('/tu/b2c/mypage'));
-                  }}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
-                  )}
-                  style={{
-                    backgroundColor: currentMode === 'learner'
-                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
-                      : 'transparent',
-                    color: currentMode === 'learner'
-                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
-                      : (isDark ? '#9E9E9E' : '#666666'),
-                  }}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  <span>{language === 'ko' ? '학습자' : 'Learner'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentMode('instructor');
-                    navigate(prefixPath('/tu/dashboard'));
-                  }}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
-                  )}
-                  style={{
-                    backgroundColor: currentMode === 'instructor'
-                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
-                      : 'transparent',
-                    color: currentMode === 'instructor'
-                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
-                      : (isDark ? '#9E9E9E' : '#666666'),
-                  }}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
-                </button>
-              </div>
+            <div className="mb-3">
+              <GlobalRoleSwitcher
+                currentRole="USER"
+                isExpanded={true}
+                language={language}
+                colors={isDark ? {
+                  bg: designTokens.darkMode.bg,
+                  border: designTokens.darkMode.border,
+                  textPrimary: designTokens.darkMode.textPrimary,
+                  textSecondary: designTokens.darkMode.textSecondary,
+                  hover: designTokens.darkMode.hover,
+                  activeBg: designTokens.darkMode.activeBg,
+                  activeText: designTokens.darkMode.activeText,
+                  tooltipBg: designTokens.darkMode.tooltipBg,
+                } : {
+                  bg: designTokens.lightMode.bg,
+                  border: designTokens.lightMode.border,
+                  textPrimary: designTokens.lightMode.textPrimary,
+                  textSecondary: designTokens.lightMode.textSecondary,
+                  hover: designTokens.lightMode.hover,
+                  activeBg: designTokens.lightMode.activeBg,
+                  activeText: designTokens.lightMode.activeText,
+                  tooltipBg: designTokens.lightMode.tooltipBg,
+                }}
+                isDarkMode={isDark}
+              />
             </div>
             {/* 구분선 */}
             <div

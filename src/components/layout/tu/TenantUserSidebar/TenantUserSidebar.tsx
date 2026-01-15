@@ -88,7 +88,6 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
       showModeSwitcher={false}
       showGlobalRoleSwitcher={showGlobalRoleSwitcher}
       showLogout={false}
-      currentMode="instructor"
       roleType="tu"
     />
   );

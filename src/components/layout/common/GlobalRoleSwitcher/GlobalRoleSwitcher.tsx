@@ -72,8 +72,15 @@ export function GlobalRoleSwitcher({
   const availableRoles: GlobalRole[] = (() => {
     // roles 배열이 있으면 사용 (1:N 관계 지원)
     if (userRoles && userRoles.length > 0) {
-      const roles: GlobalRole[] = ['USER', 'TU']; // 학습자, 강사는 항상 표시
-      if (userRoles.includes('OPERATOR') || userRoles.includes('TENANT_ADMIN')) {
+      const roles: GlobalRole[] = [];
+      // 사용자에게 부여된 역할에 따라 표시
+      if (userRoles.includes('USER')) {
+        roles.push('USER');
+      }
+      if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) {
+        roles.push('TU');
+      }
+      if (userRoles.includes('OPERATOR')) {
         roles.push('CO');
       }
       if (userRoles.includes('TENANT_ADMIN')) {
@@ -88,16 +95,17 @@ export function GlobalRoleSwitcher({
     } else if (userRole === 'OPERATOR') {
       return ['USER', 'TU', 'CO'];
     } else {
-      // 기본: 학습자 + 현재 역할
-      const roles: GlobalRole[] = ['USER'];
-      if (currentRole !== 'USER') {
-        roles.push(currentRole);
-      }
-      return roles;
+      // 기본: 현재 역할만 표시
+      return [currentRole];
     }
   })();
 
   const CurrentIcon = roleIcons[currentRole];
+
+  // 역할이 1개 이하면 스위처를 표시하지 않음
+  if (availableRoles.length <= 1) {
+    return null;
+  }
 
   const handleRoleChange = (role: GlobalRole) => {
     if (role !== currentRole) {

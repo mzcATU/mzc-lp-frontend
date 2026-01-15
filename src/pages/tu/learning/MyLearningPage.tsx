@@ -222,7 +222,7 @@ export function MyLearningPage() {
         {/* Search & Filter Bar */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 min-w-[280px] max-w-md">
+          <form onSubmit={handleSearch} className="flex-1 min-w-[280px] max-w-xl">
             <div className="relative">
               <Search
                 className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
