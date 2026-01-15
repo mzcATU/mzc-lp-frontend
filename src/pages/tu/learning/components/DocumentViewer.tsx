@@ -1,9 +1,10 @@
 /**
  * DocumentViewer 컴포넌트
  * PDF, 문서 및 이미지 콘텐츠를 표시하고 진도 추적 기능 제공
+ * PDF는 e-book 스타일의 가로 페이지 넘김 방식으로 표시
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Loader2, AlertCircle, RefreshCw, FileText, Download, ZoomIn, ZoomOut, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, FileText, Download, ZoomIn, ZoomOut, Image as ImageIcon, ChevronLeft, ChevronRight, BookOpen, FileIcon } from 'lucide-react';
 import { Button } from '@/components/common';
 import { useTranslation } from '@/store/common/languageStore';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -11,8 +12,10 @@ import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 
 // PDF Viewer imports
-import { Viewer, Worker, SpecialZoomLevel } from '@react-pdf-viewer/core';
+import { Viewer, Worker, SpecialZoomLevel, ScrollMode, ViewMode } from '@react-pdf-viewer/core';
+import { pageNavigationPlugin } from '@react-pdf-viewer/page-navigation';
 import '@react-pdf-viewer/core/lib/styles/index.css';
+import '@react-pdf-viewer/page-navigation/lib/styles/index.css';
 
 interface DocumentViewerProps {
   contentId: number;
@@ -53,6 +56,13 @@ export function DocumentViewer({
 
   // 이미지용 줌 상태
   const [imageZoom, setImageZoom] = useState(100);
+
+  // PDF 보기 모드: 'single' = 1페이지, 'dual' = 2페이지
+  const [pdfViewMode, setPdfViewMode] = useState<'single' | 'dual'>('single');
+
+  // PDF 페이지 네비게이션 플러그인
+  const pageNavigationPluginInstance = pageNavigationPlugin();
+  const { jumpToPage } = pageNavigationPluginInstance;
 
   // 문서/이미지 Blob URL 로드 (인증 토큰 포함)
   useEffect(() => {
@@ -171,18 +181,43 @@ export function DocumentViewer({
     setViewedPages((prev) => new Set([...prev, page]));
   }, []);
 
-  // 페이지 이동
+  // 페이지 이동 (플러그인 API 사용)
   const goToPreviousPage = useCallback(() => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      const newPage = pdfViewMode === 'dual' ? Math.max(1, currentPage - 2) : currentPage - 1;
+      jumpToPage(newPage - 1); // 0-indexed
     }
-  }, [currentPage]);
+  }, [currentPage, pdfViewMode, jumpToPage]);
 
   const goToNextPage = useCallback(() => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      const newPage = pdfViewMode === 'dual' ? Math.min(totalPages, currentPage + 2) : currentPage + 1;
+      jumpToPage(newPage - 1); // 0-indexed
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, pdfViewMode, jumpToPage]);
+
+  // 키보드 방향키로 페이지 이동
+  useEffect(() => {
+    if (!isPdf || !documentUrl) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goToPreviousPage();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goToNextPage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPdf, documentUrl, goToPreviousPage, goToNextPage]);
+
+  // 보기 모드 전환
+  const toggleViewMode = useCallback(() => {
+    setPdfViewMode((prev) => (prev === 'single' ? 'dual' : 'single'));
+  }, []);
 
   // 현재 줌 레벨 표시
   const zoomDisplay = useMemo(() => {
@@ -253,6 +288,32 @@ export function DocumentViewer({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* PDF 보기 모드 전환 버튼 */}
+          {isPdf && totalPages > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleViewMode}
+                title={pdfViewMode === 'single' ? '2페이지 보기' : '1페이지 보기'}
+                className="gap-1"
+              >
+                {pdfViewMode === 'single' ? (
+                  <>
+                    <BookOpen className="w-4 h-4" />
+                    <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>2페이지</span>
+                  </>
+                ) : (
+                  <>
+                    <FileIcon className="w-4 h-4" />
+                    <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>1페이지</span>
+                  </>
+                )}
+              </Button>
+              <div className={`h-4 w-px mx-1 ${isDark ? 'bg-white/10' : 'bg-gray-300'}`} />
+            </>
+          )}
+
           {/* PDF 페이지 이동 버튼 */}
           {isPdf && totalPages > 1 && (
             <>
@@ -314,16 +375,21 @@ export function DocumentViewer({
           </div>
         )}
 
-        {/* PDF 뷰어 - @react-pdf-viewer 사용 */}
+        {/* PDF 뷰어 - @react-pdf-viewer e-book 스타일 */}
         {!isImage && isPdf && documentUrl && (
-          <div className="w-full h-full bg-gray-100">
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
             <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-              <Viewer
-                fileUrl={documentUrl}
-                defaultScale={scale}
-                onDocumentLoad={handleDocumentLoad}
-                onPageChange={handlePageChange}
-              />
+              <div className="w-full h-full" style={{ maxWidth: pdfViewMode === 'dual' ? '100%' : '800px' }}>
+                <Viewer
+                  fileUrl={documentUrl}
+                  defaultScale={SpecialZoomLevel.PageFit}
+                  scrollMode={ScrollMode.Page}
+                  viewMode={pdfViewMode === 'dual' ? ViewMode.DualPage : ViewMode.SinglePage}
+                  onDocumentLoad={handleDocumentLoad}
+                  onPageChange={handlePageChange}
+                  plugins={[pageNavigationPluginInstance]}
+                />
+              </div>
             </Worker>
           </div>
         )}
