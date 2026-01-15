@@ -7,7 +7,6 @@ import {
   ProfilePage,
   MyLearningPage,
   LearningDetailPage,
-  LearningPlayerPage,
   MyTeachingPage,
   TeachingStatsPage,
   CompletedCoursesPage,
@@ -32,6 +31,7 @@ import {
   B2BWishlistPage,
   B2BLandingHeader,
   B2BCourseCard,
+  B2BLearningPlayerPage,
 } from '@/pages/tu/b2b';
 
 function B2BMyPageWrapper() {
@@ -123,13 +123,13 @@ function B2BInstructorProfilePage() {
 export const tuB2bRoutes = (
   <>
     {/* ===== 플레이어 라우트 - 레이아웃 없이 전체 화면 ===== */}
-    <Route path="/:subdomain/tu/b2b/mypage/learning/:enrollmentId/player" element={<B2BPlayerWrapper />}>
-      <Route index element={<LearningPlayerPage />} />
-      <Route path=":itemId" element={<LearningPlayerPage />} />
+    <Route path="/:subdomain/tu/b2b/player/:enrollmentId" element={<B2BPlayerWrapper />}>
+      <Route index element={<B2BLearningPlayerPage />} />
+      <Route path=":itemId" element={<B2BLearningPlayerPage />} />
     </Route>
-    <Route path="/tu/b2b/mypage/learning/:enrollmentId/player" element={<B2BPlayerWrapper />}>
-      <Route index element={<LearningPlayerPage />} />
-      <Route path=":itemId" element={<LearningPlayerPage />} />
+    <Route path="/tu/b2b/player/:enrollmentId" element={<B2BPlayerWrapper />}>
+      <Route index element={<B2BLearningPlayerPage />} />
+      <Route path=":itemId" element={<B2BLearningPlayerPage />} />
     </Route>
 
     {/* ===== 마이페이지 (로그인 필요) ===== */}

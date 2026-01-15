@@ -17,6 +17,7 @@ export { B2BSettingsPage } from './B2BSettingsPage';
 export { B2BPreferencesPage } from './B2BPreferencesPage';
 export { B2BMyActivityPage } from './B2BMyActivityPage';
 export { B2BWishlistPage } from './B2BWishlistPage';
+export { B2BLearningPlayerPage } from './B2BLearningPlayerPage';
 
 // B2B 전용 컴포넌트
 export { B2BLandingHeader } from './components/B2BLandingHeader';
