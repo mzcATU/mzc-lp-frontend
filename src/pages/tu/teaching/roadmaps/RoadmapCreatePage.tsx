@@ -37,7 +37,7 @@ import {
   useUpdateRoadmap,
   useSaveDraft,
   useRoadmap,
-  useMyPrograms,
+  useMyCourses,
 } from '@/hooks/tu';
 import {
   isDestructiveUpdate,
@@ -129,9 +129,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
   const { data: roadmapData, isLoading: isLoadingRoadmap } = useRoadmap(
     isEditMode ? parseInt(id) : 0
   );
-  const { data: programsData, isLoading: isLoadingPrograms } = useMyPrograms({
-    status: 'APPROVED'
-  });
+  const { data: programsData, isLoading: isLoadingPrograms } = useMyCourses();
   const createMutation = useCreateRoadmap();
   const updateMutation = useUpdateRoadmap();
   const draftMutation = useSaveDraft();
@@ -160,7 +158,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
 
   // 클라이언트 사이드 검색 필터링
   const availablePrograms = (programsData?.content || [])
-    .filter((program) => !selectedPrograms.find((p) => p.id === program.id))
+    .filter((program) => !selectedPrograms.find((p) => p.id === program.courseId))
     .filter((program) => {
       if (!searchQuery.trim()) return true;
       const query = searchQuery.toLowerCase();
@@ -170,7 +168,7 @@ export function RoadmapCreatePage({ language = 'ko' }: Readonly<{ language?: 'ko
       );
     })
     .map((program) => ({
-      id: program.id,
+      id: program.courseId,
       title: program.title,
       category: program.type || '',
       duration: program.estimatedHours ? `${program.estimatedHours}시간` : '',

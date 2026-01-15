@@ -13,10 +13,10 @@ import {
   CourseTimeDetailPage,
 } from '@/pages/co/time';
 import {
-  ProgramListPage,
-  ProgramPendingPage,
-  ProgramDetailPage,
-} from '@/pages/co/program';
+  CourseListPage,
+  CoursePendingPage,
+  CourseDetailPage,
+} from '@/pages/co/course';
 import { InstructorAssignmentsPage } from '@/pages/co/instructor';
 import { UserManagementPage } from '@/pages/co/user';
 import { OperatorNoticesPage, OperatorNoticeInboxPage } from '@/pages/co/notices';
@@ -40,9 +40,9 @@ export const coRoutes = (
     <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}
-    <Route path="courses" element={<ProgramListPage />} />
-    <Route path="courses/pending" element={<ProgramPendingPage />} />
-    <Route path="courses/:id" element={<ProgramDetailPage />} />
+    <Route path="courses" element={<CourseListPage />} />
+    <Route path="courses/pending" element={<CoursePendingPage />} />
+    <Route path="courses/:id" element={<CourseDetailPage />} />
     {/* 교육 운영 관리 - 차수(CourseTime) */}
     <Route path="times" element={<CourseTimesPage />} />
     <Route path="times/create" element={<CourseTimeCreatePage />} />

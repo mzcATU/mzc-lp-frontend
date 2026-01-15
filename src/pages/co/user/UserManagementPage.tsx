@@ -50,7 +50,7 @@ import {
   SelectValue,
 } from '@/components/common';
 import { useUsers, useUser, useChangeUserStatus, useUserEnrollmentStats, useUserInstructorStats } from '@/hooks/co/useUserQueries';
-import { useApprovedPrograms } from '@/hooks/co/useProgramQueries';
+import { useApprovedPrograms } from '@/hooks/co/useCourseQueries';
 import { useTimes } from '@/hooks/co/useTimeQueries';
 import { useEnrollmentsByCourseTime, useForceEnroll } from '@/hooks/co/useEnrollmentQueries';
 import type { UserListResponse, TenantRole, UserStatus, UserFilterParams } from '@/types/co';

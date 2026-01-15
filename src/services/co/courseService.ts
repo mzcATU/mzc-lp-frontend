@@ -28,7 +28,7 @@ interface PageResponse<T> {
 }
 
 // 프로그램 필터 파라미터
-export interface ProgramFilterParams {
+export interface CourseFilterParams {
   status?: ProgramStatus;
   createdBy?: number;
   page?: number;
@@ -36,7 +36,7 @@ export interface ProgramFilterParams {
   sort?: string;
 }
 
-export const programService = {
+export const courseService = {
   // ============================================
   // Program CRUD
   // ============================================
@@ -54,7 +54,7 @@ export const programService = {
 
   /** 프로그램 목록 조회 */
   async getPrograms(
-    params?: ProgramFilterParams
+    params?: CourseFilterParams
   ): Promise<PageResponse<ProgramResponse>> {
     const { data } = await axiosInstance.get<PageResponse<ProgramResponse>>(
       API_ENDPOINTS.PROGRAMS.BASE,
@@ -105,7 +105,7 @@ export const programService = {
    * @deprecated Phase 3: Course API의 status 필터 사용
    */
   async getPendingPrograms(
-    params?: Pick<ProgramFilterParams, 'page' | 'size' | 'sort'>
+    params?: Pick<CourseFilterParams, 'page' | 'size' | 'sort'>
   ): Promise<PageResponse<PendingProgramResponse>> {
     // Phase 3: /programs/pending → /courses?status=READY
     const { data } = await axiosInstance.get<PageResponse<PendingProgramResponse>>(

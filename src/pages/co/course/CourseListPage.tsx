@@ -35,16 +35,16 @@ import {
   useApproveProgram,
   useRejectProgram,
   useCloseProgram,
-} from '@/hooks/co/useProgramQueries';
+} from '@/hooks/co/useCourseQueries';
 import type { ProgramResponse, ProgramStatus } from '@/types/common';
 import {
   PROGRAM_STATUS_LABELS,
   PROGRAM_LEVEL_LABELS,
   PROGRAM_TYPE_LABELS,
 } from '@/types/common';
-import type { ProgramFilterParams } from '@/services/co/programService';
+import type { CourseFilterParams } from '@/services/co/courseService';
 
-interface ProgramListPageProps {
+interface CourseListPageProps {
   language?: 'ko' | 'en';
 }
 
@@ -142,7 +142,7 @@ function StatCard({
   );
 }
 
-export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPageProps>) {
+export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps>) {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');
@@ -160,7 +160,7 @@ export function ProgramListPage({ language = 'ko' }: Readonly<ProgramListPagePro
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   // API 파라미터 구성
-  const params: ProgramFilterParams = {
+  const params: CourseFilterParams = {
     page,
     size: 10,
     ...(statusFilter !== 'all' && { status: statusFilter }),

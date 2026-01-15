@@ -21,7 +21,7 @@ import {
   useApproveProgram,
   useRejectProgram,
   useCloseProgram,
-} from '@/hooks/co/useProgramQueries';
+} from '@/hooks/co/useCourseQueries';
 import type { ProgramStatus } from '@/types/common';
 import {
   PROGRAM_STATUS_LABELS,
@@ -29,7 +29,7 @@ import {
   PROGRAM_TYPE_LABELS,
 } from '@/types/common';
 
-interface ProgramDetailPageProps {
+interface CourseDetailPageProps {
   language?: 'ko' | 'en';
 }
 
@@ -90,7 +90,7 @@ const statusBadgeVariant: Record<ProgramStatus, 'default' | 'secondary' | 'succe
   CLOSED: 'default',
 };
 
-export function ProgramDetailPage({ language = 'ko' }: Readonly<ProgramDetailPageProps>) {
+export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
