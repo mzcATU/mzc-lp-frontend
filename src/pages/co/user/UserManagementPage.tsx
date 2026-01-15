@@ -25,6 +25,8 @@ import {
   Briefcase,
   UserPlus,
   X,
+  XCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -34,6 +36,7 @@ import {
   DataTableColumnHeader,
   Label,
   Textarea,
+  Input,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -53,7 +56,7 @@ import {
 import { useUsers, useUser, useChangeUserStatus, useUserEnrollmentStats, useUserInstructorStats } from '@/hooks/co/useUserQueries';
 import { useApprovedPrograms } from '@/hooks/co/useCourseQueries';
 import { useTimes } from '@/hooks/co/useTimeQueries';
-import { useEnrollmentsByCourseTime, useForceEnroll } from '@/hooks/co/useEnrollmentQueries';
+import { useEnrollmentsByCourseTime, useForceEnroll, useCompleteEnrollment, useUpdateEnrollmentStatus } from '@/hooks/co/useEnrollmentQueries';
 import type { UserListResponse, TenantRole, UserStatus, UserFilterParams } from '@/types/co';
 import type { EnrollmentResponse, EnrollmentStatus } from '@/types/co/enrollment.types';
 import { USER_STATUS_LABELS, TENANT_ROLE_LABELS } from '@/types/co';
@@ -163,6 +166,19 @@ const t = {
   columnEnrollmentStatus: { ko: '수강 상태', en: 'Status' },
   // Learning detail modal
   learningDetail: { ko: '학습 상세 정보', en: 'Learning Details' },
+  // Enrollment actions
+  completeEnrollment: { ko: '수료 처리', en: 'Complete' },
+  dropEnrollment: { ko: '수강 취소', en: 'Cancel Enrollment' },
+  reinstateEnrollment: { ko: '수강 복귀', en: 'Reinstate' },
+  confirmComplete: { ko: '이 수강생을 수료 처리하시겠습니까?', en: 'Complete this enrollment?' },
+  confirmDrop: { ko: '수강 취소 사유를 입력하세요.', en: 'Enter cancellation reason.' },
+  confirmReinstate: { ko: '이 수강생을 다시 수강 상태로 복귀시키시겠습니까?', en: 'Reinstate this enrollment?' },
+  scoreLabel: { ko: '점수 (선택)', en: 'Score (optional)' },
+  scorePlaceholder: { ko: '0-100', en: '0-100' },
+  processing: { ko: '처리 중...', en: 'Processing...' },
+  completeSuccess: { ko: '수료 처리되었습니다.', en: 'Enrollment completed.' },
+  dropSuccess: { ko: '수강 취소되었습니다.', en: 'Enrollment cancelled.' },
+  reinstateSuccess: { ko: '수강 복귀되었습니다.', en: 'Enrollment reinstated.' },
 };
 
 const statusBadgeVariant: Record<UserStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -281,6 +297,13 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [targetStatus, setTargetStatus] = useState<UserStatus | null>(null);
   const [statusReason, setStatusReason] = useState('');
+
+  // 수강 관리 모달 상태
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showDropModal, setShowDropModal] = useState(false);
+  const [showReinstateModal, setShowReinstateModal] = useState(false);
+  const [completeScore, setCompleteScore] = useState('');
+  const [dropReason, setDropReason] = useState('');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -545,6 +568,63 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     }
   };
 
+  // 수료/취소/복귀 mutations
+  const completeEnrollment = useCompleteEnrollment();
+  const updateEnrollmentStatus = useUpdateEnrollmentStatus();
+
+  // 수료 처리
+  const handleComplete = async () => {
+    if (!selectedEnrollment) return;
+    try {
+      await completeEnrollment.mutateAsync({
+        id: selectedEnrollment.id,
+        request: {
+          ...(completeScore && { score: Number(completeScore) }),
+        },
+      });
+      setShowCompleteModal(false);
+      setSelectedEnrollment(null);
+      setCompleteScore('');
+    } catch (err) {
+      console.error('Complete failed:', err);
+    }
+  };
+
+  // 수강 취소
+  const handleDrop = async () => {
+    if (!selectedEnrollment) return;
+    if (!dropReason.trim()) {
+      alert(getText('reasonRequired'));
+      return;
+    }
+    try {
+      await updateEnrollmentStatus.mutateAsync({
+        id: selectedEnrollment.id,
+        request: { status: 'DROPPED', reason: dropReason },
+      });
+      setShowDropModal(false);
+      setSelectedEnrollment(null);
+      setDropReason('');
+    } catch (err) {
+      console.error('Drop failed:', err);
+    }
+  };
+
+  // 수강 복귀
+  const handleReinstate = async () => {
+    if (!selectedEnrollment) return;
+    try {
+      await updateEnrollmentStatus.mutateAsync({
+        id: selectedEnrollment.id,
+        request: { status: 'ENROLLED' },
+      });
+      setShowReinstateModal(false);
+      setSelectedEnrollment(null);
+    } catch (err) {
+      console.error('Reinstate failed:', err);
+    }
+  };
+
   // 사용자 선택 토글
   const toggleUserSelection = (userId: number) => {
     setSelectedUserIds((prev) => {
@@ -729,6 +809,58 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     [language, changeStatus.isPending, allCurrentPageSelected, filteredUsers, selectedUserIds, toggleAllSelection, toggleUserSelection]
   );
 
+  // 학습 관리 뷰용 더보기 메뉴 렌더링
+  const renderEnrollmentMoreMenu = (item: EnrollmentResponse) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-bg-secondary transition-colors"
+          >
+            <MoreHorizontal size={16} className="text-text-secondary" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          {item.status === 'ENROLLED' && (
+            <>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedEnrollment(item);
+                  setShowCompleteModal(true);
+                }}
+              >
+                <CheckCircle size={14} />
+                {getText('completeEnrollment')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedEnrollment(item);
+                  setShowDropModal(true);
+                }}
+                variant="destructive"
+              >
+                <XCircle size={14} />
+                {getText('dropEnrollment')}
+              </DropdownMenuItem>
+            </>
+          )}
+          {item.status === 'DROPPED' && (
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedEnrollment(item);
+                setShowReinstateModal(true);
+              }}
+            >
+              <RotateCcw size={14} />
+              {getText('reinstateEnrollment')}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   // Case 2: 학습 관리 뷰 컬럼 (차수 선택 시)
   const learningViewColumns: ColumnDef<EnrollmentResponse>[] = useMemo(
     () => [
@@ -811,8 +943,38 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
           </span>
         ),
       },
+      {
+        id: 'actions',
+        header: () => <span className="sr-only">{getText('columnActions')}</span>,
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div
+              className="flex items-center justify-end gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {item.status === 'ENROLLED' && (
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedEnrollment(item);
+                    setShowCompleteModal(true);
+                  }}
+                  className="h-8"
+                >
+                  <CheckCircle size={14} />
+                  {getText('completeEnrollment')}
+                </Button>
+              )}
+              {renderEnrollmentMoreMenu(item)}
+            </div>
+          );
+        },
+        size: 180,
+      },
     ],
-    [language]
+    [language, completeEnrollment.isPending, updateEnrollmentStatus.isPending]
   );
 
   if (error) {
@@ -1623,6 +1785,128 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Complete Enrollment Modal */}
+      {showCompleteModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <GraduationCap size={20} className="text-status-success" />
+              {getText('confirmComplete')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName ?? `User ${selectedEnrollment.userId}`}
+            </p>
+            <div className="mb-4">
+              <Label className="text-text-secondary mb-2">{getText('scoreLabel')}</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={completeScore}
+                onChange={(e) => setCompleteScore(e.target.value)}
+                placeholder={getText('scorePlaceholder')}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowCompleteModal(false);
+                  setSelectedEnrollment(null);
+                  setCompleteScore('');
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleComplete}
+                disabled={completeEnrollment.isPending}
+              >
+                {completeEnrollment.isPending ? getText('processing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drop Enrollment Modal */}
+      {showDropModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <AlertCircle size={20} className="text-status-error" />
+              {getText('confirmDrop')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName ?? `User ${selectedEnrollment.userId}`}
+            </p>
+            <div className="mb-4">
+              <Label className="text-text-secondary mb-2">{getText('reason')} *</Label>
+              <Textarea
+                value={dropReason}
+                onChange={(e) => setDropReason(e.target.value)}
+                placeholder={getText('reasonPlaceholder')}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowDropModal(false);
+                  setSelectedEnrollment(null);
+                  setDropReason('');
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleDrop}
+                disabled={updateEnrollmentStatus.isPending || !dropReason.trim()}
+                className="bg-status-error hover:bg-status-error/90 text-white"
+              >
+                {updateEnrollmentStatus.isPending ? getText('processing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reinstate Enrollment Modal */}
+      {showReinstateModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <RotateCcw size={20} className="text-text-secondary" />
+              {getText('reinstateEnrollment')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName ?? `User ${selectedEnrollment.userId}`}
+            </p>
+            <p className="text-sm text-text-primary mb-4">
+              {getText('confirmReinstate')}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowReinstateModal(false);
+                  setSelectedEnrollment(null);
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleReinstate}
+                disabled={updateEnrollmentStatus.isPending}
+              >
+                {updateEnrollmentStatus.isPending ? getText('processing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

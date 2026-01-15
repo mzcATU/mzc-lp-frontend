@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import {
@@ -18,14 +18,12 @@ import {
   X,
   UserPlus,
   FileText,
-  GraduationCap,
   BookOpen,
   User,
   DollarSign,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, Input, Label, NativeSelect, Card, BackButton } from '@/components/common';
-import { EnrollmentTab } from '@/pages/co/enrollment';
 import {
   useTime,
   useUpdateTime,
@@ -103,9 +101,6 @@ const t = {
   statusChangeError: { ko: '상태 변경에 실패했습니다.', en: 'Failed to change status.' },
   noDescription: { ko: '설명 없음', en: 'No description' },
   noLocation: { ko: '장소 미지정', en: 'No location' },
-  // Tabs
-  tabBasicInfo: { ko: '기본 정보', en: 'Basic Info' },
-  tabEnrollments: { ko: '수강생', en: 'Enrollments' },
   // Additional Info
   createdAt: { ko: '생성일', en: 'Created' },
   allowLateEnrollment: { ko: '중간 합류', en: 'Late Enrollment' },
@@ -139,30 +134,11 @@ const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'su
 export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { prefixPath } = useSubdomainPath();
   const timeId = parseInt(id || '0');
 
-  // URL의 tab 파라미터에 따라 초기 탭 설정
-  const getInitialTab = (): 'info' | 'enrollments' => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'students' || tabParam === 'enrollments') {
-      return 'enrollments';
-    }
-    return 'info';
-  };
-
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UpdateCourseTimeRequest>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'enrollments'>(getInitialTab);
-
-  // URL 파라미터 변경 시 탭 업데이트
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'students' || tabParam === 'enrollments') {
-      setActiveTab('enrollments');
-    }
-  }, [searchParams]);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -400,51 +376,10 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-border bg-bg-app sticky top-[89px] z-10">
-        <div className="px-8">
-          <div className="flex gap-1">
-            <button
-              onClick={() => setActiveTab('info')}
-              className={cn(
-                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
-                activeTab === 'info'
-                  ? 'text-text-primary'
-                  : 'text-text-secondary hover:text-text-primary'
-              )}
-            >
-              <FileText size={16} />
-              {getText('tabBasicInfo')}
-              {activeTab === 'info' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('enrollments')}
-              className={cn(
-                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
-                activeTab === 'enrollments'
-                  ? 'text-text-primary'
-                  : 'text-text-secondary hover:text-text-primary'
-              )}
-            >
-              <GraduationCap size={16} />
-              {getText('tabEnrollments')}
-              <Badge variant="secondary" className="ml-1">
-                {courseTime.currentEnrollment}
-              </Badge>
-              {activeTab === 'enrollments' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {/* 기본 정보 탭 */}
-        {activeTab === 'info' && (
+        {/* 기본 정보 */}
+        {(
           <div className="p-6 px-8 max-w-6xl">
             {/* Bento Grid 레이아웃 */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -753,17 +688,6 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                 )}
               </Card>
             </div>
-          </div>
-        )}
-
-        {/* 수강생 탭 */}
-        {activeTab === 'enrollments' && (
-          <div className="p-6 px-8">
-            <EnrollmentTab
-              courseTimeId={timeId}
-              courseTimeTitle={courseTime.title}
-              language={language}
-            />
           </div>
         )}
       </div>
