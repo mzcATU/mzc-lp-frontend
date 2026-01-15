@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
-import { ArrowLeft, ArrowRight, Save, FileText, Loader2, Send } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Loader2, CheckCircle, Upload } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
 import { courseService, categoryService } from '@/services/common';
@@ -83,7 +83,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [courseId, setCourseId] = useState<number | null>(
     courseIdParam ? Number(courseIdParam) : null
   );
@@ -243,60 +244,108 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     }
   };
 
-  const handlePublish = async () => {
+  /**
+   * 강의 저장 공통 로직
+   * @returns 저장된 courseId 또는 null (실패 시)
+   */
+  const saveCourse = async (): Promise<number | null> => {
+    const request: CreateCourseRequest = {
+      title: formData.title,
+      description: formData.description || undefined,
+      thumbnailUrl: formData.thumbnailUrl || undefined,
+      level: formData.level || undefined,
+      type: formData.type || undefined,
+      categoryId: formData.categoryId ?? undefined,
+      startDate: formData.startDate || undefined,
+      endDate: formData.endDate || undefined,
+      tags: formData.tags.length > 0 ? formData.tags : undefined,
+    };
+
+    let targetCourseId = courseId;
+
+    if (courseId) {
+      // 기존 강의 수정
+      await courseService.update(courseId, request);
+
+      // 커리큘럼 저장
+      if (formData.curriculumItems.length > 0) {
+        await deleteAllCurriculumItems(courseId);
+        await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
+      }
+    } else {
+      // 새 강의 생성
+      const response = await courseService.create(request);
+      targetCourseId = response.courseId;
+      setCourseId(response.courseId);
+      navigate(prefixPath(`/tu/teaching/courses/create?courseId=${response.courseId}`), { replace: true });
+
+      // 커리큘럼 생성
+      if (formData.curriculumItems.length > 0) {
+        await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
+      }
+    }
+
+    return targetCourseId;
+  };
+
+  /**
+   * 작성완료 (DRAFT → READY)
+   * 완성 요건 충족 + 임시저장 마크 불필요, 추후 리스트에서 등록 가능
+   */
+  const handleComplete = async () => {
     if (!formData.title) {
       alert('강의명을 입력해주세요.');
       return;
     }
 
-    if (!confirm(getText('publishConfirm'))) return;
+    if (!confirm(getText('completeConfirm'))) return;
 
-    setIsPublishing(true);
+    setIsCompleting(true);
     try {
-      const request: CreateCourseRequest = {
-        title: formData.title,
-        description: formData.description || undefined,
-        thumbnailUrl: formData.thumbnailUrl || undefined,
-        level: formData.level || undefined,
-        type: formData.type || undefined,
-        categoryId: formData.categoryId ?? undefined,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
-        tags: formData.tags.length > 0 ? formData.tags : undefined,
-      };
+      const targetCourseId = await saveCourse();
+      if (!targetCourseId) throw new Error('저장 실패');
 
-      let targetCourseId = courseId;
+      // 작성완료 API 호출 (DRAFT → READY)
+      await courseService.ready(targetCourseId);
 
-      if (courseId) {
-        // 기존 강의 수정
-        await courseService.update(courseId, request);
-
-        // 커리큘럼 저장
-        if (formData.curriculumItems.length > 0) {
-          await deleteAllCurriculumItems(courseId);
-          await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
-        }
-      } else {
-        // 새 강의 생성
-        const response = await courseService.create(request);
-        targetCourseId = response.courseId;
-
-        // 커리큘럼 생성
-        if (formData.curriculumItems.length > 0) {
-          await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
-        }
-      }
-
-      // 발행 API 호출
-      await courseService.publish(targetCourseId!);
-
-      alert(getText('publishSuccess'));
+      alert(getText('completeSuccess'));
       navigate(prefixPath('/tu/teaching/courses'));
     } catch (error) {
-      console.error('강의 발행 실패:', error);
-      alert(getText('publishError'));
+      console.error('작성완료 실패:', error);
+      alert(getText('completeError'));
     } finally {
-      setIsPublishing(false);
+      setIsCompleting(false);
+    }
+  };
+
+  /**
+   * 등록 (저장 → READY → REGISTERED)
+   * 저장과 동시에 CO가 볼 수 있는 상태로 전환
+   */
+  const handleRegister = async () => {
+    if (!formData.title) {
+      alert('강의명을 입력해주세요.');
+      return;
+    }
+
+    if (!confirm(getText('registerConfirm'))) return;
+
+    setIsRegistering(true);
+    try {
+      const targetCourseId = await saveCourse();
+      if (!targetCourseId) throw new Error('저장 실패');
+
+      // 먼저 READY 상태로 전환 후 REGISTERED로 전환
+      await courseService.ready(targetCourseId);
+      await courseService.register(targetCourseId);
+
+      alert(getText('registerSuccess'));
+      navigate(prefixPath('/tu/teaching/courses'));
+    } catch (error) {
+      console.error('등록 실패:', error);
+      alert(getText('registerError'));
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -433,43 +482,82 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
             </Button>
           </div>
 
-          <div>
+          <div className="flex gap-3">
             {currentStep < totalSteps ? (
               <Button onClick={handleNext}>
                 {getText('next')}
                 <ArrowRight size={18} />
               </Button>
             ) : (
-              <Button
-                onClick={handlePublish}
-                disabled={
-                  isPublishing ||
-                  !formData.title ||
-                  !formData.categoryId ||
-                  formData.curriculumItems.length === 0
-                }
-                title={
-                  !formData.title
-                    ? '강의명을 입력해주세요'
-                    : !formData.categoryId
-                      ? '카테고리를 선택해주세요'
-                      : formData.curriculumItems.length === 0
-                        ? '최소 1개의 차시가 필요합니다'
-                        : undefined
-                }
-              >
-                {isPublishing ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    {getText('publishing')}
-                  </>
-                ) : (
-                  <>
-                    <Send size={18} />
-                    {getText('publish')}
-                  </>
-                )}
-              </Button>
+              <>
+                {/* 작성완료 버튼 (DRAFT → READY) */}
+                <Button
+                  variant="ghost"
+                  onClick={handleComplete}
+                  disabled={
+                    isCompleting ||
+                    isRegistering ||
+                    !formData.title ||
+                    !formData.categoryId ||
+                    formData.curriculumItems.length === 0
+                  }
+                  className="border border-border"
+                  title={
+                    !formData.title
+                      ? '강의명을 입력해주세요'
+                      : !formData.categoryId
+                        ? '카테고리를 선택해주세요'
+                        : formData.curriculumItems.length === 0
+                          ? '최소 1개의 차시가 필요합니다'
+                          : undefined
+                  }
+                >
+                  {isCompleting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      {getText('completing')}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={18} />
+                      {getText('completeWriting')}
+                    </>
+                  )}
+                </Button>
+
+                {/* 등록 버튼 (DRAFT → READY → REGISTERED) */}
+                <Button
+                  onClick={handleRegister}
+                  disabled={
+                    isCompleting ||
+                    isRegistering ||
+                    !formData.title ||
+                    !formData.categoryId ||
+                    formData.curriculumItems.length === 0
+                  }
+                  title={
+                    !formData.title
+                      ? '강의명을 입력해주세요'
+                      : !formData.categoryId
+                        ? '카테고리를 선택해주세요'
+                        : formData.curriculumItems.length === 0
+                          ? '최소 1개의 차시가 필요합니다'
+                          : undefined
+                  }
+                >
+                  {isRegistering ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      {getText('registering')}
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={18} />
+                      {getText('register')}
+                    </>
+                  )}
+                </Button>
+              </>
             )}
           </div>
         </div>
