@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Loader2,
   ArrowRight,
+  User,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
