@@ -69,7 +69,7 @@ const t = {
   // 테이블 컬럼
   columnInstructor: { ko: '강사명', en: 'Instructor' },
   columnCourseTime: { ko: '차수명', en: 'Course Time' },
-  columnProgram: { ko: '과정명', en: 'Course' },
+  columnCourse: { ko: '과정명', en: 'Course' },
   columnRole: { ko: '역할', en: 'Role' },
   columnStatus: { ko: '상태', en: 'Status' },
   columnPeriod: { ko: '학습 기간', en: 'Period' },
@@ -91,7 +91,7 @@ const t = {
   courseTimeInfo: { ko: '차수 정보', en: 'Course Time Info' },
   email: { ko: '이메일', en: 'Email' },
   assignedAt: { ko: '배정일', en: 'Assigned At' },
-  programName: { ko: '과정명', en: 'Course Name' },
+  courseName: { ko: '과정명', en: 'Course Name' },
   learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
   goToCourseTime: { ko: '차수 상세 페이지로 이동', en: 'Go to Course Time' },
   // 배정 생성
@@ -456,7 +456,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
       {
         accessorKey: 'program',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={getText('columnProgram')} />
+          <DataTableColumnHeader column={column} title={getText('columnCourse')} />
         ),
         cell: ({ row }) => (
           <div className="max-w-[180px]">
@@ -823,7 +823,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
                       {/* 과정명 */}
                       <div>
                         <dt className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-wide">
-                          {getText('programName')}
+                          {getText('courseName')}
                         </dt>
                         <dd className="text-sm font-medium text-text-primary">
                           {selectedAssignment.program?.title ?? '-'}

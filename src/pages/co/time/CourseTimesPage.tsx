@@ -77,7 +77,7 @@ const t = {
   next: { ko: '다음', en: 'Next' },
   timeCount: { ko: '개의 차수', en: ' course times' },
   columnTitle: { ko: '차수명', en: 'Title' },
-  columnProgram: { ko: '과정명', en: 'Course' },
+  columnCourse: { ko: '과정명', en: 'Course' },
   columnStatus: { ko: '상태', en: 'Status' },
   columnDelivery: { ko: '진행 방식', en: 'Delivery' },
   columnPeriod: { ko: '학습 기간', en: 'Period' },
@@ -361,9 +361,9 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
         ),
       },
       {
-        id: 'program',
+        id: 'course',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={getText('columnProgram')} />
+          <DataTableColumnHeader column={column} title={getText('columnCourse')} />
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 max-w-xs">

@@ -274,7 +274,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const [selectedUserForDetail, setSelectedUserForDetail] = useState<UserListResponse | null>(null);
 
   // 새로운 필터 상태
-  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [selectedTimeId, setSelectedTimeId] = useState<number | null>(null);
   const [completionFilter, setCompletionFilter] = useState<CompletionFilter>('all');
 
@@ -286,7 +286,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
   // 강제 배정 모달 상태
   const [showEnrollModal, setShowEnrollModal] = useState(false);
-  const [enrollProgramId, setEnrollProgramId] = useState<number | null>(null);
+  const [enrollCourseId, setEnrollCourseId] = useState<number | null>(null);
   const [enrollTimeId, setEnrollTimeId] = useState<number | null>(null);
 
   // 학습 상세 모달용 선택된 enrollment
@@ -325,14 +325,14 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const changeStatus = useChangeUserStatus();
 
   // 과정 목록 조회 (승인된 과정만)
-  const { data: programsData } = useRegisteredCourses();
+  const { data: coursesData } = useRegisteredCourses();
 
   // 전체 차수 목록 조회 (필터용 - 클라이언트에서 프로그램별 필터링)
   const { data: timesData } = useTimes({ page: 0, size: 500 });
 
   // URL 파라미터에서 courseTimeId를 읽어 자동 선택
   useEffect(() => {
-    if (isInitialized || !timesData?.content || !programsData?.content) return;
+    if (isInitialized || !timesData?.content || !coursesData?.content) return;
 
     const courseTimeIdParam = searchParams.get('courseTimeId');
     if (courseTimeIdParam) {
@@ -341,18 +341,18 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
       if (selectedTime) {
         // 해당 차수의 과정을 찾아서 먼저 선택
-        const matchingProgram = programsData.content.find(
-          (p) => p.title === selectedTime.courseTitle
+        const matchingCourse = coursesData.content.find(
+          (c) => c.title === selectedTime.courseTitle
         );
-        if (matchingProgram) {
-          setSelectedProgramId(matchingProgram.id);
+        if (matchingCourse) {
+          setSelectedCourseId(matchingCourse.id);
         }
         // 차수 선택
         setSelectedTimeId(courseTimeId);
       }
     }
     setIsInitialized(true);
-  }, [timesData, programsData, searchParams, isInitialized]);
+  }, [timesData, coursesData, searchParams, isInitialized]);
 
   // 강제 배정 모달용 - 동일한 timesData 사용하고 클라이언트에서 필터링
 
@@ -426,51 +426,51 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   }), [filteredUsers, enrollmentsData?.content, isLearningView]);
 
   // 과정 옵션
-  const programOptions = useMemo(() => {
-    return (programsData?.content ?? []).map((p) => ({
-      value: String(p.id),
-      label: p.title,
+  const courseOptions = useMemo(() => {
+    return (coursesData?.content ?? []).map((c) => ({
+      value: String(c.id),
+      label: c.title,
     }));
-  }, [programsData]);
+  }, [coursesData]);
 
-  // 선택된 프로그램의 title 조회
-  const selectedProgramTitle = useMemo(() => {
-    if (!selectedProgramId) return null;
-    const program = programsData?.content?.find((p) => p.id === selectedProgramId);
-    return program?.title ?? null;
-  }, [selectedProgramId, programsData]);
+  // 선택된 과정의 title 조회
+  const selectedCourseTitle = useMemo(() => {
+    if (!selectedCourseId) return null;
+    const course = coursesData?.content?.find((c) => c.id === selectedCourseId);
+    return course?.title ?? null;
+  }, [selectedCourseId, coursesData]);
 
-  // 차수 옵션 - 선택된 프로그램 title로 클라이언트 필터링
+  // 차수 옵션 - 선택된 과정 title로 클라이언트 필터링
   const timeOptions = useMemo(() => {
     const allTimes = timesData?.content ?? [];
-    // 선택된 프로그램이 있으면 해당 프로그램의 차수만 필터링
-    const filteredTimes = selectedProgramTitle
-      ? allTimes.filter((t) => t.courseTitle === selectedProgramTitle)
+    // 선택된 과정이 있으면 해당 과정의 차수만 필터링
+    const filteredTimes = selectedCourseTitle
+      ? allTimes.filter((t) => t.courseTitle === selectedCourseTitle)
       : allTimes;
     return filteredTimes.map((t) => ({
       value: String(t.id),
       label: t.title,
     }));
-  }, [timesData, selectedProgramTitle]);
+  }, [timesData, selectedCourseTitle]);
 
-  // 강제 배정 모달용 프로그램 title 조회
-  const enrollProgramTitle = useMemo(() => {
-    if (!enrollProgramId) return null;
-    const program = programsData?.content?.find((p) => p.id === enrollProgramId);
-    return program?.title ?? null;
-  }, [enrollProgramId, programsData]);
+  // 강제 배정 모달용 과정 title 조회
+  const enrollCourseTitle = useMemo(() => {
+    if (!enrollCourseId) return null;
+    const course = coursesData?.content?.find((c) => c.id === enrollCourseId);
+    return course?.title ?? null;
+  }, [enrollCourseId, coursesData]);
 
   // 강제 배정 모달용 차수 옵션 - 클라이언트 필터링
   const enrollTimeOptions = useMemo(() => {
     const allTimes = timesData?.content ?? [];
-    const filteredTimes = enrollProgramTitle
-      ? allTimes.filter((t) => t.courseTitle === enrollProgramTitle)
+    const filteredTimes = enrollCourseTitle
+      ? allTimes.filter((t) => t.courseTitle === enrollCourseTitle)
       : [];
     return filteredTimes.map((t) => ({
       value: String(t.id),
       label: t.title,
     }));
-  }, [timesData, enrollProgramTitle]);
+  }, [timesData, enrollCourseTitle]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -513,9 +513,9 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   };
 
   // 과정 선택 핸들러
-  const handleProgramChange = (value: string) => {
-    const programId = value ? Number(value) : null;
-    setSelectedProgramId(programId);
+  const handleCourseChange = (value: string) => {
+    const courseId = value ? Number(value) : null;
+    setSelectedCourseId(courseId);
     setSelectedTimeId(null); // 차수 초기화
     setCompletionFilter('all'); // 수료여부 필터 초기화
     setSelectedUserIds(new Set()); // 행 선택 초기화
@@ -531,7 +531,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
   // 필터 초기화
   const handleClearFilters = () => {
-    setSelectedProgramId(null);
+    setSelectedCourseId(null);
     setSelectedTimeId(null);
     setCompletionFilter('all');
     setSearchQuery('');
@@ -541,7 +541,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
   // 강제 배정 모달 열기
   const handleOpenEnrollModal = () => {
-    setEnrollProgramId(null);
+    setEnrollCourseId(null);
     setEnrollTimeId(null);
     setShowEnrollModal(true);
   };
@@ -1016,9 +1016,9 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
             {/* 과정 선택 (Autocomplete) */}
             <div className="w-64">
               <Combobox
-                options={programOptions}
-                value={selectedProgramId ? String(selectedProgramId) : undefined}
-                onValueChange={handleProgramChange}
+                options={courseOptions}
+                value={selectedCourseId ? String(selectedCourseId) : undefined}
+                onValueChange={handleCourseChange}
                 placeholder={getText('selectCourse')}
                 searchPlaceholder={getText('searchCourse')}
                 emptyMessage={getText('noResults')}
@@ -1030,7 +1030,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
               <Select
                 value={selectedTimeId ? String(selectedTimeId) : ''}
                 onValueChange={handleTimeChange}
-                disabled={!selectedProgramId}
+                disabled={!selectedCourseId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={getText('selectTime')} />
@@ -1065,7 +1065,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
             </div>
 
             {/* 필터 초기화 */}
-            {(selectedProgramId || selectedTimeId || completionFilter !== 'all') && (
+            {(selectedCourseId || selectedTimeId || completionFilter !== 'all') && (
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
                 <X size={14} />
                 {getText('clearFilters')}
@@ -1738,10 +1738,10 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
             <div>
               <Label className="text-text-secondary mb-2">{getText('selectCourseForEnroll')}</Label>
               <Combobox
-                options={programOptions}
-                value={enrollProgramId ? String(enrollProgramId) : undefined}
+                options={courseOptions}
+                value={enrollCourseId ? String(enrollCourseId) : undefined}
                 onValueChange={(value: string) => {
-                  setEnrollProgramId(value ? Number(value) : null);
+                  setEnrollCourseId(value ? Number(value) : null);
                   setEnrollTimeId(null);
                 }}
                 placeholder={getText('selectCourse')}
@@ -1756,7 +1756,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
               <Select
                 value={enrollTimeId ? String(enrollTimeId) : ''}
                 onValueChange={(value) => setEnrollTimeId(value ? Number(value) : null)}
-                disabled={!enrollProgramId}
+                disabled={!enrollCourseId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={getText('selectTime')} />

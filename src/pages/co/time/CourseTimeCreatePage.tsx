@@ -148,8 +148,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
 
-  // URL에서 programId 쿼리 파라미터 읽기
-  const initialProgramId = searchParams.get('programId');
+  // URL에서 courseId 쿼리 파라미터 읽기
+  const initialCourseId = searchParams.get('courseId');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -463,8 +463,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   // URL에서 전달된 courseId로 초기 선택
   useEffect(() => {
-    if (initialProgramId && registeredCourses.length > 0 && !selectedCourse) {
-      const courseId = parseInt(initialProgramId);
+    if (initialCourseId && registeredCourses.length > 0 && !selectedCourse) {
+      const courseId = parseInt(initialCourseId);
       const course = registeredCourses.find((c) => c.id === courseId);
       if (course) {
         setSelectedCourse(course);
@@ -475,7 +475,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         }));
       }
     }
-  }, [initialProgramId, registeredCourses, selectedCourse]);
+  }, [initialCourseId, registeredCourses, selectedCourse]);
 
   // Owner를 주강사로 자동 추가
   const handleUseOwnerToggle = (checked: boolean) => {
