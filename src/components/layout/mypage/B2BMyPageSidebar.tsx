@@ -84,11 +84,24 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
   const { theme } = useThemeStore();
   const { language } = useLanguageStore();
   const { user, updateUser } = useAuthStore();
+  const userRoles = user?.roles;
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching']);
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
   const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OWNER'>('USER');
+
+  // 프론트엔드 역할 개수 계산 (GlobalRoleSwitcher와 동일한 로직)
+  const frontendRoleCount = useMemo(() => {
+    if (!userRoles || userRoles.length === 0) return 0;
+
+    let count = 0;
+    if (userRoles.includes('USER')) count++;
+    if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) count++;
+    if (userRoles.includes('OPERATOR')) count++;
+    if (userRoles.includes('TENANT_ADMIN')) count++;
+    return count;
+  }, [userRoles]);
 
   useEffect(() => {
     const checkCourseRole = async () => {
@@ -298,8 +311,8 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
-        {/* 글로벌 역할 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
-        {isAdminOrDesigner && instructorTabEnabled && (
+        {/* 글로벌 역할 스위처 (프론트엔드 역할이 2개 이상이고 강사 탭 기능이 활성화된 경우에만 표시) */}
+        {frontendRoleCount >= 2 && instructorTabEnabled && (
           <>
             <div className="mb-3">
               <GlobalRoleSwitcher
