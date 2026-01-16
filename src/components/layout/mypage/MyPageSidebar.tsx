@@ -228,7 +228,10 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
   const isActive = (path?: string) => {
     if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    // 서브도메인 제거: /{subdomain}/tu/... -> /tu/...
+    const tuIndex = location.pathname.indexOf('/tu/');
+    const normalizedPath = tuIndex !== -1 ? location.pathname.substring(tuIndex) : location.pathname;
+    return normalizedPath === path || normalizedPath.startsWith(path + '/');
   };
 
   const renderMenuItem = (item: MenuItem) => {

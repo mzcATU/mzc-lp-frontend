@@ -199,10 +199,13 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
 
   const isActive = (path?: string, isExactMatch?: boolean) => {
     if (!path) return false;
+    // 서브도메인 제거: /{subdomain}/tu/... -> /tu/...
+    const tuIndex = location.pathname.indexOf('/tu/');
+    const normalizedPath = tuIndex !== -1 ? location.pathname.substring(tuIndex) : location.pathname;
     if (isExactMatch) {
-      return location.pathname === path;
+      return normalizedPath === path;
     }
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    return normalizedPath === path || normalizedPath.startsWith(path + '/');
   };
 
   const renderMenuItem = (item: MenuItem) => {
