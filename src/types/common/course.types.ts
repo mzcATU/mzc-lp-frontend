@@ -13,7 +13,18 @@ export type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 /** 강의 유형 */
 export type CourseType = 'ONLINE' | 'OFFLINE' | 'BLENDED';
 
-/** 강의 발행 상태 (API용, UI용 CourseStatus와 구분) */
+/**
+ * 강의 상태 (Phase 1: Course 등록 및 동결)
+ * - DRAFT: 작성 중 (수정 가능)
+ * - READY: 작성 완료 (수정 가능, 등록 대기)
+ * - REGISTERED: 등록됨 (수정 불가, 차수 생성 가능)
+ */
+export type CourseStatus = 'DRAFT' | 'READY' | 'REGISTERED';
+
+/**
+ * @deprecated Phase 1 이후 사용 중지. CourseStatus 사용 권장.
+ * 하위 호환성을 위해 유지.
+ */
 export type CoursePublishStatus = 'DRAFT' | 'PUBLISHED';
 
 /**
@@ -41,8 +52,8 @@ export interface CourseResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
-  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
-  status: CoursePublishStatus;
+  /** 강의 상태 (DRAFT: 작성중, READY: 작성완료, REGISTERED: 등록됨) */
+  status: CourseStatus;
   estimatedHours: number | null;
   categoryId: number | null;
   startDate: string | null;
@@ -90,8 +101,8 @@ export interface CourseDetailResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
-  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
-  status: CoursePublishStatus;
+  /** 강의 상태 (DRAFT: 작성중, READY: 작성완료, REGISTERED: 등록됨) */
+  status: CourseStatus;
   estimatedHours: number | null;
   categoryId: number | null;
   startDate: string | null;
@@ -137,6 +148,7 @@ export interface UpdateCourseRequest {
   startDate?: string;
   endDate?: string;
   tags?: string[];
+  /** @deprecated status는 상태 전환 API 사용 (ready, unready, register) */
   status?: CoursePublishStatus;
 }
 
@@ -200,7 +212,26 @@ export const COURSE_TYPE_LABELS: Record<CourseType, string> = {
   BLENDED: '블렌디드',
 };
 
-/** CoursePublishStatus 라벨 맵 */
+/** CourseStatus 라벨 맵 */
+export const COURSE_STATUS_LABELS: Record<CourseStatus, string> = {
+  DRAFT: '작성중',
+  READY: '작성완료',
+  REGISTERED: '등록됨',
+};
+
+/** CourseStatus 색상 맵 (UI용) */
+export const COURSE_STATUS_COLORS: Record<
+  CourseStatus,
+  { bg: string; text: string }
+> = {
+  DRAFT: { bg: 'bg-gray-100', text: 'text-gray-700' },
+  READY: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  REGISTERED: { bg: 'bg-green-100', text: 'text-green-700' },
+};
+
+/**
+ * @deprecated Phase 1 이후 사용 중지. COURSE_STATUS_LABELS 사용 권장.
+ */
 export const COURSE_PUBLISH_STATUS_LABELS: Record<CoursePublishStatus, string> = {
   DRAFT: '임시저장',
   PUBLISHED: '발행됨',

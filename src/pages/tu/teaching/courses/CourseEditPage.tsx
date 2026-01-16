@@ -27,7 +27,8 @@ interface CourseEditPageProps {
 }
 
 /**
- * 커리큘럼 트리를 재귀적으로 순회하며 API 호출
+ * 커리큘럼 트리를 재귀적으로 순회하며 API 호출 (신규 항목만)
+ * itemId가 있는 항목은 이미 저장된 항목이므로 건너뜀
  */
 async function createCurriculumItemsRecursively(
   courseId: number,
@@ -36,18 +37,41 @@ async function createCurriculumItemsRecursively(
 ): Promise<void> {
   for (const item of items) {
     if (isCurriculumFolder(item)) {
-      const folderResponse = await courseService.createFolder(courseId, {
-        folderName: item.name,
-        parentId: parentId ?? undefined,
-      });
+      let currentFolderId: number;
+
+      // itemId가 있으면 이미 저장된 폴더
+      if (item.itemId) {
+        currentFolderId = item.itemId;
+      } else {
+        // 새 폴더 생성
+        const folderResponse = await courseService.createFolder(courseId, {
+          folderName: item.name,
+          parentId: parentId ?? undefined,
+        });
+        currentFolderId = folderResponse.itemId;
+      }
+
+      // 하위 항목 재귀 생성
       if (item.children.length > 0) {
         await createCurriculumItemsRecursively(
           courseId,
           item.children,
-          folderResponse.itemId
+          currentFolderId
         );
       }
     } else if (isCurriculumContent(item)) {
+      // itemId가 있으면 이미 저장된 콘텐츠, 건너뜀
+      if (item.itemId) {
+        continue;
+      }
+
+      // contentId가 없으면 에러 (신규 항목인데 contentId가 없음)
+      if (!item.contentId) {
+        console.error('신규 콘텐츠 항목에 contentId가 없습니다:', item);
+        continue;
+      }
+
+      // 콘텐츠(차시) 생성 - contentId로 백엔드에서 LO 자동 생성
       await courseService.createItem(courseId, {
         itemName: item.name,
         parentId: parentId ?? undefined,
