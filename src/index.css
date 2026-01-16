@@ -759,9 +759,11 @@
   color: #6778ff;
 }
 
-/* Hero section for light mode - lighter gradient background */
+/* Hero section for light mode - use same dark gradient as dark mode */
 .landing-light .animated-bg {
-  background: linear-gradient(135deg, #4a4a80 0%, #6060a0 50%, #4a4a80 100%);
+  background: linear-gradient(-45deg, #1a1a2e, #2a2a4e, #243358, #1a1a2e);
+  background-size: 400% 400%;
+  animation: bg-gradient 15s ease infinite;
 }
 
 .landing-light .animated-bg h2.text-white {
