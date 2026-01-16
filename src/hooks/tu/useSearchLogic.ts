@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useCourseTimeCatalog } from './useCourseTimeCatalog';
+import { useCourseTimeCatalog } from './useCourseTimeCatalogQueries';
 import type { CourseTimeCatalogResponse } from '@/types/tu/courseTimeCatalog.types';
 import { DELIVERY_TYPE_LABELS, PROGRAM_LEVEL_LABELS } from '@/types/tu/courseTimeCatalog.types';
 
