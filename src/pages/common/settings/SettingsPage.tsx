@@ -87,7 +87,8 @@ const getBasePath = (pathname: string): string => {
 export function SettingsPage({ userRole }: SettingsPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearAuth } = useAuthStore();
+  const logout = useAuthStore((state) => state.logout);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
 
   const detectedRole = userRole || getRoleFromPath(location.pathname);
   const basePath = getBasePath(location.pathname);
@@ -105,12 +106,17 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
   const handleLogout = async () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
       try {
-        await authService.logout();
-        clearAuth();
+        if (refreshToken) {
+          await authService.logout(refreshToken);
+        }
+        logout();
         navigate('/auth/login');
         toast.success('로그아웃되었습니다.');
       } catch (error) {
         console.error('Logout failed:', error);
+        // 에러가 나더라도 로컬 상태는 초기화
+        logout();
+        navigate('/auth/login');
         toast.error('로그아웃에 실패했습니다.');
       }
     }

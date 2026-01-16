@@ -1,25 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   ChevronDown,
   ChevronRight,
   PanelLeftClose,
   PanelLeft,
   GraduationCap,
-  LogOut,
   ArrowLeft,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { GlobalRoleSwitcher, type GlobalRole } from '../GlobalRoleSwitcher';
-import { useAuthStore } from '@/store/common/authStore';
-import { authService } from '@/services/common/authService';
 import { useSubdomainPath } from '@/hooks/common';
-import { getLoginPath, getAdminLoginPath } from '@/utils/tenantUtils';
 
 // 역할 타입
 type RoleType = 'sa' | 'ta' | 'co' | 'tu';
@@ -36,15 +30,12 @@ export function BaseSidebar({
   showGlobalRoleSwitcher = false,
   roleType = 'tu',
   showBackToTA = false,
-  showLogout = true,
-}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; roleType?: RoleType; showLogout?: boolean }) {
+}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; roleType?: RoleType }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const queryClient = useQueryClient();
   const { prefixPath } = useSubdomainPath();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [activeItem, setActiveItem] = useState<string>('dashboard');
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // 현재 경로에 맞는 메뉴 아이템 찾기
   const findActiveMenuItem = useMemo(() => {
@@ -106,14 +97,8 @@ export function BaseSidebar({
     }
   }, [findActiveMenuItem]);
 
-  // 인증 스토어
-  const { refreshToken, logout } = useAuthStore();
-
   // 테넌트 브랜딩 (SA 제외)
   const { branding } = useTenantBranding();
-
-  // 어드민 역할 여부 (SA, TA, CO)
-  const isAdminRole = roleType === 'sa' || roleType === 'ta' || roleType === 'co';
 
   // 글로벌 역할 타입 매핑
   const globalRoleMap: Record<RoleType, GlobalRole> = {
@@ -123,34 +108,6 @@ export function BaseSidebar({
     tu: 'TU',
   };
   const currentGlobalRole = globalRoleMap[roleType];
-
-  // 로그아웃 핸들러
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-
-    setIsLoggingOut(true);
-    try {
-      // 서버에 로그아웃 요청 (refreshToken이 있는 경우)
-      if (refreshToken) {
-        await authService.logout(refreshToken);
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // 로컬 상태 정리
-      logout();
-      queryClient.clear();
-      toast.success(language === 'ko' ? '로그아웃되었습니다.' : 'Logged out successfully.');
-
-      // 어드민 역할은 어드민 로그인 페이지로, 그 외는 서브도메인 유지하여 로그인 페이지로
-      if (isAdminRole) {
-        navigate(getAdminLoginPath());
-      } else {
-        navigate(getLoginPath());
-      }
-      setIsLoggingOut(false);
-    }
-  };
 
   // SA는 플랫폼 기본 로고, 나머지는 테넌트 브랜딩
   const isSuperAdmin = roleType === 'sa';

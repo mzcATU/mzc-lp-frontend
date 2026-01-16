@@ -100,7 +100,6 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
       roleLabel={roleLabels.tenantUser}
       showModeSwitcher={false}
       showGlobalRoleSwitcher={showGlobalRoleSwitcher}
-      showLogout={false}
       roleType="tu"
     />
   );
