@@ -50,19 +50,48 @@ export function BaseSidebar({
   const findActiveMenuItem = useMemo(() => {
     const { pathname } = location;
 
+    // 서브도메인 제거: /{subdomain}/sa/... -> /sa/..., /{subdomain}/co/... -> /co/... 등
+    // pathname에서 역할 경로 부분을 찾아서 그 이후부터 매칭
+    const rolePathPatterns = ['/sa/', '/ta/', '/co/', '/tu/'];
+    let normalizedPath = pathname;
+    for (const pattern of rolePathPatterns) {
+      const idx = pathname.indexOf(pattern);
+      if (idx !== -1) {
+        normalizedPath = pathname.substring(idx);
+        break;
+      }
+    }
+
+    // 가장 긴 경로부터 매칭하기 위해 모든 경로를 수집하고 정렬
+    const allPaths: { path: string; itemId: string; parentId: string | null }[] = [];
+
     for (const item of menuData) {
-      // 2단계 서브메뉴 먼저 확인 (더 구체적인 경로 우선)
       if (item.subItems) {
         for (const subItem of item.subItems) {
-          if (subItem.path && pathname.startsWith(subItem.path)) {
-            return { itemId: subItem.id, parentId: item.id };
+          if (subItem.path) {
+            allPaths.push({ path: subItem.path, itemId: subItem.id, parentId: item.id });
           }
         }
       }
 
-      // 1단계 메뉴 확인
-      if (item.path && pathname.startsWith(item.path)) {
-        return { itemId: item.id, parentId: null };
+      if (item.path) {
+        allPaths.push({ path: item.path, itemId: item.id, parentId: null });
+      }
+    }
+
+    // 경로 길이 내림차순 정렬 (더 구체적인 경로 먼저 매칭)
+    allPaths.sort((a, b) => b.path.length - a.path.length);
+
+    for (const { path, itemId, parentId } of allPaths) {
+      if (normalizedPath === path || normalizedPath.startsWith(path + '/')) {
+        return { itemId, parentId };
+      }
+    }
+
+    // 정확한 매칭이 없으면 startsWith로 다시 시도
+    for (const { path, itemId, parentId } of allPaths) {
+      if (normalizedPath.startsWith(path)) {
+        return { itemId, parentId };
       }
     }
 
