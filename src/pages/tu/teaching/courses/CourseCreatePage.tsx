@@ -27,7 +27,8 @@ interface CourseCreatePageProps {
 }
 
 /**
- * 커리큘럼 트리를 재귀적으로 순회하며 API 호출
+ * 커리큘럼 트리를 재귀적으로 순회하며 API 호출 (신규 항목만)
+ * itemId가 있는 항목은 이미 저장된 항목이므로 건너뜀
  */
 async function createCurriculumItemsRecursively(
   courseId: number,
@@ -36,20 +37,40 @@ async function createCurriculumItemsRecursively(
 ): Promise<void> {
   for (const item of items) {
     if (isCurriculumFolder(item)) {
-      // 폴더 생성
-      const folderResponse = await courseService.createFolder(courseId, {
-        folderName: item.name,
-        parentId: parentId ?? undefined,
-      });
+      let currentFolderId: number;
+
+      // itemId가 있으면 이미 저장된 폴더
+      if (item.itemId) {
+        currentFolderId = item.itemId;
+      } else {
+        // 새 폴더 생성
+        const folderResponse = await courseService.createFolder(courseId, {
+          folderName: item.name,
+          parentId: parentId ?? undefined,
+        });
+        currentFolderId = folderResponse.itemId;
+      }
+
       // 하위 항목 재귀 생성
       if (item.children.length > 0) {
         await createCurriculumItemsRecursively(
           courseId,
           item.children,
-          folderResponse.itemId
+          currentFolderId
         );
       }
     } else if (isCurriculumContent(item)) {
+      // itemId가 있으면 이미 저장된 콘텐츠, 건너뜀
+      if (item.itemId) {
+        continue;
+      }
+
+      // contentId가 없으면 에러 (신규 항목인데 contentId가 없음)
+      if (!item.contentId) {
+        console.error('신규 콘텐츠 항목에 contentId가 없습니다:', item);
+        continue;
+      }
+
       // 콘텐츠(차시) 생성 - contentId로 백엔드에서 LO 자동 생성
       await courseService.createItem(courseId, {
         itemName: item.name,
@@ -65,13 +86,14 @@ async function createCurriculumItemsRecursively(
 /**
  * 기존 회차/콘텐츠를 모두 삭제
  * 루트 레벨 항목만 삭제 (하위 항목은 cascade 삭제됨)
+ * @deprecated 더 이상 사용하지 않음. 신규 항목만 추가하는 방식으로 변경됨.
  */
-async function deleteAllCurriculumItems(courseId: number): Promise<void> {
-  const hierarchy = await courseService.getItemsHierarchy(courseId);
-  for (const item of hierarchy) {
-    await courseService.deleteItem(courseId, item.itemId);
-  }
-}
+// async function deleteAllCurriculumItems(courseId: number): Promise<void> {
+//   const hierarchy = await courseService.getItemsHierarchy(courseId);
+//   for (const item of hierarchy) {
+//     await courseService.deleteItem(courseId, item.itemId);
+//   }
+// }
 
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
   const navigate = useNavigate();
@@ -88,6 +110,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   const [courseId, setCourseId] = useState<number | null>(
     courseIdParam ? Number(courseIdParam) : null
   );
+  const [courseStatus, setCourseStatus] = useState<'DRAFT' | 'READY' | 'REGISTERED'>('DRAFT');
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
@@ -139,6 +162,16 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
         // 회차 계층구조를 CurriculumItem 형태로 변환
         const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+
+        // Course 상태 설정
+        setCourseStatus(course.status);
+
+        // REGISTERED 상태이면 편집 불가 안내
+        if (course.status === 'REGISTERED') {
+          alert('이미 등록된 강의는 수정할 수 없습니다.');
+          navigate(prefixPath('/tu/teaching/courses'));
+          return;
+        }
 
         setFormData((prev) => ({
           ...prev,
@@ -198,9 +231,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         // 기존 강의 수정
         await courseService.update(courseId, request);
 
-        // 기존 회차/콘텐츠 삭제 후 재생성
+        // 신규 항목만 추가 (기존 항목은 유지)
         if (formData.curriculumItems.length > 0) {
-          await deleteAllCurriculumItems(courseId);
           await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
         }
       } else {
@@ -211,7 +243,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         // URL 업데이트 (뒤로가기 시에도 courseId 유지)
         navigate(prefixPath(`/tu/teaching/courses/create?courseId=${response.courseId}`), { replace: true });
 
-        // 회차/콘텐츠 생성
+        // 회차/콘텐츠 생성 (모두 신규)
         if (formData.curriculumItems.length > 0) {
           await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
         }
@@ -267,9 +299,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       // 기존 강의 수정
       await courseService.update(courseId, request);
 
-      // 커리큘럼 저장
+      // 신규 항목만 추가 (기존 항목은 유지)
       if (formData.curriculumItems.length > 0) {
-        await deleteAllCurriculumItems(courseId);
         await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
       }
     } else {
@@ -279,7 +310,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       setCourseId(response.courseId);
       navigate(prefixPath(`/tu/teaching/courses/create?courseId=${response.courseId}`), { replace: true });
 
-      // 커리큘럼 생성
+      // 커리큘럼 생성 (모두 신규)
       if (formData.curriculumItems.length > 0) {
         await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
       }
@@ -319,7 +350,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   };
 
   /**
-   * 등록 (저장 → READY → REGISTERED)
+   * 등록 (DRAFT → READY → REGISTERED 또는 READY → REGISTERED)
    * 저장과 동시에 CO가 볼 수 있는 상태로 전환
    */
   const handleRegister = async () => {
@@ -332,12 +363,21 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
     setIsRegistering(true);
     try {
-      const targetCourseId = await saveCourse();
-      if (!targetCourseId) throw new Error('저장 실패');
+      let targetCourseId = courseId;
 
-      // 먼저 READY 상태로 전환 후 REGISTERED로 전환
-      await courseService.ready(targetCourseId);
-      await courseService.register(targetCourseId);
+      // DRAFT 상태이면 먼저 저장
+      if (courseStatus === 'DRAFT') {
+        targetCourseId = await saveCourse();
+        if (!targetCourseId) throw new Error('저장 실패');
+
+        // DRAFT → READY
+        await courseService.ready(targetCourseId);
+      }
+
+      // READY → REGISTERED (DRAFT였어도 이제 READY 상태)
+      if (targetCourseId) {
+        await courseService.register(targetCourseId);
+      }
 
       alert(getText('registerSuccess'));
       navigate(prefixPath('/tu/teaching/courses'));
@@ -346,6 +386,24 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       alert(getText('registerError'));
     } finally {
       setIsRegistering(false);
+    }
+  };
+
+  /**
+   * 작성중으로 되돌리기 (READY → DRAFT)
+   */
+  const handleUnready = async () => {
+    if (!courseId) return;
+
+    if (!confirm('작성중 상태로 되돌리시겠습니까?')) return;
+
+    try {
+      await courseService.unready(courseId);
+      setCourseStatus('DRAFT');
+      alert('작성중 상태로 변경되었습니다.');
+    } catch (error) {
+      console.error('상태 변경 실패:', error);
+      alert('상태 변경에 실패했습니다.');
     }
   };
 
@@ -508,42 +566,56 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
               </Button>
             ) : (
               <>
-                {/* 작성완료 버튼 (DRAFT → READY) */}
-                <Button
-                  variant="ghost"
-                  onClick={handleComplete}
-                  disabled={
-                    isCompleting ||
-                    isRegistering ||
-                    !formData.title ||
-                    !formData.categoryId ||
-                    formData.curriculumItems.length === 0
-                  }
-                  className="border border-border"
-                  title={
-                    !formData.title
-                      ? '강의명을 입력해주세요'
-                      : !formData.categoryId
-                        ? '카테고리를 선택해주세요'
-                        : formData.curriculumItems.length === 0
-                          ? '최소 1개의 차시가 필요합니다'
-                          : undefined
-                  }
-                >
-                  {isCompleting ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      {getText('completing')}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle size={18} />
-                      {getText('completeWriting')}
-                    </>
-                  )}
-                </Button>
+                {/* DRAFT 상태: 작성완료 버튼 */}
+                {courseStatus === 'DRAFT' && (
+                  <Button
+                    variant="ghost"
+                    onClick={handleComplete}
+                    disabled={
+                      isCompleting ||
+                      isRegistering ||
+                      !formData.title ||
+                      !formData.categoryId ||
+                      formData.curriculumItems.length === 0
+                    }
+                    className="border border-border"
+                    title={
+                      !formData.title
+                        ? '강의명을 입력해주세요'
+                        : !formData.categoryId
+                          ? '카테고리를 선택해주세요'
+                          : formData.curriculumItems.length === 0
+                            ? '최소 1개의 차시가 필요합니다'
+                            : undefined
+                    }
+                  >
+                    {isCompleting ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        {getText('completing')}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={18} />
+                        {getText('completeWriting')}
+                      </>
+                    )}
+                  </Button>
+                )}
 
-                {/* 등록 버튼 (DRAFT → READY → REGISTERED) */}
+                {/* READY 상태: 작성중으로 되돌리기 버튼 */}
+                {courseStatus === 'READY' && (
+                  <Button
+                    variant="ghost"
+                    onClick={handleUnready}
+                    className="border border-border"
+                  >
+                    <ArrowLeft size={18} />
+                    작성중으로 되돌리기
+                  </Button>
+                )}
+
+                {/* 등록 버튼 (DRAFT → REGISTERED 또는 READY → REGISTERED) */}
                 <Button
                   onClick={handleRegister}
                   disabled={

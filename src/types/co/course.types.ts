@@ -85,8 +85,11 @@ export {
  */
 export type CourseDifficulty = 'beginner' | 'elementary' | 'intermediate' | 'advanced' | '';
 
-/** 강의 상태 (UI 전용) */
-export type CourseStatus = 'active' | 'completed' | 'draft';
+/**
+ * 강의 표시 상태 (UI 전용)
+ * @deprecated Course.status 필드에 사용되던 UI 전용 타입. 향후 제거 예정.
+ */
+export type CourseDisplayStatus = 'active' | 'completed' | 'draft';
 
 /** 다국어 버전 타입 */
 export interface LanguageVersion {
@@ -142,7 +145,7 @@ export interface Course {
   deadline?: string;
   lastAccessed?: string;
   students?: number;
-  status?: CourseStatus;
+  status?: CourseDisplayStatus;
 }
 
 // ============================================

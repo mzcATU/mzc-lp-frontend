@@ -333,3 +333,15 @@ export {
 // Question Section Hook (질문 섹션 공통 로직)
 export { useQuestionSection } from './useQuestionSection';
 export type { TabType, SortType } from './useQuestionSection';
+
+// Search Logic Hook (검색 로직 공통)
+export {
+  useSearchLogic,
+  convertCourseTimeToCardProps,
+  SORT_OPTIONS,
+  CATEGORY_OPTIONS,
+  LEVEL_OPTIONS,
+  STATUS_OPTIONS,
+  PRICE_OPTIONS,
+  type SearchFilters,
+} from './useSearchLogic';
