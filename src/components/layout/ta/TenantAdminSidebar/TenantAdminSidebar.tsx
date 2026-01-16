@@ -90,12 +90,13 @@ export function TenantAdminSidebar({
 
   // URL 변경 시 활성 상태 동기화
   useEffect(() => {
-    setActiveItem(findActiveMenuItem.itemId);
+    const { itemId, parentId } = findActiveMenuItem;
+    setActiveItem(itemId);
 
-    if (findActiveMenuItem.parentId && !expandedItems.includes(findActiveMenuItem.parentId)) {
-      setExpandedItems(prev => [...prev, findActiveMenuItem.parentId!]);
+    if (parentId && !expandedItems.includes(parentId)) {
+      setExpandedItems(prev => [...prev, parentId]);
     }
-  }, [findActiveMenuItem]);
+  }, [location.pathname]);
 
   // 로그아웃 핸들러
   const handleLogout = async () => {
