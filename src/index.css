@@ -614,14 +614,14 @@
 }
 
 .landing-light .landing-chip-inactive {
-  background: #FFFFFF;
-  color: #666666;
-  border: 1px solid #E0E0E0;
+  background: #F5F5F5;
+  color: #424242;
+  border: 1px solid #D0D0D0;
 }
 
 .landing-light .landing-chip-inactive:hover {
-  background: #F4F4F4;
-  color: #333333;
+  background: #E8E8E8;
+  color: #212121;
 }
 
 /* Header glass effect for themes */
