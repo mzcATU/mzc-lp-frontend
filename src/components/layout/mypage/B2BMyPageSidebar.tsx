@@ -305,7 +305,7 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
       }`}
     >
       <div
-        className={`rounded-2xl p-4 h-full flex flex-col overflow-y-auto ${
+        className={`rounded-2xl p-4 h-full flex flex-col ${
           isDark
             ? 'bg-white/5 border border-white/10 backdrop-blur-sm'
             : 'bg-white border border-gray-200 shadow-sm'
@@ -351,7 +351,7 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
         )}
 
         {/* 메뉴 리스트 */}
-        <nav className="space-y-1 flex-1">
+        <nav className="space-y-1 flex-1 overflow-y-auto">
           {filteredMenuData.map(renderMenuItem)}
         </nav>
       </div>
