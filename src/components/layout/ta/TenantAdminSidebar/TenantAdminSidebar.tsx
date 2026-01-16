@@ -52,17 +52,40 @@ export function TenantAdminSidebar({
   const findActiveMenuItem = useMemo(() => {
     const { pathname } = location;
 
+    // 서브도메인 제거: /{subdomain}/ta/... -> /ta/...
+    const taIndex = pathname.indexOf('/ta/');
+    const normalizedPath = taIndex !== -1 ? pathname.substring(taIndex) : pathname;
+
+    // 가장 긴 경로부터 매칭하기 위해 모든 경로를 수집하고 정렬
+    const allPaths: { path: string; itemId: string; parentId: string | null }[] = [];
+
     for (const item of tenantAdminMenuData) {
       if (item.subItems) {
         for (const subItem of item.subItems) {
-          if (subItem.path && pathname.startsWith(subItem.path)) {
-            return { itemId: subItem.id, parentId: item.id };
+          if (subItem.path) {
+            allPaths.push({ path: subItem.path, itemId: subItem.id, parentId: item.id });
           }
         }
       }
 
-      if (item.path && pathname.startsWith(item.path)) {
-        return { itemId: item.id, parentId: null };
+      if (item.path) {
+        allPaths.push({ path: item.path, itemId: item.id, parentId: null });
+      }
+    }
+
+    // 경로 길이 내림차순 정렬 (더 구체적인 경로 먼저 매칭)
+    allPaths.sort((a, b) => b.path.length - a.path.length);
+
+    for (const { path, itemId, parentId } of allPaths) {
+      if (normalizedPath === path || normalizedPath.startsWith(path + '/')) {
+        return { itemId, parentId };
+      }
+    }
+
+    // 정확한 매칭이 없으면 startsWith로 다시 시도
+    for (const { path, itemId, parentId } of allPaths) {
+      if (normalizedPath.startsWith(path)) {
+        return { itemId, parentId };
       }
     }
 
