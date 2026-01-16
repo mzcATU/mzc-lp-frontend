@@ -188,21 +188,27 @@ export function BaseSidebar({
     );
   };
 
-  const handleItemClick = (itemId: string, hasSubItems: boolean) => {
+  const handleItemClick = (itemId: string, hasSubItems: boolean, path?: string) => {
     if (hasSubItems) {
       toggleExpand(itemId);
     } else {
       setActiveItem(itemId);
+      if (path) {
+        navigate(prefixPath(path));
+      }
       if (onMenuItemClick) {
         onMenuItemClick(itemId);
       }
     }
   };
 
-  const handleSubItemClick = (subItemId: string, parentId: string) => {
+  const handleSubItemClick = (subItemId: string, parentId: string, path?: string) => {
     setActiveItem(subItemId);
     if (!expandedItems.includes(parentId)) {
       setExpandedItems([...expandedItems, parentId]);
+    }
+    if (path) {
+      navigate(prefixPath(path));
     }
     if (onMenuItemClick) {
       onMenuItemClick(subItemId);
@@ -312,7 +318,7 @@ export function BaseSidebar({
               <div key={item.id} className="mb-1">
                 {/* Level 1 Menu Item */}
                 <button
-                  onClick={() => handleItemClick(item.id, !!hasSubItems)}
+                  onClick={() => handleItemClick(item.id, !!hasSubItems, item.path)}
                   className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
                   style={{
                     width: isExpanded ? '100%' : '44px',
@@ -380,7 +386,7 @@ export function BaseSidebar({
                         <button
                           key={subItem.id}
                           onClick={() =>
-                            handleSubItemClick(subItem.id, item.id)
+                            handleSubItemClick(subItem.id, item.id, subItem.path)
                           }
                           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm"
                           style={{
@@ -449,7 +455,7 @@ export function BaseSidebar({
                             <button
                               key={subItem.id}
                               onClick={() =>
-                                handleSubItemClick(subItem.id, item.id)
+                                handleSubItemClick(subItem.id, item.id, subItem.path)
                               }
                               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm"
                               style={{
