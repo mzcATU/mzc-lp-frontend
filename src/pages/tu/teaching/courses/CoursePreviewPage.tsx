@@ -22,7 +22,7 @@ import type { CourseFormData } from '@/types';
 import type { CategoryResponse } from '@/types/common';
 import type { CurriculumItem } from '@/types/tu';
 import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
-import { translations, levelOptions, type TranslationKey } from './components/courseCreate.constants';
+import { translations, type TranslationKey } from './components/courseCreate.constants';
 import { COURSE_LEVEL_LABELS } from '@/types/common/course.types';
 
 interface PreviewData {
