@@ -121,13 +121,14 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
 
   const formatDate = (dateStr: string | null, includeTime = false) => {
     if (!dateStr) return getText('notSet');
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      ...(includeTime && { hour: '2-digit', minute: '2-digit' }),
-    };
-    return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', options);
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    if (!includeTime) return `${year}-${month}-${day}`;
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   };
 
   const formatPeriod = () => {
@@ -179,7 +180,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
         <div className="bg-bg-default border border-border rounded-xl overflow-hidden mb-6">
           <div className="flex flex-col lg:flex-row">
             {/* 썸네일 영역 */}
-            <div className="lg:w-80 flex-shrink-0 bg-bg-secondary">
+            <div className="lg:w-80 flex-shrink-0 bg-gradient-to-br from-primary/10 to-primary/5">
               {(course.thumbnailUrl || courseDetail?.thumbnailUrl) ? (
                 <img
                   src={course.thumbnailUrl || courseDetail?.thumbnailUrl || ''}
@@ -187,8 +188,10 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                   className="w-full h-48 lg:h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-48 lg:h-full flex items-center justify-center">
-                  <GraduationCap size={64} className="text-text-placeholder" />
+                <div className="w-full h-48 lg:h-full flex items-center justify-center p-6">
+                  <p className="text-xl font-bold text-primary text-center line-clamp-3 leading-relaxed">
+                    {course.title}
+                  </p>
                 </div>
               )}
             </div>
@@ -209,36 +212,34 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
                     {course.title}
                   </h1>
 
-                  {/* ID & 카테고리 */}
-                  <div className="flex items-center gap-3 text-sm text-text-secondary mb-4">
-                    <span>ID: {actualCourseId}</span>
-                    <span className="w-1 h-1 rounded-full bg-text-placeholder" />
-                    <span>{getCategoryName(courseDetail?.categoryId ?? null)}</span>
-                  </div>
+                  {/* 카테고리 */}
+                  <p className="text-sm text-text-secondary mb-4">
+                    {getCategoryName(courseDetail?.categoryId ?? null)}
+                  </p>
 
-                  {/* 핵심 정보 뱃지들 */}
+                  {/* 핵심 정보 뱃지들 - Subtle Style */}
                   <div className="flex flex-wrap items-center gap-2">
                     {course.level && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
-                        <GraduationCap size={14} className="text-text-secondary" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm font-medium">
+                        <GraduationCap size={14} />
                         {COURSE_LEVEL_LABELS[course.level]}
                       </span>
                     )}
                     {course.type && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
-                        <Monitor size={14} className="text-text-secondary" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-medium">
+                        <Monitor size={14} />
                         {COURSE_TYPE_LABELS[course.type]}
                       </span>
                     )}
                     {course.estimatedHours && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
-                        <Clock size={14} className="text-text-secondary" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm font-medium">
+                        <Clock size={14} />
                         {course.estimatedHours}{getText('hours')}
                       </span>
                     )}
                     {(courseDetail?.itemCount ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
-                        <FolderOpen size={14} className="text-text-secondary" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-50 text-violet-700 text-sm font-medium">
+                        <FolderOpen size={14} />
                         {courseDetail?.itemCount}차시
                       </span>
                     )}
@@ -281,7 +282,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
         {/* 2컬럼 레이아웃 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 좌측: 메인 콘텐츠 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* 설명 */}
             <Card>
               <div className="p-5">
@@ -303,8 +304,8 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
               curriculum={curriculum ?? []}
             />
 
-            {/* 운영 현황 */}
-            <Card>
+            {/* 운영 현황 - 섹션 구분을 위한 추가 간격 */}
+            <Card className="mt-4">
               <div className="p-5">
                 <h2 className="text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
                   <PlayCircle size={18} className="text-text-secondary" />
@@ -348,7 +349,7 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
           </div>
 
           {/* 우측: 사이드바 */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* 과정 개요 */}
             <Card>
               <div className="p-5">
@@ -384,10 +385,14 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
             <Card>
               <div className="p-5">
                 <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <Calendar size={16} className="text-text-secondary" />
+                  <Info size={16} className="text-text-secondary" />
                   {getText('metadata')}
                 </h3>
                 <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">ID</span>
+                    <span className="text-text-placeholder font-mono text-xs">{actualCourseId}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-text-secondary">{getText('createdAt')}</span>
                     <span className="text-text-primary">{formatDate(course.createdAt, true)}</span>

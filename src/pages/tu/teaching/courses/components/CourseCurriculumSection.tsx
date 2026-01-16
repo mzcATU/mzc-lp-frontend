@@ -7,6 +7,18 @@ interface CourseCurriculumSectionProps {
   curriculum: CourseItemHierarchyResponse[];
 }
 
+// 폴더가 아닌 실제 콘텐츠(차시) 수만 카운트
+function countContentItems(items: CourseItemHierarchyResponse[]): number {
+  return items.reduce((count, item) => {
+    if (item.isFolder) {
+      // 폴더면 자식들만 카운트
+      return count + countContentItems(item.children || []);
+    }
+    // 폴더가 아니면 1 + 자식들 카운트
+    return count + 1 + countContentItems(item.children || []);
+  }, 0);
+}
+
 // 재귀적으로 트리 아이템 렌더링
 function CurriculumTreeItem({
   item,
@@ -74,13 +86,18 @@ export function CourseCurriculumSection({
   itemCount,
   curriculum,
 }: Readonly<CourseCurriculumSectionProps>) {
+  // 커리큘럼 트리에서 실제 콘텐츠 수 계산 (폴더 제외)
+  const actualContentCount = countContentItems(curriculum);
+  // 계산된 값이 있으면 사용, 없으면 props의 itemCount 사용
+  const displayCount = actualContentCount > 0 ? actualContentCount : itemCount;
+
   return (
     <div className="bg-bg-default border border-border rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-text-primary text-lg font-medium flex items-center gap-2">
           <BookOpen size={20} />
           커리큘럼
-          <span className="text-text-secondary font-normal">({itemCount}차시)</span>
+          <span className="text-text-secondary font-normal">({displayCount}차시)</span>
         </h2>
       </div>
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -9,23 +9,30 @@ import {
   Plus,
   Calendar,
   FolderOpen,
+  X,
+  RotateCcw,
 } from 'lucide-react';
 import {
   Button,
   DataTable,
   DataTableColumnHeader,
+  Combobox,
 } from '@/components/common';
 import {
   useRegisteredCourses,
 } from '@/hooks/tu/useCourseQueries';
 import type {
   CourseRegistrationResponse,
+  CourseLevel,
+  CourseType,
 } from '@/types/common/course.types';
 import {
   COURSE_LEVEL_LABELS,
   COURSE_TYPE_LABELS,
 } from '@/types/common/course.types';
 import type { CourseRegistrationFilterParams } from '@/services/common/courseService';
+import { categoryService } from '@/services/common';
+import type { CategoryResponse } from '@/types/common';
 
 interface CourseListPageProps {
   language?: 'ko' | 'en';
@@ -34,7 +41,7 @@ interface CourseListPageProps {
 const t = {
   title: { ko: '과정 탐색', en: 'Courses' },
   subtitle: { ko: '교육 과정을 검색하고 조회합니다.', en: 'Search and view approved courses.' },
-  searchPlaceholder: { ko: '과정명 검색...', en: 'Search course...' },
+  searchPlaceholder: { ko: '과정명, 생성자 검색...', en: 'Search course, creator...' },
   noResults: { ko: '검색 결과가 없습니다.', en: 'No results found.' },
   noCourses: { ko: '승인된 과정이 없습니다.', en: 'No approved courses.' },
   noCoursesDescription: { ko: '과정이 승인되면 여기에 표시됩니다.', en: 'Approved courses will appear here.' },
@@ -52,6 +59,10 @@ const t = {
   createTime: { ko: '차수 생성', en: 'Create Session' },
   notSet: { ko: '미설정', en: 'Not set' },
   timeCountUnit: { ko: '개', en: '' },
+  allCategories: { ko: '전체 카테고리', en: 'All Categories' },
+  allLevels: { ko: '전체 레벨', en: 'All Levels' },
+  allTypes: { ko: '전체 타입', en: 'All Types' },
+  clearFilters: { ko: '필터 초기화', en: 'Clear Filters' },
 };
 
 export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps>) {
@@ -60,7 +71,60 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
 
+  // 필터 상태
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedLevel, setSelectedLevel] = useState<CourseLevel | ''>('');
+  const [selectedType, setSelectedType] = useState<CourseType | ''>('');
+
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
+
+  // 카테고리 목록 조회
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error('카테고리 목록 조회 실패:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // 카테고리 옵션 (Combobox용)
+  const categoryOptions = useMemo(() => {
+    return categories.map((cat) => ({
+      value: cat.name,
+      label: cat.name,
+    }));
+  }, [categories]);
+
+  // 레벨 옵션 (Combobox용)
+  const levelOptions = useMemo(() => {
+    return Object.entries(COURSE_LEVEL_LABELS).map(([key, label]) => ({
+      value: key,
+      label,
+    }));
+  }, []);
+
+  // 타입 옵션 (Combobox용)
+  const typeOptions = useMemo(() => {
+    return Object.entries(COURSE_TYPE_LABELS).map(([key, label]) => ({
+      value: key,
+      label,
+    }));
+  }, []);
+
+  // 필터 활성화 여부
+  const hasActiveFilters = selectedCategory || selectedLevel || selectedType;
+
+  // 필터 초기화
+  const clearFilters = () => {
+    setSelectedCategory('');
+    setSelectedLevel('');
+    setSelectedType('');
+  };
 
   // API 파라미터 구성 (REGISTERED 상태만 조회)
   const params: Omit<CourseRegistrationFilterParams, 'status'> = {
@@ -76,12 +140,37 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
     return (data?.content ?? []).filter((course) => course.status === 'REGISTERED');
   }, [data?.content]);
 
-  // 검색 필터링 (클라이언트 사이드)
+  // 검색 및 필터링 (클라이언트 사이드)
   const filteredCourses = useMemo(() => {
-    if (!searchQuery) return registeredCourses;
-    const query = searchQuery.toLowerCase();
-    return registeredCourses.filter((course) => course.title.toLowerCase().includes(query));
-  }, [registeredCourses, searchQuery]);
+    let result = registeredCourses;
+
+    // 텍스트 검색 (과정명 + 생성자)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (course) =>
+          course.title.toLowerCase().includes(query) ||
+          (course.creatorName && course.creatorName.toLowerCase().includes(query))
+      );
+    }
+
+    // 카테고리 필터
+    if (selectedCategory) {
+      result = result.filter((course) => course.categoryName === selectedCategory);
+    }
+
+    // 레벨 필터
+    if (selectedLevel) {
+      result = result.filter((course) => course.level === selectedLevel);
+    }
+
+    // 타입 필터
+    if (selectedType) {
+      result = result.filter((course) => course.type === selectedType);
+    }
+
+    return result;
+  }, [registeredCourses, searchQuery, selectedCategory, selectedLevel, selectedType]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -229,19 +318,93 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex-1 relative max-w-md">
-            <Search
-              size={20}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
-            />
-            <input
-              type="text"
-              placeholder={getText('searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-bg-default border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-btn-neutral"
-            />
+          {/* Control Bar - 검색과 필터를 통합한 툴바 */}
+          <div className="flex items-center gap-4 p-3 bg-bg-secondary/50 rounded-lg flex-wrap">
+            {/* Search Bar */}
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder"
+              />
+              <input
+                type="text"
+                placeholder={getText('searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-10 pl-10 pr-10 bg-bg-default border border-border rounded-md text-text-primary text-sm outline-none focus:ring-2 focus:ring-btn-neutral focus:border-transparent placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-placeholder hover:text-text-secondary"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-border/70 hidden sm:block" />
+
+            {/* Filters */}
+            <div className="flex items-center gap-2">
+              {/* 카테고리 필터 (Combobox) */}
+              <Combobox
+                options={categoryOptions}
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+                placeholder={getText('allCategories')}
+                emptyMessage={language === 'ko' ? '카테고리 없음' : 'No category found'}
+                hideSearch
+                className={`h-10 min-w-[140px] ${
+                  selectedCategory
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'bg-bg-default border-border text-text-primary'
+                }`}
+              />
+
+              {/* 레벨 필터 (Combobox) */}
+              <Combobox
+                options={levelOptions}
+                value={selectedLevel}
+                onValueChange={(value) => setSelectedLevel(value as CourseLevel | '')}
+                placeholder={getText('allLevels')}
+                emptyMessage={language === 'ko' ? '레벨 없음' : 'No level found'}
+                hideSearch
+                className={`h-10 min-w-[120px] ${
+                  selectedLevel
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'bg-bg-default border-border text-text-primary'
+                }`}
+              />
+
+              {/* 타입 필터 (Combobox) */}
+              <Combobox
+                options={typeOptions}
+                value={selectedType}
+                onValueChange={(value) => setSelectedType(value as CourseType | '')}
+                placeholder={getText('allTypes')}
+                emptyMessage={language === 'ko' ? '타입 없음' : 'No type found'}
+                hideSearch
+                className={`h-10 min-w-[120px] ${
+                  selectedType
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'bg-bg-default border-border text-text-primary'
+                }`}
+              />
+
+              {/* 필터 초기화 버튼 */}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1.5 h-10 px-3 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-default rounded-md transition-colors"
+                  title={getText('clearFilters')}
+                >
+                  <RotateCcw size={14} />
+                  <span className="hidden sm:inline">{getText('clearFilters')}</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -265,8 +428,8 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
             </div>
           )}
 
-          {/* Empty State */}
-          {!isLoading && registeredCourses.length === 0 && !searchQuery && (
+          {/* Empty State - 데이터 자체가 없을 때 */}
+          {!isLoading && registeredCourses.length === 0 && !searchQuery && !hasActiveFilters && (
             <div className="text-center py-12 text-text-secondary">
               <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p className="mb-1">{getText('noCourses')}</p>
@@ -274,8 +437,8 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
             </div>
           )}
 
-          {/* Empty Search Results */}
-          {!isLoading && filteredCourses.length === 0 && searchQuery && (
+          {/* Empty Search/Filter Results - 검색 또는 필터 결과가 없을 때 */}
+          {!isLoading && filteredCourses.length === 0 && (searchQuery || hasActiveFilters) && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>

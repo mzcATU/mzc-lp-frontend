@@ -27,6 +27,7 @@ function Combobox({
   emptyMessage = "No results found.",
   className,
   disabled = false,
+  hideSearch = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [internalValue, setInternalValue] = React.useState(value ?? "");
@@ -52,7 +53,7 @@ function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          {!hideSearch && <CommandInput placeholder={searchPlaceholder} />}
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
