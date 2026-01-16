@@ -1,27 +1,29 @@
 /**
  * 강의 미리보기 페이지
  * 수강생이 보게 될 강의 모습을 미리보기
- * sessionStorage에서 formData를 읽어와 표시
+ * sessionStorage에서 formData를 읽어와 CourseDetailPage와 동일한 UI로 표시
  */
 import { useState, useEffect } from 'react';
 import {
   X,
   Eye,
+  Clock,
+  FileText,
+  ChevronDown,
+  ChevronRight,
+  PlayCircle,
+  AlertCircle,
+  Calendar,
   BookOpen,
   Tag,
-  Calendar,
-  Folder,
-  File,
-  ChevronRight,
-  ChevronDown,
-  AlertCircle,
 } from 'lucide-react';
-import { Button, Card, CardHeader, CardContent } from '@/components/common';
+import { useThemeStore } from '@/store/common/themeStore';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse } from '@/types/common';
 import type { CurriculumItem } from '@/types/tu';
 import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
 import { translations, levelOptions, type TranslationKey } from './components/courseCreate.constants';
+import { COURSE_LEVEL_LABELS } from '@/types/common/course.types';
 
 interface PreviewData {
   formData: CourseFormData;
@@ -29,63 +31,114 @@ interface PreviewData {
   language: 'ko' | 'en';
 }
 
-/** 커리큘럼 트리 아이템 렌더링 */
-function PreviewTreeItem({
-  item,
-  depth = 0,
-  expandedIds,
-  onToggle,
-}: {
+/**
+ * 날짜 포맷팅 (YYYY.MM.DD)
+ */
+function formatDate(dateString: string): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * 커리큘럼 섹션 컴포넌트 (트리 구조)
+ */
+interface CurriculumSectionProps {
   item: CurriculumItem;
-  depth?: number;
-  expandedIds: Set<string>;
-  onToggle: (id: string) => void;
-}) {
+  isExpanded: boolean;
+  onToggle: () => void;
+  isDark: boolean;
+}
+
+function CurriculumSection({ item, isExpanded, onToggle, isDark }: CurriculumSectionProps) {
   const isFolder = isCurriculumFolder(item);
   const isContent = isCurriculumContent(item);
-  const isExpanded = expandedIds.has(item.id);
+
+  if (!isFolder) {
+    // 콘텐츠 아이템 - 카드 스타일로 표시
+    return (
+      <div
+        className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
+          isDark
+            ? 'glass border-white/10 hover:bg-white/5'
+            : 'bg-white border-gray-200 hover:bg-gray-50'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              isDark ? 'bg-white/10' : 'bg-gray-100'
+            }`}
+          >
+            <PlayCircle className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
+          </div>
+          <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+            {isContent && item.displayName ? item.displayName : item.name}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // 폴더 아이템
+  const childCount = item.children?.length || 0;
 
   return (
-    <div>
-      <div
-        className="flex items-center gap-2 py-2 px-3 rounded hover:bg-bg-secondary"
-        style={{ paddingLeft: `${depth * 20 + 12}px` }}
+    <div
+      className={`rounded-xl overflow-hidden border ${
+        isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+      }`}
+    >
+      <button
+        onClick={onToggle}
+        className={`w-full flex items-center justify-between p-4 transition-colors ${
+          isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+        }`}
       >
-        {isFolder ? (
-          <button
-            type="button"
-            onClick={() => onToggle(item.id)}
-            className="p-0.5 hover:bg-bg-tertiary rounded"
-          >
-            {isExpanded ? (
-              <ChevronDown size={16} className="text-text-secondary" />
-            ) : (
-              <ChevronRight size={16} className="text-text-secondary" />
-            )}
-          </button>
-        ) : (
-          <span className="w-6" />
-        )}
-        {isFolder ? (
-          <Folder size={18} className="text-yellow-500 shrink-0" />
-        ) : (
-          <File size={18} className="text-blue-500 shrink-0" />
-        )}
-        <span className="text-text-primary">
-          {isContent && item.displayName ? item.displayName : item.name}
+        <div className="flex items-center gap-3">
+          <ChevronDown
+            className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''} ${
+              isDark ? 'text-gray-400' : 'text-gray-500'
+            }`}
+          />
+          <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {item.name}
+          </span>
+        </div>
+        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          {childCount}개 항목
         </span>
-      </div>
-      {isFolder && isExpanded && item.children.length > 0 && (
-        <div>
-          {item.children.map((child) => (
-            <PreviewTreeItem
-              key={child.id}
-              item={child}
-              depth={depth + 1}
-              expandedIds={expandedIds}
-              onToggle={onToggle}
-            />
-          ))}
+      </button>
+      {isExpanded && item.children && item.children.length > 0 && (
+        <div className={`border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+          {item.children.map((child) => {
+            const childIsContent = isCurriculumContent(child);
+            return (
+              <div
+                key={child.id}
+                className={`flex items-center justify-between p-4 pl-12 transition-colors ${
+                  isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isDark ? 'bg-white/10' : 'bg-gray-100'
+                    }`}
+                  >
+                    {isCurriculumFolder(child) ? (
+                      <FileText className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
+                    ) : (
+                      <PlayCircle className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
+                    )}
+                  </div>
+                  <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                    {childIsContent && child.displayName ? child.displayName : child.name}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -94,7 +147,10 @@ function PreviewTreeItem({
 
 export function CoursePreviewPage() {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<number[]>([0]);
+  const [activeTab, setActiveTab] = useState<'intro' | 'curriculum'>('intro');
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
 
   // sessionStorage에서 미리보기 데이터 로드
   useEffect(() => {
@@ -103,181 +159,415 @@ export function CoursePreviewPage() {
       try {
         const data: PreviewData = JSON.parse(stored);
         setPreviewData(data);
-
-        // 모든 폴더 기본 확장
-        const ids = new Set<string>();
-        const collectFolderIds = (items: CurriculumItem[]) => {
-          for (const item of items) {
-            if (isCurriculumFolder(item)) {
-              ids.add(item.id);
-              collectFolderIds(item.children);
-            }
-          }
-        };
-        collectFolderIds(data.formData.curriculumItems);
-        setExpandedIds(ids);
       } catch {
         console.error('미리보기 데이터 파싱 실패');
       }
     }
   }, []);
 
-  const handleToggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+  const toggleSection = (index: number) => {
+    if (expandedSections.includes(index)) {
+      setExpandedSections(expandedSections.filter((i) => i !== index));
+    } else {
+      setExpandedSections([...expandedSections, index]);
+    }
   };
 
   const handleClose = () => {
     window.close();
   };
 
+  const getText = (key: TranslationKey) =>
+    previewData ? (previewData.language === 'ko' ? translations[key].ko : translations[key].en) : translations[key].ko;
+
   if (!previewData) {
     return (
-      <div className="bg-bg-app min-h-screen flex items-center justify-center">
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'
+        }`}
+      >
         <div className="text-center">
           <AlertCircle size={48} className="text-text-tertiary mx-auto mb-4" />
-          <p className="text-text-secondary">미리보기 데이터가 없습니다.</p>
-          <Button variant="ghost" onClick={handleClose} className="mt-4 border border-border">
+          <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            미리보기 데이터가 없습니다.
+          </p>
+          <button
+            onClick={handleClose}
+            className="mt-4 px-4 py-2 border rounded-lg transition-colors"
+          >
             창 닫기
-          </Button>
+          </button>
         </div>
       </div>
     );
   }
 
-  const { formData, categories, language } = previewData;
+  const { formData, categories } = previewData;
 
-  const getText = (key: TranslationKey) =>
-    language === 'ko' ? translations[key].ko : translations[key].en;
-
+  // 카테고리 정보
   const categoryName = categories.find((cat) => cat.id === formData.categoryId)?.name;
-  const levelLabel = levelOptions.find((opt) => opt.value === formData.level)?.label;
+
+  // 레벨 라벨
+  const levelLabel = formData.level ? COURSE_LEVEL_LABELS[formData.level] : null;
+
+  // 썸네일
+  const thumbnailUrl =
+    formData.thumbnailUrl ||
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=450&fit=crop';
 
   return (
-    <div className="bg-bg-app min-h-screen">
+    <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
       {/* 미리보기 모드 배너 */}
-      <div className="bg-action-primary text-white px-6 py-3 flex items-center justify-between">
+      <div className="bg-action-primary text-white px-6 py-3 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <Eye size={18} />
           <span className="font-medium">{getText('previewMode')}</span>
           <span className="text-white/80 text-sm ml-2">- {getText('previewDesc')}</span>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={handleClose}
-          className="text-white hover:bg-white/20 border-white/30"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-white hover:bg-white/20 border border-white/30 transition-colors"
         >
           <X size={16} />
           {getText('closePreview')}
-        </Button>
+        </button>
       </div>
 
-      {/* 강의 헤더 영역 */}
-      <div className="bg-bg-default border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          {/* 썸네일이 있으면 표시 */}
-          {formData.thumbnailUrl && (
-            <div className="mb-6">
-              <img
-                src={formData.thumbnailUrl}
-                alt={formData.title || '강의 썸네일'}
-                className="w-full max-h-64 object-cover rounded-lg"
-              />
-            </div>
-          )}
-
-          {/* 강의 제목 */}
-          <h1 className="text-2xl font-bold text-text-primary mb-4">
-            {formData.title || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
-          </h1>
-
-          {/* 메타 정보 */}
-          <div className="flex flex-wrap gap-4 mb-4">
-            {categoryName && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-bg-secondary rounded-full text-sm text-text-secondary">
-                <BookOpen size={14} />
-                {categoryName}
-              </span>
-            )}
-            {levelLabel && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-bg-secondary rounded-full text-sm text-text-secondary">
-                {levelLabel}
-              </span>
-            )}
-            {(formData.startDate || formData.endDate) && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-bg-secondary rounded-full text-sm text-text-secondary">
-                <Calendar size={14} />
-                {formData.startDate && formData.endDate
-                  ? `${formData.startDate} ~ ${formData.endDate}`
-                  : formData.startDate
-                    ? `${formData.startDate} ~`
-                    : `~ ${formData.endDate}`}
-              </span>
-            )}
-          </div>
-
-          {/* 태그 */}
-          {formData.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-action-primary/10 text-action-primary text-sm rounded-md"
-                >
-                  <Tag size={12} />
-                  {tag}
+      {/* Hero Section */}
+      <div
+        className={`py-12 ${
+          isDark
+            ? 'bg-gradient-to-b from-[#1a1a2e] to-[#1e1e1e]'
+            : 'bg-gradient-to-b from-gray-100 to-gray-50'
+        }`}
+      >
+        <div className="w-full px-4 md:px-8 lg:px-16">
+          <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
+            {/* Left Content */}
+            <div className="flex-1">
+              {/* Breadcrumb */}
+              <nav
+                className={`flex items-center gap-2 text-sm mb-4 ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}
+              >
+                <span className={`transition-colors`}>
+                  강의
                 </span>
-              ))}
+                <ChevronRight className="w-4 h-4" />
+                <span className={isDark ? 'text-white' : 'text-gray-900'}>{formData.title || '제목 없음'}</span>
+              </nav>
+
+              {/* Tags */}
+              <div className="flex gap-2 mb-4">
+                {/* 카테고리 태그 */}
+                {categoryName && (
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {categoryName}
+                  </span>
+                )}
+
+                {/* 레벨 태그 */}
+                {levelLabel && (
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {levelLabel}
+                  </span>
+                )}
+
+                {/* 미리보기 태그 */}
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#6778ff] to-[#a855f7] text-white">
+                  미리보기
+                </span>
+              </div>
+
+              {/* Title */}
+              <h1
+                className={`text-3xl md:text-4xl font-bold mb-4 ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}
+              >
+                {formData.title || '제목 없음'}
+              </h1>
+
+              {/* Description */}
+              {formData.description && (
+                <p className={`mb-6 leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {formData.description}
+                </p>
+              )}
+
+              {/* Stats */}
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                {/* 날짜 정보 */}
+                {(formData.startDate || formData.endDate) && (
+                  <div
+                    className={`flex items-center gap-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+                  >
+                    <Calendar className="w-5 h-5" />
+                    <span>
+                      {formData.startDate && formData.endDate
+                        ? `${formatDate(formData.startDate)} ~ ${formatDate(formData.endDate)}`
+                        : formData.startDate
+                          ? `${formatDate(formData.startDate)} ~`
+                          : `~ ${formatDate(formData.endDate)}`}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags */}
+              {formData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {formData.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-action-primary/10 text-action-primary text-sm rounded-md"
+                    >
+                      <Tag size={12} />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Thumbnail */}
+              <div
+                className={`rounded-xl overflow-hidden border ${
+                  isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                }`}
+              >
+                <div className="relative aspect-video">
+                  <img
+                    src={thumbnailUrl}
+                    alt={formData.title || '강의 썸네일'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Right - Course Card */}
+            <div className="lg:w-96">
+              <div
+                className={`rounded-2xl overflow-hidden sticky top-24 border ${
+                  isDark ? 'glass border-white/10' : 'bg-white border-gray-200 shadow-lg'
+                }`}
+              >
+                <div className="p-6">
+                  {/* 미리보기 안내 */}
+                  <div
+                    className={`mb-6 p-4 rounded-lg border ${
+                      isDark
+                        ? 'bg-blue-500/10 border-blue-500/30'
+                        : 'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Eye className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                      <span className={`font-medium ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
+                        미리보기 모드
+                      </span>
+                    </div>
+                    <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-blue-700'}`}>
+                      실제 수강생에게 이렇게 보입니다
+                    </p>
+                  </div>
+
+                  {/* 기간 정보 */}
+                  {(formData.startDate || formData.endDate) && (
+                    <div
+                      className={`mb-4 p-3 rounded-lg ${
+                        isDark ? 'bg-white/5' : 'bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                          과정 기간
+                        </span>
+                      </div>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {formData.startDate && formData.endDate
+                          ? `${formatDate(formData.startDate)} ~ ${formatDate(formData.endDate)}`
+                          : formData.startDate
+                            ? `${formatDate(formData.startDate)} ~`
+                            : `~ ${formatDate(formData.endDate)}`}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 카테고리 정보 */}
+                  {categoryName && (
+                    <div
+                      className={`mb-4 flex items-center gap-2 text-sm ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>{categoryName}</span>
+                    </div>
+                  )}
+
+                  {/* 레벨 정보 */}
+                  {levelLabel && (
+                    <div
+                      className={`mb-4 flex items-center gap-2 text-sm ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>{levelLabel}</span>
+                    </div>
+                  )}
+
+                  {/* 커리큘럼 항목 개수 */}
+                  {formData.curriculumItems.length > 0 && (
+                    <div
+                      className={`mb-4 flex items-center gap-2 text-sm ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>{formData.curriculumItems.length}개 커리큘럼 항목</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* 강의 설명 */}
-        {formData.description && (
-          <Card className="mb-6">
-            <CardHeader>
-              <h2 className="text-lg font-medium text-text-primary m-0">{getText('courseDescription')}</h2>
-            </CardHeader>
-            <CardContent>
-              <p className="text-text-primary whitespace-pre-wrap m-0">{formData.description}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 커리큘럼 */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-medium text-text-primary m-0">{getText('curriculum')}</h2>
-          </CardHeader>
-          <CardContent>
-            {formData.curriculumItems.length > 0 ? (
-              <div className="border border-border rounded-lg overflow-hidden">
-                {formData.curriculumItems.map((item) => (
-                  <PreviewTreeItem
-                    key={item.id}
-                    item={item}
-                    expandedIds={expandedIds}
-                    onToggle={handleToggleExpand}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-text-tertiary text-center py-8 m-0">{getText('noCurriculum')}</p>
-            )}
-          </CardContent>
-        </Card>
+      {/* Tab Navigation */}
+      <div className={`border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+        <div className="w-full px-4 md:px-8 lg:px-16">
+          <div className="flex gap-8 max-w-4xl">
+            <button
+              onClick={() => setActiveTab('intro')}
+              className={`py-4 font-medium transition-colors relative ${
+                activeTab === 'intro'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-900'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              강의 소개
+              {activeTab === 'intro' && (
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('curriculum')}
+              className={`py-4 font-medium transition-colors relative ${
+                activeTab === 'curriculum'
+                  ? isDark
+                    ? 'text-white'
+                    : 'text-gray-900'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              커리큘럼
+              {activeTab === 'curriculum' && (
+                <div
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                    isDark ? 'bg-white' : 'bg-gray-900'
+                  }`}
+                />
+              )}
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <main className="w-full px-4 md:px-8 lg:px-16 py-12">
+        <div className="max-w-4xl">
+          {/* 강의 소개 탭 */}
+          {activeTab === 'intro' && (
+            <>
+              {/* 과정 설명 */}
+              {formData.description && (
+                <section className="mb-12">
+                  <h2
+                    className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    강의 소개
+                  </h2>
+                  <div
+                    className={`rounded-xl p-6 border ${
+                      isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                    }`}
+                  >
+                    <p className={`leading-relaxed whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {formData.description}
+                    </p>
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+
+          {/* 커리큘럼 탭 */}
+          {activeTab === 'curriculum' && (
+            <section className="mb-12">
+              <h2
+                className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
+                커리큘럼
+              </h2>
+              {formData.curriculumItems && formData.curriculumItems.length > 0 ? (
+                <div className="space-y-3">
+                  {formData.curriculumItems.map((item, index) => (
+                    <CurriculumSection
+                      key={item.id}
+                      item={item}
+                      isExpanded={expandedSections.includes(index)}
+                      onToggle={() => toggleSection(index)}
+                      isDark={isDark}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={`rounded-xl p-8 text-center border ${
+                    isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                  }`}
+                >
+                  <FileText
+                    className={`w-12 h-12 mx-auto mb-4 ${
+                      isDark ? 'text-gray-600' : 'text-gray-300'
+                    }`}
+                  />
+                  <p className={`font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    커리큘럼 준비 중
+                  </p>
+                  <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    상세 커리큘럼은 곧 업데이트될 예정입니다.
+                  </p>
+                </div>
+              )}
+            </section>
+          )}
+        </div>
+      </main>
     </div>
   );
 }
