@@ -21,8 +21,8 @@ const mockBranding = {
   },
   favicon: '',
   colors: {
-    primary: '#3B82F6',
-    secondary: '#1E40AF',
+    primary: '#4C2D9A',
+    secondary: '#3D2478',
     accent: '#10B981',
     background: '#FFFFFF',
     text: '#1F2937',

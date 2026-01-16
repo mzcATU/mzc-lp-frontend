@@ -55,8 +55,8 @@ const MOCK_TENANT: TenantDetail = {
     tenantId: 1,
     logoUrl: '',
     faviconUrl: '',
-    primaryColor: '#3B82F6',
-    secondaryColor: '#1E40AF',
+    primaryColor: '#4C2D9A',
+    secondaryColor: '#3D2478',
   },
   settings: {
     tenantId: 1,
@@ -117,8 +117,8 @@ const toFormState = (data: TenantDetail): TenantFormState => ({
   courseCount: data.courseCount || 0,
   branding: {
     logoUrl: data.branding?.logoUrl || '',
-    primaryColor: data.branding?.primaryColor || '#3B82F6',
-    secondaryColor: data.branding?.secondaryColor || '#1E40AF',
+    primaryColor: data.branding?.primaryColor || '#4C2D9A',
+    secondaryColor: data.branding?.secondaryColor || '#3D2478',
     faviconUrl: data.branding?.faviconUrl || '',
   },
   settings: {
@@ -573,7 +573,7 @@ export function TenantDetailPage() {
                       id="primaryColor"
                       value={formState.branding.primaryColor}
                       onChange={(e) => handleBrandingChange('primaryColor', e.target.value)}
-                      placeholder="#3B82F6"
+                      placeholder="#4C2D9A"
                     />
                   </div>
                 </div>
@@ -588,7 +588,7 @@ export function TenantDetailPage() {
                       id="secondaryColor"
                       value={formState.branding.secondaryColor}
                       onChange={(e) => handleBrandingChange('secondaryColor', e.target.value)}
-                      placeholder="#1E40AF"
+                      placeholder="#3D2478"
                     />
                   </div>
                 </div>

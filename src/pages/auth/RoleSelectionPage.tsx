@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { ArrowRight, GraduationCap, Shield, Sparkles } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/common/authStore';

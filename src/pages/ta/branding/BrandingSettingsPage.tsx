@@ -358,7 +358,7 @@ const defaultBrandingSettings: BrandingSettings = {
   },
   company: { name: 'MZC Learn Platform' },
   logo: { lightPreview: null, darkPreview: null, faviconPreview: null },
-  colors: { primary: '#4C2D9A', secondary: '#6366F1' },
+  colors: { primary: '#4C2D9A', secondary: '#3D2478' },
   header: {
     enabled: true,
     showLogo: true,

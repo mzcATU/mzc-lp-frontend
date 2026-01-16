@@ -28,15 +28,28 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
   const { data: layoutData } = usePublicLayout();
   const sidebarSettings = layoutData?.sidebarTUSettings as { enabled?: boolean; items?: BrandingSidebarItem[] } | undefined;
 
-  // 사용자 역할 가져오기
+  // 사용자 역할 가져오기 (다중 역할 지원)
   const userRole = useAuthStore((state) => state.user?.role);
+  const userRoles = useAuthStore((state) => state.user?.roles);
 
   // 기능 설정 가져오기
   const { isFeatureEnabled } = useTenantFeatures();
   const instructorTabEnabled = isFeatureEnabled('instructorTabEnabled');
 
-  // 글로벌 역할 스위처 표시 여부 (강사 탭이 활성화된 경우)
-  const showGlobalRoleSwitcher = instructorTabEnabled;
+  // 프론트엔드 역할 개수 계산 (GlobalRoleSwitcher와 동일한 로직)
+  const frontendRoleCount = (() => {
+    if (!userRoles || userRoles.length === 0) return 0;
+
+    let count = 0;
+    if (userRoles.includes('USER')) count++;
+    if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) count++;
+    if (userRoles.includes('OPERATOR')) count++;
+    if (userRoles.includes('TENANT_ADMIN')) count++;
+    return count;
+  })();
+
+  // 글로벌 역할 스위처 표시 여부 (프론트엔드 역할이 2개 이상인 경우)
+  const showGlobalRoleSwitcher = instructorTabEnabled && frontendRoleCount >= 2;
 
   // 브랜딩 설정 + 역할 기반 메뉴 필터링
   const filteredMenuData = useMemo((): MenuItem[] => {
@@ -87,7 +100,6 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
       roleLabel={roleLabels.tenantUser}
       showModeSwitcher={false}
       showGlobalRoleSwitcher={showGlobalRoleSwitcher}
-      showLogout={false}
       roleType="tu"
     />
   );

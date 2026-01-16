@@ -160,7 +160,7 @@ export function TenantSettingsPage() {
                 <div className="flex gap-2">
                   <Input
                     type="color"
-                    value={formData.primaryColor || '#3B82F6'}
+                    value={formData.primaryColor || '#4C2D9A'}
                     onChange={(e) => setFormData({
                       ...formData,
                       primaryColor: e.target.value,
@@ -173,7 +173,7 @@ export function TenantSettingsPage() {
                       ...formData,
                       primaryColor: e.target.value || null,
                     })}
-                    placeholder="#3B82F6"
+                    placeholder="#4C2D9A"
                     className="flex-1"
                   />
                 </div>
@@ -183,7 +183,7 @@ export function TenantSettingsPage() {
                 <div className="flex gap-2">
                   <Input
                     type="color"
-                    value={formData.secondaryColor || '#10B981'}
+                    value={formData.secondaryColor || '#3D2478'}
                     onChange={(e) => setFormData({
                       ...formData,
                       secondaryColor: e.target.value,
@@ -196,7 +196,7 @@ export function TenantSettingsPage() {
                       ...formData,
                       secondaryColor: e.target.value || null,
                     })}
-                    placeholder="#10B981"
+                    placeholder="#3D2478"
                     className="flex-1"
                   />
                 </div>

@@ -7,6 +7,7 @@ import { extractTenantIdentifier } from '@/utils/tenantUtils';
 import { useAuthStore } from '@/store/common/authStore';
 import { tenantSettingsService } from '@/services/ta/tenantSettingsService';
 import type { PublicBrandingResponse } from '@/types/tu/branding.types';
+import { designTokens } from '@/styles/admin-design-tokens';
 
 interface TenantBrandingContextValue {
   branding: PublicBrandingResponse | null | undefined;
@@ -19,8 +20,8 @@ const TenantBrandingContext = createContext<TenantBrandingContextValue | undefin
 /** 기본 브랜딩 (SA 등 tenantId가 없는 사용자용) */
 const DEFAULT_BRANDING: PublicBrandingResponse = {
   tenantName: 'MZC Learning Platform',
-  primaryColor: '#3B82F6',
-  secondaryColor: '#10B981',
+  primaryColor: designTokens.button.brand_default,
+  secondaryColor: designTokens.button.brand_hover,
   logoUrl: null,
   darkLogoUrl: null,
   faviconUrl: null,

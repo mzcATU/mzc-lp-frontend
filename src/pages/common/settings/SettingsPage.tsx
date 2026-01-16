@@ -1,6 +1,9 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Bell, Globe, Palette, LucideIcon, ArrowLeft } from 'lucide-react';
+import { Shield, Bell, Globe, Palette, LucideIcon, ArrowLeft, LogOut } from 'lucide-react';
 import { SettingsCard, Button } from '@/components/common';
+import { useAuthStore } from '@/store/common/authStore';
+import { authService } from '@/services/common/authService';
+import { toast } from 'sonner';
 
 type UserRole = 'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SYSTEM_ADMIN';
 
@@ -84,6 +87,8 @@ const getBasePath = (pathname: string): string => {
 export function SettingsPage({ userRole }: SettingsPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const logout = useAuthStore((state) => state.logout);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
 
   const detectedRole = userRole || getRoleFromPath(location.pathname);
   const basePath = getBasePath(location.pathname);
@@ -98,9 +103,28 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
     navigate(-1);
   };
 
+  const handleLogout = async () => {
+    if (window.confirm('로그아웃 하시겠습니까?')) {
+      try {
+        if (refreshToken) {
+          await authService.logout(refreshToken);
+        }
+        logout();
+        navigate('/auth/login');
+        toast.success('로그아웃되었습니다.');
+      } catch (error) {
+        console.error('Logout failed:', error);
+        // 에러가 나더라도 로컬 상태는 초기화
+        logout();
+        navigate('/auth/login');
+        toast.error('로그아웃에 실패했습니다.');
+      }
+    }
+  };
+
   return (
-    <div className="p-10 bg-bg-app-default min-h-full">
-      <div className="max-w-[1200px] mx-auto">
+    <div className="p-10 bg-bg-app-default min-h-screen flex flex-col">
+      <div className="max-w-[1200px] mx-auto w-full flex-1 flex flex-col">
         {/* Header */}
         <div className="mb-8">
           {isUser && (
@@ -123,7 +147,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
         </div>
 
         {/* Settings Cards Grid */}
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 mb-8">
           {settingCards.map((card, index) => (
             <SettingsCard
               key={card.id}
@@ -134,6 +158,23 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               index={index}
             />
           ))}
+        </div>
+
+        {/* Spacer to push logout to bottom */}
+        <div className="flex-1"></div>
+
+        {/* Divider */}
+        <div className="border-t pt-6 border-bg-border">
+          {/* Logout Button - Left aligned */}
+          <div className="flex justify-start">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-0 py-2 transition-all duration-200 text-text-secondary hover:text-[#EF4444] bg-transparent border-none cursor-pointer"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-sm font-medium">로그아웃</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
