@@ -63,11 +63,9 @@ const t = {
   timeTitle: { ko: '차수명', en: 'Title' },
   status: { ko: '상태', en: 'Status' },
   description: { ko: '설명', en: 'Description' },
-  programInfo: { ko: '과정 정보', en: 'Course Information' },
-  programId: { ko: '과정 ID', en: 'Course ID' },
-  programTitle: { ko: '과정명', en: 'Course Title' },
-  courseId: { ko: '강의 ID', en: 'Course ID' },
-  courseTitle: { ko: '강의명', en: 'Course Title' },
+  courseInfo: { ko: '과정 정보', en: 'Course Information' },
+  courseId: { ko: '과정 ID', en: 'Course ID' },
+  courseTitle: { ko: '과정명', en: 'Course Title' },
   deliveryInfo: { ko: '진행 정보', en: 'Delivery Information' },
   deliveryType: { ko: '진행 방식', en: 'Delivery Type' },
   enrollmentMethod: { ko: '수강 신청 방식', en: 'Enrollment Method' },
@@ -402,15 +400,15 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     )}
                   </div>
 
-                  {/* 프로그램 정보 섹션 */}
+                  {/* 과정 정보 섹션 */}
                   <div className="pt-4 border-t border-border">
                     <div className="flex items-center gap-2 mb-3">
                       <BookOpen size={16} className="text-text-secondary" />
-                      <span className="text-sm font-medium text-text-secondary">{getText('programInfo')}</span>
+                      <span className="text-sm font-medium text-text-secondary">{getText('courseInfo')}</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-text-secondary">{getText('programTitle')}</Label>
+                        <Label className="text-text-secondary">{getText('courseTitle')}</Label>
                         <p className="text-text-primary font-medium">{courseTime.courseTitle || '-'}</p>
                       </div>
                       {courseTime.courseDescription && (
