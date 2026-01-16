@@ -52,6 +52,11 @@ export function TenantAdminSidebar({
   const findActiveMenuItem = useMemo(() => {
     const { pathname } = location;
 
+    // 서브도메인 제거: /{subdomain}/ta/... -> /ta/...
+    // pathname에서 /ta/ 부분을 찾아서 그 이후부터 매칭
+    const taIndex = pathname.indexOf('/ta/');
+    const normalizedPath = taIndex !== -1 ? pathname.substring(taIndex) : pathname;
+
     // 가장 긴 경로부터 매칭하기 위해 모든 경로를 수집하고 정렬
     const allPaths: { path: string; itemId: string; parentId: string | null }[] = [];
 
@@ -73,14 +78,14 @@ export function TenantAdminSidebar({
     allPaths.sort((a, b) => b.path.length - a.path.length);
 
     for (const { path, itemId, parentId } of allPaths) {
-      if (pathname === path || pathname.startsWith(path + '/')) {
+      if (normalizedPath === path || normalizedPath.startsWith(path + '/')) {
         return { itemId, parentId };
       }
     }
 
     // 정확한 매칭이 없으면 startsWith로 다시 시도
     for (const { path, itemId, parentId } of allPaths) {
-      if (pathname.startsWith(path)) {
+      if (normalizedPath.startsWith(path)) {
         return { itemId, parentId };
       }
     }
