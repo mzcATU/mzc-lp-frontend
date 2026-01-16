@@ -300,13 +300,19 @@ export function BaseSidebar({
           }}
         />
 
-        {/* Navigation Menu */}
+        {/* Navigation Menu - 스크롤 영역 */}
         <nav
           className={cn(
             'flex-1 overflow-y-auto overflow-x-hidden space-y-1',
             'sidebar-scrollbar',
             !isDarkMode && 'sidebar-scrollbar-light'
           )}
+          style={{
+            marginLeft: isExpanded ? '-16px' : '-8px',
+            marginRight: isExpanded ? '-16px' : '-8px',
+            paddingLeft: isExpanded ? '16px' : '8px',
+            paddingRight: isExpanded ? '16px' : '8px',
+          }}
         >
           {menuData.map((item) => {
             const Icon = item.icon;
@@ -542,47 +548,6 @@ export function BaseSidebar({
                   style={{ color: isDarkMode ? '#a5b4fc' : '#6366f1' }}
                 >
                   {language === 'ko' ? 'TA로 돌아가기' : 'Back to TA'}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* Logout Button */}
-          {showLogout && (
-            <button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
-              style={{
-                width: isExpanded ? '100%' : '44px',
-                height: '44px',
-                padding: isExpanded ? '0 16px' : '0',
-                justifyContent: 'center',
-                color: colors.textPrimary,
-                margin: isExpanded ? '0' : '0 auto',
-                opacity: isLoggingOut ? 0.5 : 1,
-                cursor: isLoggingOut ? 'not-allowed' : 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoggingOut) {
-                  e.currentTarget.style.backgroundColor = colors.hover;
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-              title={language === 'ko' ? '로그아웃' : 'Logout'}
-            >
-              <LogOut
-                className="w-5 h-5 flex-shrink-0"
-                style={{ color: colors.textSecondary }}
-              />
-              {isExpanded && (
-                <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
-                  {isLoggingOut
-                    ? (language === 'ko' ? '로그아웃 중...' : 'Logging out...')
-                    : (language === 'ko' ? '로그아웃' : 'Logout')
-                  }
                 </span>
               )}
             </button>

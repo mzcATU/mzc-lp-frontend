@@ -19,8 +19,8 @@ export function DesignSettingsPage() {
     logoUrl: '',
     darkLogoUrl: '',
     faviconUrl: '',
-    primaryColor: '#6778ff',
-    secondaryColor: '#a855f7',
+    primaryColor: '#4C2D9A',
+    secondaryColor: '#3D2478',
     accentColor: '#10B981',
     headingFont: 'Pretendard',
     bodyFont: 'Pretendard',
@@ -33,8 +33,8 @@ export function DesignSettingsPage() {
         logoUrl: settings.logoUrl || '',
         darkLogoUrl: settings.darkLogoUrl || '',
         faviconUrl: settings.faviconUrl || '',
-        primaryColor: settings.primaryColor || '#6778ff',
-        secondaryColor: settings.secondaryColor || '#a855f7',
+        primaryColor: settings.primaryColor || '#4C2D9A',
+        secondaryColor: settings.secondaryColor || '#3D2478',
         accentColor: settings.accentColor || '#10B981',
         headingFont: settings.headingFont || 'Pretendard',
         bodyFont: settings.bodyFont || 'Pretendard',
@@ -129,7 +129,7 @@ export function DesignSettingsPage() {
                   id="primaryColor"
                   value={formData.primaryColor}
                   onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                  placeholder="#6778ff"
+                  placeholder="#4C2D9A"
                   className="flex-1"
                 />
                 <input
@@ -147,7 +147,7 @@ export function DesignSettingsPage() {
                   id="secondaryColor"
                   value={formData.secondaryColor}
                   onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
-                  placeholder="#a855f7"
+                  placeholder="#3D2478"
                   className="flex-1"
                 />
                 <input

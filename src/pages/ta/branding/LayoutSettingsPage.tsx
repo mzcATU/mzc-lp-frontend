@@ -268,7 +268,7 @@ const defaultBrandingSettings: BrandingSettings = {
   colors: {
     enabled: true,
     primary: '#4C2D9A',
-    secondary: '#6366F1',
+    secondary: '#3D2478',
   },
   banner: {
     enabled: true,
