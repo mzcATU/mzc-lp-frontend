@@ -375,7 +375,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                         </Button>
                         <Button
                           size="sm"
-                          variant="primary"
+                          variant="brand"
                           className="flex-1"
                           onClick={() => handleRegister(course.id)}
                         >
