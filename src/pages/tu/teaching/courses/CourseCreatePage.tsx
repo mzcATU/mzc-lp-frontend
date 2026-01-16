@@ -336,8 +336,18 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       const targetCourseId = await saveCourse();
       if (!targetCourseId) throw new Error('저장 실패');
 
+      // 저장 성공 후 최신 데이터 재조회하여 동기화
+      const hierarchyData = await courseService.getItemsHierarchy(targetCourseId);
+      const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+      setFormData((prev) => ({
+        ...prev,
+        curriculumItems,
+        lastSaved: new Date().toISOString(),
+      }));
+
       // 작성완료 API 호출 (DRAFT → READY)
       await courseService.ready(targetCourseId);
+      setCourseStatus('READY');
 
       alert(getText('completeSuccess'));
       navigate(prefixPath('/tu/teaching/courses'));
@@ -367,23 +377,51 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
       // DRAFT 상태이면 먼저 저장
       if (courseStatus === 'DRAFT') {
-        targetCourseId = await saveCourse();
-        if (!targetCourseId) throw new Error('저장 실패');
+        try {
+          targetCourseId = await saveCourse();
+          if (!targetCourseId) throw new Error('저장 실패');
 
-        // DRAFT → READY
-        await courseService.ready(targetCourseId);
+          // 저장 성공 후 최신 데이터 재조회하여 동기화
+          const hierarchyData = await courseService.getItemsHierarchy(targetCourseId);
+          const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+          setFormData((prev) => ({
+            ...prev,
+            curriculumItems,
+            lastSaved: new Date().toISOString(),
+          }));
+
+          // DRAFT → READY
+          await courseService.ready(targetCourseId);
+          setCourseStatus('READY');
+        } catch (error) {
+          console.error('저장 또는 작성완료 실패:', error);
+          // 어느 단계에서 실패했는지에 따라 다른 메시지
+          if (!targetCourseId) {
+            alert('저장에 실패했습니다. 다시 시도해주세요.');
+          } else {
+            alert('작성완료 처리에 실패했습니다. 저장은 완료되었습니다.');
+          }
+          setIsRegistering(false);
+          return; // 등록 단계로 진행하지 않음
+        }
       }
 
       // READY → REGISTERED (DRAFT였어도 이제 READY 상태)
       if (targetCourseId) {
-        await courseService.register(targetCourseId);
+        try {
+          await courseService.register(targetCourseId);
+          alert(getText('registerSuccess'));
+          navigate(prefixPath('/tu/teaching/courses'));
+        } catch (error: any) {
+          console.error('등록 실패:', error);
+          // 403 에러는 권한 부족으로 명확히 표시
+          if (error.response?.status === 403) {
+            alert('등록 권한이 없습니다. OPERATOR 역할이 필요합니다.\n\n저장 및 작성완료는 성공했으므로 과정 목록에서 확인할 수 있습니다.');
+          } else {
+            alert('등록에 실패했습니다. 저장은 완료되었으므로 나중에 다시 시도해주세요.');
+          }
+        }
       }
-
-      alert(getText('registerSuccess'));
-      navigate(prefixPath('/tu/teaching/courses'));
-    } catch (error) {
-      console.error('등록 실패:', error);
-      alert(getText('registerError'));
     } finally {
       setIsRegistering(false);
     }
