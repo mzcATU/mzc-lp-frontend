@@ -5,6 +5,7 @@ import { useSubdomainPath } from '@/hooks/common';
 import { useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import { toast } from 'sonner';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 interface LandingCourseCardProps {
   id: number;
@@ -71,7 +72,7 @@ export function LandingCourseCard({
 
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/login', { state: { from: prefixPath(`/tu/b2c/courses/${id}`) } });
+      navigate(getLoginPath(), { state: { from: prefixPath(`/tu/b2c/courses/${id}`) } });
       return;
     }
 
