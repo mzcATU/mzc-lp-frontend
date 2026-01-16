@@ -235,6 +235,12 @@ export interface CourseRegistrationResponse {
   courseEndDate: string | null;
   createdAt: string;
   updatedAt: string;
+  /** 카테고리 ID (백엔드 지원 시) */
+  categoryId?: number | null;
+  /** 카테고리명 (백엔드 지원 시) */
+  categoryName?: string | null;
+  /** 해당 과정의 차수 수 (백엔드 지원 시) */
+  timeCount?: number;
 }
 
 /**

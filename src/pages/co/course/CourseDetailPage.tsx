@@ -1,31 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import {
   CheckCircle,
-  XCircle,
   FileText,
   Calendar,
   User,
   Loader2,
-  AlertCircle,
   Clock,
-  BookOpen,
   Layers,
   Plus,
+  Tag,
+  GraduationCap,
+  Monitor,
+  FolderOpen,
+  Info,
+  PlayCircle,
+  ChevronRight,
 } from 'lucide-react';
-import { Button, Badge, Card, Label, Textarea, BackButton } from '@/components/common';
+import { Button, Badge, Card, BackButton } from '@/components/common';
 import {
   useCourseRegistration,
-  useRegisterCourse,
-  useUnreadyCourse,
+  useCourse,
+  useCourseItemsHierarchy,
 } from '@/hooks/tu/useCourseQueries';
+import { useTimes } from '@/hooks/co/useTimeQueries';
+import { COURSE_TIME_STATUS_LABELS } from '@/types/co/time.types';
+import type { CourseTimeStatus } from '@/types/co/time.types';
+import { categoryService } from '@/services/common';
 import type { CourseRegistrationStatus } from '@/types/common/course.types';
+import type { CategoryResponse } from '@/types/common';
 import {
   COURSE_REGISTRATION_STATUS_LABELS,
   COURSE_LEVEL_LABELS,
   COURSE_TYPE_LABELS,
 } from '@/types/common/course.types';
+import { CourseCurriculumSection } from '@/pages/tu/teaching/courses/components/CourseCurriculumSection';
 
 interface CourseDetailPageProps {
   language?: 'ko' | 'en';
@@ -36,45 +46,29 @@ const t = {
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '과정을 불러오는데 실패했습니다.', en: 'Failed to load course.' },
   notFound: { ko: '과정을 찾을 수 없습니다.', en: 'Course not found.' },
-  basicInfo: { ko: '기본 정보', en: 'Basic Information' },
-  title: { ko: '과정명', en: 'Title' },
   description: { ko: '설명', en: 'Description' },
-  status: { ko: '상태', en: 'Status' },
-  level: { ko: '레벨', en: 'Level' },
-  type: { ko: '타입', en: 'Type' },
-  estimatedHours: { ko: '예상 시간', en: 'Estimated Hours' },
   createdAt: { ko: '생성일', en: 'Created At' },
   updatedAt: { ko: '수정일', en: 'Updated At' },
   submittedAt: { ko: '제출일', en: 'Submitted At' },
   approvalInfo: { ko: '승인 정보', en: 'Approval Info' },
   approvedBy: { ko: '승인자', en: 'Approved By' },
   approvedAt: { ko: '승인일', en: 'Approved At' },
-  registerComment: { ko: '승인 코멘트', en: 'Registration Comment' },
-  rejectionInfo: { ko: '반려 정보', en: 'Rejection Info' },
-  rejectedAt: { ko: '반려일', en: 'Rejected At' },
-  rejectionReason: { ko: '반려 사유', en: 'Rejection Reason' },
+  approvalComment: { ko: '승인 코멘트', en: 'Approval Comment' },
   snapshotInfo: { ko: '스냅샷 정보', en: 'Snapshot Info' },
   snapshotId: { ko: '스냅샷 ID', en: 'Snapshot ID' },
   snapshotName: { ko: '스냅샷명', en: 'Snapshot Name' },
-  actions: { ko: '액션', en: 'Actions' },
-  register: { ko: '승인', en: 'Register' },
-  reject: { ko: '반려', en: 'Reject' },
-  registering: { ko: '승인 중...', en: 'Registering...' },
-  rejecting: { ko: '반려 중...', en: 'Rejecting...' },
-  confirmRegister: { ko: '이 과정을 승인하시겠습니까?', en: 'Register this course?' },
-  confirmReject: { ko: '반려 사유를 입력하세요.', en: 'Enter rejection reason.' },
-  rejectReasonRequired: { ko: '반려 사유를 입력해주세요.', en: 'Rejection reason is required.' },
-  rejectReasonPlaceholder: { ko: '반려 사유를 입력하세요...', en: 'Enter rejection reason...' },
-  registerCommentPlaceholder: { ko: '승인 코멘트 (선택)', en: 'Registration comment (optional)' },
-  cancel: { ko: '취소', en: 'Cancel' },
-  confirm: { ko: '확인', en: 'Confirm' },
-  notSet: { ko: '미설정', en: 'Not set' },
+  notSet: { ko: '-', en: '-' },
   hours: { ko: '시간', en: 'hours' },
   creator: { ko: '생성자', en: 'Creator' },
-  noSnapshot: { ko: '연결된 스냅샷이 없습니다.', en: 'No snapshot linked.' },
-  courseDetails: { ko: '과정 세부 정보', en: 'Course Details' },
   metadata: { ko: '메타데이터', en: 'Metadata' },
-  createCourseTime: { ko: '차수 생성', en: 'Create Course Time' },
+  createCourseTime: { ko: '차수 생성', en: 'Create Session' },
+  period: { ko: '운영 기간', en: 'Period' },
+  noPeriod: { ko: '기간 미설정', en: 'Not set' },
+  noDescription: { ko: '설명이 없습니다.', en: 'No description.' },
+  courseOverview: { ko: '과정 개요', en: 'Overview' },
+  operationStatus: { ko: '운영 현황', en: 'Sessions' },
+  noSessions: { ko: '생성된 차수가 없습니다.', en: 'No sessions created yet.' },
+  unit: { ko: '개', en: '' },
 };
 
 const statusBadgeVariant: Record<CourseRegistrationStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -84,60 +78,63 @@ const statusBadgeVariant: Record<CourseRegistrationStatus, 'default' | 'secondar
   REJECTED: 'destructive',
 };
 
+const timeStatusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
+  DRAFT: 'secondary',
+  RECRUITING: 'warning',
+  ONGOING: 'success',
+  CLOSED: 'default',
+  ARCHIVED: 'secondary',
+};
+
 export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const courseId = Number(id);
 
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
-  const [registerComment, setRegisterComment] = useState('');
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
   const { data: course, isLoading, error } = useCourseRegistration(courseId);
-  const registerCourse = useRegisterCourse();
-  const unreadyCourse = useUnreadyCourse();
+  const { data: courseDetail } = useCourse(courseId);
+  const { data: curriculum } = useCourseItemsHierarchy(courseId);
+  const { data: timesData } = useTimes({ courseId, size: 100 });
 
-  const formatDate = (dateStr: string | null) => {
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error('카테고리 목록 조회 실패:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const getCategoryName = (categoryId: number | null): string => {
+    if (!categoryId) return getText('notSet');
+    const category = categories.find((c) => c.id === categoryId);
+    return category?.name ?? getText('notSet');
+  };
+
+  const formatDate = (dateStr: string | null, includeTime = false) => {
     if (!dateStr) return getText('notSet');
-    return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+    const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+      ...(includeTime && { hour: '2-digit', minute: '2-digit' }),
+    };
+    return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', options);
   };
 
-  const handleRegister = async () => {
-    try {
-      await registerCourse.mutateAsync({
-        id: courseId,
-        request: registerComment ? { comment: registerComment } : undefined,
-      });
-      setShowRegisterModal(false);
-      setRegisterComment('');
-    } catch (err) {
-      console.error('Register failed:', err);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!rejectReason.trim()) {
-      alert(getText('rejectReasonRequired'));
-      return;
-    }
-    try {
-      // TODO: 백엔드에서 반려 사유 저장 기능 추가 시 reason 전달
-      await unreadyCourse.mutateAsync(courseId);
-      setShowRejectModal(false);
-      setRejectReason('');
-    } catch (err) {
-      console.error('Reject failed:', err);
-    }
+  const formatPeriod = () => {
+    const start = course?.courseStartDate || courseDetail?.startDate;
+    const end = course?.courseEndDate || courseDetail?.endDate;
+    if (!start && !end) return getText('noPeriod');
+    return `${formatDate(start || null)} ~ ${formatDate(end || null)}`;
   };
 
   if (isLoading) {
@@ -165,338 +162,318 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
     );
   }
 
+  const actualCourseId = (course as { courseId?: number }).courseId || course.id;
+
   return (
     <div className="h-full overflow-auto bg-bg-app">
-      <div className="p-8">
-        {/* 뒤로가기 버튼 */}
-        <div className="mb-4">
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        {/* 뒤로가기 */}
+        <div className="mb-6">
           <BackButton
             onClick={() => navigate(prefixPath('/co/courses'))}
             label={getText('back')}
           />
         </div>
 
-        {/* Header Section - 목록 페이지와 동일한 스타일 */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-text-primary mb-0">{course.title}</h1>
-              <Badge variant={statusBadgeVariant[course.status]} className="text-sm">
-                {COURSE_REGISTRATION_STATUS_LABELS[course.status]}
-              </Badge>
+        {/* Hero Section */}
+        <div className="bg-bg-default border border-border rounded-xl overflow-hidden mb-6">
+          <div className="flex flex-col lg:flex-row">
+            {/* 썸네일 영역 */}
+            <div className="lg:w-80 flex-shrink-0 bg-bg-secondary">
+              {(course.thumbnailUrl || courseDetail?.thumbnailUrl) ? (
+                <img
+                  src={course.thumbnailUrl || courseDetail?.thumbnailUrl || ''}
+                  alt={course.title}
+                  className="w-full h-48 lg:h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 lg:h-full flex items-center justify-center">
+                  <GraduationCap size={64} className="text-text-placeholder" />
+                </div>
+              )}
             </div>
-            <p className="text-text-secondary m-0">ID: {course.id}</p>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            {course.status === 'READY' && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowRejectModal(true)}
-                  disabled={unreadyCourse.isPending}
-                  className="border border-status-error text-status-error hover:bg-status-error-bg"
-                >
-                  <XCircle size={16} />
-                  {unreadyCourse.isPending ? getText('rejecting') : getText('reject')}
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setShowRegisterModal(true)}
-                  disabled={registerCourse.isPending}
-                >
-                  <CheckCircle size={16} />
-                  {registerCourse.isPending ? getText('registering') : getText('register')}
-                </Button>
-              </>
-            )}
-            {course.status === 'REGISTERED' && (
-              <Button
-                size="sm"
-                onClick={() => navigate(prefixPath(`/co/times/create?courseId=${course.id}`))}
-              >
-                <Plus size={16} />
-                {getText('createCourseTime')}
-              </Button>
-            )}
+            {/* 정보 영역 */}
+            <div className="flex-1 p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  {/* 상태 뱃지 */}
+                  <div className="mb-3">
+                    <Badge variant={statusBadgeVariant[course.status]} className="text-sm">
+                      {COURSE_REGISTRATION_STATUS_LABELS[course.status]}
+                    </Badge>
+                  </div>
+
+                  {/* 제목 */}
+                  <h1 className="text-2xl font-bold text-text-primary mb-2 line-clamp-2">
+                    {course.title}
+                  </h1>
+
+                  {/* ID & 카테고리 */}
+                  <div className="flex items-center gap-3 text-sm text-text-secondary mb-4">
+                    <span>ID: {actualCourseId}</span>
+                    <span className="w-1 h-1 rounded-full bg-text-placeholder" />
+                    <span>{getCategoryName(courseDetail?.categoryId ?? null)}</span>
+                  </div>
+
+                  {/* 핵심 정보 뱃지들 */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {course.level && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
+                        <GraduationCap size={14} className="text-text-secondary" />
+                        {COURSE_LEVEL_LABELS[course.level]}
+                      </span>
+                    )}
+                    {course.type && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
+                        <Monitor size={14} className="text-text-secondary" />
+                        {COURSE_TYPE_LABELS[course.type]}
+                      </span>
+                    )}
+                    {course.estimatedHours && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
+                        <Clock size={14} className="text-text-secondary" />
+                        {course.estimatedHours}{getText('hours')}
+                      </span>
+                    )}
+                    {(courseDetail?.itemCount ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-secondary text-sm">
+                        <FolderOpen size={14} className="text-text-secondary" />
+                        {courseDetail?.itemCount}차시
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* 액션 버튼 */}
+                <div className="flex flex-col gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(prefixPath(`/co/times/create?courseId=${actualCourseId}`))}
+                    className="whitespace-nowrap"
+                  >
+                    <Plus size={16} />
+                    {getText('createCourseTime')}
+                  </Button>
+                </div>
+              </div>
+
+              {/* 태그 */}
+              {courseDetail?.tags && courseDetail.tags.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="flex flex-wrap gap-2">
+                    {courseDetail.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium"
+                      >
+                        <Tag size={12} />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="space-y-6">
-
-          {/* Description */}
-          {course.description && (
+        {/* 2컬럼 레이아웃 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 좌측: 메인 콘텐츠 */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* 설명 */}
             <Card>
               <div className="p-5">
+                <h2 className="text-base font-semibold text-text-primary mb-3 flex items-center gap-2">
+                  <Info size={18} className="text-text-secondary" />
+                  {getText('description')}
+                </h2>
                 <p className="text-text-primary whitespace-pre-wrap leading-relaxed">
-                  {course.description}
+                  {course.description || (
+                    <span className="text-text-placeholder italic">{getText('noDescription')}</span>
+                  )}
                 </p>
               </div>
             </Card>
-          )}
 
-          {/* Course Details Grid */}
-          <Card>
-            <div className="p-5">
-              <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
-                <BookOpen size={18} className="text-text-secondary" />
-                {getText('courseDetails')}
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('level')}
-                  </Label>
-                  <p className="text-text-primary mt-1 font-medium">
-                    {course.level ? COURSE_LEVEL_LABELS[course.level] : getText('notSet')}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('type')}
-                  </Label>
-                  <p className="text-text-primary mt-1 font-medium">
-                    {course.type ? COURSE_TYPE_LABELS[course.type] : getText('notSet')}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('estimatedHours')}
-                  </Label>
-                  <p className="text-text-primary mt-1 font-medium flex items-center gap-1">
-                    <Clock size={14} className="text-text-secondary" />
-                    {course.estimatedHours
-                      ? `${course.estimatedHours} ${getText('hours')}`
-                      : getText('notSet')}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('creator')}
-                  </Label>
-                  <p className="text-text-primary mt-1 font-medium flex items-center gap-1">
-                    <User size={14} className="text-text-secondary" />
-                    {course.creatorName || (course.creatorId ? `ID: ${course.creatorId}` : '-')}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
+            {/* 커리큘럼 */}
+            <CourseCurriculumSection
+              itemCount={courseDetail?.itemCount ?? 0}
+              curriculum={curriculum ?? []}
+            />
 
-          {/* Metadata */}
-          <Card>
-            <div className="p-5">
-              <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
-                <Calendar size={18} className="text-text-secondary" />
-                {getText('metadata')}
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div>
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('createdAt')}
-                  </Label>
-                  <p className="text-text-primary mt-1 text-sm">
-                    {formatDate(course.createdAt)}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('updatedAt')}
-                  </Label>
-                  <p className="text-text-primary mt-1 text-sm">
-                    {formatDate(course.updatedAt)}
-                  </p>
-                </div>
-                {course.submittedAt && (
-                  <div>
-                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                      {getText('submittedAt')}
-                    </Label>
-                    <p className="text-text-primary mt-1 text-sm">
-                      {formatDate(course.submittedAt)}
-                    </p>
+            {/* 운영 현황 */}
+            <Card>
+              <div className="p-5">
+                <h2 className="text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <PlayCircle size={18} className="text-text-secondary" />
+                  {getText('operationStatus')}
+                  {timesData && timesData.content.length > 0 && (
+                    <span className="text-sm font-normal text-text-secondary">
+                      ({timesData.totalElements}{getText('unit')})
+                    </span>
+                  )}
+                </h2>
+
+                {/* 차수 목록 */}
+                {timesData && timesData.content.length > 0 ? (
+                  <div className="space-y-2">
+                    {timesData.content.map((time) => (
+                      <div
+                        key={time.id}
+                        className="flex items-center justify-between gap-3 p-3 bg-bg-secondary rounded-lg hover:bg-bg-hover cursor-pointer transition-colors"
+                        onClick={() => navigate(prefixPath(`/co/times/${time.id}`))}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Badge variant={timeStatusBadgeVariant[time.status]} className="text-xs flex-shrink-0">
+                            {COURSE_TIME_STATUS_LABELS[time.status]}
+                          </Badge>
+                          <span className="text-sm text-text-primary truncate">
+                            {time.title}
+                          </span>
+                        </div>
+                        <ChevronRight size={16} className="text-text-placeholder flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <PlayCircle size={32} className="mx-auto mb-2 text-text-placeholder" />
+                    <p className="text-sm text-text-secondary">{getText('noSessions')}</p>
                   </div>
                 )}
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
 
-          {/* Snapshot Info */}
-          <Card>
-            <div className="p-5">
-              <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
-                <Layers size={18} className="text-text-secondary" />
-                {getText('snapshotInfo')}
-              </h2>
-              {course.snapshotId ? (
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                      {getText('snapshotId')}
-                    </Label>
-                    <p className="text-text-primary mt-1 font-medium">{course.snapshotId}</p>
+          {/* 우측: 사이드바 */}
+          <div className="space-y-6">
+            {/* 과정 개요 */}
+            <Card>
+              <div className="p-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <FileText size={16} className="text-text-secondary" />
+                  {getText('courseOverview')}
+                </h3>
+                <div className="space-y-4">
+                  {/* 생성자 */}
+                  <div className="flex items-start gap-3">
+                    <User size={16} className="text-text-secondary mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-text-secondary mb-0.5">{getText('creator')}</p>
+                      <p className="text-sm text-text-primary truncate">
+                        {course.creatorName || (course.creatorId ? `ID: ${course.creatorId}` : getText('notSet'))}
+                      </p>
+                    </div>
                   </div>
-                  {course.snapshotName && (
-                    <div>
-                      <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                        {getText('snapshotName')}
-                      </Label>
-                      <p className="text-text-primary mt-1 font-medium">{course.snapshotName}</p>
+
+                  {/* 운영 기간 */}
+                  <div className="flex items-start gap-3">
+                    <Calendar size={16} className="text-text-secondary mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-text-secondary mb-0.5">{getText('period')}</p>
+                      <p className="text-sm text-text-primary">{formatPeriod()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* 메타데이터 */}
+            <Card>
+              <div className="p-5">
+                <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <Calendar size={16} className="text-text-secondary" />
+                  {getText('metadata')}
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">{getText('createdAt')}</span>
+                    <span className="text-text-primary">{formatDate(course.createdAt, true)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">{getText('updatedAt')}</span>
+                    <span className="text-text-primary">{formatDate(course.updatedAt, true)}</span>
+                  </div>
+                  {course.submittedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">{getText('submittedAt')}</span>
+                      <span className="text-text-primary">{formatDate(course.submittedAt, true)}</span>
+                    </div>
+                  )}
+                  {course.approvedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">{getText('approvedAt')}</span>
+                      <span className="text-text-primary">{formatDate(course.approvedAt, true)}</span>
                     </div>
                   )}
                 </div>
-              ) : (
-                <p className="text-text-secondary text-sm">{getText('noSnapshot')}</p>
-              )}
-            </div>
-          </Card>
-
-          {/* Approval Info */}
-          {course.status === 'REGISTERED' && course.approvedAt && (
-            <Card className="border-l-4 border-l-status-success">
-              <div className="p-5">
-                <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
-                  <CheckCircle size={18} className="text-status-success" />
-                  {getText('approvalInfo')}
-                </h2>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                      {getText('approvedBy')}
-                    </Label>
-                    <p className="text-text-primary mt-1">
-                      {course.approvedByName || (course.approvedBy ? `ID: ${course.approvedBy}` : getText('notSet'))}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                      {getText('approvedAt')}
-                    </Label>
-                    <p className="text-text-primary mt-1 text-sm">
-                      {formatDate(course.approvedAt)}
-                    </p>
-                  </div>
-                </div>
-                {course.approvalComment && (
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                      {getText('registerComment')}
-                    </Label>
-                    <p className="text-text-primary mt-1 whitespace-pre-wrap">
-                      {course.approvalComment}
-                    </p>
-                  </div>
-                )}
               </div>
             </Card>
-          )}
 
-          {/* Rejection Info */}
-          {course.status === 'REJECTED' && course.rejectedAt && (
-            <Card className="border-l-4 border-l-status-error">
-              <div className="p-5">
-                <h2 className="text-base font-medium text-text-primary mb-4 flex items-center gap-2">
-                  <XCircle size={18} className="text-status-error" />
-                  {getText('rejectionInfo')}
-                </h2>
-                <div className="mb-4">
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('rejectedAt')}
-                  </Label>
-                  <p className="text-text-primary mt-1 text-sm">
-                    {formatDate(course.rejectedAt)}
-                  </p>
+            {/* 스냅샷 정보 */}
+            {(course as { snapshotId?: number }).snapshotId && (
+              <Card>
+                <div className="p-5">
+                  <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+                    <Layers size={16} className="text-text-secondary" />
+                    {getText('snapshotInfo')}
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">{getText('snapshotId')}</span>
+                      <span className="text-text-primary font-mono">
+                        {(course as { snapshotId?: number }).snapshotId}
+                      </span>
+                    </div>
+                    {(course as { snapshotName?: string }).snapshotName && (
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary">{getText('snapshotName')}</span>
+                        <span className="text-text-primary truncate ml-2">
+                          {(course as { snapshotName?: string }).snapshotName}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="pt-4 border-t border-border">
-                  <Label className="text-text-secondary text-xs uppercase tracking-wide">
-                    {getText('rejectionReason')}
-                  </Label>
-                  <p className="text-text-primary mt-1 whitespace-pre-wrap">
-                    {course.rejectionReason || getText('notSet')}
-                  </p>
+              </Card>
+            )}
+
+            {/* 승인 정보 */}
+            {course.approvedAt && (
+              <Card className="border-l-4 border-l-status-success">
+                <div className="p-5">
+                  <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+                    <CheckCircle size={16} className="text-status-success" />
+                    {getText('approvalInfo')}
+                  </h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">{getText('approvedBy')}</span>
+                      <span className="text-text-primary">
+                        {course.approvedByName || (course.approvedBy ? `ID: ${course.approvedBy}` : getText('notSet'))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">{getText('approvedAt')}</span>
+                      <span className="text-text-primary">{formatDate(course.approvedAt, true)}</span>
+                    </div>
+                  </div>
+                  {course.approvalComment && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <p className="text-xs text-text-secondary mb-1">{getText('approvalComment')}</p>
+                      <p className="text-sm text-text-primary whitespace-pre-wrap bg-bg-secondary rounded-lg p-3">
+                        {course.approvalComment}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Card>
-          )}
+              </Card>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Register Modal */}
-      {showRegisterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
-            <h3 className="text-lg font-medium text-text-primary mb-4 flex items-center gap-2">
-              <CheckCircle size={20} className="text-status-success" />
-              {getText('confirmRegister')}
-            </h3>
-            <div className="mb-4">
-              <Label className="text-text-secondary mb-2">{getText('registerComment')}</Label>
-              <Textarea
-                value={registerComment}
-                onChange={(e) => setRegisterComment(e.target.value)}
-                placeholder={getText('registerCommentPlaceholder')}
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setShowRegisterModal(false);
-                  setRegisterComment('');
-                }}
-              >
-                {getText('cancel')}
-              </Button>
-              <Button onClick={handleRegister} disabled={registerCourse.isPending}>
-                {registerCourse.isPending ? getText('registering') : getText('confirm')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Reject Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
-            <h3 className="text-lg font-medium text-text-primary mb-4 flex items-center gap-2">
-              <AlertCircle size={20} className="text-status-error" />
-              {getText('confirmReject')}
-            </h3>
-            <div className="mb-4">
-              <Label className="text-text-secondary mb-2">{getText('rejectionReason')} *</Label>
-              <Textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder={getText('rejectReasonPlaceholder')}
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setRejectReason('');
-                }}
-              >
-                {getText('cancel')}
-              </Button>
-              <Button
-                onClick={handleReject}
-                disabled={unreadyCourse.isPending || !rejectReason.trim()}
-                className="bg-status-error hover:bg-status-error/90 text-white"
-              >
-                {unreadyCourse.isPending ? getText('rejecting') : getText('reject')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
