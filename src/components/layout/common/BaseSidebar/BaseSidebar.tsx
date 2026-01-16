@@ -51,7 +51,6 @@ export function BaseSidebar({
     const { pathname } = location;
 
     // 서브도메인 제거: /{subdomain}/sa/... -> /sa/..., /{subdomain}/co/... -> /co/... 등
-    // pathname에서 역할 경로 부분을 찾아서 그 이후부터 매칭
     const rolePathPatterns = ['/sa/', '/ta/', '/co/', '/tu/'];
     let normalizedPath = pathname;
     for (const pattern of rolePathPatterns) {

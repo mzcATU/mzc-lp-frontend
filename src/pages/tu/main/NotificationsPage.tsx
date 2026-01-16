@@ -13,8 +13,8 @@ interface NotificationsPageProps {
   /** 알림 상세 페이지 기본 경로 (B2B: /tu/b2b/notifications) */
   detailBasePath?: string;
 }
-import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications } from '@/hooks/tu';
-import type { NotificationType } from '@/types/tu';
+import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications, useUserNotice } from '@/hooks/tu';
+import type { NotificationType, NotificationItem } from '@/types/tu';
 import { getNotificationDeepLink } from '@/types/tu';
 import { useAuthStore } from '@/store/common/authStore';
 
@@ -64,6 +64,59 @@ const formatRelativeTime = (dateString: string): string => {
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}일 전`;
   return date.toLocaleDateString('ko-KR');
 };
+
+/**
+ * SYSTEM 알림 아이템 컴포넌트
+ * referenceType='NOTICE'인 경우 실제 공지사항 데이터를 가져와서 표시
+ */
+interface SystemNotificationContentProps {
+  notification: NotificationItem;
+  isDark: boolean;
+}
+
+function SystemNotificationContent({ notification, isDark }: SystemNotificationContentProps) {
+  // SYSTEM 알림이면 referenceId를 공지사항 ID로 사용
+  const noticeId = notification.referenceId;
+  const { data: noticeData, isError, isLoading } = useUserNotice(noticeId ?? 0);
+
+  // referenceId가 있는데 공지 데이터가 없으면 삭제된 공지
+  const isDeleted = noticeId && !isLoading && !noticeData;
+
+  // 삭제된 공지사항인 경우
+  if (isDeleted || isError) {
+    return (
+      <div>
+        <h3 className={`font-semibold mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          삭제된 공지사항
+        </h3>
+        <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+          이 공지사항은 관리자에 의해 삭제되었습니다.
+        </p>
+      </div>
+    );
+  }
+
+  // 공지사항 데이터가 있으면 그것을 사용, 없으면 알림 데이터 사용
+  const title = noticeData?.title || notification.title;
+  const message = noticeData?.content
+    ? noticeData.content.replace(/<[^>]*>/g, '').substring(0, 100) // HTML 태그 제거하고 100자 제한
+    : notification.message;
+
+  return (
+    <div>
+      <h3 className={`font-semibold mb-1 ${
+        !notification.isRead
+          ? isDark ? 'text-white' : 'text-gray-900'
+          : isDark ? 'text-gray-300' : 'text-gray-600'
+      }`}>
+        {title}
+      </h3>
+      <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+        {message}
+      </p>
+    </div>
+  );
+}
 
 export function NotificationsPage({
   HeaderComponent = LandingHeader,
@@ -302,18 +355,23 @@ export function NotificationsPage({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className={`font-semibold mb-1 ${
-                          !notification.isRead
-                            ? isDark ? 'text-white' : 'text-gray-900'
-                            : isDark ? 'text-gray-300' : 'text-gray-600'
-                        }`}>
-                          {notification.title}
-                        </h3>
-                        <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {notification.message}
-                        </p>
-                      </div>
+                      {/* SYSTEM 알림이고 NOTICE 참조인 경우 실제 공지 데이터 표시 */}
+                      {notification.type === 'SYSTEM' ? (
+                        <SystemNotificationContent notification={notification} isDark={isDark} />
+                      ) : (
+                        <div>
+                          <h3 className={`font-semibold mb-1 ${
+                            !notification.isRead
+                              ? isDark ? 'text-white' : 'text-gray-900'
+                              : isDark ? 'text-gray-300' : 'text-gray-600'
+                          }`}>
+                            {notification.title}
+                          </h3>
+                          <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {notification.message}
+                          </p>
+                        </div>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
