@@ -188,12 +188,16 @@ export function B2BLandingPage() {
               <div className="flex justify-center items-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
               </div>
-            ) : (
+            ) : recommendedCourses.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {recommendedCourses.map((course) => (
                   <B2BCourseCard key={`rec-${course.id}`} {...course} />
                 ))}
               </div>
+            ) : (
+              <p className="text-center landing-text-muted py-10">
+                해당 카테고리에 강의가 없습니다.
+              </p>
             )}
           </div>
         </section>

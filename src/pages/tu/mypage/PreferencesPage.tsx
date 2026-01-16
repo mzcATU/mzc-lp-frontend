@@ -66,7 +66,7 @@ function ToggleSwitch({ checked, onChange, isDark }: ToggleSwitchProps) {
   );
 }
 
-export function B2CPreferencesPage() {
+export function PreferencesPage() {
   const { theme, toggleTheme } = useThemeStore();
   const { language, toggleLanguage } = useLanguageStore();
   const isDark = theme === 'dark';

@@ -3,17 +3,7 @@ import { B2BMyPageLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import { ProfileRequiredRoute } from '@/components/common/ProfileRequiredRoute';
 import {
-  MyPageHome,
-  ProfilePage,
-  MyLearningPage,
-  LearningDetailPage,
-  MyTeachingPage,
-  TeachingStatsPage,
-  CompletedCoursesPage,
-  CertificationsPage,
-  UserNoticesPage,
-  // B2C 페이지 재사용
-  SearchPage,
+  // B2C 페이지 재사용 (알림, 강사 프로필만)
   NotificationsPage,
   InstructorProfilePage,
 } from '@/pages/tu';
@@ -23,15 +13,29 @@ import {
   SettingsAppearancePage,
 } from '@/pages/common';
 import {
+  // B2B 메인 페이지
   B2BLandingPage,
   B2BCourseDetailPage,
+  B2BSearchPage,
+  // B2B 마이페이지
+  B2BMyPageHome,
+  B2BProfilePage,
+  B2BMyLearningPage,
+  B2BLearningDetailPage,
+  B2BCompletedCoursesPage,
+  B2BCertificationsPage,
+  B2BMyTeachingPage,
+  B2BTeachingStatsPage,
+  B2BUserNoticesPage,
+  // B2B 설정
   B2BSettingsPage,
   B2BPreferencesPage,
+  // B2B 기타
   B2BMyActivityPage,
   B2BWishlistPage,
-  B2BLandingHeader,
-  B2BCourseCard,
   B2BLearningPlayerPage,
+  // B2B 컴포넌트
+  B2BLandingHeader,
 } from '@/pages/tu/b2b';
 
 function B2BMyPageWrapper() {
@@ -56,28 +60,6 @@ function B2BPlayerWrapper() {
   );
 }
 
-/**
- * B2B 검색 페이지 - B2C SearchPage 재사용
- * - B2BLandingHeader 사용
- * - 로드맵/커뮤니티 탭 숨김
- * - 가격 표시/필터 숨김
- * - B2BCourseCard 사용 (랜딩 페이지와 동일한 디자인)
- */
-function B2BSearchPage() {
-  return (
-    <SearchPage
-      HeaderComponent={B2BLandingHeader}
-      showRoadmapAndCommunity={false}
-      showPrice={false}
-      showPriceFilter={false}
-      courseBasePath="/tu/b2b/times"
-      pageTitle="과정 검색"
-      pageDescription="배정된 과정을 검색하세요"
-      searchPlaceholder="과정명, 강사명으로 검색하세요"
-      CourseCardComponent={B2BCourseCard}
-    />
-  );
-}
 
 /**
  * B2B 알림 페이지 - B2C NotificationsPage 재사용
@@ -119,6 +101,7 @@ function B2BInstructorProfilePage() {
  * - 로드맵 없음
  * - 커뮤니티 → 내 활동 (내 댓글만)
  * - 설정 → 카드 형식 (프로필/환경설정)
+ * - 독립적인 B2B SearchPage 사용 (props 기반 커스터마이징 제거)
  */
 export const tuB2bRoutes = (
   <>
@@ -136,27 +119,24 @@ export const tuB2bRoutes = (
 
     {/* 마이페이지 라우트 (subdomain 있음) */}
     <Route path="/:subdomain/tu/b2b/mypage" element={<B2BMyPageWrapper />}>
-      <Route index element={<MyPageHome />} />
-      <Route path="profile" element={<ProfilePage />} />
+      <Route index element={<B2BMyPageHome />} />
+      <Route path="profile" element={<B2BProfilePage />} />
 
       {/* 내 수강 강의 */}
-      <Route path="learning" element={<MyLearningPage />} />
-      <Route path="learning/:enrollmentId" element={<LearningDetailPage />} />
-      <Route path="completed" element={<CompletedCoursesPage />} />
-      <Route path="certificates" element={<CertificationsPage />} />
+      <Route path="learning" element={<B2BMyLearningPage />} />
+      <Route path="learning/:enrollmentId" element={<B2BLearningDetailPage />} />
+      <Route path="completed" element={<B2BCompletedCoursesPage />} />
+      <Route path="certificates" element={<B2BCertificationsPage />} />
 
       {/* 내 강의 관리 */}
-      <Route path="teaching" element={<MyTeachingPage />} />
-      <Route path="teaching/stats" element={<TeachingStatsPage />} />
+      <Route path="teaching" element={<B2BMyTeachingPage />} />
+      <Route path="teaching/stats" element={<B2BTeachingStatsPage />} />
 
       {/* 내 활동 (커뮤니티 → 내 댓글만) */}
       <Route path="comments" element={<B2BMyActivityPage />} />
 
-      {/* 찜 목록 */}
-      <Route path="wishlist" element={<B2BWishlistPage />} />
-
       {/* 공지사항 */}
-      <Route path="notices" element={<UserNoticesPage />} />
+      <Route path="notices" element={<B2BUserNoticesPage />} />
 
       {/* 설정 (B2B 전용 카드 형식) */}
       <Route path="settings" element={<B2BSettingsPage />} />
@@ -168,27 +148,24 @@ export const tuB2bRoutes = (
 
     {/* 마이페이지 라우트 (subdomain 없음) */}
     <Route path="/tu/b2b/mypage" element={<B2BMyPageWrapper />}>
-      <Route index element={<MyPageHome />} />
-      <Route path="profile" element={<ProfilePage />} />
+      <Route index element={<B2BMyPageHome />} />
+      <Route path="profile" element={<B2BProfilePage />} />
 
       {/* 내 수강 강의 */}
-      <Route path="learning" element={<MyLearningPage />} />
-      <Route path="learning/:enrollmentId" element={<LearningDetailPage />} />
-      <Route path="completed" element={<CompletedCoursesPage />} />
-      <Route path="certificates" element={<CertificationsPage />} />
+      <Route path="learning" element={<B2BMyLearningPage />} />
+      <Route path="learning/:enrollmentId" element={<B2BLearningDetailPage />} />
+      <Route path="completed" element={<B2BCompletedCoursesPage />} />
+      <Route path="certificates" element={<B2BCertificationsPage />} />
 
       {/* 내 강의 관리 */}
-      <Route path="teaching" element={<MyTeachingPage />} />
-      <Route path="teaching/stats" element={<TeachingStatsPage />} />
+      <Route path="teaching" element={<B2BMyTeachingPage />} />
+      <Route path="teaching/stats" element={<B2BTeachingStatsPage />} />
 
       {/* 내 활동 (커뮤니티 → 내 댓글만) */}
       <Route path="comments" element={<B2BMyActivityPage />} />
 
-      {/* 찜 목록 */}
-      <Route path="wishlist" element={<B2BWishlistPage />} />
-
       {/* 공지사항 */}
-      <Route path="notices" element={<UserNoticesPage />} />
+      <Route path="notices" element={<B2BUserNoticesPage />} />
 
       {/* 설정 (B2B 전용 카드 형식) */}
       <Route path="settings" element={<B2BSettingsPage />} />
@@ -223,5 +200,9 @@ export const tuB2bRoutes = (
     {/* 강사 프로필 (B2B - B2C 페이지 재사용) */}
     <Route path="/:subdomain/tu/b2b/instructors/:instructorId" element={<B2BInstructorProfilePage />} />
     <Route path="/tu/b2b/instructors/:instructorId" element={<B2BInstructorProfilePage />} />
+
+    {/* 찜 목록 (독립 페이지 - 헤더/푸터만 있음) */}
+    <Route path="/:subdomain/tu/b2b/wishlist" element={<B2BWishlistPage />} />
+    <Route path="/tu/b2b/wishlist" element={<B2BWishlistPage />} />
   </>
 );

@@ -11,10 +11,27 @@
  * HeaderComponent와 showPrice 등의 prop으로 B2B 스타일 적용
  */
 
+// B2B 메인 페이지
 export { B2BLandingPage } from './B2BLandingPage';
 export { B2BCourseDetailPage } from './B2BCourseDetailPage';
+export { B2BSearchPage } from './B2BSearchPage';
+
+// B2B 마이페이지
+export { B2BMyPageHome } from './B2BMyPageHome';
+export { B2BProfilePage } from './B2BProfilePage';
+export { B2BMyLearningPage } from './B2BMyLearningPage';
+export { B2BLearningDetailPage } from './B2BLearningDetailPage';
+export { B2BCompletedCoursesPage } from './B2BCompletedCoursesPage';
+export { B2BCertificationsPage } from './B2BCertificationsPage';
+export { B2BMyTeachingPage } from './B2BMyTeachingPage';
+export { B2BTeachingStatsPage } from './B2BTeachingStatsPage';
+export { B2BUserNoticesPage } from './B2BUserNoticesPage';
+
+// B2B 설정 페이지
 export { B2BSettingsPage } from './B2BSettingsPage';
 export { B2BPreferencesPage } from './B2BPreferencesPage';
+
+// B2B 기타 페이지
 export { B2BMyActivityPage } from './B2BMyActivityPage';
 export { B2BWishlistPage } from './B2BWishlistPage';
 export { B2BLearningPlayerPage } from './B2BLearningPlayerPage';

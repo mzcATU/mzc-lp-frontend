@@ -56,7 +56,7 @@ function SettingsCard({ icon, title, description, onClick, isDark }: SettingsCar
   );
 }
 
-export function B2CSettingsPage() {
+export function SettingsPage() {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const { theme } = useThemeStore();

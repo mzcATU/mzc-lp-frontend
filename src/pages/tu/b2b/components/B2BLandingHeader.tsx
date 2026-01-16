@@ -236,7 +236,7 @@ export function B2BLandingHeader() {
                 )}
                 {/* 위시리스트 (찜) - B2B에서도 표시 */}
                 <Link
-                  to={prefixPath('/tu/b2b/mypage/wishlist')}
+                  to={prefixPath('/tu/b2b/wishlist')}
                   className={`p-2 rounded-lg transition-colors ${
                     isDark
                       ? 'text-gray-400 hover:text-white hover:bg-white/10'
