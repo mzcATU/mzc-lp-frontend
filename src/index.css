@@ -251,11 +251,13 @@
 /* Landing Button styles - Uses dynamic branding variables */
 .landing-btn-primary {
   background: linear-gradient(135deg, var(--landing-primary-color, #6778ff) 0%, var(--landing-secondary-color, #a855f7) 100%);
+  color: #ffffff;
   transition: all 0.3s ease;
 }
 
 .landing-btn-primary:hover {
   background: linear-gradient(135deg, var(--landing-primary-hover, #8b99ff) 0%, var(--landing-secondary-hover, #c084fc) 100%);
+  color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 10px 30px color-mix(in srgb, var(--landing-primary-color, #6778ff) 40%, transparent);
 }
