@@ -281,6 +281,7 @@ type TranslationKeys = {
   // 학습
   learning: {
     title: string;
+    enrolledCourses: string;
     description: string;
     searchPlaceholder: string;
     filter: string;
@@ -362,7 +363,7 @@ const ko: TranslationKeys = {
     inProgress: '수강 중',
     completed: '완료한 강의',
     completedDesc: '완료한 강의 목록을 확인하세요',
-    completedCourses: '완료한 강의 목록',
+    completedCourses: '완료한 강의',
     completedComingSoon: '완료한 강의 기능은 현재 개발 중입니다. 곧 완료한 강의 목록과 수료증을 확인할 수 있습니다.',
     pending: '승인 대기',
     dropped: '중도 포기',
@@ -372,8 +373,8 @@ const ko: TranslationKeys = {
     quickMenu: '빠른 메뉴',
     myLearning: '내 학습',
     myLearningDesc: '수강 중인 강의를 확인하세요',
-    certificates: '인증서',
-    certificatesDesc: '취득한 인증서를 확인하세요',
+    certificates: '수료증',
+    certificatesDesc: '취득한 수료증을 확인하세요',
     certificatesList: '인증서 목록',
     certificatesComingSoon: '인증서 기능은 현재 개발 중입니다. 곧 취득한 인증서를 확인하고 다운로드할 수 있습니다.',
     profileSecurityDesc: '프로필 정보 및 보안 설정',
@@ -570,6 +571,7 @@ const ko: TranslationKeys = {
   },
   learning: {
     title: '내 학습',
+    enrolledCourses: '수강 중인 강의',
     description: '수강 중인 강의를 관리하고 학습을 이어가세요',
     searchPlaceholder: '강의명 검색...',
     filter: '필터',
@@ -650,7 +652,7 @@ const en: TranslationKeys = {
     inProgress: 'In Progress',
     completed: 'Completed Courses',
     completedDesc: 'View your completed courses',
-    completedCourses: 'Completed Courses List',
+    completedCourses: 'Completed Courses',
     completedComingSoon: 'Completed courses feature is currently under development. You will soon be able to view your completed courses and certificates.',
     pending: 'Pending',
     dropped: 'Dropped',
@@ -858,6 +860,7 @@ const en: TranslationKeys = {
   },
   learning: {
     title: 'My Learning',
+    enrolledCourses: 'Enrolled Courses',
     description: 'Manage your enrolled courses and continue learning',
     searchPlaceholder: 'Search courses...',
     filter: 'Filter',

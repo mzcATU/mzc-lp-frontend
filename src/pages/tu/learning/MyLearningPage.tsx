@@ -197,23 +197,13 @@ export function MyLearningPage() {
   };
 
   return (
-    <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      <div className="max-w-[1400px] mx-auto">
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2">
-            <h1 className={`text-2xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {t.learning.title}
-            </h1>
-            {/* 데모 버튼 (테스트용 - 숨김) */}
-            <button
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning/demo/player'))}
-              className={`opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-              title="Demo Mode"
-            >
-              [demo]
-            </button>
-          </div>
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t.learning.enrolledCourses}
+          </h1>
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
             {t.learning.description}
           </p>
@@ -222,7 +212,7 @@ export function MyLearningPage() {
         {/* Search & Filter Bar */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 min-w-[280px] max-w-md">
+          <form onSubmit={handleSearch} className="flex-1 min-w-[280px]">
             <div className="relative">
               <Search
                 className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}

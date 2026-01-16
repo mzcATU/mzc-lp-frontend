@@ -230,19 +230,12 @@ export function CompletedCoursesPage() {
 
   return (
     <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              isDark ? 'bg-green-500/20' : 'bg-green-100'
-            }`}>
-              <CheckCircle className={`w-5 h-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
-            </div>
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {t.mypage.completed}
-            </h1>
-          </div>
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t.mypage.completedCourses}
+          </h1>
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
             {t.mypage.completedDesc}
           </p>

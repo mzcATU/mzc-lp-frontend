@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Loader2, BookOpen, GraduationCap } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { b2bMyPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -8,10 +8,10 @@ import { useLanguageStore } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
-import { useSubdomainPath } from '@/hooks/common';
 import { usePublicLayout } from '@/hooks/tu';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
-import { cn } from '@/utils/cn';
+import { GlobalRoleSwitcher } from '../common/GlobalRoleSwitcher';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,12 +42,8 @@ interface B2BMyPageSidebarProps {
   subdomain?: string;
 }
 
-type ViewMode = 'instructor' | 'learner';
-
 export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { prefixPath } = useSubdomainPath();
 
   const { data: layoutData } = usePublicLayout();
   const sidebarSettings = layoutData?.sidebarTUSettings as { enabled?: boolean; items?: BrandingSidebarItem[] } | undefined;
@@ -90,7 +86,6 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching']);
-  const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
   const [courseRoleStatus, setCourseRoleStatus] = useState<'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OWNER'>('USER');
@@ -288,7 +283,7 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
 
   return (
     <aside
-      className={`w-72 flex-shrink-0 p-4 sticky top-0 h-[calc(100vh-64px)] ${
+      className={`flex-shrink-0 py-4 pl-6 md:pl-12 lg:pl-16 pr-4 sticky top-0 h-[calc(100vh-64px)] w-[calc(theme(spacing.72)+theme(spacing.6))] md:w-[calc(theme(spacing.72)+theme(spacing.12))] lg:w-[calc(theme(spacing.72)+theme(spacing.16))] ${
         isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'
       }`}
     >
@@ -299,59 +294,35 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
-        {/* 모드 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
+        {/* 글로벌 역할 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
         {isDesigner && instructorTabEnabled && (
           <>
-            <div
-              className="relative rounded-lg p-1 mb-3"
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <div className="flex gap-1">
-                <button
-                  onClick={() => {
-                    setCurrentMode('instructor');
-                    navigate(prefixPath('/tu/dashboard'));
-                  }}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
-                  )}
-                  style={{
-                    backgroundColor: currentMode === 'instructor'
-                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
-                      : 'transparent',
-                    color: currentMode === 'instructor'
-                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
-                      : (isDark ? '#9E9E9E' : '#666666'),
-                  }}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentMode('learner');
-                    navigate(prefixPath('/tu/b2b/mypage'));
-                  }}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
-                  )}
-                  style={{
-                    backgroundColor: currentMode === 'learner'
-                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
-                      : 'transparent',
-                    color: currentMode === 'learner'
-                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
-                      : (isDark ? '#9E9E9E' : '#666666'),
-                  }}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  <span>{language === 'ko' ? '학습자' : 'Learner'}</span>
-                </button>
-              </div>
+            <div className="mb-3">
+              <GlobalRoleSwitcher
+                currentRole="USER"
+                isExpanded={true}
+                language={language}
+                colors={isDark ? {
+                  bg: designTokens.darkMode.bg,
+                  border: designTokens.darkMode.border,
+                  textPrimary: designTokens.darkMode.textPrimary,
+                  textSecondary: designTokens.darkMode.textSecondary,
+                  hover: designTokens.darkMode.hover,
+                  activeBg: designTokens.darkMode.activeBg,
+                  activeText: designTokens.darkMode.activeText,
+                  tooltipBg: designTokens.darkMode.tooltipBg,
+                } : {
+                  bg: designTokens.lightMode.bg,
+                  border: designTokens.lightMode.border,
+                  textPrimary: designTokens.lightMode.textPrimary,
+                  textSecondary: designTokens.lightMode.textSecondary,
+                  hover: designTokens.lightMode.hover,
+                  activeBg: designTokens.lightMode.activeBg,
+                  activeText: designTokens.lightMode.activeText,
+                  tooltipBg: designTokens.lightMode.tooltipBg,
+                }}
+                isDarkMode={isDark}
+              />
             </div>
             <div
               className="mb-3"
