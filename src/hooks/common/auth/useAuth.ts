@@ -38,6 +38,7 @@ export const useLogin = () => {
         email: userDetail.email,
         name: userDetail.name,
         role: userDetail.role,
+        roles: userDetail.roles,  // 다중 역할 (1:N) 지원
         tenantId: userDetail.tenantId,
         tenantSubdomain: userDetail.tenantSubdomain,
       };
@@ -139,6 +140,7 @@ export const useMe = () => {
         email: userDetail.email,
         name: userDetail.name,
         role: userDetail.role,
+        roles: userDetail.roles,  // 다중 역할 (1:N) 동기화
         tenantId: userDetail.tenantId,
       });
       return userDetail;
