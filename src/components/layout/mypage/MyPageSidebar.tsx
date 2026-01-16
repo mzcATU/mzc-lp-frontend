@@ -134,7 +134,8 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
   }, []);
 
   // 사용자가 강사/디자이너 역할을 가지고 있는지 확인 (CourseRole 기준)
-  const isDesigner = courseRoleStatus !== 'USER';
+  // 관리자이거나 강의 역할이 있으면 토글 표시 가능
+  const isAdminOrDesigner = courseRoleStatus !== 'USER' || user?.role === 'TENANT_ADMIN' || user?.roles?.includes('TENANT_ADMIN');
 
   // 강의 개설하기 클릭 핸들러
   const handleCreateCourseClick = () => {
@@ -143,7 +144,7 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
   const handleCreateCourseConfirm = async () => {
     // 이미 DESIGNER인 경우 바로 이동
-    if (isDesigner) {
+    if (isAdminOrDesigner) {
       setShowCreateCourseDialog(false);
       onMenuItemClick?.('create-course');
       return;
@@ -227,7 +228,10 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
   const isActive = (path?: string) => {
     if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    // 서브도메인 제거: /{subdomain}/tu/... -> /tu/...
+    const tuIndex = location.pathname.indexOf('/tu/');
+    const normalizedPath = tuIndex !== -1 ? location.pathname.substring(tuIndex) : location.pathname;
+    return normalizedPath === path || normalizedPath.startsWith(path + '/');
   };
 
   const renderMenuItem = (item: MenuItem) => {
@@ -321,7 +325,7 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
         }`}
       >
         {/* 글로벌 역할 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
-        {isDesigner && instructorTabEnabled && (
+        {isAdminOrDesigner && instructorTabEnabled && (
           <>
             <div className="mb-3">
               <GlobalRoleSwitcher
