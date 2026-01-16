@@ -50,36 +50,19 @@ export function BaseSidebar({
   const findActiveMenuItem = useMemo(() => {
     const { pathname } = location;
 
-    // 가장 긴 경로부터 매칭하기 위해 모든 경로를 수집하고 정렬
-    const allPaths: { path: string; itemId: string; parentId: string | null }[] = [];
-
     for (const item of menuData) {
+      // 2단계 서브메뉴 먼저 확인 (더 구체적인 경로 우선)
       if (item.subItems) {
         for (const subItem of item.subItems) {
-          if (subItem.path) {
-            allPaths.push({ path: subItem.path, itemId: subItem.id, parentId: item.id });
+          if (subItem.path && pathname.startsWith(subItem.path)) {
+            return { itemId: subItem.id, parentId: item.id };
           }
         }
       }
 
-      if (item.path) {
-        allPaths.push({ path: item.path, itemId: item.id, parentId: null });
-      }
-    }
-
-    // 경로 길이 내림차순 정렬 (더 구체적인 경로 먼저 매칭)
-    allPaths.sort((a, b) => b.path.length - a.path.length);
-
-    for (const { path, itemId, parentId } of allPaths) {
-      if (pathname === path || pathname.startsWith(path + '/')) {
-        return { itemId, parentId };
-      }
-    }
-
-    // 정확한 매칭이 없으면 startsWith로 다시 시도
-    for (const { path, itemId, parentId } of allPaths) {
-      if (pathname.startsWith(path)) {
-        return { itemId, parentId };
+      // 1단계 메뉴 확인
+      if (item.path && pathname.startsWith(item.path)) {
+        return { itemId: item.id, parentId: null };
       }
     }
 
@@ -88,13 +71,12 @@ export function BaseSidebar({
 
   // URL 변경 시 활성 상태 동기화
   useEffect(() => {
-    const { itemId, parentId } = findActiveMenuItem;
-    setActiveItem(itemId);
+    setActiveItem(findActiveMenuItem.itemId);
 
-    if (parentId && !expandedItems.includes(parentId)) {
-      setExpandedItems(prev => [...prev, parentId]);
+    if (findActiveMenuItem.parentId && !expandedItems.includes(findActiveMenuItem.parentId)) {
+      setExpandedItems(prev => [...prev, findActiveMenuItem.parentId!]);
     }
-  }, [location.pathname, menuData]);
+  }, [findActiveMenuItem]);
 
   // 인증 스토어
   const { refreshToken, logout } = useAuthStore();
