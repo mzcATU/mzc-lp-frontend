@@ -6,6 +6,7 @@ import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
 import { useMyCourses, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
+import { courseService } from '@/services/common/courseService';
 import type { Course } from '@/types';
 import type { CourseResponse, CourseStatus } from '@/types/common/course.types';
 
@@ -71,6 +72,8 @@ const t = {
   deselectAll: { ko: '선택 해제', en: 'Deselect All' },
   incompleteWarning: { ko: '작성을 완료해야 신청할 수 있습니다', en: 'Complete the course to apply' },
   continueEditing: { ko: '이어서 작성', en: 'Continue Editing' },
+  viewDetails: { ko: '상세보기', en: 'View Details' },
+  register: { ko: '등록하기', en: 'Register' },
 };
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
@@ -145,6 +148,20 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     } catch (err) {
       console.error('Bulk apply failed:', err);
       alert('일괄 신청에 실패했습니다.');
+    }
+  };
+
+  // 과정 등록 (READY -> REGISTERED)
+  const handleRegister = async (courseId: string) => {
+    if (!confirm('과정을 등록하시겠습니까?')) return;
+
+    try {
+      await courseService.register(Number(courseId));
+      alert('과정이 성공적으로 등록되었습니다.');
+      refetch();
+    } catch (err) {
+      console.error('Course registration failed:', err);
+      alert('과정 등록에 실패했습니다.');
     }
   };
 
@@ -337,26 +354,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                     manageCourse: getText('manageCourse'),
                   }}
                   renderActions={
-                    course.courseStatus === 'REGISTERED' ? (
-                      <>
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
-                        >
-                          {getText('manageCourse')}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="flex-1 border border-border"
-                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}/apply`))}
-                        >
-                          <Send size={14} />
-                          {getText('applyProgram')}
-                        </Button>
-                      </>
-                    ) : (
+                    course.courseStatus === 'DRAFT' ? (
                       <Button
                         size="sm"
                         variant="ghost"
@@ -366,7 +364,33 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                         <Edit size={14} />
                         {getText('continueEditing')}
                       </Button>
-                    )
+                    ) : course.courseStatus === 'READY' ? (
+                      <>
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
+                        >
+                          {getText('viewDetails')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="brand"
+                          className="flex-1"
+                          onClick={() => handleRegister(course.id)}
+                        >
+                          {getText('register')}
+                        </Button>
+                      </>
+                    ) : course.courseStatus === 'REGISTERED' ? (
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
+                      >
+                        {getText('viewDetails')}
+                      </Button>
+                    ) : null
                   }
                 />
               </div>
