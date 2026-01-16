@@ -427,24 +427,6 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     }
   };
 
-  /**
-   * 작성중으로 되돌리기 (READY → DRAFT)
-   */
-  const handleUnready = async () => {
-    if (!courseId) return;
-
-    if (!confirm('작성중 상태로 되돌리시겠습니까?')) return;
-
-    try {
-      await courseService.unready(courseId);
-      setCourseStatus('DRAFT');
-      alert('작성중 상태로 변경되었습니다.');
-    } catch (error) {
-      console.error('상태 변경 실패:', error);
-      alert('상태 변경에 실패했습니다.');
-    }
-  };
-
   // formData 업데이트 핸들러 (Step 컴포넌트들에서 사용)
   const handleFormDataChange = (updates: Partial<CourseFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -604,8 +586,8 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
               </Button>
             ) : (
               <>
-                {/* DRAFT 상태: 작성완료 버튼 */}
-                {courseStatus === 'DRAFT' && (
+                {/* DRAFT, READY 상태: 작성완료 버튼 (수정 후 작성완료 재확인 가능) */}
+                {(courseStatus === 'DRAFT' || courseStatus === 'READY') && (
                   <Button
                     variant="ghost"
                     onClick={handleComplete}
@@ -638,18 +620,6 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                         {getText('completeWriting')}
                       </>
                     )}
-                  </Button>
-                )}
-
-                {/* READY 상태: 작성중으로 되돌리기 버튼 */}
-                {courseStatus === 'READY' && (
-                  <Button
-                    variant="ghost"
-                    onClick={handleUnready}
-                    className="border border-border"
-                  >
-                    <ArrowLeft size={18} />
-                    작성중으로 되돌리기
                   </Button>
                 )}
 
