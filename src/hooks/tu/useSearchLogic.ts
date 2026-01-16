@@ -132,14 +132,12 @@ export function useSearchLogic(includePrice: boolean = true) {
     isLoading: isCoursesLoading,
     error: coursesError,
   } = useCourseTimeCatalog({
-    search: query || undefined,
-    categoryName: filters.category !== 'all' ? filters.category : undefined,
-    level: filters.level !== 'all' ? filters.level.toUpperCase() : undefined,
+    keyword: query || undefined,
     status:
       filters.status !== 'all'
         ? filters.status === 'recruiting'
-          ? 'RECRUITING'
-          : 'ONGOING'
+          ? ['RECRUITING']
+          : ['ONGOING']
         : undefined,
     sort:
       filters.sort === 'latest'

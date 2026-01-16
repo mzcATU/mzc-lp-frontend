@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Search,
   Loader2,
-  BookOpen,
   X,
   SlidersHorizontal,
   ChevronDown,

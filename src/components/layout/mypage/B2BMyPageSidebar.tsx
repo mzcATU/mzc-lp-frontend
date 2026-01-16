@@ -114,14 +114,15 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
     checkCourseRole();
   }, []);
 
-  const isDesigner = courseRoleStatus !== 'USER';
+  // 관리자이거나 강의 역할이 있으면 토글 표시 가능
+  const isAdminOrDesigner = courseRoleStatus !== 'USER' || user?.role === 'TENANT_ADMIN' || user?.roles?.includes('TENANT_ADMIN');
 
   const handleCreateCourseClick = () => {
     setShowCreateCourseDialog(true);
   };
 
   const handleCreateCourseConfirm = async () => {
-    if (isDesigner) {
+    if (isAdminOrDesigner) {
       setShowCreateCourseDialog(false);
       onMenuItemClick?.('create-course');
       return;
@@ -295,7 +296,7 @@ export function B2BMyPageSidebar({ onMenuItemClick }: B2BMyPageSidebarProps) {
         }`}
       >
         {/* 글로벌 역할 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
-        {isDesigner && instructorTabEnabled && (
+        {isAdminOrDesigner && instructorTabEnabled && (
           <>
             <div className="mb-3">
               <GlobalRoleSwitcher
