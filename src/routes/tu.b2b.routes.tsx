@@ -1,4 +1,4 @@
-import { Route, Outlet } from 'react-router-dom';
+import { Route, Outlet, Navigate, useParams } from 'react-router-dom';
 import { B2BMyPageLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import { ProfileRequiredRoute } from '@/components/common/ProfileRequiredRoute';
@@ -88,6 +88,18 @@ function B2BInstructorProfilePage() {
       roadmapBasePath="/tu/b2b/roadmaps"
     />
   );
+}
+
+/**
+ * 레거시 /my-courses/:id 경로를 B2C 학습 상세 페이지로 리다이렉트
+ * 백엔드에서 보내는 알림 링크 호환성을 위해 추가 (id = enrollmentId)
+ */
+function MyCoursesRedirect() {
+  const { subdomain, id } = useParams<{ subdomain: string; id: string }>();
+  const targetPath = subdomain
+    ? `/${subdomain}/tu/b2c/mypage/learning/${id}`
+    : `/tu/b2c/mypage/learning/${id}`;
+  return <Navigate to={targetPath} replace />;
 }
 
 /**
@@ -204,5 +216,9 @@ export const tuB2bRoutes = (
     {/* 찜 목록 (독립 페이지 - 헤더/푸터만 있음) */}
     <Route path="/:subdomain/tu/b2b/wishlist" element={<B2BWishlistPage />} />
     <Route path="/tu/b2b/wishlist" element={<B2BWishlistPage />} />
+
+    {/* 레거시 경로 리다이렉트 - 백엔드 알림 링크 호환성 */}
+    <Route path="/:subdomain/my-courses/:id" element={<MyCoursesRedirect />} />
+    <Route path="/my-courses/:id" element={<MyCoursesRedirect />} />
   </>
 );

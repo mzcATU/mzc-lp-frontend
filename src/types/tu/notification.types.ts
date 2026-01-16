@@ -151,6 +151,11 @@ function getCourseNotificationLink(
   _message?: string,
   metadata?: NotificationMetadata
 ): string | null {
+  // ENROLLMENT 타입이면 학습 상세 페이지로 직접 이동
+  if (referenceType === 'ENROLLMENT') {
+    return `/tu/b2c/mypage/learning/${referenceId}`;
+  }
+
   const courseTimeId = metadata?.courseTimeId;
 
   // courseTimeId가 있으면 해당 강의 페이지로
@@ -158,12 +163,12 @@ function getCourseNotificationLink(
     return `/tu/b2c/times/${courseTimeId}`;
   }
 
-  if (referenceType === 'COURSE') {
+  if (referenceType === 'COURSE' || referenceType === 'COURSE_TIME') {
     return `/tu/b2c/times/${referenceId}`;
   }
 
-  // enrollment의 경우 내 강의 목록으로
-  return '/tu/b2c/my-courses';
+  // 기타의 경우 내 강의 목록으로
+  return '/tu/b2c/mypage/learning';
 }
 
 function getAssignmentNotificationLink(
