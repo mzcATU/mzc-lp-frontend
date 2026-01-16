@@ -135,9 +135,6 @@ export const tuB2bRoutes = (
       {/* 내 활동 (커뮤니티 → 내 댓글만) */}
       <Route path="comments" element={<B2BMyActivityPage />} />
 
-      {/* 찜 목록 */}
-      <Route path="wishlist" element={<B2BWishlistPage />} />
-
       {/* 공지사항 */}
       <Route path="notices" element={<B2BUserNoticesPage />} />
 
@@ -166,9 +163,6 @@ export const tuB2bRoutes = (
 
       {/* 내 활동 (커뮤니티 → 내 댓글만) */}
       <Route path="comments" element={<B2BMyActivityPage />} />
-
-      {/* 찜 목록 */}
-      <Route path="wishlist" element={<B2BWishlistPage />} />
 
       {/* 공지사항 */}
       <Route path="notices" element={<B2BUserNoticesPage />} />
@@ -206,5 +200,9 @@ export const tuB2bRoutes = (
     {/* 강사 프로필 (B2B - B2C 페이지 재사용) */}
     <Route path="/:subdomain/tu/b2b/instructors/:instructorId" element={<B2BInstructorProfilePage />} />
     <Route path="/tu/b2b/instructors/:instructorId" element={<B2BInstructorProfilePage />} />
+
+    {/* 찜 목록 (독립 페이지 - 헤더/푸터만 있음) */}
+    <Route path="/:subdomain/tu/b2b/wishlist" element={<B2BWishlistPage />} />
+    <Route path="/tu/b2b/wishlist" element={<B2BWishlistPage />} />
   </>
 );
