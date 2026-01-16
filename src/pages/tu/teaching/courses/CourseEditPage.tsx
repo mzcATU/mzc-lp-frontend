@@ -6,7 +6,7 @@
  * CourseCreatePage와 동일한 Step 구조 사용
  */
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Save, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
@@ -97,6 +97,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const { courseId } = useParams<{ courseId: string }>();
+  const [searchParams] = useSearchParams();
   const courseIdNum = Number(courseId);
 
   const { data: courseData, isLoading, isError } = useCourse(courseIdNum);
@@ -164,8 +165,17 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         },
       });
       setIsInitialized(true);
+
+      // URL에서 step 파라미터 확인하여 초기 step 설정
+      const stepParam = searchParams.get('step');
+      if (stepParam) {
+        const step = parseInt(stepParam, 10);
+        if (step >= 1 && step <= 3) {
+          setCurrentStep(step);
+        }
+      }
     }
-  }, [courseData, hierarchyData, isInitialized]);
+  }, [courseData, hierarchyData, isInitialized, searchParams]);
 
   // 네비게이션 핸들러
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);

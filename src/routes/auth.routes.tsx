@@ -1,5 +1,5 @@
 import { Route } from 'react-router-dom';
-import { LoginPage, RegisterPage } from '@/pages/auth';
+import { LoginPage, RegisterPage, RoleSelectionPage } from '@/pages/auth';
 import { AdminLoginPage, AdminRegisterPage } from '@/pages/admin';
 import { ProfileSetupPage } from '@/pages/common';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
@@ -38,6 +38,26 @@ export const authRoutes = (
       element={
         <ProtectedRoute>
           <ProfileSetupPage />
+        </ProtectedRoute>
+      }
+    />
+
+    {/* 역할 선택 페이지 (다중 역할 사용자용) */}
+    <Route
+      path="/select-role"
+      element={
+        <ProtectedRoute>
+          <RoleSelectionPage />
+        </ProtectedRoute>
+      }
+    />
+
+    {/* 역할 선택 페이지 (서브도메인 포함) */}
+    <Route
+      path="/:subdomain/select-role"
+      element={
+        <ProtectedRoute>
+          <RoleSelectionPage />
         </ProtectedRoute>
       }
     />

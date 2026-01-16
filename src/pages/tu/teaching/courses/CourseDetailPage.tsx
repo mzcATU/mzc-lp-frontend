@@ -14,7 +14,11 @@ import {
   useCourse,
   useCourseItemsHierarchy,
   useDeleteCourse,
+  useLearningObject,
 } from '@/hooks/tu';
+import { ContentPreviewModal } from '@/components/domain/tu/content/ContentPreviewModal';
+import type { ContentType } from '@/types/tu';
+import type { CourseItemHierarchyResponse } from '@/types/common/course.types';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { categoryService } from '@/services/common';
 import { CourseInfoSection } from './components/CourseInfoSection';
@@ -62,6 +66,13 @@ export function CourseDetailPage() {
   const { data: curriculum } = useCourseItemsHierarchy(id);
   const deleteCourseMutation = useDeleteCourse();
 
+  // 콘텐츠 미리보기 상태
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<CourseItemHierarchyResponse | null>(null);
+
+  // LO 조회 (selectedItem이 있을 때만)
+  const { data: learningObject } = useLearningObject(selectedItem?.learningObjectId ?? 0);
+
   // 카테고리 목록 조회
   useEffect(() => {
     const fetchCategories = async () => {
@@ -87,6 +98,17 @@ export function CourseDetailPage() {
       console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
     }
+  };
+
+  // 콘텐츠 미리보기 핸들러
+  const handlePreviewContent = (item: CourseItemHierarchyResponse) => {
+    setSelectedItem(item);
+    setPreviewModalOpen(true);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewModalOpen(false);
+    setSelectedItem(null);
   };
 
   // 로딩 상태
@@ -165,7 +187,7 @@ export function CourseDetailPage() {
               onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/apply`))}
             >
               <Send size={16} />
-              과정 신청
+              과정 등록
             </Button>
             <Button
               variant="ghost"
@@ -191,15 +213,32 @@ export function CourseDetailPage() {
         {/* Content */}
         <div className="space-y-6">
           {/* 기본 정보 섹션 */}
-          <CourseInfoSection course={course} categories={categories} />
+          <CourseInfoSection
+            course={course}
+            categories={categories}
+            onEdit={() => navigate(prefixPath(`/tu/teaching/courses/${id}/edit?step=1`))}
+          />
 
           {/* 커리큘럼 섹션 */}
           <CourseCurriculumSection
             itemCount={course.itemCount}
             curriculum={curriculum ?? []}
+            onEdit={() => navigate(prefixPath(`/tu/teaching/courses/${id}/edit?step=2`))}
+            onPreviewContent={handlePreviewContent}
           />
         </div>
       </div>
+
+      {/* 콘텐츠 미리보기 모달 */}
+      {selectedItem && learningObject && (
+        <ContentPreviewModal
+          isOpen={previewModalOpen}
+          onClose={handleClosePreview}
+          contentId={learningObject.contentId}
+          contentType={learningObject.contentType as ContentType}
+          fileName={selectedItem.displayName || selectedItem.itemName}
+        />
+      )}
     </div>
   );
 }

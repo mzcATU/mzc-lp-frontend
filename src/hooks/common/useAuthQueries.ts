@@ -54,6 +54,7 @@ export const useLogin = () => {
         email: userDetail.email,
         name: userDetail.name,
         role: userDetail.role,
+        roles: userDetail.roles,
         tenantId: userDetail.tenantId,
         tenantSubdomain: userDetail.tenantSubdomain,
       };
@@ -76,6 +77,14 @@ export const useLogin = () => {
       if (!isAdminRole && userDetail.profileCompleted === false) {
         const profileEditPath = `${subdomainPrefix}/tu/b2c/mypage/profile`;
         navigate(profileEditPath, { state: { profileIncomplete: true } });
+        return;
+      }
+
+      // 다중 역할을 가진 사용자는 역할 선택 페이지로 리다이렉트
+      const roles = userDetail.roles || [];
+      if (roles.length > 1) {
+        const selectRolePath = `${subdomainPrefix}/select-role`;
+        navigate(selectRolePath);
         return;
       }
 
