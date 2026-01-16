@@ -28,6 +28,7 @@ export const tuB2cRoutes = (
     <Route path="/tu/b2c" element={<LandingPage />} />
 
     {/* 통합 검색 */}
+    <Route path="/:subdomain/tu/b2c/search" element={<SearchPage />} />
     <Route path="/tu/b2c/search" element={<SearchPage />} />
 
     {/* 강의 탐색 */}
