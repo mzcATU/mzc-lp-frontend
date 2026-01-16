@@ -14,7 +14,7 @@ export const translations = {
   submit: { ko: '강의 등록', en: 'Submit' },
   lastSaved: { ko: '마지막 저장', en: 'Last saved' },
   step1: { ko: '기본 정보', en: 'Basic Info' },
-  step2: { ko: '차시 구성', en: 'Curriculum' },
+  step2: { ko: '커리큘럼 구성', en: 'Curriculum' },
   step3: { ko: '검토 및 저장', en: 'Review' },
   courseName: { ko: '강의명', en: 'Course Name' },
   courseNamePlaceholder: { ko: '강의명을 입력하세요', en: 'Enter course name' },
@@ -36,7 +36,7 @@ export const translations = {
   startDate: { ko: '시작일', en: 'Start Date' },
   endDate: { ko: '종료일', en: 'End Date' },
   comingSoon: { ko: '준비 중입니다', en: 'Coming Soon' },
-  curriculumTitle: { ko: '차시 구성', en: 'Curriculum' },
+  curriculumTitle: { ko: '커리큘럼 구성', en: 'Curriculum' },
   curriculumDesc: { ko: '차시를 추가하고 콘텐츠를 등록하세요. 드래그앤드롭으로 순서를 변경할 수 있습니다.', en: 'Add lessons and register content. Drag and drop to reorder.' },
   noLessons: { ko: '아직 등록된 차시가 없습니다.', en: 'No lessons registered yet.' },
   addFirstLesson: { ko: '첫 번째 차시 추가', en: 'Add First Lesson' },
@@ -136,6 +136,13 @@ export const translations = {
   // 페이지네이션
   prev: { ko: '이전', en: 'Prev' },
   pageInfo: { ko: '{current} / {total} 페이지', en: 'Page {current} of {total}' },
+  // 미리보기
+  preview: { ko: '미리보기', en: 'Preview' },
+  previewTitle: { ko: '강의 미리보기', en: 'Course Preview' },
+  previewDesc: { ko: '수강생이 보게 될 강의 모습입니다.', en: 'This is how learners will see this course.' },
+  previewMode: { ko: '미리보기 모드', en: 'Preview Mode' },
+  closePreview: { ko: '미리보기 닫기', en: 'Close Preview' },
+  noPreviewData: { ko: '미리보기 데이터가 없습니다.', en: 'No preview data available.' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

@@ -7,6 +7,7 @@ import {
   MyContentPage,
   CourseCreatePage,
   CourseEditPage,
+  CoursePreviewPage,
   TeachingCourseDetailPage,
   TuContentCreatePage,
   ContentDetailPage,
@@ -40,6 +41,22 @@ function TenantUserWrapper() {
  */
 export const tuTeachingRoutes = (
   <>
+  {/* 미리보기 페이지 - 레이아웃 없이 렌더링 (수강생 뷰) */}
+  <Route path="/:subdomain/tu/teaching/courses/preview" element={
+    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN']}>
+      <ProfileRequiredRoute>
+        <CoursePreviewPage />
+      </ProfileRequiredRoute>
+    </ProtectedRoute>
+  } />
+  <Route path="/tu/teaching/courses/preview" element={
+    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN']}>
+      <ProfileRequiredRoute>
+        <CoursePreviewPage />
+      </ProfileRequiredRoute>
+    </ProtectedRoute>
+  } />
+
   <Route path="/:subdomain/tu" element={<TenantUserWrapper />}>
     <Route index element={<TUDashboardPage />} />
     <Route path="dashboard" element={<TUDashboardPage />} />

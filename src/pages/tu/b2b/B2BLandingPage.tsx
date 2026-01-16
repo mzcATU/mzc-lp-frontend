@@ -122,7 +122,7 @@ export function B2BLandingPage() {
         <HeroSection />
 
         {/* Category Bar */}
-        <div className="w-full px-4 md:px-8 lg:px-16 py-12">
+        <div className="w-full px-6 md:px-12 lg:px-16 py-12">
           <div className="flex flex-wrap items-center gap-3">
             {categoryOptions.map((cat) => (
               <button
@@ -143,7 +143,7 @@ export function B2BLandingPage() {
         </div>
 
         {/* 당신을 위한 필수 강의 */}
-        <section className="w-full px-4 md:px-8 lg:px-16 pb-20">
+        <section className="w-full px-6 md:px-12 lg:px-16 pb-20">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">
@@ -176,7 +176,7 @@ export function B2BLandingPage() {
 
         {/* 당신을 위한 추천 강의 */}
         <section className="landing-section-alt py-20">
-          <div className="w-full px-4 md:px-8 lg:px-16">
+          <div className="w-full px-6 md:px-12 lg:px-16">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">당신을 위한 추천 강의</h2>

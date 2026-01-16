@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Sun, Moon, Globe, Loader2, BookOpen, GraduationCap } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { myPageMenuData } from '@/config/sidebar-menus';
 import { useThemeStore } from '@/store/common/themeStore';
-import { useLanguageStore, useTranslation } from '@/store/common/languageStore';
+import { useLanguageStore } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { userService } from '@/services/common/userService';
 import { authService } from '@/services/common/authService';
-import { useSubdomainPath } from '@/hooks/common';
 import { usePublicLayout } from '@/hooks/tu';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
-import { cn } from '@/utils/cn';
+import { GlobalRoleSwitcher } from '../common/GlobalRoleSwitcher';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,12 +44,8 @@ interface MyPageSidebarProps {
   menuData?: MenuItem[];
 }
 
-type ViewMode = 'instructor' | 'learner';
-
 export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: MyPageSidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { prefixPath } = useSubdomainPath();
 
   // 브랜딩 설정에서 사이드바 설정 가져오기
   const { data: layoutData } = usePublicLayout();
@@ -102,13 +98,11 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
       }));
   }, [sidebarSettings, communityEnabled, userCourseCreationEnabled, externalMenuData]);
 
-  const { theme, toggleTheme } = useThemeStore();
-  const { language, toggleLanguage } = useLanguageStore();
-  const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const { language } = useLanguageStore();
   const { user, updateUser } = useAuthStore();
   const isDark = theme === 'dark';
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['my-enrollments', 'my-teaching', 'mypage-settings']);
-  const [currentMode, setCurrentMode] = useState<ViewMode>('learner');
   const [showCreateCourseDialog, setShowCreateCourseDialog] = useState(false);
   const [isGrantingRole, setIsGrantingRole] = useState(false);
   // USER: 권한 없음, INSTRUCTOR: 강사, DESIGNER: 강의 개설 권한, OWNER: 강의 소유자
@@ -315,71 +309,46 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
   return (
     <aside
-      className={`w-72 flex-shrink-0 p-4 ${
+      className={`flex-shrink-0 py-4 pl-6 md:pl-12 lg:pl-16 pr-4 sticky top-0 h-[calc(100vh-64px)] w-[calc(theme(spacing.72)+theme(spacing.6))] md:w-[calc(theme(spacing.72)+theme(spacing.12))] lg:w-[calc(theme(spacing.72)+theme(spacing.16))] ${
         isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'
       }`}
     >
-      {/* 카드형 사이드바 */}
       <div
-        className={`rounded-2xl p-4 h-full flex flex-col ${
+        className={`rounded-2xl p-4 h-full flex flex-col overflow-y-auto ${
           isDark
             ? 'bg-white/5 border border-white/10 backdrop-blur-sm'
             : 'bg-white border border-gray-200 shadow-sm'
         }`}
       >
-        {/* 모드 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
+        {/* 글로벌 역할 스위처 (디자이너 권한 + 강사 탭 기능이 활성화된 경우에만 표시) */}
         {isDesigner && instructorTabEnabled && (
           <>
-            <div
-              className="relative rounded-lg p-1 mb-3"
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-              }}
-            >
-              <div className="flex gap-1">
-                <button
-                  onClick={() => {
-                    setCurrentMode('instructor');
-                    navigate(prefixPath('/tu/dashboard'));
-                  }}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
-                  )}
-                  style={{
-                    backgroundColor: currentMode === 'instructor'
-                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
-                      : 'transparent',
-                    color: currentMode === 'instructor'
-                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
-                      : (isDark ? '#9E9E9E' : '#666666'),
-                  }}
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>{language === 'ko' ? '강사' : 'Instructor'}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentMode('learner');
-                    navigate(prefixPath('/tu/b2c/mypage'));
-                  }}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
-                    'transition-all duration-200 text-sm font-medium whitespace-nowrap'
-                  )}
-                  style={{
-                    backgroundColor: currentMode === 'learner'
-                      ? (isDark ? '#7C5CBF' : '#D4CDEF')
-                      : 'transparent',
-                    color: currentMode === 'learner'
-                      ? (isDark ? '#FFFFFF' : '#4C2D9A')
-                      : (isDark ? '#9E9E9E' : '#666666'),
-                  }}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  <span>{language === 'ko' ? '학습자' : 'Learner'}</span>
-                </button>
-              </div>
+            <div className="mb-3">
+              <GlobalRoleSwitcher
+                currentRole="USER"
+                isExpanded={true}
+                language={language}
+                colors={isDark ? {
+                  bg: designTokens.darkMode.bg,
+                  border: designTokens.darkMode.border,
+                  textPrimary: designTokens.darkMode.textPrimary,
+                  textSecondary: designTokens.darkMode.textSecondary,
+                  hover: designTokens.darkMode.hover,
+                  activeBg: designTokens.darkMode.activeBg,
+                  activeText: designTokens.darkMode.activeText,
+                  tooltipBg: designTokens.darkMode.tooltipBg,
+                } : {
+                  bg: designTokens.lightMode.bg,
+                  border: designTokens.lightMode.border,
+                  textPrimary: designTokens.lightMode.textPrimary,
+                  textSecondary: designTokens.lightMode.textSecondary,
+                  hover: designTokens.lightMode.hover,
+                  activeBg: designTokens.lightMode.activeBg,
+                  activeText: designTokens.lightMode.activeText,
+                  tooltipBg: designTokens.lightMode.tooltipBg,
+                }}
+                isDarkMode={isDark}
+              />
             </div>
             {/* 구분선 */}
             <div
@@ -395,63 +364,6 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
         <nav className="space-y-1 flex-1">
           {filteredMenuData.map(renderMenuItem)}
         </nav>
-
-        {/* 설정 토글 영역 */}
-        <div className={`mt-4 pt-4 border-t space-y-2 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-          {/* 테마 토글 */}
-          <button
-            onClick={toggleTheme}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {isDark ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              <span className="font-medium text-sm">
-                {isDark ? t.common.darkMode : t.common.lightMode}
-              </span>
-            </div>
-            <div
-              className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                isDark ? 'bg-[#6778ff]' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform ${
-                  isDark ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </div>
-          </button>
-
-          {/* 언어 토글 */}
-          <button
-            onClick={toggleLanguage}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-              isDark
-                ? 'bg-white/5 hover:bg-white/10 text-gray-300'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5" />
-              <span className="font-medium text-sm">
-                {t.settings.language}
-              </span>
-            </div>
-            <div
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                isDark
-                  ? 'bg-[#6778ff]/20 text-[#6778ff]'
-                  : 'bg-blue-100 text-blue-600'
-              }`}
-            >
-              {language === 'ko' ? '한국어' : 'EN'}
-            </div>
-          </button>
-        </div>
       </div>
 
       {/* 강의 디자인 확인 다이얼로그 */}

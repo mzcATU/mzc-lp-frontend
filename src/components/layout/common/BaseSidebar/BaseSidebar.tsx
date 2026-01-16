@@ -15,7 +15,6 @@ import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
-import { ModeSwitcher, type ViewMode } from '../ModeSwitcher';
 import { GlobalRoleSwitcher, type GlobalRole } from '../GlobalRoleSwitcher';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
@@ -35,10 +34,10 @@ export function BaseSidebar({
   roleLabel,
   showModeSwitcher = false,
   showGlobalRoleSwitcher = false,
-  currentMode = 'instructor',
   roleType = 'tu',
   showBackToTA = false,
-}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; currentMode?: ViewMode; roleType?: RoleType }) {
+  showLogout = true,
+}: BaseSidebarProps & { showModeSwitcher?: boolean; showGlobalRoleSwitcher?: boolean; roleType?: RoleType; showLogout?: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -129,14 +128,6 @@ export function BaseSidebar({
   const isSuperAdmin = roleType === 'sa';
   const logoUrl = isSuperAdmin ? null : (isDarkMode ? branding?.darkLogoUrl : branding?.logoUrl) || branding?.logoUrl;
   const platformName = isSuperAdmin ? 'Learning Hub' : (branding?.tenantName || 'Learning Hub');
-
-  const handleModeChange = (mode: ViewMode) => {
-    if (mode === 'learner') {
-      navigate(prefixPath('/tu/b2c/mypage'));
-    } else {
-      navigate(prefixPath('/tu/dashboard'));
-    }
-  };
 
   // Color tokens - Dynamic based on theme
   const colors: SidebarColors = isDarkMode
@@ -254,21 +245,7 @@ export function BaseSidebar({
           )}
         </div>
 
-        {/* Mode Switcher (TU only) */}
-        {showModeSwitcher && (
-          <div className={cn('mb-3', !isExpanded && 'flex justify-center')}>
-            <ModeSwitcher
-              currentMode={currentMode}
-              isExpanded={isExpanded}
-              language={language}
-              colors={colors}
-              onModeChange={handleModeChange}
-              isDarkMode={isDarkMode}
-            />
-          </div>
-        )}
-
-        {/* Global Role Switcher (TA, CO, TU 간 전환) */}
+        {/* Global Role Switcher (TA, CO, TU, USER 간 전환) */}
         {showGlobalRoleSwitcher && (
           <div className={cn('mb-3', !isExpanded && 'flex justify-center')}>
             <GlobalRoleSwitcher
@@ -537,43 +514,45 @@ export function BaseSidebar({
           )}
 
           {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
-            style={{
-              width: isExpanded ? '100%' : '44px',
-              height: '44px',
-              padding: isExpanded ? '0 16px' : '0',
-              justifyContent: 'center',
-              color: colors.textPrimary,
-              margin: isExpanded ? '0' : '0 auto',
-              opacity: isLoggingOut ? 0.5 : 1,
-              cursor: isLoggingOut ? 'not-allowed' : 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              if (!isLoggingOut) {
-                e.currentTarget.style.backgroundColor = colors.hover;
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            title={language === 'ko' ? '로그아웃' : 'Logout'}
-          >
-            <LogOut
-              className="w-5 h-5 flex-shrink-0"
-              style={{ color: colors.textSecondary }}
-            />
-            {isExpanded && (
-              <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
-                {isLoggingOut
-                  ? (language === 'ko' ? '로그아웃 중...' : 'Logging out...')
-                  : (language === 'ko' ? '로그아웃' : 'Logout')
+          {showLogout && (
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+              style={{
+                width: isExpanded ? '100%' : '44px',
+                height: '44px',
+                padding: isExpanded ? '0 16px' : '0',
+                justifyContent: 'center',
+                color: colors.textPrimary,
+                margin: isExpanded ? '0' : '0 auto',
+                opacity: isLoggingOut ? 0.5 : 1,
+                cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoggingOut) {
+                  e.currentTarget.style.backgroundColor = colors.hover;
                 }
-              </span>
-            )}
-          </button>
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+              title={language === 'ko' ? '로그아웃' : 'Logout'}
+            >
+              <LogOut
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: colors.textSecondary }}
+              />
+              {isExpanded && (
+                <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
+                  {isLoggingOut
+                    ? (language === 'ko' ? '로그아웃 중...' : 'Logging out...')
+                    : (language === 'ko' ? '로그아웃' : 'Logout')
+                  }
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Collapse Toggle */}
           <button

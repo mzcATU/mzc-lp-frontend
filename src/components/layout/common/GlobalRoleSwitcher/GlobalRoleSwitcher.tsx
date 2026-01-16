@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Shield, Briefcase, GraduationCap } from 'lucide-react';
+import { ChevronDown, Shield, Briefcase, BookOpen, GraduationCap } from 'lucide-react';
 import type { SidebarColors } from '@/types';
 import { cn } from '@/utils/cn';
 import { useSubdomainPath } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
 
-// 글로벌 역할 타입 (TA, CO, TU)
-export type GlobalRole = 'TA' | 'CO' | 'TU';
+// 글로벌 역할 타입 (TA, CO, TU, USER)
+export type GlobalRole = 'TA' | 'CO' | 'TU' | 'USER';
 
 interface GlobalRoleSwitcherProps {
   currentRole: GlobalRole;
@@ -21,18 +21,20 @@ interface GlobalRoleSwitcherProps {
 const roleIcons: Record<GlobalRole, typeof Shield> = {
   TA: Shield,
   CO: Briefcase,
-  TU: GraduationCap,
+  TU: BookOpen,
+  USER: GraduationCap,
 };
 
 // 역할별 라벨
 const roleLabels: Record<GlobalRole, { ko: string; en: string }> = {
-  TA: { ko: '테넌트 관리자', en: 'Tenant Admin' },
+  TA: { ko: '관리자', en: 'Admin' },
   CO: { ko: '교육 운영자', en: 'Course Operator' },
-  TU: { ko: '강의 관리자', en: 'Course Manager' },
+  TU: { ko: '강사', en: 'Instructor' },
+  USER: { ko: '학습자', en: 'Learner' },
 };
 
 // 역할별 기본 경로
-const roleDefaultPaths: Record<GlobalRole, string> = {
+const roleDefaultPaths: Record<Exclude<GlobalRole, 'USER'>, string> = {
   TA: '/ta/dashboard',
   CO: '/co/dashboard',
   TU: '/tu/dashboard',
@@ -66,40 +68,53 @@ export function GlobalRoleSwitcher({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 사용자가 가진 역할만 표시
+  // 사용자가 가진 역할만 표시 (순서: 학습자 → 강사 → 교육 운영자 → 관리자)
   const availableRoles: GlobalRole[] = (() => {
-    const roles: GlobalRole[] = [];
-
     // roles 배열이 있으면 사용 (1:N 관계 지원)
     if (userRoles && userRoles.length > 0) {
+      const roles: GlobalRole[] = [];
+      // 사용자에게 부여된 역할에 따라 표시
+      if (userRoles.includes('USER')) {
+        roles.push('USER');
+      }
+      if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) {
+        roles.push('TU');
+      }
+      if (userRoles.includes('OPERATOR')) {
+        roles.push('CO');
+      }
       if (userRoles.includes('TENANT_ADMIN')) {
         roles.push('TA');
       }
-      if (userRoles.includes('OPERATOR') || userRoles.includes('TENANT_ADMIN')) {
-        roles.push('CO');
-      }
-      roles.push('TU');
       return roles;
     }
 
     // 단일 role 기반 (기존 호환)
     if (userRole === 'TENANT_ADMIN') {
-      roles.push('TA', 'CO', 'TU');
+      return ['USER', 'TU', 'CO', 'TA'];
     } else if (userRole === 'OPERATOR') {
-      roles.push('CO', 'TU');
+      return ['USER', 'TU', 'CO'];
     } else {
-      // 기본: 현재 역할만
+      // 기본: 현재 역할만 표시
       return [currentRole];
     }
-
-    return roles;
   })();
 
   const CurrentIcon = roleIcons[currentRole];
 
+  // 역할이 1개 이하면 스위처를 표시하지 않음
+  if (availableRoles.length <= 1) {
+    return null;
+  }
+
   const handleRoleChange = (role: GlobalRole) => {
     if (role !== currentRole) {
-      navigate(prefixPath(roleDefaultPaths[role]));
+      if (role === 'USER') {
+        // TODO: 테넌트 설정(siteMode)에 따라 B2B/B2C 경로 결정 (현재는 B2C 기본)
+        navigate(prefixPath('/tu/b2c/mypage'));
+      } else {
+        navigate(prefixPath(roleDefaultPaths[role]));
+      }
     }
     setIsOpen(false);
   };

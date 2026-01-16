@@ -38,7 +38,7 @@ export function LandingFooter() {
 
   return (
     <footer className="landing-footer-wrapper landing-text-secondary text-sm py-16">
-      <div className="w-full px-4 md:px-8 lg:px-16">
+      <div className="w-full px-6 md:px-12 lg:px-16">
         {/* Middle Section - Company Info */}
         <div className="landing-border-top pt-8 pb-8">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-8">

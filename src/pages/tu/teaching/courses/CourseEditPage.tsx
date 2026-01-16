@@ -149,6 +149,19 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const handleGoToStep = (step: number) => setCurrentStep(step);
   const handleClose = () => navigate(prefixPath('/tu/teaching/courses'));
 
+  /**
+   * 미리보기 - 새 탭에서 수강생 뷰로 강의 정보 표시
+   */
+  const handlePreview = () => {
+    const previewData = {
+      formData,
+      categories,
+      language,
+    };
+    sessionStorage.setItem('course-preview-data', JSON.stringify(previewData));
+    window.open(prefixPath('/tu/teaching/courses/preview'), '_blank');
+  };
+
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveDraft = async () => {
@@ -342,6 +355,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
               formData={formData}
               categories={categories}
               onGoToStep={handleGoToStep}
+              onPreview={handlePreview}
             />
           )}
         </div>

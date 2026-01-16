@@ -96,19 +96,12 @@ export function CertificationsPage() {
 
   return (
     <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      <div className="max-w-[1400px] mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              isDark ? 'bg-yellow-500/20' : 'bg-amber-100'
-            }`}>
-              <Award className={`w-5 h-5 ${isDark ? 'text-yellow-400' : 'text-amber-600'}`} />
-            </div>
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {t.mypage.certificates}
-            </h1>
-          </div>
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t.mypage.certificates}
+          </h1>
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
             {t.mypage.certificatesDesc}
           </p>

@@ -16,9 +16,10 @@ import {
   MyPostsPage,
   MyCommentsPage,
   UserNoticesPage,
+  B2CSettingsPage,
+  B2CPreferencesPage,
 } from '@/pages/tu';
 import {
-  SettingsPage,
   SettingsSecurityPage,
   SettingsNotificationsPage,
   SettingsAppearancePage,
@@ -80,7 +81,8 @@ export const tuMyPageRoutes = (
     <Route path="posts" element={<MyPostsPage />} />
     <Route path="comments" element={<MyCommentsPage />} />
     <Route path="notices" element={<UserNoticesPage />} />
-    <Route path="settings" element={<SettingsPage />} />
+    <Route path="settings" element={<B2CSettingsPage />} />
+    <Route path="settings/preferences" element={<B2CPreferencesPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />
     <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
     <Route path="settings/language" element={<SettingsLanguagePage />} />
@@ -109,8 +111,9 @@ export const tuMyPageRoutes = (
     {/* 공지사항 */}
     <Route path="notices" element={<UserNoticesPage />} />
 
-    {/* 설정 */}
-    <Route path="settings" element={<SettingsPage />} />
+    {/* 설정 (B2C 전용 카드 형식) */}
+    <Route path="settings" element={<B2CSettingsPage />} />
+    <Route path="settings/preferences" element={<B2CPreferencesPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />
     <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
     <Route path="settings/language" element={<SettingsLanguagePage />} />

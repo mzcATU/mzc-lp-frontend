@@ -16,6 +16,7 @@ import {
   File,
   ChevronRight,
   ChevronDown,
+  Eye,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Label, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
@@ -117,6 +118,7 @@ interface Step3ReviewProps {
   formData: CourseFormData;
   categories: CategoryResponse[];
   onGoToStep: (step: number) => void;
+  onPreview: () => void;
 }
 
 export function Step3Review({
@@ -124,6 +126,7 @@ export function Step3Review({
   formData,
   categories,
   onGoToStep,
+  onPreview,
 }: Readonly<Step3ReviewProps>) {
   const getText = (key: TranslationKey) =>
     language === 'ko' ? translations[key].ko : translations[key].en;
@@ -167,9 +170,15 @@ export function Step3Review({
   return (
     <div className="flex flex-col gap-6">
       {/* 헤더 */}
-      <div>
-        <h2 className="text-text-primary mb-2">{getText('reviewTitle')}</h2>
-        <p className="text-text-secondary m-0">{getText('reviewDesc')}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-text-primary mb-2">{getText('reviewTitle')}</h2>
+          <p className="text-text-secondary m-0">{getText('reviewDesc')}</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={onPreview} className="shrink-0">
+          <Eye size={14} />
+          {getText('preview')}
+        </Button>
       </div>
 
       {/* 경고 메시지 또는 완료 메시지 */}

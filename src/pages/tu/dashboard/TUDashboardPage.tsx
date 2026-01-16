@@ -4,8 +4,6 @@ import {
   BookOpen,
   Users,
   FileEdit,
-  Plus,
-  FolderPlus,
   Loader2,
   ArrowRight,
 } from 'lucide-react';
@@ -39,11 +37,6 @@ const t = {
   students: { ko: '수강생', en: 'Students' },
   completion: { ko: '완료율', en: 'Completion' },
   emptyActive: { ko: '운영중인 강의가 없습니다', en: 'No active courses' },
-
-  // 빠른 시작
-  quickActionTitle: { ko: '빠른 시작', en: 'Quick Actions' },
-  createCourse: { ko: '새 강의 만들기', en: 'Create New Course' },
-  createContent: { ko: '콘텐츠 등록', en: 'Upload Content' },
 
   // 로딩
   loading: { ko: '데이터를 불러오는 중...', en: 'Loading data...' },
@@ -225,26 +218,6 @@ export function TUDashboardPage({ language = 'ko' }: Readonly<TUDashboardPagePro
         )}
       </Card>
 
-      {/* 빠른 시작 */}
-      <Card className="p-6">
-        <h3 className="text-text-primary mb-4 flex items-center gap-2">
-          {getText('quickActionTitle')}
-        </h3>
-        <div className="flex gap-3 flex-wrap">
-          <Button onClick={() => navigate(prefixPath('/tu/teaching/courses/create'))}>
-            <Plus size={18} />
-            {getText('createCourse')}
-          </Button>
-          <Button
-            variant="ghost"
-            className="border border-border"
-            onClick={() => navigate(prefixPath('/tu/teaching/content/create'))}
-          >
-            <FolderPlus size={18} />
-            {getText('createContent')}
-          </Button>
-        </div>
-      </Card>
     </div>
   );
 }
