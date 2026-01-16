@@ -27,11 +27,11 @@ export function CourseOperatorSidebar(props: CourseOperatorSidebarProps) {
   const { data: layoutData } = usePublicLayout();
   const sidebarSettings = layoutData?.sidebarCOSettings as { enabled?: boolean; items?: BrandingSidebarItem[] } | undefined;
 
-  // 사용자 역할 가져오기
-  const userRole = useAuthStore((state) => state.user?.role);
+  // 사용자 역할 가져오기 (다중 역할 지원)
+  const userRoles = useAuthStore((state) => state.user?.roles);
 
-  // TENANT_ADMIN만 글로벌 역할 스위처 표시
-  const showGlobalRoleSwitcher = userRole === 'TENANT_ADMIN';
+  // 부여된 역할이 2개 이상이면 글로벌 역할 스위처 표시
+  const showGlobalRoleSwitcher = (userRoles?.length ?? 0) >= 2;
 
   // 브랜딩 설정을 기반으로 메뉴 필터링
   const filteredMenuData = useMemo((): MenuItem[] => {

@@ -3,6 +3,8 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '@/services/ta';
+import { useAuthStore } from '@/store/common/authStore';
+import { authKeys } from '@/hooks/common/auth/useAuth';
 import type {
   UserListParams,
   UpdateUserDetailRequest,
@@ -100,10 +102,18 @@ export const useUpdateUserRoles = () => {
   return useMutation({
     mutationFn: ({ id, request }: { id: number; request: UpdateUserRolesRequest }) =>
       userService.updateUserRoles(id, request),
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.roles(variables.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+
+      // 현재 로그인한 사용자의 역할이 변경된 경우 store 직접 업데이트
+      const currentUserId = useAuthStore.getState().user?.id;
+      if (currentUserId === variables.id) {
+        queryClient.invalidateQueries({ queryKey: authKeys.me() });
+        // store에 새 roles 직접 업데이트
+        useAuthStore.getState().updateUser({ roles: variables.request.roles });
+      }
     },
   });
 };
@@ -119,6 +129,16 @@ export const useAddUserRole = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.roles(variables.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+
+      // 현재 로그인한 사용자의 역할이 변경된 경우 store 직접 업데이트
+      const authState = useAuthStore.getState();
+      if (authState.user?.id === variables.id) {
+        queryClient.invalidateQueries({ queryKey: authKeys.me() });
+        const currentRoles = authState.user?.roles || [];
+        if (!currentRoles.includes(variables.role)) {
+          authState.updateUser({ roles: [...currentRoles, variables.role] });
+        }
+      }
     },
   });
 };
@@ -134,6 +154,14 @@ export const useRemoveUserRole = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.roles(variables.id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+
+      // 현재 로그인한 사용자의 역할이 변경된 경우 store 직접 업데이트
+      const authState = useAuthStore.getState();
+      if (authState.user?.id === variables.id) {
+        queryClient.invalidateQueries({ queryKey: authKeys.me() });
+        const currentRoles = authState.user?.roles || [];
+        authState.updateUser({ roles: currentRoles.filter(r => r !== variables.role) });
+      }
     },
   });
 };
