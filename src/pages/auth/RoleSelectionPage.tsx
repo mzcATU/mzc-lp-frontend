@@ -1,41 +1,67 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, GraduationCap, Shield, Sparkles } from 'lucide-react';
+import { ArrowRight, GraduationCap, Shield, Sparkles, Settings, Pencil } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/common/authStore';
 
 // 카드 데이터 타입
 interface CardData {
-  id: 'learner' | 'admin';
+  id: string;
   title: string;
   description: string;
   image: string;
   icon: React.ReactNode;
-  themeColor: 'blue' | 'purple';
+  themeColor: 'blue' | 'purple' | 'green' | 'orange';
   delay: number;
   path: string;
+  roles: string[]; // 이 카드를 표시할 역할들
 }
 
-// 카드 설정 데이터
-const CARD_DATA: CardData[] = [
+// 전체 카드 설정 데이터
+const ALL_CARD_DATA: CardData[] = [
   {
     id: 'learner',
     title: '학습자 모드',
-    description: '기업 교육 프로그램에 참여하고, 나의 학습 현황을 확인하세요.',
+    description: '교육 프로그램에 참여하고, 나의 학습 현황을 확인하세요.',
     image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <GraduationCap size={32} className="text-blue-400" />,
     themeColor: 'blue',
     delay: 0.3,
-    path: '/tu/b2b/mypage',
+    path: '/tu/b2c',
+    roles: ['USER'],
+  },
+  {
+    id: 'teaching',
+    title: '강사/디자이너 모드',
+    description: '강의를 제작하고, 교육 콘텐츠를 관리하세요.',
+    image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    icon: <Pencil size={32} className="text-green-400" />,
+    themeColor: 'green',
+    delay: 0.35,
+    path: '/tu/teaching',
+    roles: ['INSTRUCTOR', 'DESIGNER'],
+  },
+  {
+    id: 'operator',
+    title: '운영자 모드',
+    description: '교육 과정을 운영하고, 수강생을 관리하세요.',
+    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    icon: <Settings size={32} className="text-orange-400" />,
+    themeColor: 'orange',
+    delay: 0.4,
+    path: '/co/dashboard',
+    roles: ['OPERATOR'],
   },
   {
     id: 'admin',
     title: '관리자 모드',
-    description: '테넌트 관리, 사용자 관리, 교육 과정 운영 등 관리 기능을 사용하세요.',
+    description: '테넌트 설정, 사용자 관리, 시스템 관리 기능을 사용하세요.',
     image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <Shield size={32} className="text-purple-400" />,
     themeColor: 'purple',
-    delay: 0.4,
+    delay: 0.45,
     path: '/ta/dashboard',
+    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN'],
   },
 ];
 
@@ -47,7 +73,7 @@ interface SelectionCardProps {
   icon: React.ReactNode;
   onClick: () => void;
   delay: number;
-  themeColor: 'blue' | 'purple';
+  themeColor: 'blue' | 'purple' | 'green' | 'orange';
 }
 
 function SelectionCard({
@@ -62,11 +88,15 @@ function SelectionCard({
   const accentClasses = {
     blue: 'group-hover:shadow-blue-500/20 group-hover:border-blue-500/50',
     purple: 'group-hover:shadow-purple-500/20 group-hover:border-purple-500/50',
+    green: 'group-hover:shadow-green-500/20 group-hover:border-green-500/50',
+    orange: 'group-hover:shadow-orange-500/20 group-hover:border-orange-500/50',
   }[themeColor];
 
   const buttonClasses = {
     blue: 'bg-blue-600 hover:bg-blue-500',
     purple: 'bg-purple-600 hover:bg-purple-500',
+    green: 'bg-green-600 hover:bg-green-500',
+    orange: 'bg-orange-600 hover:bg-orange-500',
   }[themeColor];
 
   return (
@@ -133,6 +163,14 @@ export function RoleSelectionPage() {
     return path;
   };
 
+  // 사용자 역할에 맞는 카드만 필터링
+  const availableCards = useMemo(() => {
+    const userRoles = user?.roles || [];
+    return ALL_CARD_DATA.filter(card =>
+      card.roles.some(role => userRoles.includes(role as typeof userRoles[number]))
+    );
+  }, [user?.roles]);
+
   const handleSelect = (card: CardData) => {
     navigate(prefixPath(card.path));
   };
@@ -178,7 +216,7 @@ export function RoleSelectionPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl z-10">
-        {CARD_DATA.map((card) => (
+        {availableCards.map((card, index) => (
           <SelectionCard
             key={card.id}
             title={card.title}
@@ -186,7 +224,7 @@ export function RoleSelectionPage() {
             image={card.image}
             icon={card.icon}
             onClick={() => handleSelect(card)}
-            delay={card.delay}
+            delay={0.3 + index * 0.1}
             themeColor={card.themeColor}
           />
         ))}

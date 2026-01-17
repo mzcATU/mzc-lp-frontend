@@ -80,9 +80,13 @@ export const useLogin = () => {
         return;
       }
 
-      // 다중 역할을 가진 사용자는 역할 선택 페이지로 리다이렉트
+      // 다중 역할 체크: 관리자 역할 + USER 역할을 동시에 가진 경우 역할 선택 페이지로 리다이렉트
       const roles = userDetail.roles || [];
-      if (roles.length > 1) {
+      const adminLikeRoles = ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'OPERATOR', 'DESIGNER', 'INSTRUCTOR'];
+      const hasAdminLikeRole = roles.some(role => adminLikeRoles.includes(role));
+      const hasUserRole = roles.includes('USER');
+
+      if (hasAdminLikeRole && hasUserRole) {
         const selectRolePath = `${subdomainPrefix}/select-role`;
         navigate(selectRolePath);
         return;
