@@ -18,4 +18,4 @@ export { TenantSettingsPage, UserManagementSettingsPage } from './settings';
 export { FeatureSettingsPage, TenantCategoryPage } from './features';
 
 // Notices
-export { TenantNoticesPage, SystemNoticesPage, NoticeInboxPage } from './notices';
+export { TenantNoticesPage, SystemNoticesPage, NoticeInboxPage, NoticeDistributionPage } from './notices';

@@ -10,6 +10,9 @@ import type {
   TenantNoticeSearchParams,
   CreateTenantNoticeRequest,
   UpdateTenantNoticeRequest,
+  TenantNoticeDistributionStatsResponse,
+  TenantNoticeDistributionSummary,
+  TenantNoticeDistributionDetail,
 } from '@/types/ta/tenantNotice.types';
 
 /**
@@ -146,6 +149,41 @@ export const tenantNoticeService = {
   async countVisibleNotices(): Promise<number> {
     const { data } = await axiosInstance.get<number>(
       API_ENDPOINTS.TENANT_NOTICES.TU_COUNT
+    );
+    return data;
+  },
+
+  // ============================================
+  // 배포 통계 API
+  // ============================================
+
+  /**
+   * 배포 통계 목록 조회
+   */
+  async getDistributionStats(params?: { page?: number; size?: number }): Promise<TenantNoticeDistributionStatsResponse> {
+    const { data } = await axiosInstance.get<TenantNoticeDistributionStatsResponse>(
+      API_ENDPOINTS.TENANT_NOTICES.DISTRIBUTION_STATS,
+      { params }
+    );
+    return data;
+  },
+
+  /**
+   * 배포 통계 요약 조회
+   */
+  async getDistributionSummary(): Promise<TenantNoticeDistributionSummary> {
+    const { data } = await axiosInstance.get<TenantNoticeDistributionSummary>(
+      API_ENDPOINTS.TENANT_NOTICES.DISTRIBUTION_SUMMARY
+    );
+    return data;
+  },
+
+  /**
+   * 특정 공지사항의 배포 상세 현황 조회
+   */
+  async getDistributionDetail(noticeId: number): Promise<TenantNoticeDistributionDetail> {
+    const { data } = await axiosInstance.get<TenantNoticeDistributionDetail>(
+      API_ENDPOINTS.TENANT_NOTICES.DISTRIBUTION_BY_ID(noticeId)
     );
     return data;
   },

@@ -411,6 +411,10 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenant/notices/${id}`,
     PUBLISH: (id: number) => `/tenant/notices/${id}/publish`,
     ARCHIVE: (id: number) => `/tenant/notices/${id}/archive`,
+    // 배포 통계
+    DISTRIBUTION_STATS: '/tenant/notices/distribution/stats',
+    DISTRIBUTION_SUMMARY: '/tenant/notices/distribution/summary',
+    DISTRIBUTION_BY_ID: (id: number) => `/tenant/notices/${id}/distribution`,
     // TU/TO 조회용
     TU_BASE: '/tu/notices',
     TU_BY_ID: (id: number) => `/tu/notices/${id}`,

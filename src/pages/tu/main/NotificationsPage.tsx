@@ -1,7 +1,7 @@
 import { useState, useEffect, ComponentType } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
-import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight, Zap } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -15,16 +15,17 @@ interface NotificationsPageProps {
 }
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications, useUserNotice } from '@/hooks/tu';
 import type { NotificationType, NotificationItem } from '@/types/tu';
-import { getNotificationDeepLink } from '@/types/tu';
+import { getNotificationDeepLink, getDisplayNotificationType } from '@/types/tu';
 import { useAuthStore } from '@/store/common/authStore';
 
-// 알림 타입별 필터 옵션
+// 알림 타입별 필터 옵션 (NOTICE: 공지사항, SYSTEM: 시스템 알림 트리거)
 const notificationTypes: { id: NotificationType | 'all'; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: 'COMMENT', label: '댓글' },
   { id: 'LIKE', label: '좋아요' },
   { id: 'COURSE', label: '강의' },
-  { id: 'SYSTEM', label: '공지사항' },
+  { id: 'NOTICE', label: '공지사항' },
+  { id: 'SYSTEM', label: '시스템' },
   { id: 'ASSIGNMENT', label: '과제' },
 ];
 
@@ -34,7 +35,8 @@ const getNotificationIcon = (type: NotificationType) => {
     case 'COMMENT': return MessageSquare;
     case 'LIKE': return Heart;
     case 'COURSE': return BookOpen;
-    case 'SYSTEM': return Megaphone;
+    case 'NOTICE': return Megaphone;  // 공지사항은 메가폰
+    case 'SYSTEM': return Zap;        // 시스템 알림은 번개
     case 'ASSIGNMENT': return FileText;
     default: return AlertCircle;
   }
@@ -46,7 +48,8 @@ const getIconColor = (type: NotificationType) => {
     case 'COMMENT': return 'text-[#10b981] bg-[#10b981]/20';
     case 'LIKE': return 'text-[#f43f5e] bg-[#f43f5e]/20';
     case 'COURSE': return 'text-[#6778ff] bg-[#6778ff]/20';
-    case 'SYSTEM': return 'text-[#f59e0b] bg-[#f59e0b]/20';
+    case 'NOTICE': return 'text-[#f59e0b] bg-[#f59e0b]/20';  // 공지사항은 amber
+    case 'SYSTEM': return 'text-[#64748b] bg-[#64748b]/20';  // 시스템은 slate
     case 'ASSIGNMENT': return 'text-[#8b5cf6] bg-[#8b5cf6]/20';
     default: return 'text-gray-400 bg-gray-400/20';
   }
@@ -131,16 +134,18 @@ export function NotificationsPage({
   const [activeType, setActiveType] = useState<NotificationType | 'all'>('all');
   const { isAuthenticated } = useAuthStore();
 
-  // URL 쿼리 파라미터로 탭 설정 (예: ?tab=SYSTEM)
+  // URL 쿼리 파라미터로 탭 설정 (예: ?tab=NOTICE)
   useEffect(() => {
-    if (tabParam && ['COMMENT', 'LIKE', 'COURSE', 'SYSTEM', 'ASSIGNMENT'].includes(tabParam)) {
+    if (tabParam && ['COMMENT', 'LIKE', 'COURSE', 'NOTICE', 'SYSTEM', 'ASSIGNMENT'].includes(tabParam)) {
       setActiveType(tabParam as NotificationType);
     }
   }, [tabParam]);
 
-  // React Query 훅
-  const filter = activeType === 'all' ? undefined : { type: activeType };
-  const { data: apiNotificationData, isLoading, error } = useNotifications(filter);
+  // React Query 훅 - NOTICE/SYSTEM 필터는 프론트에서 처리 (백엔드는 SYSTEM 타입만 있음)
+  const backendFilter = activeType === 'all' ? undefined
+    : activeType === 'NOTICE' || activeType === 'SYSTEM' ? { type: 'SYSTEM' as NotificationType }
+    : { type: activeType };
+  const { data: apiNotificationData, isLoading, error } = useNotifications(backendFilter);
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
   const deleteNotificationMutation = useDeleteNotification();
@@ -149,10 +154,10 @@ export function NotificationsPage({
   // 실제 사용할 데이터 결정
   const allNotifications = apiNotificationData?.notifications || [];
 
-  // 필터링 적용
+  // 필터링 적용 (getDisplayNotificationType으로 NOTICE/SYSTEM 구분)
   const filteredNotifications = activeType === 'all'
     ? allNotifications
-    : allNotifications.filter(n => n.type === activeType);
+    : allNotifications.filter(n => getDisplayNotificationType(n) === activeType);
 
   const unreadCount = allNotifications.filter(n => !n.isRead).length;
 
@@ -333,7 +338,8 @@ export function NotificationsPage({
         ) : (
           <div className="space-y-3">
             {filteredNotifications.map((notification) => {
-              const IconComponent = getNotificationIcon(notification.type);
+              const displayType = getDisplayNotificationType(notification);
+              const IconComponent = getNotificationIcon(displayType);
               const deepLink = getNotificationDeepLink(notification);
               return (
                 <div
@@ -350,13 +356,13 @@ export function NotificationsPage({
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   } ${!notification.isRead ? 'border-l-4 border-l-[#6778ff]' : ''}`}
                 >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getIconColor(notification.type)}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getIconColor(displayType)}`}>
                     <IconComponent className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
-                      {/* SYSTEM 알림이고 NOTICE 참조인 경우 실제 공지 데이터 표시 */}
-                      {notification.type === 'SYSTEM' ? (
+                      {/* NOTICE 타입 (공지사항)인 경우 실제 공지 데이터 표시 */}
+                      {displayType === 'NOTICE' ? (
                         <SystemNotificationContent notification={notification} isDark={isDark} />
                       ) : (
                         <div>
