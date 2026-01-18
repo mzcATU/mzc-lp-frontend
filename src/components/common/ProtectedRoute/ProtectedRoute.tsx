@@ -24,7 +24,7 @@ export function ProtectedRoute({
   redirectTo = '/login',
 }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, currentRole } = useAuthStore();
 
   // 개발 모드에서 인증 우회
   if (DEV_BYPASS_AUTH) {
@@ -38,7 +38,17 @@ export function ProtectedRoute({
 
   // 역할 제한이 있고, 사용자 역할이 허용되지 않은 경우
   if (allowedRoles && allowedRoles.length > 0 && user) {
-    if (!allowedRoles.includes(user.role)) {
+    // currentRole이 있으면 현재 선택된 역할로 체크
+    // 없으면 roles 배열 또는 기본 role로 체크
+    const activeRole = currentRole || user.role;
+    const userRoles = user.roles || [user.role];
+
+    // 현재 역할이 허용된 역할 목록에 있는지 확인
+    const hasPermission = currentRole
+      ? allowedRoles.includes(activeRole)
+      : allowedRoles.some(role => userRoles.includes(role));
+
+    if (!hasPermission) {
       // 권한이 없으면 403 또는 홈으로 리다이렉트
       return <Navigate to="/unauthorized" replace />;
     }

@@ -4,6 +4,7 @@ import type {
   LoginRequest,
   RegisterRequest,
   RefreshTokenRequest,
+  SwitchRoleRequest,
   TokenResponse,
   UserResponse,
 } from '@/types/common/auth.types';
@@ -51,5 +52,16 @@ export const authService = {
   logout: async (refreshToken: string): Promise<void> => {
     const request: RefreshTokenRequest = { refreshToken };
     await axiosInstance.post(API_ENDPOINTS.AUTH.LOGOUT, request);
+  },
+
+  /**
+   * 역할 전환
+   */
+  switchRole: async (request: SwitchRoleRequest): Promise<TokenResponse> => {
+    const response = await axiosInstance.post<TokenResponse>(
+      API_ENDPOINTS.AUTH.SWITCH_ROLE,
+      request
+    );
+    return response.data;
   },
 };
