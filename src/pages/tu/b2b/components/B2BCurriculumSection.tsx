@@ -1,4 +1,4 @@
-import { PlayCircle, Video, FileText, Image as ImageIcon, Link as LinkIcon, BookOpen, CheckCircle } from 'lucide-react';
+import { PlayCircle, Video, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
@@ -84,7 +84,7 @@ export function B2BCurriculumSection({ curriculum, enrollmentId, onItemClick, is
             >
               {item.itemName}
             </p>
-            {item.duration !== undefined && item.duration > 0 && (
+            {item.duration != null && item.duration > 0 && (
               <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                 {formatDuration(item.duration)}
               </p>

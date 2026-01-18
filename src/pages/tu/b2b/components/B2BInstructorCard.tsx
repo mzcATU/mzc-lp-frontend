@@ -1,4 +1,4 @@
-import { Users, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 interface B2BInstructorCardProps {
   instructorName: string;

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useSubdomainPath } from '@/hooks/common';
 import {
@@ -27,11 +27,6 @@ import {
   DELIVERY_TYPE_LABELS,
   PROGRAM_LEVEL_LABELS,
 } from '@/types/tu/courseTimeCatalog.types';
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-}
 
 // 학습 포인트 Mock 데이터
 const MOCK_LEARNING_POINTS = [

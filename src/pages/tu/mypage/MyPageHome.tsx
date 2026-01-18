@@ -30,6 +30,7 @@ import type { EnrollmentStatus } from '@/services/tu/enrollmentService';
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',
+  ENROLLED: 'blue',
   REJECTED: 'red',
   CANCELLED: 'gray',
   COMPLETED: 'green',
@@ -158,6 +159,7 @@ export function MyPageHome() {
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.mypage.pending,
     APPROVED: t.mypage.inProgress,
+    ENROLLED: t.mypage.inProgress,
     REJECTED: language === 'ko' ? '반려됨' : 'Rejected',
     CANCELLED: language === 'ko' ? '취소됨' : 'Cancelled',
     COMPLETED: t.mypage.completed,
