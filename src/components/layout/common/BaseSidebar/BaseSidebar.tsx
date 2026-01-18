@@ -14,6 +14,8 @@ import { cn } from '@/utils/cn';
 import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { GlobalRoleSwitcher, type GlobalRole } from '../GlobalRoleSwitcher';
 import { useSubdomainPath } from '@/hooks/common';
+import { useAuthStore } from '@/store/common/authStore';
+import type { TenantRole } from '@/types/common/auth.types';
 
 // 역할 타입
 type RoleType = 'sa' | 'ta' | 'co' | 'tu';
@@ -100,14 +102,34 @@ export function BaseSidebar({
   // 테넌트 브랜딩 (SA 제외)
   const { branding } = useTenantBranding();
 
-  // 글로벌 역할 타입 매핑
+  // authStore에서 현재 역할 가져오기
+  const storeCurrentRole = useAuthStore((state) => state.currentRole);
+  const userRole = useAuthStore((state) => state.user?.role);
+
+  // TenantRole → GlobalRole 매핑
+  const tenantRoleToGlobalRole: Record<TenantRole, GlobalRole> = {
+    SYSTEM_ADMIN: 'TA',
+    TENANT_ADMIN: 'TA',
+    OPERATOR: 'CO',
+    DESIGNER: 'DS',
+    INSTRUCTOR: 'TU',
+    USER: 'USER',
+  };
+
+  // 글로벌 역할 타입 매핑 (fallback용)
   const globalRoleMap: Record<RoleType, GlobalRole> = {
-    sa: 'TA', // SA는 TA로 매핑 (SA에서는 글로벌 스위처 안 씀)
+    sa: 'TA',
     ta: 'TA',
     co: 'CO',
     tu: 'TU',
   };
-  const currentGlobalRole = globalRoleMap[roleType];
+
+  // 현재 역할 결정: authStore의 currentRole > user.role > roleType 기반 fallback
+  const currentGlobalRole = storeCurrentRole
+    ? tenantRoleToGlobalRole[storeCurrentRole]
+    : userRole
+      ? tenantRoleToGlobalRole[userRole]
+      : globalRoleMap[roleType];
 
   // SA는 플랫폼 기본 로고, 나머지는 테넌트 브랜딩
   const isSuperAdmin = roleType === 'sa';

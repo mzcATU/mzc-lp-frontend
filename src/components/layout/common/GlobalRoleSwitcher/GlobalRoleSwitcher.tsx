@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Shield, Briefcase, BookOpen, GraduationCap, Loader2 } from 'lucide-react';
+import { ChevronDown, Shield, Briefcase, BookOpen, GraduationCap, Loader2, Pencil } from 'lucide-react';
 import type { SidebarColors } from '@/types';
 import type { TenantRole } from '@/types/common/auth.types';
 import { cn } from '@/utils/cn';
@@ -8,8 +8,8 @@ import { useSubdomainPath } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 
-// 글로벌 역할 타입 (TA, CO, TU, USER)
-export type GlobalRole = 'TA' | 'CO' | 'TU' | 'USER';
+// 글로벌 역할 타입 (TA, CO, TU, DS, USER)
+export type GlobalRole = 'TA' | 'CO' | 'TU' | 'DS' | 'USER';
 
 interface GlobalRoleSwitcherProps {
   currentRole: GlobalRole;
@@ -24,6 +24,7 @@ const roleIcons: Record<GlobalRole, typeof Shield> = {
   TA: Shield,
   CO: Briefcase,
   TU: BookOpen,
+  DS: Pencil,
   USER: GraduationCap,
 };
 
@@ -32,6 +33,7 @@ const roleLabels: Record<GlobalRole, { ko: string; en: string }> = {
   TA: { ko: '관리자', en: 'Admin' },
   CO: { ko: '교육 운영자', en: 'Course Operator' },
   TU: { ko: '강사', en: 'Instructor' },
+  DS: { ko: '설계자', en: 'Designer' },
   USER: { ko: '학습자', en: 'Learner' },
 };
 
@@ -40,6 +42,7 @@ const roleDefaultPaths: Record<Exclude<GlobalRole, 'USER'>, string> = {
   TA: '/ta/dashboard',
   CO: '/co/dashboard',
   TU: '/tu/dashboard',
+  DS: '/tu/dashboard',
 };
 
 // GlobalRole → TenantRole 매핑
@@ -47,6 +50,7 @@ const globalRoleToTenantRole: Record<GlobalRole, TenantRole> = {
   TA: 'TENANT_ADMIN',
   CO: 'OPERATOR',
   TU: 'INSTRUCTOR',
+  DS: 'DESIGNER',
   USER: 'USER',
 };
 
@@ -83,7 +87,7 @@ export function GlobalRoleSwitcher({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 사용자가 가진 역할만 표시 (순서: 학습자 → 강사 → 교육 운영자 → 관리자)
+  // 사용자가 가진 역할만 표시 (순서: 학습자 → 설계자 → 강사 → 교육 운영자 → 관리자)
   const availableRoles: GlobalRole[] = (() => {
     const roles: GlobalRole[] = [];
 
@@ -96,7 +100,10 @@ export function GlobalRoleSwitcher({
     if (rolesToCheck.includes('USER')) {
       roles.push('USER');
     }
-    if (rolesToCheck.includes('INSTRUCTOR') || rolesToCheck.includes('DESIGNER')) {
+    if (rolesToCheck.includes('DESIGNER')) {
+      roles.push('DS');
+    }
+    if (rolesToCheck.includes('INSTRUCTOR')) {
       roles.push('TU');
     }
     if (rolesToCheck.includes('OPERATOR')) {
