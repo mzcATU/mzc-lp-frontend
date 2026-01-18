@@ -91,9 +91,8 @@ export function validateCourseTimeClient(
     });
   }
 
-  // R21: LIVE만 FIXED로 제한 (UI에서 availableDurationTypes로 처리)
-  // R22: LIVE 중도등록 금지 (UI에서 handleDeliveryTypeChange로 처리)
-  // → UI 레벨에서 불가능한 조합을 선택할 수 없도록 제한했으므로 검증 불필요
+  // R21: 제거됨 - 모든 DeliveryType에서 모든 DurationType 선택 가능 (B2B 유연성 확보)
+  // R22: 제거됨 - LIVE에서도 중도등록 허용 가능 (B2B 유연성 확보)
 
   return errors;
 }

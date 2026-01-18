@@ -276,9 +276,9 @@ export const DURATION_TYPE_LABELS: Record<DurationType, string> = {
 
 /** DurationType 설명 맵 */
 export const DURATION_TYPE_DESCRIPTIONS: Record<DurationType, string> = {
-  FIXED: '특정 날짜에 시작하고 종료합니다',
-  RELATIVE: '수강 신청일로부터 지정된 기간동안 학습합니다',
-  UNLIMITED: '종료일 없이 무제한 학습합니다',
+  FIXED: '특정 시작일과 종료일 지정',
+  RELATIVE: '수강 신청일 기준 지정 기간 동안 학습',
+  UNLIMITED: '종료일 없이 무제한 학습',
 };
 
 /** QualityRating 라벨 맵 */

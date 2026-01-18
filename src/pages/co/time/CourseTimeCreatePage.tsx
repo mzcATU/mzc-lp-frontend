@@ -293,18 +293,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     return Object.keys(newErrors).length === 0;
   };
 
-  // 선택 가능한 DurationType 목록 계산
-  const availableDurationTypes = useMemo(() => {
-    // LIVE는 실시간 진행이므로 FIXED만 가능
-    if (formData.deliveryType === 'LIVE') {
-      return ['FIXED'] as DurationType[];
-    }
-
-    // ONLINE, OFFLINE, BLENDED는 모든 DurationType 지원
-    // - B2C: FIXED 선택 (일반적인 단체 수업)
-    // - B2B: RELATIVE/UNLIMITED 선택 가능 (기업 맞춤 교육)
-    return ['FIXED', 'RELATIVE', 'UNLIMITED'] as DurationType[];
-  }, [formData.deliveryType]);
+  // DurationType 비활성화 여부 계산
+  // 모든 DeliveryType에서 모든 DurationType 선택 가능 (B2B 유연성 확보)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getDurationTypeDisabled = (_type: DurationType): { disabled: boolean; reason?: string } => {
+    // 현재 모든 조합 허용 - 향후 제약 필요 시 여기에 추가
+    return { disabled: false };
+  };
 
   // DeliveryType 변경 시 DurationType 기본값 설정
   const handleDeliveryTypeChange = (type: DeliveryType) => {
@@ -315,8 +310,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       durationType: defaultDurationType,
       // FIXED가 아니면 classEndDate 초기화
       classEndDate: defaultDurationType === 'FIXED' ? prev.classEndDate : null,
-      // LIVE 선택 시 중간 합류 자동 비활성화
-      allowLateEnrollment: type === 'LIVE' ? false : prev.allowLateEnrollment,
+      // R22 제거: LIVE에서도 중도등록 허용 가능 (B2B 유연성 확보)
     }));
   };
 
@@ -932,39 +926,57 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
               </div>
 
-              {/* 학습 기간 유형 - 라디오 버튼 (DeliveryType에 따라 필터링) */}
+              {/* 학습 기간 유형 - 라디오 버튼 (비활성화 옵션 포함) */}
               <div className="space-y-3">
-                <Label>학습 기간 유형 *</Label>
-                <div className={cn(
-                  'grid grid-cols-1 gap-3',
-                  availableDurationTypes.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-1'
-                )}>
-                  {availableDurationTypes.map((value) => (
-                    <label
-                      key={value}
-                      className={cn(
-                        'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
-                        formData.durationType === value
-                          ? 'border-action-primary bg-bg-brand-active/10'
-                          : 'border-border hover:border-action-primary/50'
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="durationType"
-                        value={value}
-                        checked={formData.durationType === value}
-                        onChange={(e) => handleInputChange('durationType', e.target.value as DurationType)}
-                        className="mt-1"
-                      />
-                      <div>
-                        <span className="font-medium text-text-primary">{DURATION_TYPE_LABELS[value]}</span>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          {DURATION_TYPE_DESCRIPTIONS[value]}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
+                <Label>학습 기간 유형</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {(['FIXED', 'RELATIVE', 'UNLIMITED'] as DurationType[]).map((value) => {
+                    const { disabled, reason } = getDurationTypeDisabled(value);
+                    return (
+                      <label
+                        key={value}
+                        className={cn(
+                          'flex items-start gap-3 p-4 rounded-lg border transition-colors',
+                          disabled
+                            ? 'cursor-not-allowed opacity-50 bg-bg-subtle border-border'
+                            : 'cursor-pointer',
+                          !disabled && formData.durationType === value
+                            ? 'border-action-primary bg-bg-brand-active/10'
+                            : !disabled && 'border-border hover:border-action-primary/50'
+                        )}
+                        title={disabled ? reason : undefined}
+                      >
+                        <input
+                          type="radio"
+                          name="durationType"
+                          value={value}
+                          checked={formData.durationType === value}
+                          onChange={(e) => !disabled && handleInputChange('durationType', e.target.value as DurationType)}
+                          disabled={disabled}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <span className={cn(
+                            'font-medium',
+                            disabled ? 'text-text-tertiary' : 'text-text-primary'
+                          )}>
+                            {DURATION_TYPE_LABELS[value]}
+                          </span>
+                          <p className={cn(
+                            'text-sm mt-0.5',
+                            disabled ? 'text-text-tertiary' : 'text-text-secondary'
+                          )}>
+                            {DURATION_TYPE_DESCRIPTIONS[value]}
+                          </p>
+                          {disabled && reason && (
+                            <p className="text-xs text-status-warning mt-1.5 flex items-center gap-1">
+                              <span>⚠️</span> {reason}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1237,19 +1249,17 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
               )}
 
-              {/* 중간 합류 허용 (LIVE가 아닌 경우에만) */}
-              {formData.deliveryType !== 'LIVE' && (
-                <div className="flex items-center gap-3 p-4 bg-bg-subtle rounded-lg border border-border">
-                  <Switch
-                    checked={formData.allowLateEnrollment ?? false}
-                    onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
-                  />
-                  <div>
-                    <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
-                    <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
-                  </div>
+              {/* 중간 합류 허용 - 모든 DeliveryType에서 선택 가능 (B2B 유연성 확보) */}
+              <div className="flex items-center gap-3 p-4 bg-bg-subtle rounded-lg border border-border">
+                <Switch
+                  checked={formData.allowLateEnrollment ?? false}
+                  onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
+                />
+                <div>
+                  <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
+                  <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
                 </div>
-              )}
+              </div>
 
               {/* 강사 일정 충돌 경고 */}
               {conflictInfo && (
