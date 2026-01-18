@@ -444,23 +444,27 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           <div className="flex items-center gap-2 max-w-2xl w-full">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex-1 flex items-center gap-2">
-                <div
+                <button
+                  type="button"
+                  onClick={() => handleGoToStep(step)}
                   className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm',
-                    currentStep >= step ? 'bg-btn-brand text-white' : 'bg-border text-text-secondary'
+                    'w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm cursor-pointer transition-colors',
+                    currentStep >= step ? 'bg-btn-brand text-white hover:opacity-90' : 'bg-border text-text-secondary hover:bg-border-hover'
                   )}
                 >
                   {step}
-                </div>
-                <span
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleGoToStep(step)}
                   className={cn(
-                    'text-sm',
+                    'text-sm cursor-pointer hover:underline',
                     currentStep >= step ? 'text-text-primary' : 'text-text-secondary',
                     currentStep === step && 'font-medium'
                   )}
                 >
                   {stepLabels[step - 1]}
-                </span>
+                </button>
                 {step < 3 && (
                   <div
                     className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-brand' : 'bg-border')}

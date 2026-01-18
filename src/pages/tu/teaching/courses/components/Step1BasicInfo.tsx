@@ -83,7 +83,7 @@ export function Step1BasicInfo({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">{getText('courseDescription')}</Label>
+        <Label htmlFor="description">강의 소개</Label>
         <Textarea
           id="description"
           value={formData.description}
@@ -229,7 +229,7 @@ export function Step1BasicInfo({
 
                   <div className="mb-3">
                     <Input
-                      label={`강의 이름 (${lang.name})`}
+                      label={`강의명 (${lang.name})`}
                       value={lang.courseName}
                       onChange={(e) => handleUpdateLanguage(index, { courseName: e.target.value })}
                       placeholder={`Enter course name in ${lang.name}`}
