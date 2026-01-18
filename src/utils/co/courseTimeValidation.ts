@@ -44,7 +44,7 @@ export function validateCourseTimeClient(
   if (data.durationType === 'FIXED' && !data.classEndDate) {
     errors.push({
       ruleId: 'R61',
-      message: '고정 날짜(FIXED) 방식은 학습 종료일이 필수입니다.',
+      message: '고정 날짜 방식은 학습 종료일이 필수입니다.',
     });
   }
 
@@ -55,7 +55,7 @@ export function validateCourseTimeClient(
   ) {
     errors.push({
       ruleId: 'R62',
-      message: '상대 기간(RELATIVE) 방식은 수강 일수를 1일 이상 입력해야 합니다.',
+      message: '상대 기간 방식은 수강 일수를 1일 이상 입력해야 합니다.',
     });
   }
 
@@ -63,12 +63,15 @@ export function validateCourseTimeClient(
   if (data.durationType === 'UNLIMITED' && data.classEndDate) {
     errors.push({
       ruleId: 'R63',
-      message: '무제한(UNLIMITED) 방식은 학습 종료일을 지정할 수 없습니다.',
+      message: '무제한 방식은 학습 종료일을 지정할 수 없습니다.',
     });
   }
 
-  // R64: enrollEndDate < classStartDate
+  // R64: enrollEndDate < classStartDate (수시 모집 제외)
+  // 수시 모집(enrollEndDate = '9999-12-31')인 경우 검증 스킵
+  const isAlwaysOpen = data.enrollEndDate === '9999-12-31';
   if (
+    !isAlwaysOpen &&
     data.enrollEndDate &&
     data.classStartDate &&
     new Date(data.enrollEndDate) > new Date(data.classStartDate)

@@ -2,8 +2,29 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, Save, Loader2, Calendar, Clock, BookOpen, Info, UserPlus, X, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Save,
+  Loader2,
+  Calendar,
+  CalendarDays,
+  Clock,
+  BookOpen,
+  Info,
+  UserPlus,
+  X,
+  Users,
+  Video,
+  MapPin,
+  Layers,
+  Radio,
+  CheckCircle,
+  Mail,
+  Infinity,
+} from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { designTokens } from '@/styles/admin-design-tokens';
 import {
   Button,
   Input,
@@ -15,6 +36,12 @@ import {
   SelectValue,
   Switch,
   Textarea,
+  RadioOptionCard,
+  DatePicker,
+  TimePicker,
+  ToggleGroup,
+  ToggleGroupItem,
+  Combobox,
 } from '@/components/common';
 import { useCreateTime } from '@/hooks/co/useTimeQueries';
 import { useRegisteredCourses } from '@/hooks/tu/useCourseQueries';
@@ -42,6 +69,23 @@ import { COURSE_LEVEL_LABELS, COURSE_TYPE_LABELS } from '@/types/common/course.t
 import type { CourseRegistrationResponse } from '@/types/common/course.types';
 import type { InstructorRole } from '@/types/tu/instructorAssignment.types';
 import { INSTRUCTOR_ROLE_LABELS } from '@/types/tu/instructorAssignment.types';
+import { format, parseISO, isToday, isBefore, startOfDay, addDays } from 'date-fns';
+
+// 날짜 문자열 -> Date 객체 변환
+const parseDate = (dateStr: string | null | undefined): Date | undefined => {
+  if (!dateStr) return undefined;
+  try {
+    return parseISO(dateStr);
+  } catch {
+    return undefined;
+  }
+};
+
+// Date 객체 -> 날짜 문자열 변환 (YYYY-MM-DD)
+const formatDate = (date: Date | undefined): string => {
+  if (!date) return '';
+  return format(date, 'yyyy-MM-dd');
+};
 
 interface CourseTimeCreatePageProps {
   language?: 'ko' | 'en';
@@ -356,15 +400,6 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
   }, [formData.durationType, formData.classStartDate, formData.classEndDate]);
 
-  // 요일 선택 토글 핸들러
-  const handleDayToggle = (day: DayOfWeek) => {
-    setSelectedDays((prev) => {
-      const newDays = prev.includes(day)
-        ? prev.filter((d) => d !== day)
-        : [...prev, day].sort((a, b) => a - b);
-      return newDays;
-    });
-  };
 
   // 정기 일정 업데이트 (formData에 반영)
   useEffect(() => {
@@ -690,24 +725,21 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     <span className="text-sm">{getText('noApprovedPrograms')}</span>
                   </div>
                 ) : (
-                  <Select
+                  <Combobox
+                    options={registeredCourses.map((course) => ({
+                      value: course.id.toString(),
+                      label: course.title,
+                    }))}
                     value={formData.courseId ? formData.courseId.toString() : ''}
                     onValueChange={handleCourseSelect}
-                  >
-                    <SelectTrigger
-                      id="courseSelect"
-                      className={errors.courseId ? 'border-status-error' : ''}
-                    >
-                      <SelectValue placeholder={getText('selectProgramPlaceholder')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {registeredCourses.map((course) => (
-                        <SelectItem key={course.id} value={course.id.toString()}>
-                          {course.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder={getText('selectProgramPlaceholder')}
+                    searchPlaceholder="과정명 검색..."
+                    emptyMessage="검색 결과가 없습니다"
+                    className={cn(
+                      'w-full',
+                      errors.courseId && 'border-status-error'
+                    )}
+                  />
                 )}
                 {errors.courseId && (
                   <p className="text-sm text-status-error">{errors.courseId}</p>
@@ -826,35 +858,28 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
           {/* Step 2: 일정 및 모집 */}
           {currentStep === 2 && (
             <div className="flex flex-col gap-8">
-              {/* 진행 방식 - 라디오 버튼 */}
+              {/* 진행 방식 - RadioOptionCard */}
               <div className="space-y-3">
                 <Label>{getText('deliveryType')}</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {(Object.entries(DELIVERY_TYPE_LABELS) as [DeliveryType, string][]).map(([value, label]) => (
-                    <label
+                  {([
+                    { value: 'ONLINE' as DeliveryType, icon: Video, iconBg: designTokens.badge.blue.bg, iconColor: designTokens.badge.blue.text },
+                    { value: 'OFFLINE' as DeliveryType, icon: MapPin, iconBg: designTokens.badge.orange.bg, iconColor: designTokens.badge.orange.text },
+                    { value: 'BLENDED' as DeliveryType, icon: Layers, iconBg: designTokens.badge.indigo.bg, iconColor: designTokens.badge.indigo.text },
+                    { value: 'LIVE' as DeliveryType, icon: Radio, iconBg: designTokens.badge.red.bg, iconColor: designTokens.badge.red.text },
+                  ]).map(({ value, icon, iconBg, iconColor }) => (
+                    <RadioOptionCard
                       key={value}
-                      className={cn(
-                        'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
-                        formData.deliveryType === value
-                          ? 'border-action-primary bg-bg-brand-active/10'
-                          : 'border-border hover:border-action-primary/50'
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="deliveryType"
-                        value={value}
-                        checked={formData.deliveryType === value}
-                        onChange={(e) => handleDeliveryTypeChange(e.target.value as DeliveryType)}
-                        className="mt-1"
-                      />
-                      <div>
-                        <span className="font-medium text-text-primary">{label}</span>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          {DELIVERY_TYPE_DESCRIPTIONS[value]}
-                        </p>
-                      </div>
-                    </label>
+                      name="deliveryType"
+                      value={value}
+                      label={DELIVERY_TYPE_LABELS[value]}
+                      description={DELIVERY_TYPE_DESCRIPTIONS[value]}
+                      isSelected={formData.deliveryType === value}
+                      onChange={(v) => handleDeliveryTypeChange(v as DeliveryType)}
+                      icon={icon}
+                      iconBg={iconBg}
+                      iconColor={iconColor}
+                    />
                   ))}
                 </div>
               </div>
@@ -864,16 +889,27 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="capacity">{getText('capacity')}</Label>
-                    <Input
-                      id="capacity"
-                      type="number"
-                      min="1"
-                      placeholder={getText('capacityPlaceholder')}
-                      value={formData.capacity ?? ''}
-                      onChange={(e) =>
-                        handleInputChange('capacity', e.target.value ? parseInt(e.target.value) : null)
-                      }
-                    />
+                    <div className="relative">
+                      <Input
+                        id="capacity"
+                        type="number"
+                        min="1"
+                        placeholder={getText('capacityPlaceholder')}
+                        value={formData.capacity ?? ''}
+                        onChange={(e) =>
+                          handleInputChange('capacity', e.target.value ? parseInt(e.target.value) : null)
+                        }
+                        className={cn(
+                          '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+                          formData.capacity && 'pr-8 text-right'
+                        )}
+                      />
+                      {formData.capacity && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary pointer-events-none">
+                          명
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-text-secondary">{getText('capacityHint')}</p>
                   </div>
 
@@ -893,182 +929,164 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
               </div>
 
-              {/* 수강 신청 방식 - 라디오 버튼 */}
+              {/* 수강 신청 방식 - RadioOptionCard */}
               <div className="space-y-3">
                 <Label>{getText('enrollmentMethod')}</Label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {(Object.entries(ENROLLMENT_METHOD_LABELS) as [EnrollmentMethod, string][]).map(([value, label]) => (
-                    <label
+                  {([
+                    { value: 'FIRST_COME' as EnrollmentMethod, icon: Users, iconBg: designTokens.badge.green.bg, iconColor: designTokens.badge.green.text },
+                    { value: 'APPROVAL' as EnrollmentMethod, icon: CheckCircle, iconBg: designTokens.badge.blue.bg, iconColor: designTokens.badge.blue.text },
+                    { value: 'INVITE_ONLY' as EnrollmentMethod, icon: Mail, iconBg: designTokens.badge.purple.bg, iconColor: designTokens.badge.purple.text },
+                  ]).map(({ value, icon, iconBg, iconColor }) => (
+                    <RadioOptionCard
                       key={value}
-                      className={cn(
-                        'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
-                        formData.enrollmentMethod === value
-                          ? 'border-action-primary bg-bg-brand-active/10'
-                          : 'border-border hover:border-action-primary/50'
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="enrollmentMethod"
-                        value={value}
-                        checked={formData.enrollmentMethod === value}
-                        onChange={(e) => handleInputChange('enrollmentMethod', e.target.value as EnrollmentMethod)}
-                        className="mt-1"
-                      />
-                      <div>
-                        <span className="font-medium text-text-primary">{label}</span>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                          {ENROLLMENT_METHOD_DESCRIPTIONS[value]}
-                        </p>
-                      </div>
-                    </label>
+                      name="enrollmentMethod"
+                      value={value}
+                      label={ENROLLMENT_METHOD_LABELS[value]}
+                      description={ENROLLMENT_METHOD_DESCRIPTIONS[value]}
+                      isSelected={formData.enrollmentMethod === value}
+                      onChange={(v) => handleInputChange('enrollmentMethod', v as EnrollmentMethod)}
+                      icon={icon}
+                      iconBg={iconBg}
+                      iconColor={iconColor}
+                    />
                   ))}
                 </div>
               </div>
 
-              {/* 학습 기간 유형 - 라디오 버튼 (비활성화 옵션 포함) */}
+              {/* 학습 기간 유형 - RadioOptionCard (비활성화 옵션 포함) */}
               <div className="space-y-3">
                 <Label>학습 기간 유형</Label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {(['FIXED', 'RELATIVE', 'UNLIMITED'] as DurationType[]).map((value) => {
+                  {([
+                    { value: 'FIXED' as DurationType, icon: CalendarDays, iconBg: designTokens.badge.indigo.bg, iconColor: designTokens.badge.indigo.text },
+                    { value: 'RELATIVE' as DurationType, icon: Clock, iconBg: designTokens.badge.blue.bg, iconColor: designTokens.badge.blue.text },
+                    { value: 'UNLIMITED' as DurationType, icon: Infinity, iconBg: designTokens.badge.green.bg, iconColor: designTokens.badge.green.text },
+                  ]).map(({ value, icon, iconBg, iconColor }) => {
                     const { disabled, reason } = getDurationTypeDisabled(value);
                     return (
-                      <label
+                      <RadioOptionCard
                         key={value}
-                        className={cn(
-                          'flex items-start gap-3 p-4 rounded-lg border transition-colors',
-                          disabled
-                            ? 'cursor-not-allowed opacity-50 bg-bg-subtle border-border'
-                            : 'cursor-pointer',
-                          !disabled && formData.durationType === value
-                            ? 'border-action-primary bg-bg-brand-active/10'
-                            : !disabled && 'border-border hover:border-action-primary/50'
-                        )}
-                        title={disabled ? reason : undefined}
-                      >
-                        <input
-                          type="radio"
-                          name="durationType"
-                          value={value}
-                          checked={formData.durationType === value}
-                          onChange={(e) => !disabled && handleInputChange('durationType', e.target.value as DurationType)}
-                          disabled={disabled}
-                          className="mt-1"
-                        />
-                        <div className="flex-1">
-                          <span className={cn(
-                            'font-medium',
-                            disabled ? 'text-text-tertiary' : 'text-text-primary'
-                          )}>
-                            {DURATION_TYPE_LABELS[value]}
-                          </span>
-                          <p className={cn(
-                            'text-sm mt-0.5',
-                            disabled ? 'text-text-tertiary' : 'text-text-secondary'
-                          )}>
-                            {DURATION_TYPE_DESCRIPTIONS[value]}
-                          </p>
-                          {disabled && reason && (
-                            <p className="text-xs text-status-warning mt-1.5 flex items-center gap-1">
-                              <span>⚠️</span> {reason}
-                            </p>
-                          )}
-                        </div>
-                      </label>
+                        name="durationType"
+                        value={value}
+                        label={DURATION_TYPE_LABELS[value]}
+                        description={DURATION_TYPE_DESCRIPTIONS[value]}
+                        isSelected={formData.durationType === value}
+                        onChange={(v) => handleInputChange('durationType', v as DurationType)}
+                        icon={icon}
+                        iconBg={iconBg}
+                        iconColor={iconColor}
+                        disabled={disabled}
+                        disabledMessage={reason}
+                      />
                     );
                   })}
                 </div>
+
+                {/* 클라이언트 검증 결과 표시 - 학습 기간 유형 바로 아래에 배치 */}
+                {!clientValidationResult.valid && (
+                  <ValidationResultDisplay validationResult={clientValidationResult} variant="alert" />
+                )}
               </div>
 
-              {/* 클라이언트 검증 결과 표시 */}
-              {!clientValidationResult.valid && (
-                <ValidationResultDisplay validationResult={clientValidationResult} />
-              )}
-
-              {/* 모집 기간 */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-text-primary">
+              {/* 모집 기간 - Card로 그룹화 */}
+              <div className="bg-bg-secondary rounded-lg p-5 border border-border">
+                <div className="flex items-center gap-2 text-text-primary mb-4">
                   <Calendar size={20} />
                   <h3 className="font-medium m-0">{getText('enrollmentPeriod')}</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between h-5">
-                      <Label htmlFor="enrollStartDate">{getText('enrollStartDate')} *</Label>
+                      <Label>{getText('enrollStartDate')} *</Label>
                     </div>
-                    <Input
-                      id="enrollStartDate"
-                      type="date"
-                      value={formData.enrollStartDate}
-                      onChange={(e) => handleInputChange('enrollStartDate', e.target.value)}
-                      className={errors.enrollStartDate ? 'border-status-error' : ''}
+                    <DatePicker
+                      date={parseDate(formData.enrollStartDate)}
+                      onDateChange={(date) => handleInputChange('enrollStartDate', formatDate(date))}
+                      placeholder="모집 시작일 선택"
+                      className={cn('w-full', errors.enrollStartDate && 'border-status-error')}
                     />
                     {errors.enrollStartDate && (
                       <p className="text-sm text-status-error">{errors.enrollStartDate}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between h-5">
-                      <Label htmlFor="enrollEndDate">
+                    <div className="flex items-center gap-4">
+                      <Label>
                         {getText('enrollEndDate')} {!isAlwaysOpen && '*'}
                       </Label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input
-                          type="checkbox"
+                      <div className="flex items-center gap-2">
+                        <Switch
                           checked={isAlwaysOpen}
-                          onChange={(e) => handleAlwaysOpenToggle(e.target.checked)}
-                          className="rounded border-border"
+                          onCheckedChange={handleAlwaysOpenToggle}
                         />
-                        <span className="text-text-secondary">{getText('alwaysOpen')}</span>
-                      </label>
+                        <span className="text-sm text-text-secondary">{getText('alwaysOpen')}</span>
+                      </div>
                     </div>
-                    <Input
-                      id="enrollEndDate"
-                      type="date"
-                      value={isAlwaysOpen ? '' : formData.enrollEndDate}
-                      onChange={(e) => handleInputChange('enrollEndDate', e.target.value)}
-                      className={errors.enrollEndDate ? 'border-status-error' : ''}
-                      disabled={isAlwaysOpen}
-                      placeholder={isAlwaysOpen ? getText('alwaysOpenHint') : ''}
-                    />
+                    {isAlwaysOpen ? (
+                      <div className="flex items-center h-9 px-3 rounded-md border border-border bg-bg-subtle text-text-secondary text-sm">
+                        수시 모집 (종료일 없음)
+                      </div>
+                    ) : (
+                      <DatePicker
+                        date={parseDate(formData.enrollEndDate)}
+                        onDateChange={(date) => handleInputChange('enrollEndDate', formatDate(date))}
+                        placeholder="모집 종료일 선택"
+                        className={cn('w-full', errors.enrollEndDate && 'border-status-error')}
+                      />
+                    )}
                     {errors.enrollEndDate && (
                       <p className="text-sm text-status-error">{errors.enrollEndDate}</p>
                     )}
                   </div>
                 </div>
+
+                {/* 모집 시작일이 오늘이거나 이미 지났으면 안내 메시지 표시 */}
+                {formData.enrollStartDate && (
+                  isToday(parseISO(formData.enrollStartDate)) ? (
+                    <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-md bg-status-info_background text-status-info_text text-sm">
+                      <Info size={16} className="flex-shrink-0" />
+                      <span>모집 시작일이 오늘입니다. 생성 즉시 <strong>모집중</strong> 상태로 시작됩니다.</span>
+                    </div>
+                  ) : isBefore(parseISO(formData.enrollStartDate), startOfDay(new Date())) ? (
+                    <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-md bg-status-warning_background text-status-warning_text text-sm">
+                      <Info size={16} className="flex-shrink-0" />
+                      <span>모집 시작일이 이미 지났습니다. 생성 즉시 <strong>모집중</strong> 상태로 시작됩니다.</span>
+                    </div>
+                  ) : null
+                )}
               </div>
 
-              {/* 학습 기간 - DurationType별 조건부 렌더링 */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-text-primary">
+              {/* 학습 기간 - Card로 그룹화, DurationType별 조건부 렌더링 */}
+              <div className="bg-bg-secondary rounded-lg p-5 border border-border">
+                <div className="flex items-center gap-2 text-text-primary mb-4">
                   <Clock size={20} />
                   <h3 className="font-medium m-0">{getText('learningPeriod')}</h3>
                 </div>
 
                 {/* FIXED: 시작일 + 종료일 (총 일수 자동 계산) */}
                 {formData.durationType === 'FIXED' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
-                      <Input
-                        id="classStartDate"
-                        type="date"
-                        value={formData.classStartDate}
-                        onChange={(e) => handleInputChange('classStartDate', e.target.value)}
-                        className={errors.classStartDate ? 'border-status-error' : ''}
+                      <Label>{getText('classStartDate')} *</Label>
+                      <DatePicker
+                        date={parseDate(formData.classStartDate)}
+                        onDateChange={(date) => handleInputChange('classStartDate', formatDate(date))}
+                        placeholder="학습 시작일 선택"
+                        fromDate={addDays(new Date(), 1)}
+                        className={cn('w-full', errors.classStartDate && 'border-status-error')}
                       />
                       {errors.classStartDate && (
                         <p className="text-sm text-status-error">{errors.classStartDate}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="classEndDate">{getText('classEndDate')} *</Label>
-                      <Input
-                        id="classEndDate"
-                        type="date"
-                        value={formData.classEndDate || ''}
-                        onChange={(e) => handleInputChange('classEndDate', e.target.value)}
-                        className={errors.classEndDate ? 'border-status-error' : ''}
+                      <Label>{getText('classEndDate')} *</Label>
+                      <DatePicker
+                        date={parseDate(formData.classEndDate)}
+                        onDateChange={(date) => handleInputChange('classEndDate', formatDate(date))}
+                        placeholder="학습 종료일 선택"
+                        className={cn('w-full', errors.classEndDate && 'border-status-error')}
                       />
                       {errors.classEndDate && (
                         <p className="text-sm text-status-error">{errors.classEndDate}</p>
@@ -1076,7 +1094,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     </div>
                     {/* 총 수강 일수 표시 */}
                     {formData.classStartDate && formData.classEndDate && formData.durationDays && (
-                      <div className="col-span-full pl-7">
+                      <div className="col-span-full">
                         <div className="bg-bg-brand-active/10 rounded-lg px-4 py-2 border border-action-primary/30">
                           <span className="text-sm text-text-secondary">
                             총 수강 일수:{' '}
@@ -1090,56 +1108,84 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   </div>
                 )}
 
-                {/* RELATIVE: 시작일 + 수강 일수 입력 */}
+                {/* RELATIVE: 차수 오픈일 + 수강 일수 입력 */}
                 {formData.durationType === 'RELATIVE' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
-                    <div className="space-y-2">
-                      <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
-                      <Input
-                        id="classStartDate"
-                        type="date"
-                        value={formData.classStartDate}
-                        onChange={(e) => handleInputChange('classStartDate', e.target.value)}
-                        className={errors.classStartDate ? 'border-status-error' : ''}
-                      />
-                      {errors.classStartDate && (
-                        <p className="text-sm text-status-error">{errors.classStartDate}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="durationDays">수강 일수 *</Label>
-                      <Input
-                        id="durationDays"
-                        type="number"
-                        min="1"
-                        placeholder="예: 30"
-                        value={formData.durationDays || ''}
-                        onChange={(e) => handleInputChange('durationDays', e.target.value ? parseInt(e.target.value) : null)}
-                        className={errors.durationDays ? 'border-status-error' : ''}
-                      />
-                      {errors.durationDays && (
-                        <p className="text-sm text-status-error">{errors.durationDays}</p>
-                      )}
-                      {selectedCourse?.estimatedHours && (
+                  <div className="space-y-4">
+                    {/* 안내 메시지 - 시각적 강조 */}
+                    <div className="flex gap-3 p-4 rounded-lg bg-badge-blue-bg border border-badge-blue/30">
+                      <Info size={20} className="flex-shrink-0 text-badge-blue mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-medium text-text-primary">수강 신청일 기준 개별 적용</p>
                         <p className="text-sm text-text-secondary">
-                          예상 학습 시간({selectedCourse.estimatedHours}시간) 기준 권장: {Math.ceil(selectedCourse.estimatedHours / 8)}일
+                          수강생마다 본인의 <strong className="text-badge-blue">수강 신청일</strong>로부터 지정된 수강 일수 동안 학습할 수 있습니다.
                         </p>
-                      )}
+                        <p className="text-xs text-text-placeholder">
+                          예: 30일 설정 시, 1월 10일 신청자는 2월 9일까지 / 1월 20일 신청자는 2월 19일까지
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>{getText('classStartDate')} *</Label>
+                        <DatePicker
+                          date={parseDate(formData.classStartDate)}
+                          onDateChange={(date) => handleInputChange('classStartDate', formatDate(date))}
+                          placeholder="차수 오픈일 선택"
+                          fromDate={addDays(new Date(), 1)}
+                          className={cn('w-full', errors.classStartDate && 'border-status-error')}
+                        />
+                        <p className="text-xs text-text-secondary">이 날짜부터 수강 신청이 가능합니다</p>
+                        {errors.classStartDate && (
+                          <p className="text-sm text-status-error">{errors.classStartDate}</p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="durationDays">수강 일수 *</Label>
+                        <div className="relative">
+                          <Input
+                            id="durationDays"
+                            type="number"
+                            min="1"
+                            placeholder="30"
+                            value={formData.durationDays || ''}
+                            onChange={(e) => handleInputChange('durationDays', e.target.value ? parseInt(e.target.value) : null)}
+                            className={cn(
+                              '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
+                              formData.durationDays && 'pr-8 text-right',
+                              errors.durationDays && 'border-status-error'
+                            )}
+                          />
+                          {formData.durationDays && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary pointer-events-none">
+                              일
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-text-secondary">수강 신청일로부터 학습 가능한 기간</p>
+                        {errors.durationDays && (
+                          <p className="text-sm text-status-error">{errors.durationDays}</p>
+                        )}
+                        {selectedCourse?.estimatedHours && (
+                          <p className="text-sm text-text-secondary">
+                            예상 학습 시간({selectedCourse.estimatedHours}시간) 기준 권장: {Math.ceil(selectedCourse.estimatedHours / 8)}일
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* UNLIMITED: 시작일만 */}
                 {formData.durationType === 'UNLIMITED' && (
-                  <div className="pl-7 space-y-4">
+                  <div className="space-y-4">
                     <div className="space-y-2 md:w-1/2">
-                      <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
-                      <Input
-                        id="classStartDate"
-                        type="date"
-                        value={formData.classStartDate}
-                        onChange={(e) => handleInputChange('classStartDate', e.target.value)}
-                        className={errors.classStartDate ? 'border-status-error' : ''}
+                      <Label>{getText('classStartDate')} *</Label>
+                      <DatePicker
+                        date={parseDate(formData.classStartDate)}
+                        onDateChange={(date) => handleInputChange('classStartDate', formatDate(date))}
+                        placeholder="학습 시작일 선택"
+                        fromDate={addDays(new Date(), 1)}
+                        className={cn('w-full', errors.classStartDate && 'border-status-error')}
                       />
                       {errors.classStartDate && (
                         <p className="text-sm text-status-error">{errors.classStartDate}</p>
@@ -1173,26 +1219,32 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
                   {hasSchedule && (
                     <div className="pl-7 space-y-4">
-                      {/* 요일 선택 */}
+                      {/* 요일 선택 - ToggleGroup으로 접근성 확보 */}
                       <div className="space-y-2">
                         <Label>수업 요일 *</Label>
-                        <div className="flex gap-2">
+                        <ToggleGroup
+                          type="multiple"
+                          value={selectedDays.map(String)}
+                          onValueChange={(values) => setSelectedDays(values.map(Number) as DayOfWeek[])}
+                          className="justify-start gap-1"
+                        >
                           {([1, 2, 3, 4, 5, 6, 0] as DayOfWeek[]).map((day) => (
-                            <button
+                            <ToggleGroupItem
                               key={day}
-                              type="button"
-                              onClick={() => handleDayToggle(day)}
+                              value={String(day)}
                               className={cn(
-                                'w-10 h-10 rounded-full border transition-colors font-medium',
-                                selectedDays.includes(day)
-                                  ? 'bg-action-primary text-white border-action-primary'
-                                  : 'bg-white text-text-primary border-border hover:border-action-primary/50'
+                                'w-11 h-11 font-medium text-sm',
+                                '!rounded-lg', // 기본 first/last rounded 오버라이드
+                                'data-[state=on]:bg-action-primary data-[state=on]:text-white data-[state=on]:border-action-primary',
+                                'data-[state=off]:bg-bg-default data-[state=off]:text-text-primary data-[state=off]:border-border',
+                                'hover:bg-bg-secondary hover:border-action-primary/50',
+                                'border transition-colors'
                               )}
                             >
                               {DAY_OF_WEEK_LABELS[day]}
-                            </button>
+                            </ToggleGroupItem>
                           ))}
-                        </div>
+                        </ToggleGroup>
                         {selectedDays.length === 0 && (
                           <p className="text-sm text-text-secondary">최소 1개 이상의 요일을 선택하세요</p>
                         )}
@@ -1201,21 +1253,25 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       {/* 시간 입력 */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="scheduleStartTime">시작 시간 *</Label>
-                          <Input
-                            id="scheduleStartTime"
-                            type="time"
+                          <Label>시작 시간 *</Label>
+                          <TimePicker
                             value={scheduleStartTime}
-                            onChange={(e) => setScheduleStartTime(e.target.value)}
+                            onChange={setScheduleStartTime}
+                            placeholder="시작 시간 선택"
+                            interval={30}
+                            minTime="06:00"
+                            maxTime="22:00"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="scheduleEndTime">종료 시간 *</Label>
-                          <Input
-                            id="scheduleEndTime"
-                            type="time"
+                          <Label>종료 시간 *</Label>
+                          <TimePicker
                             value={scheduleEndTime}
-                            onChange={(e) => setScheduleEndTime(e.target.value)}
+                            onChange={setScheduleEndTime}
+                            placeholder="종료 시간 선택"
+                            interval={30}
+                            minTime="06:00"
+                            maxTime="23:00"
                           />
                         </div>
                       </div>
@@ -1239,7 +1295,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                         <div className="bg-bg-brand-active/10 rounded-lg px-4 py-3 border border-action-primary/30">
                           <p className="text-sm text-text-secondary mb-1">수업 일정 미리보기</p>
                           <p className="text-sm font-medium text-action-primary">
-                            매주 {selectedDays.map((d) => DAY_OF_WEEK_LABELS[d]).join(', ')} {scheduleStartTime} ~ {scheduleEndTime}
+                            매주 {[...selectedDays].sort((a, b) => ((a || 7) - (b || 7))).map((d) => DAY_OF_WEEK_LABELS[d]).join(', ')} {scheduleStartTime} ~ {scheduleEndTime}
                             {excludeHolidays && ' (공휴일 제외)'}
                           </p>
                         </div>
@@ -1250,16 +1306,53 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               )}
 
               {/* 중간 합류 허용 - 모든 DeliveryType에서 선택 가능 (B2B 유연성 확보) */}
-              <div className="flex items-center gap-3 p-4 bg-bg-subtle rounded-lg border border-border">
-                <Switch
-                  checked={formData.allowLateEnrollment ?? false}
-                  onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
-                />
-                <div>
-                  <span className="font-medium text-text-primary">{getText('allowLateEnrollment')}</span>
-                  <p className="text-sm text-text-secondary mt-0.5">{getText('allowLateEnrollmentHint')}</p>
-                </div>
-              </div>
+              {/* UNLIMITED + 정원 무제한인 경우에만 비활성화 (항상 합류 가능하므로) */}
+              {(() => {
+                const isUnlimitedWithNoCapacity = formData.durationType === 'UNLIMITED' && !formData.capacity;
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-4 rounded-lg border bg-bg-subtle border-border">
+                      <Switch
+                        checked={isUnlimitedWithNoCapacity ? true : (formData.allowLateEnrollment ?? false)}
+                        onCheckedChange={(checked) => handleInputChange('allowLateEnrollment', checked)}
+                        disabled={isUnlimitedWithNoCapacity}
+                        className={isUnlimitedWithNoCapacity ? "opacity-50" : ""}
+                      />
+                      <div>
+                        <span className="font-medium text-text-primary">
+                          {isUnlimitedWithNoCapacity ? '중간 합류 항상 가능' : getText('allowLateEnrollment')}
+                        </span>
+                        <p className="text-sm mt-0.5 text-text-primary">
+                          {isUnlimitedWithNoCapacity
+                            ? '학습 종료일과 정원 제한이 없어 언제든 합류 가능합니다'
+                            : getText('allowLateEnrollmentHint')
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 중간 합류 허용 시 안내 메시지 */}
+                    {formData.allowLateEnrollment && !isUnlimitedWithNoCapacity && (
+                      <div className="flex gap-3 p-4 rounded-lg bg-badge-blue-bg border border-badge-blue/30">
+                        <Info size={20} className="flex-shrink-0 text-badge-blue mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-medium text-text-primary">학습 진행 중에도 신규 수강생 등록 가능</p>
+                          <p className="text-sm text-text-secondary">
+                            학습 기간이 시작된 후에도 새로운 수강생이 <strong className="text-badge-blue">중도 등록</strong>하여 학습에 참여할 수 있습니다.
+                            단, <strong className="text-text-primary">정원이 꽉 찬 경우 중간 합류가 불가능</strong>합니다.
+                          </p>
+                          <p className="text-xs text-text-placeholder">
+                            {formData.durationType === 'UNLIMITED'
+                              ? '예: 정원 30명 중 빈 자리가 있으면 언제든 등록 가능'
+                              : '예: 1월 1일~31일 차수에 1월 15일 신청자도 등록 가능 (정원 여유 시, 남은 기간 동안 학습)'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* 강사 일정 충돌 경고 */}
               {conflictInfo && (
