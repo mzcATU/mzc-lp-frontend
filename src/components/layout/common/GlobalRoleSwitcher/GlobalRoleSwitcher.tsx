@@ -54,7 +54,9 @@ export function GlobalRoleSwitcher({
 
   // 사용자의 역할 가져오기 (현재는 단일 role, 향후 roles 배열로 확장 가능)
   const userRole = useAuthStore((state) => state.user?.role);
-  const userRoles = useAuthStore((state) => state.user?.roles) as string[] | undefined;
+  const userRolesRaw = useAuthStore((state) => state.user?.roles);
+  // Set이나 배열 모두 처리 가능하도록 Array.from 사용
+  const userRoles = userRolesRaw ? Array.from(userRolesRaw) as string[] : undefined;
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -70,34 +72,28 @@ export function GlobalRoleSwitcher({
 
   // 사용자가 가진 역할만 표시 (순서: 학습자 → 강사 → 교육 운영자 → 관리자)
   const availableRoles: GlobalRole[] = (() => {
-    // roles 배열이 있으면 사용 (1:N 관계 지원)
-    if (userRoles && userRoles.length > 0) {
-      const roles: GlobalRole[] = [];
-      // 사용자에게 부여된 역할에 따라 표시
-      if (userRoles.includes('USER')) {
-        roles.push('USER');
-      }
-      if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) {
-        roles.push('TU');
-      }
-      if (userRoles.includes('OPERATOR')) {
-        roles.push('CO');
-      }
-      if (userRoles.includes('TENANT_ADMIN')) {
-        roles.push('TA');
-      }
-      return roles;
+    const roles: GlobalRole[] = [];
+
+    // roles 배열 또는 단일 role을 기반으로 체크할 역할 목록 결정
+    const rolesToCheck = userRoles && userRoles.length > 0
+      ? userRoles
+      : (userRole ? [userRole] : []);
+
+    // 부여받은 역할만 표시 (USER 역할도 부여받은 경우에만)
+    if (rolesToCheck.includes('USER')) {
+      roles.push('USER');
+    }
+    if (rolesToCheck.includes('INSTRUCTOR') || rolesToCheck.includes('DESIGNER')) {
+      roles.push('TU');
+    }
+    if (rolesToCheck.includes('OPERATOR')) {
+      roles.push('CO');
+    }
+    if (rolesToCheck.includes('TENANT_ADMIN')) {
+      roles.push('TA');
     }
 
-    // 단일 role 기반 (기존 호환)
-    if (userRole === 'TENANT_ADMIN') {
-      return ['USER', 'TU', 'CO', 'TA'];
-    } else if (userRole === 'OPERATOR') {
-      return ['USER', 'TU', 'CO'];
-    } else {
-      // 기본: 현재 역할만 표시
-      return [currentRole];
-    }
+    return roles;
   })();
 
   const CurrentIcon = roleIcons[currentRole];

@@ -176,3 +176,38 @@ export const useVisibleTenantNoticeCount = () => {
     queryFn: () => tenantNoticeService.countVisibleNotices(),
   });
 };
+
+// ============================================
+// 배포 통계 훅
+// ============================================
+
+/**
+ * 배포 통계 목록 조회
+ */
+export const useTenantNoticeDistributionStats = (params?: { page?: number; size?: number }) => {
+  return useQuery({
+    queryKey: [...tenantNoticeKeys.all, 'distribution-stats', params] as const,
+    queryFn: () => tenantNoticeService.getDistributionStats(params),
+  });
+};
+
+/**
+ * 배포 통계 요약 조회
+ */
+export const useTenantNoticeDistributionSummary = () => {
+  return useQuery({
+    queryKey: [...tenantNoticeKeys.all, 'distribution-summary'] as const,
+    queryFn: () => tenantNoticeService.getDistributionSummary(),
+  });
+};
+
+/**
+ * 특정 공지사항의 배포 상세 현황 조회
+ */
+export const useTenantNoticeDistributionDetail = (noticeId: number) => {
+  return useQuery({
+    queryKey: [...tenantNoticeKeys.all, 'distribution-detail', noticeId] as const,
+    queryFn: () => tenantNoticeService.getDistributionDetail(noticeId),
+    enabled: !!noticeId,
+  });
+};

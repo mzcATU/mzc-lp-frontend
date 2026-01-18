@@ -22,12 +22,13 @@ export interface TenantIdentifier {
  * /mzc/login → 'mzc'
  * /mzc/register → 'mzc'
  * /mzc/admin/login → 'mzc'
+ * /mzc/select-role → 'mzc'
  */
 export function extractSubdomainFromPath(): string | null {
   const pathname = window.location.pathname;
 
-  // 경로 기반 서브도메인 패턴: /{subdomain}/(tu|ta|co|admin)/... 또는 /{subdomain}/(login|register)
-  const regex = /^\/([^/]+)\/(tu|ta|co|admin|login|register)(\/|$)/;
+  // 경로 기반 서브도메인 패턴: /{subdomain}/(tu|ta|co|admin|login|register|select-role)/...
+  const regex = /^\/([^/]+)\/(tu|ta|co|admin|login|register|select-role)(\/|$)/;
   const match = regex.exec(pathname);
   const subdomain = match?.[1];
 
