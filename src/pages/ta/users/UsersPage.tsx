@@ -737,31 +737,6 @@ export function UsersPage() {
         }}
       />
 
-      {/* 페이지네이션 */}
-      {usersData && usersData.totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            이전
-          </Button>
-          <span className="flex items-center px-4 text-sm text-text-secondary">
-            {page + 1} / {usersData.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= usersData.totalPages - 1}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            다음
-          </Button>
-        </div>
-      )}
-
       {/* 사용자 수정 다이얼로그 */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-md">
