@@ -48,6 +48,7 @@ import type { SnapshotItemResponse, SnapshotRelationsResponse } from '@/types/co
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',
+  ENROLLED: 'blue',
   REJECTED: 'red',
   CANCELLED: 'gray',
   COMPLETED: 'green',
@@ -56,6 +57,7 @@ const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' |
 const statusIcons: Record<EnrollmentStatus, React.ReactNode> = {
   PENDING: <AlertCircle className="w-4 h-4" />,
   APPROVED: <PlayCircle className="w-4 h-4" />,
+  ENROLLED: <PlayCircle className="w-4 h-4" />,
   REJECTED: <XCircle className="w-4 h-4" />,
   CANCELLED: <XCircle className="w-4 h-4" />,
   COMPLETED: <CheckCircle className="w-4 h-4" />,
@@ -168,6 +170,7 @@ export function B2BLearningDetailPage() {
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
     APPROVED: t.learning.statusApproved,
+    ENROLLED: t.learning.statusApproved, // ENROLLED는 APPROVED와 동일하게 표시
     REJECTED: t.learning.statusRejected,
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
@@ -295,15 +298,15 @@ export function B2BLearningDetailPage() {
     try {
       await cancelEnrollment.mutateAsync(enrollment.id);
       setCancelDialogOpen(false);
-      navigate(prefixPath('/tu/b2c/mypage/learning'));
+      navigate(prefixPath('/tu/b2b/mypage/learning'));
     } catch (error) {
       console.error('Failed to cancel enrollment:', error);
     }
   };
 
   const handleContinueLearning = () => {
-    // 플레이어 페이지로 이동 (첫 아이템 선택은 플레이어에서 자동 처리)
-    navigate(`/tu/b2c/mypage/learning/${enrollmentId}/player`);
+    // B2B 플레이어 페이지로 이동 (첫 아이템 선택은 플레이어에서 자동 처리)
+    navigate(prefixPath(`/tu/b2b/player/${enrollmentId}`));
   };
 
   // Loading State
@@ -323,7 +326,7 @@ export function B2BLearningDetailPage() {
         <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           {t.learning.enrollmentNotFound}
         </h3>
-        <Button onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
+        <Button onClick={() => navigate(prefixPath('/tu/b2b/mypage/learning'))}>
           {t.learning.backToLearning}
         </Button>
       </div>
@@ -338,7 +341,7 @@ export function B2BLearningDetailPage() {
       <div className="max-w-[1200px] mx-auto">
         {/* Back Button */}
         <BackButton
-          onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+          onClick={() => navigate(prefixPath('/tu/b2b/mypage/learning'))}
           label={t.learning.backToLearning}
           className={`mb-6 ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : ''}`}
         />
@@ -415,7 +418,7 @@ export function B2BLearningDetailPage() {
               </div>
 
               {/* Continue Button */}
-              {enrollment.status === 'APPROVED' && (
+              {(enrollment.status === 'APPROVED' || enrollment.status === 'ENROLLED') && (
                 <Button
                   variant="brand"
                   className="w-full mt-4"
@@ -448,20 +451,20 @@ export function B2BLearningDetailPage() {
                     key={item.itemId}
                     item={item}
                     isDark={isDark}
-                    onClick={() => navigate(`/tu/b2c/mypage/learning/${enrollmentId}/player/${item.itemId}`)}
+                    onClick={() => navigate(prefixPath(`/tu/b2b/player/${enrollmentId}/${item.itemId}`))}
                   />
                 ))}
               </div>
             ) : (
               <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                {snapshotId === 0 ? '과정에 스냅샷이 연결되지 않았습니다.' : '커리큘럼이 없습니다.'}
+                {snapshotId === 0 ? '📚 강의 콘텐츠를 준비 중입니다.' : '커리큘럼이 없습니다.'}
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Actions Section */}
-        {(enrollment.status === 'PENDING' || enrollment.status === 'APPROVED') && (
+        {(enrollment.status === 'PENDING' || enrollment.status === 'APPROVED' || enrollment.status === 'ENROLLED') && (
           <div className="flex justify-end gap-4">
             <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
               <AlertDialogTrigger asChild>

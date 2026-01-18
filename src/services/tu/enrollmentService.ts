@@ -9,7 +9,7 @@ import type {
 /**
  * 수강 신청 상태
  */
-export type EnrollmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
+export type EnrollmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED' | 'ENROLLED';
 
 /**
  * 백엔드 EnrollmentResponse 타입 (실제 API 응답)
