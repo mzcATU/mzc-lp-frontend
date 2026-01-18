@@ -89,6 +89,14 @@ function DatePicker({
   const currentDate = date ?? internalDate;
   const handleDateChange = onDateChange ?? setInternalDate;
 
+  // 날짜 제한 Matcher 배열 생성
+  const getDisabledMatchers = () => {
+    const matchers: Array<{ before: Date } | { after: Date }> = [];
+    if (fromDate) matchers.push({ before: fromDate });
+    if (toDate) matchers.push({ after: toDate });
+    return matchers.length > 0 ? matchers : undefined;
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -112,7 +120,7 @@ function DatePicker({
           onSelect={handleDateChange}
           initialFocus
           weekStartsOn={1}
-          disabled={fromDate || toDate ? { before: fromDate, after: toDate } : undefined}
+          disabled={getDisabledMatchers()}
         />
       </PopoverContent>
     </Popover>
