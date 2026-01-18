@@ -25,6 +25,7 @@ import type {
   DeliveryType,
   EnrollmentMethod,
   DurationType,
+  DayOfWeek,
 } from '@/types/co/time.types';
 import {
   DELIVERY_TYPE_LABELS,
@@ -33,6 +34,7 @@ import {
   ENROLLMENT_METHOD_DESCRIPTIONS,
   DURATION_TYPE_LABELS,
   DURATION_TYPE_DESCRIPTIONS,
+  DAY_OF_WEEK_LABELS,
 } from '@/types/co/time.types';
 import { ValidationResultDisplay } from '@/components/co/time/ValidationResultDisplay';
 import { validateCourseTimeClient, getDefaultDurationType, calculateDurationDays } from '@/utils/co/courseTimeValidation';
@@ -184,6 +186,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   // 수시 모집 상태 (모집 종료일 없음)
   const [isAlwaysOpen, setIsAlwaysOpen] = useState(false);
 
+  // 정기 수업 일정 상태
+  const [hasSchedule, setHasSchedule] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
+  const [scheduleStartTime, setScheduleStartTime] = useState('');
+  const [scheduleEndTime, setScheduleEndTime] = useState('');
+  const [excludeHolidays, setExcludeHolidays] = useState(false);
+
   // Form State
   const [formData, setFormData] = useState<CreateCourseTimeRequest>({
     courseId: 0, // Phase 3: programId → courseId
@@ -203,6 +212,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     minProgressForCompletion: 80,
     locationInfo: '',
     allowLateEnrollment: false,
+    recurringSchedule: null,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateCourseTimeRequest, string>>>({});
@@ -257,11 +267,44 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
           newErrors.classStartDate = getText('classStartBeforeEnrollEnd');
         }
       }
+
+      // 정기 일정 검증
+      if (hasSchedule) {
+        if (selectedDays.length === 0) {
+          toast.error('정기 수업 일정을 설정한 경우 최소 1개 이상의 요일을 선택해야 합니다.');
+          return false;
+        }
+        if (!scheduleStartTime) {
+          toast.error('정기 수업 일정의 시작 시간을 입력해주세요.');
+          return false;
+        }
+        if (!scheduleEndTime) {
+          toast.error('정기 수업 일정의 종료 시간을 입력해주세요.');
+          return false;
+        }
+        if (scheduleStartTime >= scheduleEndTime) {
+          toast.error('종료 시간은 시작 시간 이후여야 합니다.');
+          return false;
+        }
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  // 선택 가능한 DurationType 목록 계산
+  const availableDurationTypes = useMemo(() => {
+    // LIVE는 실시간 진행이므로 FIXED만 가능
+    if (formData.deliveryType === 'LIVE') {
+      return ['FIXED'] as DurationType[];
+    }
+
+    // ONLINE, OFFLINE, BLENDED는 모든 DurationType 지원
+    // - B2C: FIXED 선택 (일반적인 단체 수업)
+    // - B2B: RELATIVE/UNLIMITED 선택 가능 (기업 맞춤 교육)
+    return ['FIXED', 'RELATIVE', 'UNLIMITED'] as DurationType[];
+  }, [formData.deliveryType]);
 
   // DeliveryType 변경 시 DurationType 기본값 설정
   const handleDeliveryTypeChange = (type: DeliveryType) => {
@@ -272,6 +315,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       durationType: defaultDurationType,
       // FIXED가 아니면 classEndDate 초기화
       classEndDate: defaultDurationType === 'FIXED' ? prev.classEndDate : null,
+      // LIVE 선택 시 중간 합류 자동 비활성화
+      allowLateEnrollment: type === 'LIVE' ? false : prev.allowLateEnrollment,
     }));
   };
 
@@ -316,6 +361,37 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       setFormData((prev) => ({ ...prev, durationDays: null }));
     }
   }, [formData.durationType, formData.classStartDate, formData.classEndDate]);
+
+  // 요일 선택 토글 핸들러
+  const handleDayToggle = (day: DayOfWeek) => {
+    setSelectedDays((prev) => {
+      const newDays = prev.includes(day)
+        ? prev.filter((d) => d !== day)
+        : [...prev, day].sort((a, b) => a - b);
+      return newDays;
+    });
+  };
+
+  // 정기 일정 업데이트 (formData에 반영)
+  useEffect(() => {
+    if (hasSchedule && selectedDays.length > 0 && scheduleStartTime && scheduleEndTime) {
+      setFormData((prev) => ({
+        ...prev,
+        recurringSchedule: {
+          daysOfWeek: selectedDays,
+          startTime: scheduleStartTime,
+          endTime: scheduleEndTime,
+          locationInfo: prev.locationInfo || undefined,
+          excludeHolidays,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        recurringSchedule: null,
+      }));
+    }
+  }, [hasSchedule, selectedDays, scheduleStartTime, scheduleEndTime, excludeHolidays]);
 
   // 수시 모집 토글 핸들러 (모집 종료일 없음)
   const handleAlwaysOpenToggle = (checked: boolean) => {
@@ -856,11 +932,14 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
               </div>
 
-              {/* 학습 기간 유형 - 라디오 버튼 */}
+              {/* 학습 기간 유형 - 라디오 버튼 (DeliveryType에 따라 필터링) */}
               <div className="space-y-3">
                 <Label>학습 기간 유형 *</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {(Object.entries(DURATION_TYPE_LABELS) as [DurationType, string][]).map(([value, label]) => (
+                <div className={cn(
+                  'grid grid-cols-1 gap-3',
+                  availableDurationTypes.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-1'
+                )}>
+                  {availableDurationTypes.map((value) => (
                     <label
                       key={value}
                       className={cn(
@@ -879,7 +958,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                         className="mt-1"
                       />
                       <div>
-                        <span className="font-medium text-text-primary">{label}</span>
+                        <span className="font-medium text-text-primary">{DURATION_TYPE_LABELS[value]}</span>
                         <p className="text-sm text-text-secondary mt-0.5">
                           {DURATION_TYPE_DESCRIPTIONS[value]}
                         </p>
@@ -1062,6 +1141,101 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   </div>
                 )}
               </div>
+
+              {/* 정기 수업 일정 (FIXED + OFFLINE/BLENDED/LIVE만) */}
+              {formData.durationType === 'FIXED' &&
+               ['OFFLINE', 'BLENDED', 'LIVE'].includes(formData.deliveryType) && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={hasSchedule}
+                      onCheckedChange={setHasSchedule}
+                    />
+                    <div>
+                      <span className="font-medium text-text-primary">정기 수업 일정 설정</span>
+                      <p className="text-sm text-text-secondary mt-0.5">
+                        반복되는 수업 일정이 있는 경우 요일과 시간을 지정하세요
+                      </p>
+                    </div>
+                  </div>
+
+                  {hasSchedule && (
+                    <div className="pl-7 space-y-4">
+                      {/* 요일 선택 */}
+                      <div className="space-y-2">
+                        <Label>수업 요일 *</Label>
+                        <div className="flex gap-2">
+                          {([1, 2, 3, 4, 5, 6, 0] as DayOfWeek[]).map((day) => (
+                            <button
+                              key={day}
+                              type="button"
+                              onClick={() => handleDayToggle(day)}
+                              className={cn(
+                                'w-10 h-10 rounded-full border transition-colors font-medium',
+                                selectedDays.includes(day)
+                                  ? 'bg-action-primary text-white border-action-primary'
+                                  : 'bg-white text-text-primary border-border hover:border-action-primary/50'
+                              )}
+                            >
+                              {DAY_OF_WEEK_LABELS[day]}
+                            </button>
+                          ))}
+                        </div>
+                        {selectedDays.length === 0 && (
+                          <p className="text-sm text-text-secondary">최소 1개 이상의 요일을 선택하세요</p>
+                        )}
+                      </div>
+
+                      {/* 시간 입력 */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="scheduleStartTime">시작 시간 *</Label>
+                          <Input
+                            id="scheduleStartTime"
+                            type="time"
+                            value={scheduleStartTime}
+                            onChange={(e) => setScheduleStartTime(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="scheduleEndTime">종료 시간 *</Label>
+                          <Input
+                            id="scheduleEndTime"
+                            type="time"
+                            value={scheduleEndTime}
+                            onChange={(e) => setScheduleEndTime(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 공휴일 제외 옵션 */}
+                      <div className="flex items-center gap-3 p-3 bg-bg-subtle rounded-lg border border-border">
+                        <Switch
+                          checked={excludeHolidays}
+                          onCheckedChange={setExcludeHolidays}
+                        />
+                        <div>
+                          <span className="font-medium text-text-primary">공휴일 제외</span>
+                          <p className="text-sm text-text-secondary mt-0.5">
+                            공휴일에는 수업을 진행하지 않습니다
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* 미리보기 */}
+                      {selectedDays.length > 0 && scheduleStartTime && scheduleEndTime && (
+                        <div className="bg-bg-brand-active/10 rounded-lg px-4 py-3 border border-action-primary/30">
+                          <p className="text-sm text-text-secondary mb-1">수업 일정 미리보기</p>
+                          <p className="text-sm font-medium text-action-primary">
+                            매주 {selectedDays.map((d) => DAY_OF_WEEK_LABELS[d]).join(', ')} {scheduleStartTime} ~ {scheduleEndTime}
+                            {excludeHolidays && ' (공휴일 제외)'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 중간 합류 허용 (LIVE가 아닌 경우에만) */}
               {formData.deliveryType !== 'LIVE' && (

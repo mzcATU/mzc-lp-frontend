@@ -34,6 +34,9 @@ export type DurationType =
   | 'RELATIVE' // 상대 기간 (등록일 기준 durationDays일)
   | 'UNLIMITED'; // 무제한 (종료일 없음)
 
+/** 요일 (0=일요일, 1=월요일, ..., 6=토요일) */
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
 /** 조합 품질 등급 */
 export type QualityRating =
   | 'BEST' // 최적 조합
@@ -44,6 +47,15 @@ export type QualityRating =
 // ============================================
 // Response Types
 // ============================================
+
+/** 정기 수업 일정 (선택 사항) */
+export interface RecurringSchedule {
+  daysOfWeek: DayOfWeek[]; // 수업 요일 (예: [2, 4] = 화요일, 목요일)
+  startTime: string; // 시작 시간 (HH:mm 형식, 예: "19:00")
+  endTime: string; // 종료 시간 (HH:mm 형식, 예: "21:00")
+  locationInfo?: string; // 장소 정보 (선택)
+  excludeHolidays?: boolean; // 공휴일 제외 여부 (기본값: false)
+}
 
 /** 차수 목록 조회 응답 (백엔드 CourseTimeResponse 매칭) */
 export interface CourseTimeResponse {
@@ -66,6 +78,7 @@ export interface CourseTimeResponse {
   price: string | null; // BigDecimal -> string
   isFree: boolean;
   allowLateEnrollment: boolean;
+  recurringSchedule: RecurringSchedule | null; // 정기 수업 일정 (선택)
   createdAt: string;
   instructors: CourseTimeInstructor[];
   courseTitle: string | null; // Phase 3: programTitle → courseTitle
@@ -134,6 +147,7 @@ export interface CreateCourseTimeRequest {
   isFree: boolean;
   locationInfo?: string;
   allowLateEnrollment?: boolean;
+  recurringSchedule?: RecurringSchedule | null; // 정기 수업 일정 (선택)
 }
 
 /** 차수 수정 요청 */
@@ -273,6 +287,28 @@ export const QUALITY_RATING_LABELS: Record<QualityRating, string> = {
   GOOD: '권장 조합',
   COMMON: '일반 조합',
   CAUTION: '주의 필요',
+};
+
+/** 요일 라벨 맵 */
+export const DAY_OF_WEEK_LABELS: Record<DayOfWeek, string> = {
+  0: '일',
+  1: '월',
+  2: '화',
+  3: '수',
+  4: '목',
+  5: '금',
+  6: '토',
+};
+
+/** 요일 전체 이름 */
+export const DAY_OF_WEEK_FULL_LABELS: Record<DayOfWeek, string> = {
+  0: '일요일',
+  1: '월요일',
+  2: '화요일',
+  3: '수요일',
+  4: '목요일',
+  5: '금요일',
+  6: '토요일',
 };
 
 /** 상태 전이 가능 여부 */

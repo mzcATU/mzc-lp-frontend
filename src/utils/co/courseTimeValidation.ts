@@ -91,25 +91,9 @@ export function validateCourseTimeClient(
     });
   }
 
-  // R21: OFFLINE/BLENDED/LIVE는 FIXED 필수
-  if (
-    ['OFFLINE', 'BLENDED', 'LIVE'].includes(data.deliveryType) &&
-    data.durationType !== 'FIXED'
-  ) {
-    errors.push({
-      ruleId: 'R21',
-      message:
-        '오프라인/블렌디드/실시간 과정은 고정 날짜(FIXED) 학습 기간만 지원합니다.',
-    });
-  }
-
-  // R22: LIVE는 중도 등록 불가
-  if (data.deliveryType === 'LIVE' && data.allowLateEnrollment) {
-    errors.push({
-      ruleId: 'R22',
-      message: '실시간(LIVE) 과정은 중도 등록을 허용할 수 없습니다.',
-    });
-  }
+  // R21: LIVE만 FIXED로 제한 (UI에서 availableDurationTypes로 처리)
+  // R22: LIVE 중도등록 금지 (UI에서 handleDeliveryTypeChange로 처리)
+  // → UI 레벨에서 불가능한 조합을 선택할 수 없도록 제한했으므로 검증 불필요
 
   return errors;
 }

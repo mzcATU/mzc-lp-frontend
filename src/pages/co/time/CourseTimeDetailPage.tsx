@@ -40,6 +40,7 @@ import {
   ENROLLMENT_METHOD_LABELS,
   COURSE_TIME_STATUS_TRANSITIONS,
   DURATION_TYPE_LABELS,
+  DAY_OF_WEEK_LABELS,
 } from '@/types/co/time.types';
 
 interface CourseTimeDetailPageProps {
@@ -579,6 +580,41 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                       </p>
                     )}
                   </div>
+
+                  {/* 정기 수업 일정 */}
+                  {courseTime.recurringSchedule && (
+                    <div className="bg-bg-brand-active/10 p-4 rounded-lg border border-action-primary/30 mt-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock size={16} className="text-action-primary" />
+                        <Label className="text-text-secondary">정기 수업 일정</Label>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-text-secondary">요일:</span>
+                          <div className="flex gap-1">
+                            {courseTime.recurringSchedule.daysOfWeek.map((day) => (
+                              <Badge key={day} variant="default" className="bg-action-primary text-white">
+                                {DAY_OF_WEEK_LABELS[day]}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-text-secondary">시간:</span>
+                          <span className="text-sm font-medium text-text-primary">
+                            {courseTime.recurringSchedule.startTime} ~ {courseTime.recurringSchedule.endTime}
+                          </span>
+                        </div>
+                        {courseTime.recurringSchedule.excludeHolidays && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="text-xs">
+                              공휴일 제외
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
