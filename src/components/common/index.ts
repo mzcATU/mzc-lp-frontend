@@ -276,6 +276,7 @@ export { Timeline, TimelineItem, HorizontalTimeline, HorizontalTimelineItem } fr
 export { Alert, AlertTitle, AlertDescription } from './Alert';
 export { Toaster } from './Sonner';
 export { EmptyState, NoResultsEmpty, NoDataEmpty } from './EmptyState';
+export { QualityRatingBadge } from './feedback/QualityRatingBadge';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. NAVIGATION - 네비게이션

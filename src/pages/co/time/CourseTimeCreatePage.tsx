@@ -24,8 +24,18 @@ import type {
   CreateCourseTimeRequest,
   DeliveryType,
   EnrollmentMethod,
+  DurationType,
 } from '@/types/co/time.types';
-import { DELIVERY_TYPE_LABELS, DELIVERY_TYPE_DESCRIPTIONS, ENROLLMENT_METHOD_LABELS, ENROLLMENT_METHOD_DESCRIPTIONS } from '@/types/co/time.types';
+import {
+  DELIVERY_TYPE_LABELS,
+  DELIVERY_TYPE_DESCRIPTIONS,
+  ENROLLMENT_METHOD_LABELS,
+  ENROLLMENT_METHOD_DESCRIPTIONS,
+  DURATION_TYPE_LABELS,
+  DURATION_TYPE_DESCRIPTIONS,
+} from '@/types/co/time.types';
+import { ValidationResultDisplay } from '@/components/co/time/ValidationResultDisplay';
+import { validateCourseTimeClient, getDefaultDurationType, calculateDurationDays } from '@/utils/co/courseTimeValidation';
 import { COURSE_LEVEL_LABELS, COURSE_TYPE_LABELS } from '@/types/common/course.types';
 import type { CourseRegistrationResponse } from '@/types/common/course.types';
 import type { InstructorRole } from '@/types/tu/instructorAssignment.types';
@@ -182,11 +192,13 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     title: '',
     description: '',
     deliveryType: 'ONLINE',
+    durationType: 'RELATIVE', // ONLINE 기본값
     enrollmentMethod: 'FIRST_COME',
     enrollStartDate: '',
     enrollEndDate: '',
     classStartDate: '',
-    classEndDate: '',
+    classEndDate: null,
+    durationDays: null,
     capacity: null,
     price: '0',
     isFree: true,
@@ -247,6 +259,60 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  // DeliveryType 변경 시 DurationType 기본값 설정
+  const handleDeliveryTypeChange = (type: DeliveryType) => {
+    const defaultDurationType = getDefaultDurationType(type);
+    setFormData((prev) => ({
+      ...prev,
+      deliveryType: type,
+      durationType: defaultDurationType,
+      // FIXED가 아니면 classEndDate 초기화
+      classEndDate: defaultDurationType === 'FIXED' ? prev.classEndDate : null,
+    }));
+  };
+
+  // 클라이언트 사이드 검증 (실시간)
+  const clientValidationResult = useMemo(() => {
+    if (!formData.deliveryType || !formData.enrollmentMethod || !formData.durationType) {
+      return { valid: true, errors: [], warnings: [], qualityRating: null };
+    }
+
+    const errors = validateCourseTimeClient({
+      deliveryType: formData.deliveryType,
+      enrollmentMethod: formData.enrollmentMethod,
+      durationType: formData.durationType,
+      capacity: formData.capacity || null,
+      locationInfo: formData.locationInfo || null,
+      allowLateEnrollment: formData.allowLateEnrollment || false,
+      durationDays: formData.durationDays || null,
+      classStartDate: formData.classStartDate || null,
+      classEndDate: formData.classEndDate || null,
+      enrollStartDate: formData.enrollStartDate || null,
+      enrollEndDate: formData.enrollEndDate || null,
+    });
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings: [],
+      qualityRating: null,
+    };
+  }, [formData]);
+
+  // FIXED 타입일 때 durationDays 자동 계산
+  useEffect(() => {
+    if (
+      formData.durationType === 'FIXED' &&
+      formData.classStartDate &&
+      formData.classEndDate
+    ) {
+      const days = calculateDurationDays(formData.classStartDate, formData.classEndDate);
+      setFormData((prev) => ({ ...prev, durationDays: days }));
+    } else if (formData.durationType === 'UNLIMITED') {
+      setFormData((prev) => ({ ...prev, durationDays: null }));
+    }
+  }, [formData.durationType, formData.classStartDate, formData.classEndDate]);
 
   // 수시 모집 토글 핸들러 (모집 종료일 없음)
   const handleAlwaysOpenToggle = (checked: boolean) => {
@@ -725,7 +791,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                         name="deliveryType"
                         value={value}
                         checked={formData.deliveryType === value}
-                        onChange={(e) => handleInputChange('deliveryType', e.target.value as DeliveryType)}
+                        onChange={(e) => handleDeliveryTypeChange(e.target.value as DeliveryType)}
                         className="mt-1"
                       />
                       <div>
@@ -805,6 +871,44 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                   ))}
                 </div>
               </div>
+
+              {/* 학습 기간 유형 - 라디오 버튼 */}
+              <div className="space-y-3">
+                <Label>학습 기간 유형 *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {(Object.entries(DURATION_TYPE_LABELS) as [DurationType, string][]).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className={cn(
+                        'flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors',
+                        formData.durationType === value
+                          ? 'border-action-primary bg-bg-brand-active/10'
+                          : 'border-border hover:border-action-primary/50'
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="durationType"
+                        value={value}
+                        checked={formData.durationType === value}
+                        onChange={(e) => handleInputChange('durationType', e.target.value as DurationType)}
+                        className="mt-1"
+                      />
+                      <div>
+                        <span className="font-medium text-text-primary">{label}</span>
+                        <p className="text-sm text-text-secondary mt-0.5">
+                          {DURATION_TYPE_DESCRIPTIONS[value]}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* 클라이언트 검증 결과 표시 */}
+              {!clientValidationResult.valid && (
+                <ValidationResultDisplay validationResult={clientValidationResult} />
+              )}
 
               {/* 모집 기간 */}
               <div className="space-y-4">
