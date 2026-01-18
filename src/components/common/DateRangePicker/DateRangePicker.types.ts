@@ -16,4 +16,8 @@ export interface DatePickerProps {
   placeholder?: string;
   align?: 'start' | 'center' | 'end';
   disabled?: boolean;
+  /** 이 날짜 이전은 선택 불가 (이 날짜 포함 선택 가능) */
+  fromDate?: Date;
+  /** 이 날짜 이후는 선택 불가 (이 날짜 포함 선택 가능) */
+  toDate?: Date;
 }

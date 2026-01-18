@@ -28,9 +28,34 @@ export type EnrollmentMethod =
   | 'APPROVAL' // 승인제
   | 'INVITE_ONLY'; // 초대 전용
 
+/** 학습 기간 유형 */
+export type DurationType =
+  | 'FIXED' // 고정 날짜 (classStartDate ~ classEndDate)
+  | 'RELATIVE' // 상대 기간 (등록일 기준 durationDays일)
+  | 'UNLIMITED'; // 무제한 (종료일 없음)
+
+/** 요일 (0=일요일, 1=월요일, ..., 6=토요일) */
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/** 조합 품질 등급 */
+export type QualityRating =
+  | 'BEST' // 최적 조합
+  | 'GOOD' // 권장 조합
+  | 'COMMON' // 일반 조합
+  | 'CAUTION'; // 주의 필요
+
 // ============================================
 // Response Types
 // ============================================
+
+/** 정기 수업 일정 (선택 사항) */
+export interface RecurringSchedule {
+  daysOfWeek: DayOfWeek[]; // 수업 요일 (예: [2, 4] = 화요일, 목요일)
+  startTime: string; // 시작 시간 (HH:mm 형식, 예: "19:00")
+  endTime: string; // 종료 시간 (HH:mm 형식, 예: "21:00")
+  locationInfo?: string; // 장소 정보 (선택)
+  excludeHolidays?: boolean; // 공휴일 제외 여부 (기본값: false)
+}
 
 /** 차수 목록 조회 응답 (백엔드 CourseTimeResponse 매칭) */
 export interface CourseTimeResponse {
@@ -39,11 +64,13 @@ export interface CourseTimeResponse {
   cmCourseVersionId: number | null;
   title: string;
   deliveryType: DeliveryType;
+  durationType: DurationType; // 학습 기간 유형
   status: CourseTimeStatus;
   enrollStartDate: string; // 모집 시작일
   enrollEndDate: string; // 모집 종료일
   classStartDate: string; // 학습 시작일
-  classEndDate: string; // 학습 종료일
+  classEndDate: string | null; // 학습 종료일 (RELATIVE/UNLIMITED는 null)
+  durationDays: number | null; // 학습 일수 (FIXED: 자동계산, RELATIVE: 필수, UNLIMITED: null)
   capacity: number | null; // null = 무제한
   currentEnrollment: number;
   availableSeats: number | null; // null = 무제한
@@ -51,6 +78,7 @@ export interface CourseTimeResponse {
   price: string | null; // BigDecimal -> string
   isFree: boolean;
   allowLateEnrollment: boolean;
+  recurringSchedule: RecurringSchedule | null; // 정기 수업 일정 (선택)
   createdAt: string;
   instructors: CourseTimeInstructor[];
   courseTitle: string | null; // Phase 3: programTitle → courseTitle
@@ -105,10 +133,12 @@ export interface CreateCourseTimeRequest {
   title: string;
   description?: string; // 차수 설명
   deliveryType: DeliveryType;
+  durationType: DurationType; // 학습 기간 유형
   enrollStartDate: string; // LocalDate (YYYY-MM-DD)
   enrollEndDate: string; // LocalDate (YYYY-MM-DD)
   classStartDate: string; // LocalDate (YYYY-MM-DD)
-  classEndDate: string; // LocalDate (YYYY-MM-DD)
+  classEndDate: string | null; // LocalDate (YYYY-MM-DD) - RELATIVE/UNLIMITED는 null
+  durationDays?: number | null; // RELATIVE만 필수 입력
   capacity?: number | null;
   maxWaitingCount?: number | null;
   enrollmentMethod: EnrollmentMethod;
@@ -117,6 +147,7 @@ export interface CreateCourseTimeRequest {
   isFree: boolean;
   locationInfo?: string;
   allowLateEnrollment?: boolean;
+  recurringSchedule?: RecurringSchedule | null; // 정기 수업 일정 (선택)
 }
 
 /** 차수 수정 요청 */
@@ -142,6 +173,30 @@ export interface CloneCourseTimeRequest {
   enrollmentEndDate: string;
   startDate: string;
   endDate: string;
+}
+
+// ============================================
+// Validation Types
+// ============================================
+
+/** 검증 오류 */
+export interface ValidationError {
+  ruleId: string; // R61, R62 등
+  message: string; // 오류 메시지
+}
+
+/** 검증 경고 */
+export interface ValidationWarning {
+  ruleId: string;
+  message: string;
+}
+
+/** 차수 검증 결과 */
+export interface CourseTimeValidationResult {
+  valid: boolean; // 검증 통과 여부
+  errors: ValidationError[]; // 오류 목록
+  warnings: ValidationWarning[]; // 경고 목록
+  qualityRating: QualityRating | null; // 조합 품질 등급 (valid=true일 때만)
 }
 
 // ============================================
@@ -210,6 +265,50 @@ export const ENROLLMENT_METHOD_DESCRIPTIONS: Record<EnrollmentMethod, string> = 
   FIRST_COME: '신청 순서대로 등록',
   APPROVAL: '운영자 승인 후 등록',
   INVITE_ONLY: '운영자가 직접 선발하여 등록',
+};
+
+/** DurationType 라벨 맵 */
+export const DURATION_TYPE_LABELS: Record<DurationType, string> = {
+  FIXED: '고정 날짜',
+  RELATIVE: '상대 기간',
+  UNLIMITED: '무제한',
+};
+
+/** DurationType 설명 맵 */
+export const DURATION_TYPE_DESCRIPTIONS: Record<DurationType, string> = {
+  FIXED: '특정 시작일과 종료일 지정',
+  RELATIVE: '수강 신청일 기준 지정 기간 동안 학습',
+  UNLIMITED: '종료일 없이 무제한 학습',
+};
+
+/** QualityRating 라벨 맵 */
+export const QUALITY_RATING_LABELS: Record<QualityRating, string> = {
+  BEST: '최적 조합',
+  GOOD: '권장 조합',
+  COMMON: '일반 조합',
+  CAUTION: '주의 필요',
+};
+
+/** 요일 라벨 맵 */
+export const DAY_OF_WEEK_LABELS: Record<DayOfWeek, string> = {
+  0: '일',
+  1: '월',
+  2: '화',
+  3: '수',
+  4: '목',
+  5: '금',
+  6: '토',
+};
+
+/** 요일 전체 이름 */
+export const DAY_OF_WEEK_FULL_LABELS: Record<DayOfWeek, string> = {
+  0: '일요일',
+  1: '월요일',
+  2: '화요일',
+  3: '수요일',
+  4: '목요일',
+  5: '금요일',
+  6: '토요일',
 };
 
 /** 상태 전이 가능 여부 */

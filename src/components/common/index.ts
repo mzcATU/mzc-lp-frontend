@@ -68,6 +68,7 @@ export {
   FormField,
 } from './Form';
 export { DateRangePicker, DatePicker } from './DateRangePicker';
+export { TimePicker } from './TimePicker';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 3. OVERLAY - 떠있는 UI (모달, 팝업)
@@ -276,6 +277,7 @@ export { Timeline, TimelineItem, HorizontalTimeline, HorizontalTimelineItem } fr
 export { Alert, AlertTitle, AlertDescription } from './Alert';
 export { Toaster } from './Sonner';
 export { EmptyState, NoResultsEmpty, NoDataEmpty } from './EmptyState';
+export { QualityRatingBadge } from './feedback/QualityRatingBadge';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 7. NAVIGATION - 네비게이션

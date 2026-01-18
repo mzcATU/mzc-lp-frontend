@@ -45,13 +45,15 @@ function Combobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn("w-[200px] justify-between", className)}
+          className={cn("w-[200px] justify-between font-normal", className)}
         >
-          {selectedOption ? selectedOption.label : placeholder}
+          <span className="truncate">
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           {!hideSearch && <CommandInput placeholder={searchPlaceholder} />}
           <CommandList>
@@ -131,13 +133,13 @@ function MultiCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn("w-[200px] justify-between", className)}
+          className={cn("w-[200px] justify-between font-normal", className)}
         >
           <span className="truncate">{displayText()}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
