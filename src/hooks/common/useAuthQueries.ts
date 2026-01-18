@@ -7,7 +7,6 @@ import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 import { userService } from '@/services/common/userService';
 import type { LoginRequest, RegisterRequest } from '@/types/common/auth.types';
-import { getLoginPath } from '@/utils/tenantUtils';
 
 // Query Keys
 export const authKeys = {
@@ -80,9 +79,13 @@ export const useLogin = () => {
         return;
       }
 
-      // 다중 역할을 가진 사용자는 역할 선택 페이지로 리다이렉트
+      // 다중 역할 체크: 관리자 역할 + USER 역할을 동시에 가진 경우 역할 선택 페이지로 리다이렉트
       const roles = userDetail.roles || [];
-      if (roles.length > 1) {
+      const adminLikeRoles = ['SYSTEM_ADMIN', 'TENANT_ADMIN', 'OPERATOR', 'DESIGNER', 'INSTRUCTOR'];
+      const hasAdminLikeRole = roles.some(role => adminLikeRoles.includes(role));
+      const hasUserRole = roles.includes('USER');
+
+      if (hasAdminLikeRole && hasUserRole) {
         const selectRolePath = `${subdomainPrefix}/select-role`;
         navigate(selectRolePath);
         return;
@@ -120,7 +123,18 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
   const logout = useAuthStore((state) => state.logout);
   const refreshToken = useAuthStore((state) => state.refreshToken);
+  const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
+
+  // 로그아웃 전에 서브도메인 저장 (로그아웃 후에는 user 정보가 없어짐)
+  const getLogoutRedirectPath = () => {
+    const subdomain = user?.tenantSubdomain;
+    const isDefaultSubdomain = !subdomain || subdomain === 'default' || subdomain === 'www';
+    if (isDefaultSubdomain) {
+      return '/login';
+    }
+    return `/${subdomain}/login`;
+  };
 
   return useMutation({
     mutationFn: () => {
@@ -130,15 +144,17 @@ export const useLogout = () => {
       return authService.logout(refreshToken);
     },
     onSuccess: () => {
+      const redirectPath = getLogoutRedirectPath();
       logout();
       queryClient.clear();
-      navigate(getLoginPath());
+      navigate(redirectPath);
     },
     onError: () => {
       // 서버 에러가 나더라도 로컬 상태는 초기화
+      const redirectPath = getLogoutRedirectPath();
       logout();
       queryClient.clear();
-      navigate(getLoginPath());
+      navigate(redirectPath);
     },
   });
 };

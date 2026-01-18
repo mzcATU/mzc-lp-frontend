@@ -137,6 +137,7 @@ export {
   NOTIFICATION_TYPE_LABELS,
   NOTIFICATION_TYPE_COLORS,
   getNotificationDeepLink,
+  getDisplayNotificationType,
 } from './notification.types';
 
 // Course Explore (강의 탐색)

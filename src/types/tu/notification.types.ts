@@ -7,8 +7,21 @@ export type NotificationType =
   | 'COMMENT'     // 댓글 알림
   | 'LIKE'        // 좋아요 알림
   | 'COURSE'      // 강의 관련 알림
-  | 'SYSTEM'      // 시스템 알림
+  | 'SYSTEM'      // 시스템 알림 (트리거 - 웰컴, 수강완료 등)
+  | 'NOTICE'      // 공지사항 알림
   | 'ASSIGNMENT'; // 과제 알림
+
+/**
+ * 백엔드 SYSTEM 타입 알림을 공지사항/시스템으로 분류
+ * - referenceType이 'NOTICE'면 공지사항
+ * - 그 외는 시스템 트리거 (웰컴 메시지, 수강완료 등)
+ */
+export function getDisplayNotificationType(notification: NotificationItem): NotificationType {
+  if (notification.type === 'SYSTEM' && notification.referenceType === 'NOTICE') {
+    return 'NOTICE';
+  }
+  return notification.type;
+}
 
 // 알림 메타데이터 (타입별 추가 정보)
 export interface NotificationMetadata {
@@ -77,7 +90,8 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   COMMENT: '댓글',
   LIKE: '좋아요',
   COURSE: '강의',
-  SYSTEM: '공지사항',
+  SYSTEM: '시스템',
+  NOTICE: '공지사항',
   ASSIGNMENT: '과제',
 };
 
@@ -86,7 +100,8 @@ export const NOTIFICATION_TYPE_COLORS: Record<NotificationType, string> = {
   COMMENT: 'emerald',
   LIKE: 'rose',
   COURSE: 'blue',
-  SYSTEM: 'amber',
+  SYSTEM: 'slate',      // 시스템 알림은 회색 계열
+  NOTICE: 'amber',      // 공지사항은 amber (기존 SYSTEM 색상)
   ASSIGNMENT: 'purple',
 };
 
@@ -136,6 +151,7 @@ export function getNotificationDeepLink(notification: NotificationItem): string 
     case 'ASSIGNMENT':
       return getAssignmentNotificationLink(referenceType, referenceId, message);
     case 'SYSTEM':
+    case 'NOTICE':
       return getSystemNotificationLink(referenceType, referenceId);
     case 'COMMENT':
     case 'LIKE':

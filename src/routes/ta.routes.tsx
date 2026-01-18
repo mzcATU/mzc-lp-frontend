@@ -23,6 +23,7 @@ import {
   TenantNoticesPage,
   SystemNoticesPage,
   NoticeInboxPage,
+  NoticeDistributionPage,
 } from '@/pages/ta';
 import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
 import { AutoEnrollmentRulesPage } from '@/pages/ta/automation/AutoEnrollmentRulesPage';
@@ -67,6 +68,7 @@ const taChildRoutes = (
     {/* 공지사항 관리 */}
     <Route path="notices" element={<NoticeInboxPage />} />
     <Route path="notices/manage" element={<TenantNoticesPage />} />
+    <Route path="notices/distribution" element={<NoticeDistributionPage />} />
     <Route path="notices/system" element={<SystemNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
