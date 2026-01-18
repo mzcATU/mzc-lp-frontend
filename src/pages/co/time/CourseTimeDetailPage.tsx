@@ -33,12 +33,13 @@ import {
   useCloseTime,
   useArchiveTime,
 } from '@/hooks/co/useTimeQueries';
-import type { CourseTimeStatus, UpdateCourseTimeRequest, DeliveryType, EnrollmentMethod } from '@/types/co/time.types';
+import type { CourseTimeStatus, UpdateCourseTimeRequest, DeliveryType, EnrollmentMethod, DurationType } from '@/types/co/time.types';
 import {
   COURSE_TIME_STATUS_LABELS,
   DELIVERY_TYPE_LABELS,
   ENROLLMENT_METHOD_LABELS,
   COURSE_TIME_STATUS_TRANSITIONS,
+  DURATION_TYPE_LABELS,
 } from '@/types/co/time.types';
 
 interface CourseTimeDetailPageProps {
@@ -73,6 +74,8 @@ const t = {
   periodInfo: { ko: '기간 정보', en: 'Period Information' },
   enrollmentPeriod: { ko: '모집 기간', en: 'Enrollment Period' },
   learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
+  durationType: { ko: '학습 기간 유형', en: 'Duration Type' },
+  durationDays: { ko: '수강 일수', en: 'Duration Days' },
   capacityInfo: { ko: '정원 및 수강', en: 'Capacity & Enrollment' },
   capacity: { ko: '정원', en: 'Capacity' },
   currentEnrollment: { ko: '현재 수강 인원', en: 'Current Enrollment' },
@@ -545,25 +548,36 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                   <div className="bg-bg-secondary p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-text-secondary">{getText('learningPeriod')}</Label>
-                      {(() => {
-                        const today = new Date();
-                        const classStart = new Date(courseTime.classStartDate);
-                        const classEnd = new Date(courseTime.classEndDate);
-
-                        if (today < classStart) {
-                          const daysUntil = Math.ceil((classStart.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                          return <Badge variant="secondary">D-{daysUntil}</Badge>;
-                        } else if (today <= classEnd) {
-                          const daysLeft = Math.ceil((classEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                          return <Badge variant="default">{language === 'ko' ? `진행 중 (D-${daysLeft})` : `Ongoing (D-${daysLeft})`}</Badge>;
-                        } else {
-                          return <Badge variant="destructive">{language === 'ko' ? '종료' : 'Ended'}</Badge>;
-                        }
-                      })()}
+                      {courseTime.durationType && (
+                        <Badge variant="default">
+                          {DURATION_TYPE_LABELS[courseTime.durationType as DurationType]}
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-text-primary font-medium">
-                      {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate)}
-                    </p>
+                    {/* FIXED: 시작일 ~ 종료일 */}
+                    {courseTime.durationType === 'FIXED' && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
+                      </p>
+                    )}
+                    {/* RELATIVE: 시작일 + N일 */}
+                    {courseTime.durationType === 'RELATIVE' && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} + {courseTime.durationDays}일
+                      </p>
+                    )}
+                    {/* UNLIMITED: 시작일부터 무제한 */}
+                    {courseTime.durationType === 'UNLIMITED' && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} ~ {language === 'ko' ? '무제한' : 'Unlimited'}
+                      </p>
+                    )}
+                    {/* durationType이 없는 경우 (기존 데이터) */}
+                    {!courseTime.durationType && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
+                      </p>
+                    )}
                   </div>
                 </div>
 

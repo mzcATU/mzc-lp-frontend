@@ -9,7 +9,7 @@
  * ```
  */
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 import type { QualityRating } from '@/types/co/time.types';
 import { QUALITY_RATING_LABELS } from '@/types/co/time.types';
 import { designTokens } from '@/styles/admin-design-tokens';

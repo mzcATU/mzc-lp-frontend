@@ -183,8 +183,6 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   // 수시 모집 상태 (모집 종료일 없음)
   const [isAlwaysOpen, setIsAlwaysOpen] = useState(false);
-  // 학습 기간 없음 상태 (모집 종료 후 바로 시작)
-  const [noLearningPeriod, setNoLearningPeriod] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<CreateCourseTimeRequest>({
@@ -231,25 +229,30 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       if (!formData.enrollStartDate) newErrors.enrollStartDate = getText('required');
       if (!isAlwaysOpen && !formData.enrollEndDate) newErrors.enrollEndDate = getText('required');
 
-      // 학습 기간이 있는 경우에만 학습 시작일/종료일 필수
-      if (!noLearningPeriod) {
-        if (!formData.classStartDate) newErrors.classStartDate = getText('required');
-        if (!isAlwaysOpen && !formData.classEndDate) newErrors.classEndDate = getText('required');
+      // 학습 시작일 필수
+      if (!formData.classStartDate) newErrors.classStartDate = getText('required');
+
+      // DurationType별 필수 필드 검증
+      if (formData.durationType === 'FIXED' && !formData.classEndDate) {
+        newErrors.classEndDate = getText('required');
+      }
+      if (formData.durationType === 'RELATIVE' && (!formData.durationDays || formData.durationDays <= 0)) {
+        newErrors.durationDays = getText('required');
       }
 
-      // 날짜 유효성 검사 (수시 모집이 아닌 경우에만)
+      // 날짜 유효성 검사
       if (!isAlwaysOpen && formData.enrollStartDate && formData.enrollEndDate) {
         if (new Date(formData.enrollEndDate) < new Date(formData.enrollStartDate)) {
           newErrors.enrollEndDate = getText('enrollEndBeforeStart');
         }
       }
-      if (!noLearningPeriod && !isAlwaysOpen && formData.classStartDate && formData.classEndDate) {
+      if (formData.durationType === 'FIXED' && formData.classStartDate && formData.classEndDate) {
         if (new Date(formData.classEndDate) < new Date(formData.classStartDate)) {
           newErrors.classEndDate = getText('classEndBeforeStart');
         }
       }
-      // 학습 시작일이 모집 종료일 이후인지 검사 (학습 기간이 있고 수시 모집이 아닌 경우)
-      if (!noLearningPeriod && formData.enrollEndDate && formData.classStartDate && !isAlwaysOpen) {
+      // 학습 시작일이 모집 종료일 이후인지 검사
+      if (formData.enrollEndDate && formData.classStartDate && !isAlwaysOpen) {
         if (new Date(formData.classStartDate) < new Date(formData.enrollEndDate)) {
           newErrors.classStartDate = getText('classStartBeforeEnrollEnd');
         }
@@ -332,25 +335,6 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
   };
 
-  // 학습 기간 없음 토글 핸들러
-  const handleNoLearningPeriodToggle = (checked: boolean) => {
-    setNoLearningPeriod(checked);
-    if (checked) {
-      // 학습 기간 없음 선택 시 학습 시작/종료일을 9999-12-31로 설정
-      setFormData((prev) => ({
-        ...prev,
-        classStartDate: '9999-12-31',
-        classEndDate: '9999-12-31',
-      }));
-    } else {
-      // 학습 기간 없음 해제 시 학습 시작/종료일 초기화
-      setFormData((prev) => ({
-        ...prev,
-        classStartDate: '',
-        classEndDate: '',
-      }));
-    }
-  };
 
   // 과정 선택 핸들러
   const handleCourseSelect = (courseIdStr: string) => {
@@ -963,28 +947,15 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
               </div>
 
-              {/* 학습 기간 */}
+              {/* 학습 기간 - DurationType별 조건부 렌더링 */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-text-primary">
-                    <Clock size={20} />
-                    <h3 className="font-medium m-0">{getText('learningPeriod')}</h3>
-                  </div>
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={noLearningPeriod}
-                      onChange={(e) => handleNoLearningPeriodToggle(e.target.checked)}
-                      className="rounded border-border"
-                    />
-                    <span className="text-text-secondary">{getText('noLearningPeriod')}</span>
-                  </label>
+                <div className="flex items-center gap-2 text-text-primary">
+                  <Clock size={20} />
+                  <h3 className="font-medium m-0">{getText('learningPeriod')}</h3>
                 </div>
-                {noLearningPeriod ? (
-                  <div className="pl-7 p-4 bg-bg-subtle rounded-lg border border-border">
-                    <p className="text-text-secondary text-sm">{getText('noLearningPeriodHint')}</p>
-                  </div>
-                ) : (
+
+                {/* FIXED: 시작일 + 종료일 (총 일수 자동 계산) */}
+                {formData.durationType === 'FIXED' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
                     <div className="space-y-2">
                       <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
@@ -1004,7 +975,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       <Input
                         id="classEndDate"
                         type="date"
-                        value={formData.classEndDate}
+                        value={formData.classEndDate || ''}
                         onChange={(e) => handleInputChange('classEndDate', e.target.value)}
                         className={errors.classEndDate ? 'border-status-error' : ''}
                       />
@@ -1012,12 +983,88 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                         <p className="text-sm text-status-error">{errors.classEndDate}</p>
                       )}
                     </div>
+                    {/* 총 수강 일수 표시 */}
+                    {formData.classStartDate && formData.classEndDate && formData.durationDays && (
+                      <div className="col-span-full pl-7">
+                        <div className="bg-bg-brand-active/10 rounded-lg px-4 py-2 border border-action-primary/30">
+                          <span className="text-sm text-text-secondary">
+                            총 수강 일수:{' '}
+                          </span>
+                          <span className="text-sm font-medium text-action-primary">
+                            {formData.durationDays}일
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* RELATIVE: 시작일 + 수강 일수 입력 */}
+                {formData.durationType === 'RELATIVE' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-7">
+                    <div className="space-y-2">
+                      <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
+                      <Input
+                        id="classStartDate"
+                        type="date"
+                        value={formData.classStartDate}
+                        onChange={(e) => handleInputChange('classStartDate', e.target.value)}
+                        className={errors.classStartDate ? 'border-status-error' : ''}
+                      />
+                      {errors.classStartDate && (
+                        <p className="text-sm text-status-error">{errors.classStartDate}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="durationDays">수강 일수 *</Label>
+                      <Input
+                        id="durationDays"
+                        type="number"
+                        min="1"
+                        placeholder="예: 30"
+                        value={formData.durationDays || ''}
+                        onChange={(e) => handleInputChange('durationDays', e.target.value ? parseInt(e.target.value) : null)}
+                        className={errors.durationDays ? 'border-status-error' : ''}
+                      />
+                      {errors.durationDays && (
+                        <p className="text-sm text-status-error">{errors.durationDays}</p>
+                      )}
+                      {selectedCourse?.estimatedHours && (
+                        <p className="text-sm text-text-secondary">
+                          예상 학습 시간({selectedCourse.estimatedHours}시간) 기준 권장: {Math.ceil(selectedCourse.estimatedHours / 8)}일
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* UNLIMITED: 시작일만 */}
+                {formData.durationType === 'UNLIMITED' && (
+                  <div className="pl-7 space-y-4">
+                    <div className="space-y-2 md:w-1/2">
+                      <Label htmlFor="classStartDate">{getText('classStartDate')} *</Label>
+                      <Input
+                        id="classStartDate"
+                        type="date"
+                        value={formData.classStartDate}
+                        onChange={(e) => handleInputChange('classStartDate', e.target.value)}
+                        className={errors.classStartDate ? 'border-status-error' : ''}
+                      />
+                      {errors.classStartDate && (
+                        <p className="text-sm text-status-error">{errors.classStartDate}</p>
+                      )}
+                    </div>
+                    <div className="bg-bg-subtle rounded-lg p-4 border border-border">
+                      <p className="text-sm text-text-secondary">
+                        무제한 학습 방식은 종료일 없이 수강생이 원하는 기간 동안 학습할 수 있습니다.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* 중간 합류 허용 */}
-              {!noLearningPeriod && (
+              {/* 중간 합류 허용 (LIVE가 아닌 경우에만) */}
+              {formData.deliveryType !== 'LIVE' && (
                 <div className="flex items-center gap-3 p-4 bg-bg-subtle rounded-lg border border-border">
                   <Switch
                     checked={formData.allowLateEnrollment ?? false}
@@ -1399,7 +1446,10 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 <ArrowRight size={18} />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={createTime.isPending}>
+              <Button
+                onClick={handleSubmit}
+                disabled={createTime.isPending || !clientValidationResult.valid}
+              >
                 {createTime.isPending ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
