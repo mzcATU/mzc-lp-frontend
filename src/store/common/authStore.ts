@@ -8,10 +8,12 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   tokenExpiresAt: number | null; // 토큰 만료 시간 (timestamp)
+  currentRole: TenantRole | null; // 현재 선택된 역할
 
   // Actions
-  setAuth: (user: AuthUser, accessToken: string, refreshToken: string, expiresIn?: number) => void;
+  setAuth: (user: AuthUser, accessToken: string, refreshToken: string, expiresIn?: number, currentRole?: TenantRole) => void;
   setTokens: (accessToken: string, refreshToken: string, expiresIn?: number) => void;
+  setCurrentRole: (role: TenantRole) => void;
   updateUser: (user: Partial<AuthUser>) => void;
   logout: () => void;
 
@@ -22,6 +24,7 @@ interface AuthState {
   // Selectors
   hasRole: (role: TenantRole) => boolean;
   hasAnyRole: (roles: TenantRole[]) => boolean;
+  getCurrentRole: () => TenantRole | null;
 }
 
 // 토큰 만료 시간 계산 (expiresIn: 초 단위)
@@ -39,14 +42,16 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       tokenExpiresAt: null,
+      currentRole: null,
 
-      setAuth: (user, accessToken, refreshToken, expiresIn) =>
+      setAuth: (user, accessToken, refreshToken, expiresIn, currentRole) =>
         set({
           user,
           accessToken,
           refreshToken,
           isAuthenticated: true,
           tokenExpiresAt: calculateExpiresAt(expiresIn),
+          currentRole: currentRole || user.role,
         }),
 
       setTokens: (accessToken, refreshToken, expiresIn) =>
@@ -54,6 +59,11 @@ export const useAuthStore = create<AuthState>()(
           accessToken,
           refreshToken,
           tokenExpiresAt: calculateExpiresAt(expiresIn),
+        }),
+
+      setCurrentRole: (role) =>
+        set({
+          currentRole: role,
         }),
 
       updateUser: (userData) =>
@@ -68,6 +78,7 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
           tokenExpiresAt: null,
+          currentRole: null,
         }),
 
       isTokenExpired: () => {
@@ -91,6 +102,11 @@ export const useAuthStore = create<AuthState>()(
         const userRole = get().user?.role;
         return userRole ? roles.includes(userRole) : false;
       },
+
+      getCurrentRole: () => {
+        const { currentRole, user } = get();
+        return currentRole || user?.role || null;
+      },
     }),
     {
       name: 'auth-storage',
@@ -100,6 +116,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
         tokenExpiresAt: state.tokenExpiresAt,
+        currentRole: state.currentRole,
       }),
     }
   )

@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Shield, Briefcase, BookOpen, GraduationCap } from 'lucide-react';
+import { ChevronDown, Shield, Briefcase, BookOpen, GraduationCap, Loader2, Pencil } from 'lucide-react';
 import type { SidebarColors } from '@/types';
+import type { TenantRole } from '@/types/common/auth.types';
 import { cn } from '@/utils/cn';
 import { useSubdomainPath } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
+import { authService } from '@/services/common/authService';
 
-// 글로벌 역할 타입 (TA, CO, TU, USER)
-export type GlobalRole = 'TA' | 'CO' | 'TU' | 'USER';
+// 글로벌 역할 타입 (TA, CO, TU, DS, USER)
+export type GlobalRole = 'TA' | 'CO' | 'TU' | 'DS' | 'USER';
 
 interface GlobalRoleSwitcherProps {
   currentRole: GlobalRole;
@@ -22,6 +24,7 @@ const roleIcons: Record<GlobalRole, typeof Shield> = {
   TA: Shield,
   CO: Briefcase,
   TU: BookOpen,
+  DS: Pencil,
   USER: GraduationCap,
 };
 
@@ -30,6 +33,7 @@ const roleLabels: Record<GlobalRole, { ko: string; en: string }> = {
   TA: { ko: '관리자', en: 'Admin' },
   CO: { ko: '교육 운영자', en: 'Course Operator' },
   TU: { ko: '강사', en: 'Instructor' },
+  DS: { ko: '설계자', en: 'Designer' },
   USER: { ko: '학습자', en: 'Learner' },
 };
 
@@ -38,6 +42,16 @@ const roleDefaultPaths: Record<Exclude<GlobalRole, 'USER'>, string> = {
   TA: '/ta/dashboard',
   CO: '/co/dashboard',
   TU: '/tu/dashboard',
+  DS: '/tu/dashboard',
+};
+
+// GlobalRole → TenantRole 매핑
+const globalRoleToTenantRole: Record<GlobalRole, TenantRole> = {
+  TA: 'TENANT_ADMIN',
+  CO: 'OPERATOR',
+  TU: 'INSTRUCTOR',
+  DS: 'DESIGNER',
+  USER: 'USER',
 };
 
 export function GlobalRoleSwitcher({
@@ -50,11 +64,14 @@ export function GlobalRoleSwitcher({
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 사용자의 역할 가져오기 (현재는 단일 role, 향후 roles 배열로 확장 가능)
+  // 사용자의 역할 가져오기
   const userRole = useAuthStore((state) => state.user?.role);
   const userRolesRaw = useAuthStore((state) => state.user?.roles);
+  const setTokens = useAuthStore((state) => state.setTokens);
+  const setCurrentRole = useAuthStore((state) => state.setCurrentRole);
   // Set이나 배열 모두 처리 가능하도록 Array.from 사용
   const userRoles = userRolesRaw ? Array.from(userRolesRaw) as string[] : undefined;
 
@@ -70,7 +87,7 @@ export function GlobalRoleSwitcher({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 사용자가 가진 역할만 표시 (순서: 학습자 → 강사 → 교육 운영자 → 관리자)
+  // 사용자가 가진 역할만 표시 (순서: 학습자 → 설계자 → 강사 → 교육 운영자 → 관리자)
   const availableRoles: GlobalRole[] = (() => {
     const roles: GlobalRole[] = [];
 
@@ -83,7 +100,10 @@ export function GlobalRoleSwitcher({
     if (rolesToCheck.includes('USER')) {
       roles.push('USER');
     }
-    if (rolesToCheck.includes('INSTRUCTOR') || rolesToCheck.includes('DESIGNER')) {
+    if (rolesToCheck.includes('DESIGNER')) {
+      roles.push('DS');
+    }
+    if (rolesToCheck.includes('INSTRUCTOR')) {
       roles.push('TU');
     }
     if (rolesToCheck.includes('OPERATOR')) {
@@ -103,16 +123,35 @@ export function GlobalRoleSwitcher({
     return null;
   }
 
-  const handleRoleChange = (role: GlobalRole) => {
-    if (role !== currentRole) {
+  const handleRoleChange = async (role: GlobalRole) => {
+    if (role === currentRole) {
+      setIsOpen(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 역할 전환 API 호출
+      const targetRole = globalRoleToTenantRole[role];
+      const response = await authService.switchRole({ targetRole });
+
+      // 새 토큰 저장
+      setTokens(response.accessToken, response.refreshToken, response.expiresIn);
+      setCurrentRole(targetRole);
+
+      // 페이지 이동
       if (role === 'USER') {
-        // TODO: 테넌트 설정(siteMode)에 따라 B2B/B2C 경로 결정 (현재는 B2C 기본)
         navigate(prefixPath('/tu/b2c/mypage'));
       } else {
         navigate(prefixPath(roleDefaultPaths[role]));
       }
+    } catch (error) {
+      console.error('Role switch failed:', error);
+      // TODO: 에러 토스트 표시
+    } finally {
+      setIsLoading(false);
+      setIsOpen(false);
     }
-    setIsOpen(false);
   };
 
   // 접힌 상태 - 아이콘만 표시
@@ -120,15 +159,17 @@ export function GlobalRoleSwitcher({
     return (
       <div ref={dropdownRef} className="relative">
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => !isLoading && setIsOpen(!isOpen)}
+          disabled={isLoading}
           className="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200"
           style={{
             backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
             color: colors.textPrimary,
+            opacity: isLoading ? 0.7 : 1,
           }}
           title={roleLabels[currentRole][language]}
         >
-          <CurrentIcon className="w-5 h-5" />
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CurrentIcon className="w-5 h-5" />}
         </button>
 
         {/* 드롭다운 메뉴 (접힌 상태) */}
@@ -188,7 +229,8 @@ export function GlobalRoleSwitcher({
   return (
     <div ref={dropdownRef} className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !isLoading && setIsOpen(!isOpen)}
+        disabled={isLoading}
         className={cn(
           'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
           'border'
@@ -197,11 +239,16 @@ export function GlobalRoleSwitcher({
           backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.03)',
           borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
           color: colors.textPrimary,
+          opacity: isLoading ? 0.7 : 1,
         }}
       >
-        <CurrentIcon className="w-5 h-5" style={{ color: colors.textSecondary }} />
+        {isLoading ? (
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: colors.textSecondary }} />
+        ) : (
+          <CurrentIcon className="w-5 h-5" style={{ color: colors.textSecondary }} />
+        )}
         <span className="flex-1 text-left text-sm font-medium">
-          {roleLabels[currentRole][language]}
+          {isLoading ? (language === 'ko' ? '전환 중...' : 'Switching...') : roleLabels[currentRole][language]}
         </span>
         <ChevronDown
           className={cn('w-4 h-4 transition-transform duration-200', isOpen && 'rotate-180')}

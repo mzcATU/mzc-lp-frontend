@@ -115,7 +115,8 @@ export function MyPageSidebar({ onMenuItemClick, menuData: externalMenuData }: M
 
     let count = 0;
     if (userRoles.includes('USER')) count++;
-    if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) count++;
+    if (userRoles.includes('DESIGNER')) count++;
+    if (userRoles.includes('INSTRUCTOR')) count++;
     if (userRoles.includes('OPERATOR')) count++;
     if (userRoles.includes('TENANT_ADMIN')) count++;
     return count;

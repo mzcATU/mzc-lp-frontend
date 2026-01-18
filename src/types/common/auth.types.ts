@@ -31,6 +31,10 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface SwitchRoleRequest {
+  targetRole: TenantRole;
+}
+
 export interface UpdateProfileRequest {
   name?: string;
   phone?: string;
@@ -83,7 +87,8 @@ export interface AuthUser {
   email: string;
   name: string;
   role: TenantRole;
-  roles?: TenantRole[];  // 1:N 역할 지원 (향후 확장용)
+  roles?: TenantRole[];  // 1:N 역할 지원
+  currentRole?: TenantRole;  // 현재 선택된 역할
   tenantId?: number;
   tenantSubdomain?: string;
 }
