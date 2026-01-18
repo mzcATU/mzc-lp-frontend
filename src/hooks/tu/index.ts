@@ -345,3 +345,13 @@ export {
   PRICE_OPTIONS,
   type SearchFilters,
 } from './useSearchLogic';
+
+// CourseTime Announcement Hooks (차수별 공지사항)
+export {
+  courseTimeAnnouncementKeys,
+  useCourseTimeAnnouncements,
+  useCourseTimeAnnouncementDetail,
+  useCreateCourseTimeAnnouncement,
+  useUpdateCourseTimeAnnouncement,
+  useDeleteCourseTimeAnnouncement,
+} from './useCourseTimeAnnouncementQueries';

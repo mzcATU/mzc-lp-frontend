@@ -184,11 +184,11 @@ export function B2BMyLearningPage() {
   ) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
-    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
+    navigate(prefixPath(`/tu/b2b/mypage/learning/${enrollmentId}`));
   };
 
   const handleContinueLearning = (enrollmentId: number) => {
-    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}/player`));
+    navigate(prefixPath(`/tu/b2b/player/${enrollmentId}`));
   };
 
   const handleSearch = (e: React.FormEvent) => {
