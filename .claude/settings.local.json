@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(curl:*)",
+      "Bash(/opt/homebrew/Cellar/mysql@8.0/8.0.44_3/bin/mysql:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run dev:*)"
     ]
   }
 }

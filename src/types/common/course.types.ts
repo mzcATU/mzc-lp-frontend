@@ -56,8 +56,6 @@ export interface CourseResponse {
   status: CourseStatus;
   estimatedHours: number | null;
   categoryId: number | null;
-  startDate: string | null;
-  endDate: string | null;
   tags: string[];
   createdAt: string;
   updatedAt: string;
@@ -105,8 +103,6 @@ export interface CourseDetailResponse {
   status: CourseStatus;
   estimatedHours: number | null;
   categoryId: number | null;
-  startDate: string | null;
-  endDate: string | null;
   tags: string[];
   items: CourseItemResponse[];
   itemCount: number;
@@ -129,8 +125,6 @@ export interface CreateCourseRequest {
   estimatedHours?: number;
   categoryId?: number;
   thumbnailUrl?: string;
-  startDate?: string;
-  endDate?: string;
   tags?: string[];
   /** 스냅샷 연결 (TU 과정 신청 시 사용) */
   snapshotId?: number;
@@ -145,8 +139,6 @@ export interface UpdateCourseRequest {
   estimatedHours?: number;
   categoryId?: number;
   thumbnailUrl?: string;
-  startDate?: string;
-  endDate?: string;
   tags?: string[];
   /** @deprecated status는 상태 전환 API 사용 (ready, unready, register) */
   status?: CoursePublishStatus;

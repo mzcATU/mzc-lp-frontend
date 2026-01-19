@@ -114,12 +114,12 @@ export interface CourseFormData {
   description: string;
   /** 썸네일 이미지 URL */
   thumbnailUrl?: string;
-  startDate: string;
-  endDate: string;
   categoryId: number | null;
   tags: string[];
   level: CourseLevel | '';
   type: CourseType | '';
+  /** 예상 학습 시간 (시간 단위) */
+  estimatedHours: number | null;
   /** @deprecated curriculumItems 사용 권장 */
   lessons: LessonData[];
   /** 커리큘럼 트리 구조 (폴더/콘텐츠 계층) */

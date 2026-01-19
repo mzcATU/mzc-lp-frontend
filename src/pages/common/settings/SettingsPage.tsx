@@ -4,6 +4,7 @@ import { SettingsCard, Button } from '@/components/common';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 import { toast } from 'sonner';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 type UserRole = 'USER' | 'INSTRUCTOR' | 'DESIGNER' | 'OPERATOR' | 'TENANT_ADMIN' | 'SYSTEM_ADMIN';
 
@@ -105,18 +106,20 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
 
   const handleLogout = async () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
+      // 로그아웃 전에 현재 서브도메인 경로 저장
+      const loginPath = getLoginPath();
       try {
         if (refreshToken) {
           await authService.logout(refreshToken);
         }
         logout();
-        navigate('/auth/login');
+        navigate(loginPath);
         toast.success('로그아웃되었습니다.');
       } catch (error) {
         console.error('Logout failed:', error);
         // 에러가 나더라도 로컬 상태는 초기화
         logout();
-        navigate('/auth/login');
+        navigate(loginPath);
         toast.error('로그아웃에 실패했습니다.');
       }
     }

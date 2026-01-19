@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, GraduationCap, Shield, Sparkles, Settings, Pencil } from 'lucide-react';
+import { ArrowRight, GraduationCap, Shield, Sparkles } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/common/authStore';
 
@@ -12,56 +12,44 @@ interface CardData {
   image: string;
   icon: React.ReactNode;
   themeColor: 'blue' | 'purple' | 'green' | 'orange';
-  delay: number;
-  path: string;
+  path?: string; // 단일 경로 (옵셔널)
+  getPath?: (userRoles: string[]) => string; // 역할 기반 경로 결정 함수
   roles: string[]; // 이 카드를 표시할 역할들
 }
 
-// 전체 카드 설정 데이터
+// 전체 카드 설정 데이터 (학습자 / 관리자 2개로 구분)
 const ALL_CARD_DATA: CardData[] = [
   {
-    id: 'learner',
+    id: 'user',
     title: '학습자 모드',
     description: '교육 프로그램에 참여하고, 나의 학습 현황을 확인하세요.',
     image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <GraduationCap size={32} className="text-blue-400" />,
     themeColor: 'blue',
-    delay: 0.3,
     path: '/tu/b2c',
     roles: ['USER'],
   },
   {
-    id: 'teaching',
-    title: '강사/디자이너 모드',
-    description: '강의를 제작하고, 교육 콘텐츠를 관리하세요.',
-    image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    icon: <Pencil size={32} className="text-green-400" />,
-    themeColor: 'green',
-    delay: 0.35,
-    path: '/tu/teaching',
-    roles: ['INSTRUCTOR', 'DESIGNER'],
-  },
-  {
-    id: 'operator',
-    title: '운영자 모드',
-    description: '교육 과정을 운영하고, 수강생을 관리하세요.',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    icon: <Settings size={32} className="text-orange-400" />,
-    themeColor: 'orange',
-    delay: 0.4,
-    path: '/co/dashboard',
-    roles: ['OPERATOR'],
-  },
-  {
     id: 'admin',
     title: '관리자 모드',
-    description: '테넌트 설정, 사용자 관리, 시스템 관리 기능을 사용하세요.',
+    description: '교육 과정 운영, 강의 제작, 사용자 관리 등 관리 기능을 사용하세요.',
     image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <Shield size={32} className="text-purple-400" />,
     themeColor: 'purple',
-    delay: 0.45,
-    path: '/ta/dashboard',
-    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN'],
+    getPath: (userRoles: string[]) => {
+      // 역할 우선순위: TENANT_ADMIN > OPERATOR > INSTRUCTOR/DESIGNER
+      if (userRoles.includes('TENANT_ADMIN') || userRoles.includes('SYSTEM_ADMIN')) {
+        return '/ta/dashboard';
+      }
+      if (userRoles.includes('OPERATOR')) {
+        return '/co/dashboard';
+      }
+      if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) {
+        return '/tu/dashboard';
+      }
+      return '/ta/dashboard'; // 기본값
+    },
+    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'OPERATOR', 'DESIGNER', 'INSTRUCTOR'],
   },
 ];
 
@@ -172,7 +160,11 @@ export function RoleSelectionPage() {
   }, [user?.roles]);
 
   const handleSelect = (card: CardData) => {
-    navigate(prefixPath(card.path));
+    const userRoles = user?.roles || [];
+    const targetPath = card.getPath
+      ? card.getPath(Array.from(userRoles))
+      : card.path || '/';
+    navigate(prefixPath(targetPath));
   };
 
   const userName = user?.name || '사용자';

@@ -44,7 +44,6 @@ function TenantAdminWrapper() {
 // TA 하위 라우트 (Admin 메뉴)
 const taChildRoutes = (
   <>
-    <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />

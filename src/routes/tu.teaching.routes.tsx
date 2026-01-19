@@ -58,7 +58,6 @@ export const tuTeachingRoutes = (
   } />
 
   <Route path="/:subdomain/tu" element={<TenantUserWrapper />}>
-    <Route index element={<TUDashboardPage />} />
     <Route path="dashboard" element={<TUDashboardPage />} />
     <Route path="teaching/courses" element={<MyCoursesPage />} />
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
@@ -77,7 +76,6 @@ export const tuTeachingRoutes = (
     <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
   </Route>
   <Route path="/tu" element={<TenantUserWrapper />}>
-    <Route index element={<TUDashboardPage />} />
     <Route path="dashboard" element={<TUDashboardPage />} />
 
     {/* 내 강의계획 */}

@@ -110,12 +110,11 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
-    startDate: '',
-    endDate: '',
     categoryId: null,
     tags: [],
     level: '',
     type: '',
+    estimatedHours: null,
     lessons: [], // deprecated
     curriculumItems: [],
     isDraft: false,
@@ -150,12 +149,11 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         title: courseData.title,
         description: courseData.description || '',
         thumbnailUrl: courseData.thumbnailUrl || '',
-        startDate: courseData.startDate || '',
-        endDate: courseData.endDate || '',
         categoryId: courseData.categoryId,
         tags: courseData.tags || [],
         level: courseData.level || '',
         type: courseData.type || '',
+        estimatedHours: courseData.estimatedHours,
         lessons: [], // deprecated
         curriculumItems: convertHierarchyToCurriculumItems(hierarchyData),
         isDraft: false,
@@ -213,8 +211,6 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
@@ -261,8 +257,6 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 

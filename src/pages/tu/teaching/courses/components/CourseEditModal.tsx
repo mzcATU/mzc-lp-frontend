@@ -52,8 +52,6 @@ export function CourseEditModal({
     level: '' as CourseLevel | '',
     type: '' as CourseType | '',
     estimatedHours: '',
-    startDate: '',
-    endDate: '',
     tags: '',
   });
 
@@ -66,8 +64,6 @@ export function CourseEditModal({
         level: course.level || '',
         type: course.type || '',
         estimatedHours: course.estimatedHours?.toString() || '',
-        startDate: course.startDate || '',
-        endDate: course.endDate || '',
         tags: course.tags?.join(', ') || '',
       });
     }
@@ -96,8 +92,6 @@ export function CourseEditModal({
       estimatedHours: formData.estimatedHours
         ? parseInt(formData.estimatedHours, 10)
         : undefined,
-      startDate: formData.startDate || undefined,
-      endDate: formData.endDate || undefined,
       tags: formData.tags
         ? formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
         : undefined,
@@ -203,34 +197,6 @@ export function CourseEditModal({
               min="1"
               className="w-full px-3 py-2 border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-action-primary bg-bg-default"
             />
-          </div>
-
-          {/* 기간 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">
-                시작일
-              </label>
-              <input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-action-primary bg-bg-default"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">
-                종료일
-              </label>
-              <input
-                type="date"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-border rounded-lg text-text-primary text-sm outline-none focus:ring-2 focus:ring-action-primary bg-bg-default"
-              />
-            </div>
           </div>
 
           {/* 태그 */}
