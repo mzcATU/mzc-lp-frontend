@@ -24,6 +24,7 @@ interface BackendEnrollmentResponse {
   progressPercent: number | null;
   score: number | null;
   completedAt: string | null;
+  actualEndDate: string | null;
 }
 
 /**
@@ -127,7 +128,7 @@ const transformEnrollment = (
   completedAt: backend.completedAt ?? undefined,
   progress: backend.progressPercent ?? 0,
   startDate: courseTimeInfo?.classStartDate ?? '',
-  endDate: courseTimeInfo?.classEndDate ?? '',
+  endDate: backend.actualEndDate ?? courseTimeInfo?.classEndDate ?? '',
 });
 
 /**
