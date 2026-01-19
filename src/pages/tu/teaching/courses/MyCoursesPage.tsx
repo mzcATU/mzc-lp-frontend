@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
-import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit } from 'lucide-react';
+import { BookOpen, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
@@ -54,13 +54,13 @@ const t = {
   all: { ko: '전체', en: 'All' },
   draft: { ko: '작성중', en: 'Draft' },
   ready: { ko: '작성완료', en: 'Ready' },
-  registered: { ko: '등록됨', en: 'Registered' },
+  registered: { ko: '등록', en: 'Registered' },
   published: { ko: '발행됨', en: 'Published' },
   sortBy: { ko: '정렬', en: 'Sort By' },
   recent: { ko: '최신순', en: 'Recent' },
   studentCount: { ko: '수강생 순', en: 'Students' },
   titleSort: { ko: '제목순', en: 'Title' },
-  coursesCreated: { ko: '개설한 과정', en: 'Courses Created' },
+  coursesCreated: { ko: '전체 과정', en: 'All Courses' },
   totalStudents: { ko: '총 수강생', en: 'Total Students' },
   avgCompletion: { ko: '평균 완료율', en: 'Avg. Completion' },
   students: { ko: '수강생', en: 'Students' },
@@ -234,6 +234,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   });
 
   const totalStudents = courses.reduce((acc, c) => acc + (c.students || 0), 0);
+  const registeredCount = courses.filter((c) => c.courseStatus === 'REGISTERED').length;
   const avgCompletion = courses.length > 0
     ? Math.round(courses.reduce((acc, c) => acc + c.progress, 0) / courses.length)
     : 0;
@@ -255,10 +256,9 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       </div>
 
       {/* Statistics Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
         <IconStatCard icon={<BookOpen size={20} />} label={getText('coursesCreated')} value={courses.length} />
-        <IconStatCard icon={<Users size={20} />} label={getText('totalStudents')} value={totalStudents} />
-        <IconStatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCompletion')} value={`${avgCompletion}%`} />
+        <IconStatCard icon={<Award size={20} />} label="등록된 과정" value={registeredCount} />
       </div>
 
       {/* Filters, Sort, and Bulk Actions */}
@@ -384,6 +384,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                       <>
                         <Button
                           size="sm"
+                          variant="outline"
                           className="flex-1"
                           onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
                         >
@@ -401,6 +402,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
                     ) : course.courseStatus === 'REGISTERED' ? (
                       <Button
                         size="sm"
+                        variant="outline"
                         className="flex-1"
                         onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
                       >

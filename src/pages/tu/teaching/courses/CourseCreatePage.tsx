@@ -516,14 +516,14 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 {getText('lastSaved')}: {new Date(formData.lastSaved).toLocaleString('ko-KR')}
               </span>
             )}
-            <Button
+{/*            <Button
               variant="ghost"
               onClick={() => alert('템플릿 불러오기 기능은 추후 구현됩니다.')}
               className="border border-border"
             >
               <FileText size={16} />
               {getText('loadTemplate')}
-            </Button>
+            </Button> */}
             <Button variant="ghost" onClick={handleClose} className="border border-border">
               {getText('close')}
             </Button>

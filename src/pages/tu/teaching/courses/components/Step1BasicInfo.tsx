@@ -146,6 +146,14 @@ export function Step1BasicInfo({
         />
       </div>
 
+      <TagInput
+        label="태그"
+        hint="강의와 관련된 키워드를 쉼표(,)로 구분하여 입력하세요. 예: React, TypeScript, 프론트엔드"
+        value={formData.tags}
+        onChange={(tags) => onFormDataChange({ tags })}
+        placeholder="태그를 입력하세요 (쉼표로 구분)"
+      />
+
       {/* 썸네일 URL */}
       <div className="space-y-2">
         <Label htmlFor="thumbnailUrl" className="flex items-center gap-2">
@@ -174,14 +182,6 @@ export function Step1BasicInfo({
           권장 크기: 400x250px, 지원 형식: JPG, PNG, WebP
         </p>
       </div>
-
-      <TagInput
-        label="태그"
-        hint="강의와 관련된 키워드를 쉼표(,)로 구분하여 입력하세요. 예: React, TypeScript, 프론트엔드"
-        value={formData.tags}
-        onChange={(tags) => onFormDataChange({ tags })}
-        placeholder="태그를 입력하세요 (쉼표로 구분)"
-      />
 
       {/* 다국어 설정 */}
       <Card className="bg-bg-secondary">
@@ -269,7 +269,7 @@ export function Step1BasicInfo({
         </CardContent>
       </Card>
 
-      <Alert variant="info" style={{ borderLeftColor: 'var(--color-btn-brand)' }} className="[&>svg]:text-[var(--color-btn-brand)]">
+      <Alert variant="info" style={{ borderLeftColor: '#666666', backgroundColor: '#F4F4F4' }} className="[&>svg]:text-[#666666]">
         <AlertDescription>
           <strong>Tip:</strong> 기본 정보는 나중에 수정할 수 있습니다. 다음 단계에서 차시를 구성하고
           콘텐츠를 추가할 수 있습니다.
