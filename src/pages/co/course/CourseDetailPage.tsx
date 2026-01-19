@@ -132,8 +132,8 @@ export function CourseDetailPage({ language = 'ko' }: Readonly<CourseDetailPageP
   };
 
   const formatPeriod = () => {
-    const start = course?.courseStartDate || courseDetail?.startDate;
-    const end = course?.courseEndDate || courseDetail?.endDate;
+    const start = course?.courseStartDate;
+    const end = course?.courseEndDate;
     if (!start && !end) return getText('noPeriod');
     return `${formatDate(start || null)} ~ ${formatDate(end || null)}`;
   };

@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   BookOpen,
-  Calendar,
   Tag,
   Globe,
   FileText,
@@ -280,24 +279,6 @@ export function Step3Review({
                 </div>
               </div>
 
-              {/* 수강 기간 */}
-              <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
-                <Calendar size={18} className="mt-0.5 shrink-0" style={{ color: '#1976D2' }} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-text-secondary text-xs mb-1">{getText('period')}</p>
-                  <p className="text-text-primary font-medium m-0 text-sm truncate">
-                    {formData.startDate && formData.endDate ? (
-                      `${formData.startDate} ~ ${formData.endDate}`
-                    ) : formData.startDate ? (
-                      `${formData.startDate} ~`
-                    ) : formData.endDate ? (
-                      `~ ${formData.endDate}`
-                    ) : (
-                      <span className="text-text-tertiary italic">{getText('noPeriod')}</span>
-                    )}
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* 태그 */}

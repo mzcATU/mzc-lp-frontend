@@ -114,8 +114,6 @@ export interface CourseFormData {
   description: string;
   /** 썸네일 이미지 URL */
   thumbnailUrl?: string;
-  startDate: string;
-  endDate: string;
   categoryId: number | null;
   tags: string[];
   level: CourseLevel | '';

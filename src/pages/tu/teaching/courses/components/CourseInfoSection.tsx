@@ -1,4 +1,4 @@
-import { FileText, Calendar, Clock, Tag, ImageIcon, Pencil } from 'lucide-react';
+import { FileText, Clock, Tag, ImageIcon, Pencil } from 'lucide-react';
 import { Button } from '@/components/common';
 import type { CourseDetailResponse } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
@@ -7,16 +7,6 @@ interface CourseInfoSectionProps {
   course: CourseDetailResponse;
   categories: CategoryResponse[];
   onEdit?: () => void;
-}
-
-// 날짜 포맷팅
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
 }
 
 // 난이도 라벨
@@ -117,24 +107,6 @@ export function CourseInfoSection({ course, categories, onEdit }: Readonly<Cours
             <label className="block text-sm text-text-secondary mb-1">카테고리</label>
             <p className="text-text-primary">
               {getCategoryName(course.categoryId)}
-            </p>
-          </div>
-        </div>
-
-        {/* 기간 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">시작일</label>
-            <p className="text-text-primary flex items-center gap-1">
-              <Calendar size={16} className="text-text-secondary" />
-              {formatDate(course.startDate)}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">종료일</label>
-            <p className="text-text-primary flex items-center gap-1">
-              <Calendar size={16} className="text-text-secondary" />
-              {formatDate(course.endDate)}
             </p>
           </div>
         </div>

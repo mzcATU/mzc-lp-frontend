@@ -13,7 +13,6 @@ import {
   ChevronRight,
   PlayCircle,
   AlertCircle,
-  Calendar,
   BookOpen,
   Tag,
 } from 'lucide-react';
@@ -29,15 +28,6 @@ interface PreviewData {
   formData: CourseFormData;
   categories: CategoryResponse[];
   language: 'ko' | 'en';
-}
-
-/**
- * 날짜 포맷팅 (YYYY.MM.DD)
- */
-function formatDate(dateString: string): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
 }
 
 /**
@@ -305,25 +295,6 @@ export function CoursePreviewPage() {
                 </p>
               )}
 
-              {/* Stats */}
-              <div className="flex flex-wrap items-center gap-4 mb-6">
-                {/* 날짜 정보 */}
-                {(formData.startDate || formData.endDate) && (
-                  <div
-                    className={`flex items-center gap-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
-                  >
-                    <Calendar className="w-5 h-5" />
-                    <span>
-                      {formData.startDate && formData.endDate
-                        ? `${formatDate(formData.startDate)} ~ ${formatDate(formData.endDate)}`
-                        : formData.startDate
-                          ? `${formatDate(formData.startDate)} ~`
-                          : `~ ${formatDate(formData.endDate)}`}
-                    </span>
-                  </div>
-                )}
-              </div>
-
               {/* Tags */}
               {formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-8">
@@ -381,29 +352,6 @@ export function CoursePreviewPage() {
                       실제 수강생에게 이렇게 보입니다
                     </p>
                   </div>
-
-                  {/* 기간 정보 */}
-                  {(formData.startDate || formData.endDate) && (
-                    <div
-                      className={`mb-4 p-3 rounded-lg ${
-                        isDark ? 'bg-white/5' : 'bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                        <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          과정 기간
-                        </span>
-                      </div>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {formData.startDate && formData.endDate
-                          ? `${formatDate(formData.startDate)} ~ ${formatDate(formData.endDate)}`
-                          : formData.startDate
-                            ? `${formatDate(formData.startDate)} ~`
-                            : `~ ${formatDate(formData.endDate)}`}
-                      </p>
-                    </div>
-                  )}
 
                   {/* 카테고리 정보 */}
                   {categoryName && (
