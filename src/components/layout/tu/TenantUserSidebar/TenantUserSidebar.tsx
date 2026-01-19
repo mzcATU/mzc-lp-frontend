@@ -29,7 +29,6 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
   const sidebarSettings = layoutData?.sidebarTUSettings as { enabled?: boolean; items?: BrandingSidebarItem[] } | undefined;
 
   // 사용자 역할 가져오기 (다중 역할 지원)
-  const userRole = useAuthStore((state) => state.user?.role);
   const userRoles = useAuthStore((state) => state.user?.roles);
 
   // 기능 설정 가져오기
