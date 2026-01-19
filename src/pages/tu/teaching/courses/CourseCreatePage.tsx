@@ -124,8 +124,6 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
-    startDate: '',
-    endDate: '',
     categoryId: null,
     tags: [],
     level: '',
@@ -191,8 +189,6 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           level: course.level || '',
           type: course.type || '',
           categoryId: course.categoryId,
-          startDate: course.startDate || '',
-          endDate: course.endDate || '',
           tags: course.tags || [],
           curriculumItems,
           isDraft: !course.isComplete,
@@ -275,8 +271,6 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       level: formData.level || undefined,
       type: formData.type || undefined,
       categoryId: formData.categoryId ?? undefined,
-      startDate: formData.startDate || undefined,
-      endDate: formData.endDate || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
     };
 
