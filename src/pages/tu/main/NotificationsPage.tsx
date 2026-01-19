@@ -1,22 +1,31 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, ComponentType } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
-import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight, Zap } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
-import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications } from '@/hooks/tu';
-import type { NotificationType } from '@/types/tu';
-import { getNotificationDeepLink } from '@/types/tu';
+
+/** NotificationsPage props */
+interface NotificationsPageProps {
+  /** 커스텀 헤더 컴포넌트 (B2B 등에서 사용) */
+  HeaderComponent?: ComponentType;
+  /** 알림 상세 페이지 기본 경로 (B2B: /tu/b2b/notifications) */
+  detailBasePath?: string;
+}
+import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification, useDeleteReadNotifications, useUserNotice } from '@/hooks/tu';
+import type { NotificationType, NotificationItem } from '@/types/tu';
+import { getNotificationDeepLink, getDisplayNotificationType } from '@/types/tu';
 import { useAuthStore } from '@/store/common/authStore';
 
-// 알림 타입별 필터 옵션
+// 알림 타입별 필터 옵션 (NOTICE: 공지사항, SYSTEM: 시스템 알림 트리거)
 const notificationTypes: { id: NotificationType | 'all'; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: 'COMMENT', label: '댓글' },
   { id: 'LIKE', label: '좋아요' },
-  { id: 'COURSE', label: '강의' },
-  { id: 'SYSTEM', label: '공지사항' },
+  { id: 'COURSE', label: '내 학습' },
+  { id: 'NOTICE', label: '공지' },
+  { id: 'SYSTEM', label: '중요 알림' },
   { id: 'ASSIGNMENT', label: '과제' },
 ];
 
@@ -26,7 +35,8 @@ const getNotificationIcon = (type: NotificationType) => {
     case 'COMMENT': return MessageSquare;
     case 'LIKE': return Heart;
     case 'COURSE': return BookOpen;
-    case 'SYSTEM': return Megaphone;
+    case 'NOTICE': return Megaphone;  // 공지사항은 메가폰
+    case 'SYSTEM': return Zap;        // 시스템 알림은 번개
     case 'ASSIGNMENT': return FileText;
     default: return AlertCircle;
   }
@@ -38,7 +48,8 @@ const getIconColor = (type: NotificationType) => {
     case 'COMMENT': return 'text-[#10b981] bg-[#10b981]/20';
     case 'LIKE': return 'text-[#f43f5e] bg-[#f43f5e]/20';
     case 'COURSE': return 'text-[#6778ff] bg-[#6778ff]/20';
-    case 'SYSTEM': return 'text-[#f59e0b] bg-[#f59e0b]/20';
+    case 'NOTICE': return 'text-[#f59e0b] bg-[#f59e0b]/20';  // 공지사항은 amber
+    case 'SYSTEM': return 'text-[#64748b] bg-[#64748b]/20';  // 시스템은 slate
     case 'ASSIGNMENT': return 'text-[#8b5cf6] bg-[#8b5cf6]/20';
     default: return 'text-gray-400 bg-gray-400/20';
   }
@@ -57,17 +68,84 @@ const formatRelativeTime = (dateString: string): string => {
   return date.toLocaleDateString('ko-KR');
 };
 
-export function NotificationsPage() {
+/**
+ * SYSTEM 알림 아이템 컴포넌트
+ * referenceType='NOTICE'인 경우 실제 공지사항 데이터를 가져와서 표시
+ */
+interface SystemNotificationContentProps {
+  notification: NotificationItem;
+  isDark: boolean;
+}
+
+function SystemNotificationContent({ notification, isDark }: SystemNotificationContentProps) {
+  // SYSTEM 알림이면 referenceId를 공지사항 ID로 사용
+  const noticeId = notification.referenceId;
+  const { data: noticeData, isError, isLoading } = useUserNotice(noticeId ?? 0);
+
+  // referenceId가 있는데 공지 데이터가 없으면 삭제된 공지
+  const isDeleted = noticeId && !isLoading && !noticeData;
+
+  // 삭제된 공지사항인 경우
+  if (isDeleted || isError) {
+    return (
+      <div>
+        <h3 className={`font-semibold mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          삭제된 공지사항
+        </h3>
+        <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+          이 공지사항은 관리자에 의해 삭제되었습니다.
+        </p>
+      </div>
+    );
+  }
+
+  // 공지사항 데이터가 있으면 그것을 사용, 없으면 알림 데이터 사용
+  const title = noticeData?.title || notification.title;
+  const message = noticeData?.content
+    ? noticeData.content.replace(/<[^>]*>/g, '').substring(0, 100) // HTML 태그 제거하고 100자 제한
+    : notification.message;
+
+  return (
+    <div>
+      <h3 className={`font-semibold mb-1 ${
+        !notification.isRead
+          ? isDark ? 'text-white' : 'text-gray-900'
+          : isDark ? 'text-gray-300' : 'text-gray-600'
+      }`}>
+        {title}
+      </h3>
+      <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+        {message}
+      </p>
+    </div>
+  );
+}
+
+export function NotificationsPage({
+  HeaderComponent = LandingHeader,
+  detailBasePath = '/tu/b2c/notifications'
+}: NotificationsPageProps = {}) {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
   const [activeType, setActiveType] = useState<NotificationType | 'all'>('all');
   const { isAuthenticated } = useAuthStore();
 
-  // React Query 훅
-  const filter = activeType === 'all' ? undefined : { type: activeType };
-  const { data: apiNotificationData, isLoading, error } = useNotifications(filter);
+  // URL 쿼리 파라미터로 탭 설정 (예: ?tab=NOTICE)
+  useEffect(() => {
+    if (tabParam && ['COMMENT', 'LIKE', 'COURSE', 'NOTICE', 'SYSTEM', 'ASSIGNMENT'].includes(tabParam)) {
+      setActiveType(tabParam as NotificationType);
+    }
+  }, [tabParam]);
+
+  // React Query 훅 - NOTICE/SYSTEM 필터는 프론트에서 처리 (백엔드는 SYSTEM 타입만 있음)
+  const backendFilter = activeType === 'all' ? undefined
+    : activeType === 'NOTICE' || activeType === 'SYSTEM' ? { type: 'SYSTEM' as NotificationType }
+    : { type: activeType };
+  const { data: apiNotificationData, isLoading, error } = useNotifications(backendFilter);
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
   const deleteNotificationMutation = useDeleteNotification();
@@ -76,10 +154,10 @@ export function NotificationsPage() {
   // 실제 사용할 데이터 결정
   const allNotifications = apiNotificationData?.notifications || [];
 
-  // 필터링 적용
+  // 필터링 적용 (getDisplayNotificationType으로 NOTICE/SYSTEM 구분)
   const filteredNotifications = activeType === 'all'
     ? allNotifications
-    : allNotifications.filter(n => n.type === activeType);
+    : allNotifications.filter(n => getDisplayNotificationType(n) === activeType);
 
   const unreadCount = allNotifications.filter(n => !n.isRead).length;
 
@@ -103,7 +181,7 @@ export function NotificationsPage() {
   if (!isAuthenticated) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="text-center py-20">
             <Bell className={`w-20 h-20 mx-auto mb-6 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
@@ -130,7 +208,7 @@ export function NotificationsPage() {
   if (isLoading) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
@@ -148,7 +226,7 @@ export function NotificationsPage() {
   if (error) {
     return (
       <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-        <LandingHeader />
+        <HeaderComponent />
         <main className="w-full px-4 md:px-8 lg:px-16 py-12">
           <div className="text-center py-20">
             <p className={`text-lg ${isDark ? 'text-red-400' : 'text-red-500'}`}>
@@ -169,7 +247,7 @@ export function NotificationsPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
-      <LandingHeader />
+      <HeaderComponent />
 
       <main className="w-full px-4 md:px-8 lg:px-16 py-12">
         {/* Header */}
@@ -182,13 +260,6 @@ export function NotificationsPage() {
               {unreadCount > 0 ? `읽지 않은 알림 ${unreadCount}개` : '모든 알림을 확인했습니다'}
             </p>
           </div>
-          <button className={`p-2 rounded-lg transition-colors ${
-            isDark
-              ? 'text-gray-400 hover:text-white hover:bg-white/10'
-              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-          }`}>
-            <Settings className="w-6 h-6" />
-          </button>
         </div>
 
         {/* Filter Tabs */}
@@ -260,7 +331,8 @@ export function NotificationsPage() {
         ) : (
           <div className="space-y-3">
             {filteredNotifications.map((notification) => {
-              const IconComponent = getNotificationIcon(notification.type);
+              const displayType = getDisplayNotificationType(notification);
+              const IconComponent = getNotificationIcon(displayType);
               const deepLink = getNotificationDeepLink(notification);
               return (
                 <div
@@ -268,7 +340,7 @@ export function NotificationsPage() {
                   onClick={() => {
                     markAsRead(notification.id);
                     // 딥링크가 있으면 해당 페이지로, 없으면 알림 상세로
-                    const targetPath = deepLink || `/tu/b2c/notifications/${notification.id}`;
+                    const targetPath = deepLink || `${detailBasePath}/${notification.id}`;
                     navigate(prefixPath(targetPath));
                   }}
                   className={`rounded-xl p-4 flex gap-4 cursor-pointer transition-all border ${
@@ -277,23 +349,28 @@ export function NotificationsPage() {
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   } ${!notification.isRead ? 'border-l-4 border-l-[#6778ff]' : ''}`}
                 >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getIconColor(notification.type)}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getIconColor(displayType)}`}>
                     <IconComponent className="w-6 h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className={`font-semibold mb-1 ${
-                          !notification.isRead
-                            ? isDark ? 'text-white' : 'text-gray-900'
-                            : isDark ? 'text-gray-300' : 'text-gray-600'
-                        }`}>
-                          {notification.title}
-                        </h3>
-                        <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {notification.message}
-                        </p>
-                      </div>
+                      {/* NOTICE 타입 (공지사항)인 경우 실제 공지 데이터 표시 */}
+                      {displayType === 'NOTICE' ? (
+                        <SystemNotificationContent notification={notification} isDark={isDark} />
+                      ) : (
+                        <div>
+                          <h3 className={`font-semibold mb-1 ${
+                            !notification.isRead
+                              ? isDark ? 'text-white' : 'text-gray-900'
+                              : isDark ? 'text-gray-300' : 'text-gray-600'
+                          }`}>
+                            {notification.title}
+                          </h3>
+                          <p className={`text-sm line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {notification.message}
+                          </p>
+                        </div>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

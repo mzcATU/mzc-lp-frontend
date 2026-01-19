@@ -4,6 +4,7 @@ import { useSubdomainPath } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
 import { useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
 import { toast } from 'sonner';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 interface B2BCourseCardProps {
   id: number;
@@ -64,7 +65,7 @@ export function B2BCourseCard({
 
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/login', { state: { from: prefixPath(`/tu/b2b/times/${id}`) } });
+      navigate(getLoginPath(), { state: { from: prefixPath(`/tu/b2b/times/${id}`) } });
       return;
     }
 

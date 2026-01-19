@@ -1,0 +1,523 @@
+import { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
+import {
+  User,
+  BookOpen,
+  Award,
+  ChevronRight,
+  PlayCircle,
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  Calendar,
+  Bell,
+  Shield,
+  Globe,
+  Loader2,
+  Camera,
+  AlertTriangle,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/common/auth';
+import { useMyProfile, useUploadProfileImage } from '@/hooks/common';
+import { useMyEnrollments, useMyLearningStats } from '@/hooks/tu';
+import { useThemeStore } from '@/store/common/themeStore';
+import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
+import { Button, Card, CardContent, Badge } from '@/components/common';
+import type { EnrollmentStatus } from '@/services/tu/enrollmentService';
+
+const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
+  PENDING: 'orange',
+  APPROVED: 'blue',
+  ENROLLED: 'blue',
+  REJECTED: 'red',
+  CANCELLED: 'gray',
+  COMPLETED: 'green',
+};
+
+interface QuickMenuItemProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+  isDark: boolean;
+}
+
+function QuickMenuItem({ icon, title, description, onClick, isDark }: QuickMenuItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full p-4 rounded-xl text-left transition-all hover:scale-[1.02] ${
+        isDark
+          ? 'bg-white/5 hover:bg-white/10 border border-white/10'
+          : 'bg-white hover:bg-gray-50 border border-gray-200 shadow-sm'
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+            isDark ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]' : 'bg-blue-100'
+          }`}
+        >
+          <div className={isDark ? 'text-white' : 'text-blue-600'}>{icon}</div>
+        </div>
+        <div className="flex-1">
+          <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
+          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{description}</p>
+        </div>
+        <ChevronRight className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+      </div>
+    </button>
+  );
+}
+
+export function B2BMyPageHome() {
+  const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
+  const { user } = useAuth();
+  const { data: profile } = useMyProfile();
+  const uploadImageMutation = useUploadProfileImage();
+  const { theme } = useThemeStore();
+  const { language } = useLanguageStore();
+  const { t } = useTranslation();
+  const isDark = theme === 'dark';
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+
+  // 프로필 이미지 URL 생성
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api').replace('/api', '');
+
+  // 서버에서 받아온 프로필 이미지로 프리뷰 동기화
+  useEffect(() => {
+    if (profile?.profileImageUrl) {
+      const imageUrl = profile.profileImageUrl.startsWith('http')
+        ? profile.profileImageUrl
+        : `${apiBaseUrl}${profile.profileImageUrl}`;
+      setProfileImagePreview(imageUrl);
+    }
+  }, [profile, apiBaseUrl]);
+
+  // 역할 우선순위 (높을수록 상위 역할)
+  const ROLE_PRIORITY: Record<string, number> = {
+    TENANT_ADMIN: 5,
+    OPERATOR: 4,
+    INSTRUCTOR: 3,
+    DESIGNER: 2,
+    USER: 1,
+  };
+
+  // 역할별 뱃지 라벨 및 색상
+  const getRoleBadgeInfo = (role: string) => {
+    switch (role) {
+      case 'USER':
+        return {
+          label: language === 'ko' ? '학습자' : 'Learner',
+          variant: 'gray' as const,
+        };
+      case 'DESIGNER':
+        return {
+          label: language === 'ko' ? '강의 설계자' : 'Course Designer',
+          variant: 'indigo' as const,
+        };
+      case 'INSTRUCTOR':
+        return {
+          label: language === 'ko' ? '강사' : 'Instructor',
+          variant: 'blue' as const,
+        };
+      case 'OPERATOR':
+        return {
+          label: language === 'ko' ? '강의 운영자' : 'Course Operator',
+          variant: 'orange' as const,
+        };
+      case 'TENANT_ADMIN':
+        return {
+          label: language === 'ko' ? '관리자' : 'Administrator',
+          variant: 'red' as const,
+        };
+      default:
+        return {
+          label: language === 'ko' ? '학습자' : 'Learner',
+          variant: 'gray' as const,
+        };
+    }
+  };
+
+  // 가장 높은 우선순위 역할 찾기
+  const getHighestRole = (): string => {
+    const roles = user?.roles || (user?.role ? [user.role] : ['USER']);
+    return roles.reduce((highest, current) => {
+      const currentPriority = ROLE_PRIORITY[current] || 0;
+      const highestPriority = ROLE_PRIORITY[highest] || 0;
+      return currentPriority > highestPriority ? current : highest;
+    }, 'USER');
+  };
+
+  const roleBadgeInfo = getRoleBadgeInfo(getHighestRole());
+
+  // 상태 라벨 (다국어)
+  const statusLabels: Record<EnrollmentStatus, string> = {
+    PENDING: t.mypage.pending,
+    APPROVED: t.mypage.inProgress,
+    ENROLLED: t.mypage.inProgress,
+    REJECTED: language === 'ko' ? '반려됨' : 'Rejected',
+    CANCELLED: language === 'ko' ? '취소됨' : 'Cancelled',
+    COMPLETED: t.mypage.completed,
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error(language === 'ko' ? '이미지 파일만 업로드 가능합니다.' : 'Only image files can be uploaded.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(language === 'ko' ? '파일 크기는 5MB 이하여야 합니다.' : 'File size must be 5MB or less.');
+      return;
+    }
+
+    // 즉시 프리뷰 표시
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // 서버에 업로드
+    try {
+      await uploadImageMutation.mutateAsync(file);
+      toast.success(language === 'ko' ? '프로필 이미지가 업로드되었습니다.' : 'Profile image uploaded.');
+    } catch {
+      toast.error(language === 'ko' ? '이미지 업로드에 실패했습니다.' : 'Failed to upload image.');
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 학습 통계 API 조회
+  const { data: learningStats, isLoading: isLoadingStats } = useMyLearningStats();
+
+  // 최근 학습을 위한 enrollment 목록 조회 (수강 중인 강의만)
+  const { data: enrollmentData, isLoading: isLoadingEnrollments } = useMyEnrollments({
+    page: 0,
+    size: 3,
+  });
+
+  // 통계 (API에서 가져온 데이터 사용, 없으면 기본값)
+  const stats = {
+    inProgress: learningStats?.overview.inProgress ?? 0,
+    completed: learningStats?.overview.completed ?? 0,
+    dropped: learningStats?.overview.dropped ?? 0,
+    total: learningStats?.overview.totalCourses ?? 0,
+  };
+
+  // 최근 학습 (수강 중인 강의 최대 3개)
+  const recentLearning = enrollmentData?.content
+    .filter((e) => e.status === 'APPROVED')
+    .slice(0, 3) ?? [];
+
+  return (
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-5xl mx-auto">
+        {/* 프로필 섹션 */}
+        <section className="mb-8">
+          <div
+            className={`rounded-2xl p-6 sm:p-8 ${
+              isDark
+                ? 'bg-[#1e1e1e] border border-white/10'
+                : 'bg-white shadow-sm border border-gray-200'
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              {/* 프로필 아바타 */}
+              <div className="relative">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {profileImagePreview ? (
+                    <img src={profileImagePreview} alt={t.mypage.profile} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-12 h-12 text-white" />
+                  )}
+                </div>
+                <button
+                  onClick={triggerFileInput}
+                  disabled={uploadImageMutation.isPending}
+                  className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform disabled:opacity-50"
+                  title={t.mypage.editProfile}
+                >
+                  {uploadImageMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4 text-gray-600" />
+                  )}
+                </button>
+              </div>
+
+              {/* 프로필 정보 */}
+              <div className="flex-1">
+                <h1 className={`text-2xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {user?.name}{t.mypage.hello}
+                </h1>
+                <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {user?.email}
+                </p>
+                <Badge variant={roleBadgeInfo.variant} className="text-xs">
+                  {roleBadgeInfo.label}
+                </Badge>
+              </div>
+
+              {/* 프로필 수정 버튼 */}
+              <Button
+                variant="outline"
+                onClick={() => navigate(prefixPath('/tu/b2b/mypage/profile'))}
+                className={isDark ? 'border-white/30 text-white bg-white/10 hover:bg-white/20' : ''}
+              >
+                {t.mypage.editProfile}
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* 부서/직급 미입력 안내 배너 */}
+        {profile && (!profile.department || !profile.position) && (
+          <section className="mb-8">
+            <button
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/profile'))}
+              className={`w-full p-4 rounded-xl flex items-center gap-4 transition-all hover:scale-[1.01] ${
+                isDark
+                  ? 'bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20'
+                  : 'bg-amber-50 border border-amber-200 hover:bg-amber-100'
+              }`}
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  isDark ? 'bg-amber-500/20' : 'bg-amber-100'
+                }`}
+              >
+                <AlertTriangle className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+              </div>
+              <div className="flex-1 text-left">
+                <p className={`font-medium ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>
+                  {language === 'ko'
+                    ? '부서와 직급 정보를 입력해 주세요'
+                    : 'Please enter your department and position'}
+                </p>
+                <p className={`text-sm ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>
+                  {language === 'ko'
+                    ? '프로필 정보를 완성하면 더 나은 학습 경험을 제공받을 수 있습니다.'
+                    : 'Complete your profile for a better learning experience.'}
+                </p>
+              </div>
+              <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+            </button>
+          </section>
+        )}
+
+        {/* 학습 통계 */}
+        <section className="mb-8">
+          <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t.mypage.learningStatus}
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: t.mypage.inProgress, value: stats.inProgress, icon: <PlayCircle className="w-5 h-5" />, color: 'blue' },
+              { label: t.mypage.completed, value: stats.completed, icon: <CheckCircle className="w-5 h-5" />, color: 'green' },
+              { label: t.mypage.dropped, value: stats.dropped, icon: <Clock className="w-5 h-5" />, color: 'orange' },
+              { label: t.mypage.total, value: stats.total, icon: <TrendingUp className="w-5 h-5" />, color: 'purple' },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className={`p-4 rounded-xl ${
+                  isDark
+                    ? 'bg-white/5 border border-white/10'
+                    : 'bg-white border border-gray-200 shadow-sm'
+                }`}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div
+                    className={`${
+                      stat.color === 'blue'
+                        ? isDark ? 'text-blue-400' : 'text-blue-600'
+                        : stat.color === 'green'
+                        ? isDark ? 'text-green-400' : 'text-green-600'
+                        : stat.color === 'orange'
+                        ? isDark ? 'text-orange-400' : 'text-orange-600'
+                        : isDark ? 'text-purple-400' : 'text-purple-600'
+                    }`}
+                  >
+                    {stat.icon}
+                  </div>
+                  <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {stat.label}
+                  </span>
+                </div>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {isLoadingStats ? '-' : stat.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 최근 학습 */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              {t.mypage.recentLearning}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+              className={isDark ? 'text-gray-400 hover:text-white' : ''}
+            >
+              {t.mypage.viewAll}
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+
+          {isLoadingEnrollments ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className={`w-8 h-8 animate-spin ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+            </div>
+          ) : recentLearning.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentLearning.map((enrollment) => (
+                <Card
+                  key={enrollment.id}
+                  className={`cursor-pointer transition-all hover:scale-[1.02] ${
+                    isDark
+                      ? 'bg-white/5 border-white/10 hover:bg-white/10'
+                      : 'bg-white hover:shadow-md'
+                  }`}
+                  onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollment.id}`))}
+                >
+                  <CardContent className="p-5">
+                    <Badge variant={statusColors[enrollment.status]} className="text-xs mb-3">
+                      {statusLabels[enrollment.status]}
+                    </Badge>
+                    <h3
+                      className={`font-medium mb-2 line-clamp-2 ${
+                        isDark ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      {enrollment.programTitle}
+                    </h3>
+                    <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {enrollment.courseTimeName}
+                    </p>
+                    {enrollment.progress !== undefined && (
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                            {language === 'ko' ? '진도율' : 'Progress'}
+                          </span>
+                          <span className={isDark ? 'text-white' : 'text-gray-900'}>
+                            {enrollment.progress}%
+                          </span>
+                        </div>
+                        <div
+                          className={`w-full h-2 rounded-full overflow-hidden ${
+                            isDark ? 'bg-white/10' : 'bg-gray-200'
+                          }`}
+                        >
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-[#6778ff] to-[#a855f7]"
+                            style={{ width: `${enrollment.progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className={`flex items-center gap-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>
+                        {new Date(enrollment.startDate).toLocaleDateString()} ~{' '}
+                        {new Date(enrollment.endDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div
+              className={`text-center py-12 rounded-xl ${
+                isDark ? 'bg-white/5 border border-white/10' : 'bg-white border border-gray-200'
+              }`}
+            >
+              <BookOpen className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+              <h3 className={`font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {t.mypage.noEnrolledCourses}
+              </h3>
+              <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {t.mypage.noEnrolledCoursesDesc}
+              </p>
+              <Button onClick={() => navigate(prefixPath('/tu/b2c/courses'))}>{t.mypage.browseCourses}</Button>
+            </div>
+          )}
+        </section>
+
+        {/* 빠른 메뉴 */}
+        <section>
+          <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t.mypage.quickMenu}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <QuickMenuItem
+              icon={<BookOpen className="w-5 h-5" />}
+              title={t.mypage.myLearning}
+              description={t.mypage.myLearningDesc}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+              isDark={isDark}
+            />
+            <QuickMenuItem
+              icon={<Award className="w-5 h-5" />}
+              title={t.mypage.certificates}
+              description={t.mypage.certificatesDesc}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/certificates'))}
+              isDark={isDark}
+            />
+            <QuickMenuItem
+              icon={<Shield className="w-5 h-5" />}
+              title={t.mypage.profileAndSecurity}
+              description={t.mypage.profileSecurityDesc}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/profile'))}
+              isDark={isDark}
+            />
+            <QuickMenuItem
+              icon={<Bell className="w-5 h-5" />}
+              title={t.mypage.notifications}
+              description={t.mypage.notificationsDesc}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/notifications'))}
+              isDark={isDark}
+            />
+            <QuickMenuItem
+              icon={<Globe className="w-5 h-5" />}
+              title={t.mypage.languageRegion}
+              description={t.mypage.languageRegionDesc}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/language'))}
+              isDark={isDark}
+            />
+            <QuickMenuItem
+              icon={<TrendingUp className="w-5 h-5" />}
+              title={t.mypage.learningProgress}
+              description={t.mypage.learningProgressDesc}
+              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+              isDark={isDark}
+            />
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

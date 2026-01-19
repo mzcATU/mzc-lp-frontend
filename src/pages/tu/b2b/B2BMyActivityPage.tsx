@@ -12,9 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  User,
   ArrowRight,
-  Sparkles,
+  User,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
@@ -34,12 +33,6 @@ export function B2BMyActivityPage() {
 
   const posts = data?.posts || [];
   const totalPages = data?.totalPages || 0;
-  const totalCount = data?.totalCount || 0;
-
-  const totalInteractions = posts.reduce(
-    (sum, post) => sum + (post.likeCount || 0) + (post.commentCount || 0),
-    0
-  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -68,105 +61,17 @@ export function B2BMyActivityPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
-      {/* 헤더 카드 */}
-      <div
-        className={`relative overflow-hidden rounded-2xl p-6 ${
-          isDark
-            ? 'bg-gradient-to-br from-emerald-500/20 via-teal-600/10 to-transparent border border-white/10'
-            : 'bg-gradient-to-br from-emerald-50 via-teal-50 to-white border border-gray-100'
-        }`}
-      >
-        <div className="relative z-10">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                내 활동
-              </h1>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                내가 작성한 댓글과 활동을 확인하세요
-              </p>
-            </div>
-          </div>
-
-          {/* 통계 카드들 */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-            <div
-              className={`p-4 rounded-xl ${
-                isDark ? 'bg-white/5 backdrop-blur-sm' : 'bg-white/80 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
-                  <MessageSquare
-                    className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}
-                  />
-                </div>
-                <div>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {totalCount}
-                  </p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    참여한 게시글
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`p-4 rounded-xl ${
-                isDark ? 'bg-white/5 backdrop-blur-sm' : 'bg-white/80 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-teal-500/20' : 'bg-teal-100'}`}>
-                  <Sparkles className={`w-5 h-5 ${isDark ? 'text-teal-400' : 'text-teal-600'}`} />
-                </div>
-                <div>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {totalInteractions}
-                  </p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    총 상호작용
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`p-4 rounded-xl col-span-2 md:col-span-1 ${
-                isDark ? 'bg-white/5 backdrop-blur-sm' : 'bg-white/80 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-cyan-500/20' : 'bg-cyan-100'}`}>
-                  <User className={`w-5 h-5 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
-                </div>
-                <div>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {posts.length > 0 ? new Set(posts.map((p) => p.author?.id)).size : 0}
-                  </p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    소통한 작성자
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            내 활동
+          </h1>
+          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+            내가 작성한 댓글과 활동을 확인하세요
+          </p>
         </div>
-
-        {/* 배경 장식 */}
-        <div
-          className={`absolute -right-10 -top-10 w-40 h-40 rounded-full blur-3xl ${
-            isDark ? 'bg-emerald-500/20' : 'bg-emerald-200/50'
-          }`}
-        />
-        <div
-          className={`absolute -left-10 -bottom-10 w-32 h-32 rounded-full blur-3xl ${
-            isDark ? 'bg-teal-600/20' : 'bg-teal-200/50'
-          }`}
-        />
-      </div>
 
       {/* 게시글 목록 */}
       {isLoading ? (
@@ -385,6 +290,7 @@ export function B2BMyActivityPage() {
           </Button>
         </div>
       )}
+      </div>
     </div>
   );
 }

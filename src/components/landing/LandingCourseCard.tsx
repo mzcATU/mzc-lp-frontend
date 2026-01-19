@@ -5,6 +5,7 @@ import { useSubdomainPath } from '@/hooks/common';
 import { useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
 import { useTenantFeatures } from '@/contexts/TenantFeaturesContext';
 import { toast } from 'sonner';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 interface LandingCourseCardProps {
   id: number;
@@ -23,6 +24,8 @@ interface LandingCourseCardProps {
   classStartDate?: string; // 개강일
   availableSeats?: number | null; // 잔여석
   isOnDemand?: boolean; // 상시모집 여부
+  /** 강의 상세 페이지 기본 경로 (기본: /tu/b2c/courses) */
+  courseBasePath?: string;
 }
 
 /**
@@ -48,6 +51,7 @@ export function LandingCourseCard({
   classStartDate,
   availableSeats,
   isOnDemand,
+  courseBasePath = '/tu/b2c/courses',
 }: LandingCourseCardProps) {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
@@ -68,7 +72,7 @@ export function LandingCourseCard({
 
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/login', { state: { from: prefixPath(`/tu/b2c/courses/${id}`) } });
+      navigate(getLoginPath(), { state: { from: prefixPath(`/tu/b2c/courses/${id}`) } });
       return;
     }
 
@@ -101,7 +105,7 @@ export function LandingCourseCard({
   };
 
   return (
-    <Link to={prefixPath(`/tu/b2c/courses/${id}`)} className="group block h-full">
+    <Link to={prefixPath(`${courseBasePath}/${id}`)} className="group block h-full">
       <div className="h-full card-hover rounded-xl overflow-hidden landing-card-bg border landing-card-border">
         {/* 썸네일 영역 */}
         <div className="relative aspect-[16/10] overflow-hidden">

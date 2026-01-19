@@ -14,12 +14,13 @@ import type {
   PublicLayoutResponse,
   NavigationItemResponse,
 } from '@/types/tu/branding.types';
+import { designTokens } from '@/styles/admin-design-tokens';
 
 /** 기본 브랜딩 (fallback) */
 const DEFAULT_BRANDING: PublicBrandingResponse = {
   tenantName: 'MZC Learning Platform',
-  primaryColor: '#3B82F6',
-  secondaryColor: '#10B981',
+  primaryColor: designTokens.button.brand_default,
+  secondaryColor: designTokens.button.brand_hover,
   logoUrl: null,
   darkLogoUrl: null,
   faviconUrl: null,

@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
+    SWITCH_ROLE: '/auth/switch-role',
   },
 
   // Users
@@ -312,9 +313,11 @@ export const API_ENDPOINTS = {
   // Analytics (TA, SA)
   ANALYTICS: {
     // TA용 (테넌트 단위)
+    TA_BASE: '/admin/analytics',
     TA_LOGS: '/admin/analytics/logs',
     TA_STATS: '/admin/analytics/stats',
     TA_RECENT: '/admin/analytics/recent',
+    TA_TYPES: '/admin/analytics/types',
     // SA용 (전체 시스템)
     SA_LOGS: '/sa/analytics/logs',
     SA_STATS: '/sa/analytics/stats',
@@ -411,6 +414,10 @@ export const API_ENDPOINTS = {
     BY_ID: (id: number) => `/tenant/notices/${id}`,
     PUBLISH: (id: number) => `/tenant/notices/${id}/publish`,
     ARCHIVE: (id: number) => `/tenant/notices/${id}/archive`,
+    // 배포 통계
+    DISTRIBUTION_STATS: '/tenant/notices/distribution/stats',
+    DISTRIBUTION_SUMMARY: '/tenant/notices/distribution/summary',
+    DISTRIBUTION_BY_ID: (id: number) => `/tenant/notices/${id}/distribution`,
     // TU/TO 조회용
     TU_BASE: '/tu/notices',
     TU_BY_ID: (id: number) => `/tu/notices/${id}`,

@@ -77,7 +77,7 @@ const t = {
   next: { ko: '다음', en: 'Next' },
   timeCount: { ko: '개의 차수', en: ' course times' },
   columnTitle: { ko: '차수명', en: 'Title' },
-  columnProgram: { ko: '과정명', en: 'Course' },
+  columnCourse: { ko: '과정명', en: 'Course' },
   columnStatus: { ko: '상태', en: 'Status' },
   columnDelivery: { ko: '진행 방식', en: 'Delivery' },
   columnPeriod: { ko: '학습 기간', en: 'Period' },
@@ -317,10 +317,10 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
     setSelectedTimeId(selectedTimeId === id ? null : id);
   };
 
-  // 수강생 관리 페이지로 이동 (차수 상세의 수강생 탭)
+  // 수강생 관리 페이지로 이동 (해당 차수 필터 적용)
   const handleManageStudents = () => {
     if (selectedTimeId) {
-      navigate(prefixPath(`/co/times/${selectedTimeId}?tab=students`));
+      navigate(prefixPath(`/co/users?courseTimeId=${selectedTimeId}`));
     } else {
       toast.info(getText('selectTimeFirst'));
     }
@@ -361,9 +361,9 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
         ),
       },
       {
-        id: 'program',
+        id: 'course',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={getText('columnProgram')} />
+          <DataTableColumnHeader column={column} title={getText('columnCourse')} />
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 max-w-xs">
@@ -430,7 +430,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
             className="flex items-center gap-1.5 cursor-pointer hover:text-action-primary transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(prefixPath(`/co/times/${row.original.id}?tab=students`));
+              navigate(prefixPath(`/co/users?courseTimeId=${row.original.id}`));
             }}
           >
             <Users size={14} className="text-text-secondary" />

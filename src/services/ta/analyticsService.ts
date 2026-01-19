@@ -90,6 +90,23 @@ export interface ActivityLogsParams {
   size?: number;
 }
 
+// 검색 파라미터
+export interface ActivityLogSearchParams {
+  userId?: number;
+  type?: ActivityType;
+  startDate?: string;
+  endDate?: string;
+  keyword?: string;
+  page?: number;
+  size?: number;
+}
+
+// 활동 유형 정보
+export interface ActivityTypeInfo {
+  type: ActivityType;
+  description: string;
+}
+
 export const analyticsService = {
   /** 활동 로그 목록 조회 */
   async getLogs(params?: ActivityLogsParams): Promise<Page<ActivityLogResponse>> {
@@ -115,5 +132,93 @@ export const analyticsService = {
       API_ENDPOINTS.ANALYTICS.TA_RECENT
     );
     return data;
+  },
+
+  /** 활동 로그 검색 */
+  async searchLogs(params: ActivityLogSearchParams): Promise<Page<ActivityLogResponse>> {
+    const { data } = await axiosInstance.get<Page<ActivityLogResponse>>(
+      `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/search`,
+      { params }
+    );
+    return data;
+  },
+
+  /** 특정 사용자 활동 로그 조회 */
+  async getLogsByUser(userId: number, params?: { page?: number; size?: number }): Promise<Page<ActivityLogResponse>> {
+    const { data } = await axiosInstance.get<Page<ActivityLogResponse>>(
+      `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/users/${userId}`,
+      { params }
+    );
+    return data;
+  },
+
+  /** 활동 유형 목록 조회 */
+  async getActivityTypes(): Promise<ActivityTypeInfo[]> {
+    const { data } = await axiosInstance.get<ActivityTypeInfo[]>(
+      API_ENDPOINTS.ANALYTICS.TA_TYPES
+    );
+    return data;
+  },
+
+  /** 활동 로그 CSV 내보내기 (Blob 다운로드) */
+  async exportLogs(params?: {
+    userId?: number;
+    type?: ActivityType;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<void> {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/export`,
+        {
+          params,
+          responseType: 'blob',
+        }
+      );
+
+      // Content-Type이 JSON이면 에러 응답임
+      const contentType = response.headers['content-type'];
+      if (contentType?.includes('application/json')) {
+        const text = await response.data.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.error?.message || '내보내기에 실패했습니다.');
+      }
+
+      // Blob으로 파일 다운로드
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `activity_logs_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      // axios 에러이고 blob 응답인 경우 에러 내용 읽기
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data instanceof Blob
+      ) {
+        const text = await error.response.data.text();
+        console.error('Export error response:', text);
+        try {
+          const errorData = JSON.parse(text);
+          throw new Error(errorData.error?.message || errorData.message || '내보내기에 실패했습니다.');
+        } catch {
+          // JSON 파싱 실패시 text 내용 그대로 사용
+          throw new Error(text || '내보내기에 실패했습니다.');
+        }
+      }
+      if (error instanceof Error && error.message) {
+        throw error;
+      }
+      throw new Error('CSV 내보내기에 실패했습니다. 권한을 확인해주세요.');
+    }
   },
 };

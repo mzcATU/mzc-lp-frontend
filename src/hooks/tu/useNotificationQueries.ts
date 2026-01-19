@@ -12,6 +12,7 @@ export const notificationKeys = {
   list: (filter?: NotificationFilter) => [...notificationKeys.all, 'list', filter] as const,
   detail: (id: number) => [...notificationKeys.all, 'detail', id] as const,
   unreadCount: () => [...notificationKeys.all, 'unreadCount'] as const,
+  latestUnread: () => [...notificationKeys.all, 'latestUnread'] as const,
 };
 
 /**
@@ -45,6 +46,19 @@ export function useUnreadNotificationCount(enabled = true) {
   return useQuery({
     queryKey: notificationKeys.unreadCount(),
     queryFn: notificationService.getUnreadCount,
+    enabled,
+    staleTime: 1000 * 30, // 30초
+    refetchInterval: 1000 * 60, // 1분마다 자동 갱신
+  });
+}
+
+/**
+ * 최신 읽지 않은 알림 1개 조회 훅 (배너용)
+ */
+export function useLatestUnreadNotification(enabled = true) {
+  return useQuery({
+    queryKey: notificationKeys.latestUnread(),
+    queryFn: notificationService.getLatestUnread,
     enabled,
     staleTime: 1000 * 30, // 30초
     refetchInterval: 1000 * 60, // 1분마다 자동 갱신

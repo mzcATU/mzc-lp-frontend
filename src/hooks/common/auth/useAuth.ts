@@ -5,6 +5,7 @@ import { userService } from '@/services/common/userService';
 import { useAuthStore } from '@/store/common/authStore';
 import type { LoginRequest, RegisterRequest, AuthUser } from '@/types/common/auth.types';
 import { toast } from 'sonner';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 // Query Keys
 export const authKeys = {
@@ -37,6 +38,7 @@ export const useLogin = () => {
         email: userDetail.email,
         name: userDetail.name,
         role: userDetail.role,
+        roles: userDetail.roles,
         tenantId: userDetail.tenantId,
         tenantSubdomain: userDetail.tenantSubdomain,
       };
@@ -82,7 +84,7 @@ export const useRegister = () => {
     mutationFn: (request: RegisterRequest) => authService.register(request),
     onSuccess: () => {
       toast.success('회원가입이 완료되었습니다. 로그인해주세요.');
-      navigate('/login');
+      navigate(getLoginPath());
     },
     onError: (error: Error) => {
       toast.error('회원가입에 실패했습니다. 다시 시도해주세요.');
@@ -98,6 +100,8 @@ export const useLogout = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { refreshToken, logout } = useAuthStore();
+  // 로그아웃 전에 현재 서브도메인 경로 저장
+  const loginPath = getLoginPath();
 
   return useMutation({
     mutationFn: async () => {
@@ -109,13 +113,13 @@ export const useLogout = () => {
       logout();
       queryClient.clear();
       toast.success('로그아웃되었습니다.');
-      navigate('/login');
+      navigate(loginPath);
     },
     onError: () => {
       // 에러가 발생해도 로컬 상태는 정리
       logout();
       queryClient.clear();
-      navigate('/login');
+      navigate(loginPath);
     },
   });
 };
@@ -136,6 +140,7 @@ export const useMe = () => {
         email: userDetail.email,
         name: userDetail.name,
         role: userDetail.role,
+        roles: userDetail.roles,  // 다중 역할 (1:N) 동기화
         tenantId: userDetail.tenantId,
       });
       return userDetail;

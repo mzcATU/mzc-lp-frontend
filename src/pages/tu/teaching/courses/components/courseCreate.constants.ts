@@ -3,8 +3,8 @@
  */
 
 export const translations = {
-  title: { ko: '강의 디자인', en: 'Course Design' },
-  editTitle: { ko: '강의 수정', en: 'Edit Course' },
+  title: { ko: '과정 설계', en: 'Course Design' },
+  editTitle: { ko: '과정 수정', en: 'Edit Course' },
   editSubmit: { ko: '수정 완료', en: 'Save Changes' },
   loadTemplate: { ko: '템플릿 불러오기', en: 'Load Template' },
   close: { ko: '닫기', en: 'Close' },
@@ -14,7 +14,7 @@ export const translations = {
   submit: { ko: '강의 등록', en: 'Submit' },
   lastSaved: { ko: '마지막 저장', en: 'Last saved' },
   step1: { ko: '기본 정보', en: 'Basic Info' },
-  step2: { ko: '차시 구성', en: 'Curriculum' },
+  step2: { ko: '커리큘럼 구성', en: 'Curriculum' },
   step3: { ko: '검토 및 저장', en: 'Review' },
   courseName: { ko: '강의명', en: 'Course Name' },
   courseNamePlaceholder: { ko: '강의명을 입력하세요', en: 'Enter course name' },
@@ -36,7 +36,7 @@ export const translations = {
   startDate: { ko: '시작일', en: 'Start Date' },
   endDate: { ko: '종료일', en: 'End Date' },
   comingSoon: { ko: '준비 중입니다', en: 'Coming Soon' },
-  curriculumTitle: { ko: '차시 구성', en: 'Curriculum' },
+  curriculumTitle: { ko: '커리큘럼 구성', en: 'Curriculum' },
   curriculumDesc: { ko: '차시를 추가하고 콘텐츠를 등록하세요. 드래그앤드롭으로 순서를 변경할 수 있습니다.', en: 'Add lessons and register content. Drag and drop to reorder.' },
   noLessons: { ko: '아직 등록된 차시가 없습니다.', en: 'No lessons registered yet.' },
   addFirstLesson: { ko: '첫 번째 차시 추가', en: 'Add First Lesson' },
@@ -51,8 +51,8 @@ export const translations = {
   externalLink: { ko: '외부 링크', en: 'External Link' },
   loadExisting: { ko: '기존 콘텐츠 불러오기', en: 'Load Existing Content' },
   deleteLesson: { ko: '차시 삭제', en: 'Delete Lesson' },
-  reviewTitle: { ko: '강의 정보 검토', en: 'Review Course Information' },
-  reviewDesc: { ko: '등록할 강의 정보를 확인하세요. 수정이 필요하면 각 섹션의 수정 버튼을 눌러주세요.', en: 'Please review your course information. Click edit to modify each section.' },
+  reviewTitle: { ko: '과정 설계 검토', en: 'Review Course Design' },
+  reviewDesc: { ko: '설계한 과정 정보를 확인하세요. 수정이 필요하면 각 섹션의 수정 버튼을 눌러주세요.', en: 'Please review your course design. Click edit to modify each section.' },
   edit: { ko: '수정', en: 'Edit' },
   basicInfo: { ko: '기본 정보', en: 'Basic Information' },
   tags: { ko: '태그', en: 'Tags' },
@@ -113,7 +113,19 @@ export const translations = {
   // 공통
   cancel: { ko: '취소', en: 'Cancel' },
   processing: { ko: '처리 중...', en: 'Processing...' },
-  // 발행
+  // 작성완료 (DRAFT → READY)
+  completeWriting: { ko: '작성완료', en: 'Complete' },
+  completing: { ko: '작성완료 처리 중...', en: 'Completing...' },
+  completeSuccess: { ko: '작성완료 되었습니다. 추후 리스트에서 등록할 수 있습니다.', en: 'Course marked as complete. You can register it later from the list.' },
+  completeError: { ko: '작성완료 처리에 실패했습니다. 다시 시도해주세요.', en: 'Failed to mark as complete. Please try again.' },
+  completeConfirm: { ko: '작성완료 하시겠습니까? 완료 후에도 수정이 가능합니다.', en: 'Mark as complete? You can still edit it later.' },
+  // 등록 (READY → REGISTERED)
+  register: { ko: '등록', en: 'Register' },
+  registering: { ko: '등록 중...', en: 'Registering...' },
+  registerSuccess: { ko: '등록되었습니다. 운영자가 차수를 개설할 수 있습니다.', en: 'Course has been registered. Operators can now create sessions.' },
+  registerError: { ko: '등록에 실패했습니다. 다시 시도해주세요.', en: 'Failed to register. Please try again.' },
+  registerConfirm: { ko: '등록하시겠습니까? 등록 후에는 운영자가 차수를 개설할 수 있습니다.', en: 'Register this course? After registration, operators can create course sessions.' },
+  // 발행 (deprecated)
   publish: { ko: '발행하기', en: 'Publish' },
   publishing: { ko: '발행 중...', en: 'Publishing...' },
   publishSuccess: { ko: '강의가 발행되었습니다.', en: 'Course has been published.' },
@@ -124,6 +136,13 @@ export const translations = {
   // 페이지네이션
   prev: { ko: '이전', en: 'Prev' },
   pageInfo: { ko: '{current} / {total} 페이지', en: 'Page {current} of {total}' },
+  // 미리보기
+  preview: { ko: '미리보기', en: 'Preview' },
+  previewTitle: { ko: '강의 미리보기', en: 'Course Preview' },
+  previewDesc: { ko: '수강생이 보게 될 강의 모습입니다.', en: 'This is how learners will see this course.' },
+  previewMode: { ko: '미리보기 모드', en: 'Preview Mode' },
+  closePreview: { ko: '미리보기 닫기', en: 'Close Preview' },
+  noPreviewData: { ko: '미리보기 데이터가 없습니다.', en: 'No preview data available.' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

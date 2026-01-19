@@ -268,7 +268,7 @@ const defaultBrandingSettings: BrandingSettings = {
   colors: {
     enabled: true,
     primary: '#4C2D9A',
-    secondary: '#6366F1',
+    secondary: '#3D2478',
   },
   banner: {
     enabled: true,
@@ -2379,7 +2379,7 @@ export function LayoutSettingsPage() {
                         </div>
                       )}
                       <div className={`hidden md:flex gap-6 text-sm font-medium ${previewTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {settings.header.navLinks.filter(l => l.visible).slice(0, 4).map((link, i) => (
+                        {settings.header.navLinks.filter(l => l.visible).map((link, i) => (
                           <span
                             key={i}
                             className="hover:opacity-80 cursor-pointer transition-all relative group/link"
@@ -2498,7 +2498,7 @@ export function LayoutSettingsPage() {
                     <div className="mb-8">
                       <h3 className={`text-sm font-semibold mb-3 ${previewTheme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{settings.category.sectionTitle}</h3>
                       <div className="flex gap-2 flex-wrap">
-                        {settings.category.items.slice(0, 6).map((cat, i) => (
+                        {settings.category.items.map((cat, i) => (
                           <span
                             key={i}
                             className={`px-4 py-2 text-sm rounded-full font-medium transition-colors cursor-pointer ${
@@ -2720,7 +2720,7 @@ export function LayoutSettingsPage() {
                       </div>
 
                       {/* 메뉴 아이템 */}
-                      {settings.sidebarTU.items.filter(item => item.visible).slice(0, 5).map((item, idx) => {
+                      {settings.sidebarTU.items.filter(item => item.visible).map((item, idx) => {
                         const isExpanded = expandedMenuItems.has(item.id);
                         const hasChildren = item.children && item.children.length > 0;
                         const IconComponent = item.icon ? iconMap[item.icon] : null;
@@ -2751,7 +2751,9 @@ export function LayoutSettingsPage() {
                               }`}
                             >
                               {IconComponent && <IconComponent className="w-4 h-4 flex-shrink-0" />}
-                              <span className="truncate">{item.label}</span>
+                              <span className={`truncate ${!item.label ? 'italic opacity-50' : ''}`}>
+                                {item.label || '(새 항목)'}
+                              </span>
                               {hasChildren && (
                                 <ChevronDown
                                   className={`ml-auto w-3 h-3 flex-shrink-0 transition-transform ${
@@ -2762,7 +2764,7 @@ export function LayoutSettingsPage() {
                             </div>
                             {hasChildren && isExpanded && (
                               <div className="ml-4 mt-1 space-y-1">
-                                {item.children!.filter(child => child.visible).slice(0, 3).map((child) => {
+                                {item.children!.filter(child => child.visible).map((child) => {
                                   const ChildIconComponent = child.icon ? iconMap[child.icon] : null;
                                   return (
                                     <div
@@ -2774,7 +2776,9 @@ export function LayoutSettingsPage() {
                                       }`}
                                     >
                                       {ChildIconComponent && <ChildIconComponent className="w-3 h-3 flex-shrink-0" />}
-                                      <span className="truncate">{child.label}</span>
+                                      <span className={`truncate ${!child.label ? 'italic opacity-50' : ''}`}>
+                                        {child.label || '(새 항목)'}
+                                      </span>
                                     </div>
                                   );
                                 })}
@@ -2936,7 +2940,7 @@ export function LayoutSettingsPage() {
                       previewTheme === 'dark' ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'
                     }`}>
                       <div className={`text-xs font-semibold mb-3 px-2 ${previewTheme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>관리 메뉴</div>
-                      {settings.sidebarCO.items.filter(item => item.visible).slice(0, 6).map((item, idx) => {
+                      {settings.sidebarCO.items.filter(item => item.visible).map((item, idx) => {
                         const isExpanded = expandedMenuItems.has(item.id);
                         const hasChildren = item.children && item.children.length > 0;
                         const IconComponent = item.icon ? iconMap[item.icon] : null;
@@ -2967,7 +2971,9 @@ export function LayoutSettingsPage() {
                               } : {}}
                             >
                               {IconComponent && <IconComponent className="w-4 h-4 flex-shrink-0" />}
-                              <span className="font-medium flex-1">{item.label}</span>
+                              <span className={`font-medium flex-1 ${!item.label ? 'italic opacity-50' : ''}`}>
+                                {item.label || '(새 항목)'}
+                              </span>
                               {hasChildren && (
                                 <ChevronDown
                                   className={`h-4 w-4 flex-shrink-0 transition-transform ${
@@ -2978,7 +2984,7 @@ export function LayoutSettingsPage() {
                             </div>
                             {hasChildren && isExpanded && (
                               <div className="ml-4 mt-1 space-y-1">
-                                {item.children!.filter(c => c.visible).slice(0, 3).map((child) => {
+                                {item.children!.filter(c => c.visible).map((child) => {
                                   const ChildIconComponent = child.icon ? iconMap[child.icon] : null;
                                   return (
                                     <div
@@ -2988,7 +2994,9 @@ export function LayoutSettingsPage() {
                                       }`}
                                     >
                                       {ChildIconComponent && <ChildIconComponent className="w-3 h-3 flex-shrink-0" />}
-                                      <span className="truncate">{child.label}</span>
+                                      <span className={`truncate ${!child.label ? 'italic opacity-50' : ''}`}>
+                                        {child.label || '(새 항목)'}
+                                      </span>
                                     </div>
                                   );
                                 })}

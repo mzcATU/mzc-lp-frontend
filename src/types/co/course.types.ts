@@ -85,8 +85,11 @@ export {
  */
 export type CourseDifficulty = 'beginner' | 'elementary' | 'intermediate' | 'advanced' | '';
 
-/** 강의 상태 (UI 전용) */
-export type CourseStatus = 'active' | 'completed' | 'draft';
+/**
+ * 강의 표시 상태 (UI 전용)
+ * @deprecated Course.status 필드에 사용되던 UI 전용 타입. 향후 제거 예정.
+ */
+export type CourseDisplayStatus = 'active' | 'completed' | 'draft';
 
 /** 다국어 버전 타입 */
 export interface LanguageVersion {
@@ -111,12 +114,12 @@ export interface CourseFormData {
   description: string;
   /** 썸네일 이미지 URL */
   thumbnailUrl?: string;
-  startDate: string;
-  endDate: string;
   categoryId: number | null;
   tags: string[];
   level: CourseLevel | '';
   type: CourseType | '';
+  /** 예상 학습 시간 (시간 단위) */
+  estimatedHours: number | null;
   /** @deprecated curriculumItems 사용 권장 */
   lessons: LessonData[];
   /** 커리큘럼 트리 구조 (폴더/콘텐츠 계층) */
@@ -142,7 +145,7 @@ export interface Course {
   deadline?: string;
   lastAccessed?: string;
   students?: number;
-  status?: CourseStatus;
+  status?: CourseDisplayStatus;
 }
 
 // ============================================

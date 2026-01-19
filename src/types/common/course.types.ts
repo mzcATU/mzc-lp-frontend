@@ -13,8 +13,32 @@ export type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 /** 강의 유형 */
 export type CourseType = 'ONLINE' | 'OFFLINE' | 'BLENDED';
 
-/** 강의 발행 상태 (API용, UI용 CourseStatus와 구분) */
+/**
+ * 강의 상태 (Phase 1: Course 등록 및 동결)
+ * - DRAFT: 작성 중 (수정 가능)
+ * - READY: 작성 완료 (수정 가능, 등록 대기)
+ * - REGISTERED: 등록됨 (수정 불가, 차수 생성 가능)
+ */
+export type CourseStatus = 'DRAFT' | 'READY' | 'REGISTERED';
+
+/**
+ * @deprecated Phase 1 이후 사용 중지. CourseStatus 사용 권장.
+ * 하위 호환성을 위해 유지.
+ */
 export type CoursePublishStatus = 'DRAFT' | 'PUBLISHED';
+
+/**
+ * 과정 등록 워크플로우 상태 (CO용)
+ * - DRAFT: 작성 중
+ * - READY: 검토 대기 (TU가 제출)
+ * - REGISTERED: 승인됨 (차수 생성 가능)
+ * - REJECTED: 반려됨
+ */
+export type CourseRegistrationStatus =
+  | 'DRAFT'
+  | 'READY'
+  | 'REGISTERED'
+  | 'REJECTED';
 
 // ============================================
 // Response Types
@@ -28,12 +52,10 @@ export interface CourseResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
-  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
-  status: CoursePublishStatus;
+  /** 강의 상태 (DRAFT: 작성중, READY: 작성완료, REGISTERED: 등록됨) */
+  status: CourseStatus;
   estimatedHours: number | null;
   categoryId: number | null;
-  startDate: string | null;
-  endDate: string | null;
   tags: string[];
   createdAt: string;
   updatedAt: string;
@@ -77,12 +99,10 @@ export interface CourseDetailResponse {
   thumbnailUrl: string | null;
   level: CourseLevel | null;
   type: CourseType | null;
-  /** 발행 상태 (DRAFT: 임시저장, PUBLISHED: 발행됨) */
-  status: CoursePublishStatus;
+  /** 강의 상태 (DRAFT: 작성중, READY: 작성완료, REGISTERED: 등록됨) */
+  status: CourseStatus;
   estimatedHours: number | null;
   categoryId: number | null;
-  startDate: string | null;
-  endDate: string | null;
   tags: string[];
   items: CourseItemResponse[];
   itemCount: number;
@@ -105,9 +125,9 @@ export interface CreateCourseRequest {
   estimatedHours?: number;
   categoryId?: number;
   thumbnailUrl?: string;
-  startDate?: string;
-  endDate?: string;
   tags?: string[];
+  /** 스냅샷 연결 (TU 과정 신청 시 사용) */
+  snapshotId?: number;
 }
 
 /** 강의 수정 요청 */
@@ -119,9 +139,8 @@ export interface UpdateCourseRequest {
   estimatedHours?: number;
   categoryId?: number;
   thumbnailUrl?: string;
-  startDate?: string;
-  endDate?: string;
   tags?: string[];
+  /** @deprecated status는 상태 전환 API 사용 (ready, unready, register) */
   status?: CoursePublishStatus;
 }
 
@@ -185,8 +204,126 @@ export const COURSE_TYPE_LABELS: Record<CourseType, string> = {
   BLENDED: '블렌디드',
 };
 
-/** CoursePublishStatus 라벨 맵 */
+/** CourseStatus 라벨 맵 */
+export const COURSE_STATUS_LABELS: Record<CourseStatus, string> = {
+  DRAFT: '작성중',
+  READY: '작성완료',
+  REGISTERED: '등록됨',
+};
+
+/** CourseStatus 색상 맵 (UI용) */
+export const COURSE_STATUS_COLORS: Record<
+  CourseStatus,
+  { bg: string; text: string }
+> = {
+  DRAFT: { bg: 'bg-gray-100', text: 'text-gray-700' },
+  READY: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  REGISTERED: { bg: 'bg-green-100', text: 'text-green-700' },
+};
+
+/**
+ * @deprecated Phase 1 이후 사용 중지. COURSE_STATUS_LABELS 사용 권장.
+ */
 export const COURSE_PUBLISH_STATUS_LABELS: Record<CoursePublishStatus, string> = {
   DRAFT: '임시저장',
   PUBLISHED: '발행됨',
+};
+
+// ============================================
+// CO 워크플로우 타입 (과정 등록/승인)
+// ============================================
+
+/**
+ * 등록된 과정 응답 (CO용)
+ * TU가 제출한 과정 목록 조회에 사용
+ */
+export interface CourseRegistrationResponse {
+  id: number;
+  courseId: number;
+  title: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  level: CourseLevel | null;
+  type: CourseType | null;
+  estimatedHours: number | null;
+  status: CourseRegistrationStatus;
+  creatorId: number;
+  creatorName: string | null;
+  ownerId: number | null;
+  ownerName: string | null;
+  ownerEmail: string | null;
+  snapshotId: number | null;
+  /** Course 권장 운영 기간 (차수 생성 시 참고용) */
+  courseStartDate: string | null;
+  courseEndDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** 카테고리 ID (백엔드 지원 시) */
+  categoryId?: number | null;
+  /** 카테고리명 (백엔드 지원 시) */
+  categoryName?: string | null;
+  /** 해당 과정의 차수 수 (백엔드 지원 시) */
+  timeCount?: number;
+}
+
+/**
+ * 등록된 과정 상세 응답 (CO용)
+ */
+export interface CourseRegistrationDetailResponse extends CourseRegistrationResponse {
+  snapshotName: string | null;
+  /** 승인 정보 */
+  approvedBy: number | null;
+  approvedByName: string | null;
+  approvedAt: string | null;
+  approvalComment: string | null;
+  /** 반려 정보 */
+  rejectionReason: string | null;
+  rejectedAt: string | null;
+  /** 제출 정보 */
+  submittedAt: string | null;
+}
+
+/**
+ * 검토 대기 과정 응답 (CO용)
+ */
+export interface ReadyCourseResponse {
+  id: number;
+  courseId: number;
+  title: string;
+  thumbnailUrl: string | null;
+  level: CourseLevel | null;
+  type: CourseType | null;
+  creatorId: number;
+  creatorName: string | null;
+  submittedAt: string;
+  snapshotId: number | null;
+}
+
+/** 과정 승인 요청 */
+export interface RegisterCourseRequest {
+  comment?: string;
+}
+
+/** 과정 반려 요청 */
+export interface UnreadyCourseRequest {
+  reason: string;
+}
+
+/** CourseRegistrationStatus 라벨 맵 */
+export const COURSE_REGISTRATION_STATUS_LABELS: Record<CourseRegistrationStatus, string> = {
+  DRAFT: '작성 중',
+  READY: '검토 대기',
+  REGISTERED: '승인됨',
+  REJECTED: '반려됨',
+};
+
+/** CourseRegistrationStatus 색상 맵 (UI용) */
+export const COURSE_REGISTRATION_STATUS_COLORS: Record<
+  CourseRegistrationStatus,
+  { bg: string; text: string }
+> = {
+  DRAFT: { bg: 'bg-gray-100', text: 'text-gray-700' },
+  READY: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  REGISTERED: { bg: 'bg-green-100', text: 'text-green-700' },
+  REJECTED: { bg: 'bg-red-100', text: 'text-red-700' },
 };

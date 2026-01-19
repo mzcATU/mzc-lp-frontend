@@ -7,16 +7,13 @@ import {
   MyContentPage,
   CourseCreatePage,
   CourseEditPage,
+  CoursePreviewPage,
   TeachingCourseDetailPage,
-  CourseApplyPage,
   TuContentCreatePage,
   ContentDetailPage,
   ContentBulkUploadPage,
   MyAssignmentsPage,
   AssignmentDetailPage,
-  MyProgramsPage,
-  TuProgramDetailPage,
-  TuProgramEditPage,
   RoadmapListPage,
   RoadmapCreatePage,
   TeachingRoadmapDetailPage,
@@ -44,17 +41,28 @@ function TenantUserWrapper() {
  */
 export const tuTeachingRoutes = (
   <>
+  {/* 미리보기 페이지 - 레이아웃 없이 렌더링 (수강생 뷰) */}
+  <Route path="/:subdomain/tu/teaching/courses/preview" element={
+    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN']}>
+      <ProfileRequiredRoute>
+        <CoursePreviewPage />
+      </ProfileRequiredRoute>
+    </ProtectedRoute>
+  } />
+  <Route path="/tu/teaching/courses/preview" element={
+    <ProtectedRoute allowedRoles={['USER', 'DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN']}>
+      <ProfileRequiredRoute>
+        <CoursePreviewPage />
+      </ProfileRequiredRoute>
+    </ProtectedRoute>
+  } />
+
   <Route path="/:subdomain/tu" element={<TenantUserWrapper />}>
-    <Route index element={<TUDashboardPage />} />
     <Route path="dashboard" element={<TUDashboardPage />} />
     <Route path="teaching/courses" element={<MyCoursesPage />} />
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
     <Route path="teaching/courses/:courseId/edit" element={<CourseEditPage />} />
-    <Route path="teaching/courses/:courseId/apply" element={<CourseApplyPage />} />
-    <Route path="teaching/programs" element={<MyProgramsPage />} />
-    <Route path="teaching/programs/:programId" element={<TuProgramDetailPage />} />
-    <Route path="teaching/programs/:programId/edit" element={<TuProgramEditPage />} />
     <Route path="teaching/content" element={<MyContentPage />} />
     <Route path="teaching/content/create" element={<TuContentCreatePage />} />
     <Route path="teaching/content/bulk-upload" element={<ContentBulkUploadPage />} />
@@ -68,7 +76,6 @@ export const tuTeachingRoutes = (
     <Route path="catalog" element={<PlaceholderPage title="과정 둘러보기" />} />
   </Route>
   <Route path="/tu" element={<TenantUserWrapper />}>
-    <Route index element={<TUDashboardPage />} />
     <Route path="dashboard" element={<TUDashboardPage />} />
 
     {/* 내 강의계획 */}
@@ -76,12 +83,7 @@ export const tuTeachingRoutes = (
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
     <Route path="teaching/courses/:courseId/edit" element={<CourseEditPage />} />
-    <Route path="teaching/courses/:courseId/apply" element={<CourseApplyPage />} />
 
-    {/* 내 프로그램 */}
-    <Route path="teaching/programs" element={<MyProgramsPage />} />
-    <Route path="teaching/programs/:programId" element={<TuProgramDetailPage />} />
-    <Route path="teaching/programs/:programId/edit" element={<TuProgramEditPage />} />
 
     {/* 내 콘텐츠 */}
     <Route path="teaching/content" element={<MyContentPage />} />

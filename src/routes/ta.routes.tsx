@@ -23,6 +23,7 @@ import {
   TenantNoticesPage,
   SystemNoticesPage,
   NoticeInboxPage,
+  NoticeDistributionPage,
 } from '@/pages/ta';
 import { EmployeeListPage } from '@/pages/ta/users/EmployeeListPage';
 import { AutoEnrollmentRulesPage } from '@/pages/ta/automation/AutoEnrollmentRulesPage';
@@ -40,10 +41,9 @@ function TenantAdminWrapper() {
   );
 }
 
-// TA 하위 라우트
+// TA 하위 라우트 (Admin 메뉴)
 const taChildRoutes = (
   <>
-    <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
@@ -67,6 +67,7 @@ const taChildRoutes = (
     {/* 공지사항 관리 */}
     <Route path="notices" element={<NoticeInboxPage />} />
     <Route path="notices/manage" element={<TenantNoticesPage />} />
+    <Route path="notices/distribution" element={<NoticeDistributionPage />} />
     <Route path="notices/system" element={<SystemNoticesPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />

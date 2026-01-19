@@ -36,6 +36,7 @@ type StatusFilter = EnrollmentStatus | 'all';
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',
+  ENROLLED: 'blue',
   REJECTED: 'red',
   CANCELLED: 'gray',
   COMPLETED: 'green',
@@ -44,6 +45,7 @@ const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' |
 const statusIcons: Record<EnrollmentStatus, React.ReactNode> = {
   PENDING: <AlertCircle className="w-4 h-4" />,
   APPROVED: <PlayCircle className="w-4 h-4" />,
+  ENROLLED: <PlayCircle className="w-4 h-4" />,
   REJECTED: <XCircle className="w-4 h-4" />,
   CANCELLED: <XCircle className="w-4 h-4" />,
   COMPLETED: <CheckCircle className="w-4 h-4" />,
@@ -73,13 +75,16 @@ interface EnrollmentCardProps {
 
 function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: EnrollmentCardProps) {
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '-';
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
   };
 
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
     APPROVED: t.learning.statusApproved,
+    ENROLLED: t.learning.statusApproved,
     REJECTED: t.learning.statusRejected,
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
@@ -158,6 +163,7 @@ export function MyLearningPage() {
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
     APPROVED: t.learning.statusApproved,
+    ENROLLED: t.learning.statusApproved,
     REJECTED: t.learning.statusRejected,
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
@@ -197,23 +203,13 @@ export function MyLearningPage() {
   };
 
   return (
-    <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      <div className="max-w-[1400px] mx-auto">
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2">
-            <h1 className={`text-2xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {t.learning.title}
-            </h1>
-            {/* 데모 버튼 (테스트용 - 숨김) */}
-            <button
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning/demo/player'))}
-              className={`opacity-10 hover:opacity-100 transition-opacity text-xs px-2 py-1 rounded ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-              title="Demo Mode"
-            >
-              [demo]
-            </button>
-          </div>
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t.learning.enrolledCourses}
+          </h1>
           <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
             {t.learning.description}
           </p>
@@ -222,7 +218,7 @@ export function MyLearningPage() {
         {/* Search & Filter Bar */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 min-w-[280px] max-w-md">
+          <form onSubmit={handleSearch} className="flex-1 min-w-[280px]">
             <div className="relative">
               <Search
                 className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}

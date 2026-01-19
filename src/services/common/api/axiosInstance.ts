@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/store/common/authStore';
 import { API_ENDPOINTS } from './endpoints';
-import { extractTenantIdentifier } from '@/utils/tenantUtils';
+import { extractTenantIdentifier, getLoginPath } from '@/utils/tenantUtils';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -59,6 +59,10 @@ axiosInstance.interceptors.request.use(
 // Response interceptor: ApiResponse wrapper 처리 및 토큰 갱신
 axiosInstance.interceptors.response.use(
   (response) => {
+    // blob 응답은 ApiResponse wrapper 처리를 건너뜀
+    if (response.config.responseType === 'blob') {
+      return response;
+    }
     // ApiResponse wrapper에서 data 추출
     // 서버 응답: { success: boolean, data: T, error?: {...} }
     if (
@@ -108,7 +112,7 @@ axiosInstance.interceptors.response.use(
 
       if (!refreshToken) {
         logout();
-        window.location.href = '/login';
+        window.location.href = getLoginPath();
         return Promise.reject(error);
       }
 
@@ -129,7 +133,7 @@ axiosInstance.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError as AxiosError, null);
         logout();
-        window.location.href = '/login';
+        window.location.href = getLoginPath();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

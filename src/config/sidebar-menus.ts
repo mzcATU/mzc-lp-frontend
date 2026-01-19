@@ -238,7 +238,17 @@ export const tenantUserMenuData: MenuItem[] = [
     label: { ko: '대시보드', en: 'Dashboard' },
     icon: LayoutDashboard,
     path: '/tu/dashboard',
-    roles: ['INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
+    roles: ['DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
+  },
+  {
+    id: 'my-courses',
+    label: { ko: '내 과정 관리', en: 'My Courses' },
+    icon: BookOpen,
+    subItems: [
+      { id: 'course-management', label: { ko: '과정 설계', en: 'Course Design' }, icon: FolderEdit, path: '/tu/teaching/courses' },
+      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER'] },
+    ],
+    roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'],
   },
   {
     id: 'my-teaching',
@@ -246,16 +256,6 @@ export const tenantUserMenuData: MenuItem[] = [
     icon: Briefcase,
     path: '/tu/teaching/assignments',
     roles: ['INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
-  },
-  {
-    id: 'my-courses',
-    label: { ko: '내 과정', en: 'My Courses' },
-    icon: BookOpen,
-    subItems: [
-      { id: 'course-management', label: { ko: '과정 관리', en: 'Course Management' }, icon: FolderEdit, path: '/tu/teaching/courses' },
-      { id: 'my-roadmaps', label: { ko: '로드맵', en: 'Roadmaps' }, icon: Map, path: '/tu/teaching/roadmaps', roles: ['DESIGNER'] },
-    ],
-    roles: ['DESIGNER', 'OPERATOR', 'TENANT_ADMIN'],
   },
   {
     id: 'my-content',
@@ -282,7 +282,7 @@ export const myPageMenuData: MenuItem[] = [
     label: { ko: '내 수강 강의', en: 'My Enrollments' },
     icon: BookOpen,
     subItems: [
-      { id: 'enrolled-courses', label: { ko: '수강중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
+      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2c/mypage/learning' },
       { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2c/mypage/completed' },
       { id: 'certificates', label: { ko: '수료증', en: 'Certificates' }, icon: Award, path: '/tu/b2c/mypage/certificates' },
     ],
@@ -337,7 +337,7 @@ export const b2bMyPageMenuData: MenuItem[] = [
     label: { ko: '내 수강 강의', en: 'My Enrollments' },
     icon: BookOpen,
     subItems: [
-      { id: 'enrolled-courses', label: { ko: '수강중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2b/mypage/learning' },
+      { id: 'enrolled-courses', label: { ko: '수강 중인 강의', en: 'Enrolled Courses' }, icon: BookOpen, path: '/tu/b2b/mypage/learning' },
       { id: 'completed-courses', label: { ko: '완료한 강의', en: 'Completed Courses' }, icon: BookCheck, path: '/tu/b2b/mypage/completed' },
       { id: 'certificates', label: { ko: '수료증', en: 'Certificates' }, icon: Award, path: '/tu/b2b/mypage/certificates' },
     ],

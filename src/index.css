@@ -1,3 +1,5 @@
+@import 'pretendard/dist/web/static/pretendard.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -142,7 +144,7 @@
 
   body {
     @apply bg-bg-app text-text-primary;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: var(--font-size-base);
   }
 
@@ -251,11 +253,13 @@
 /* Landing Button styles - Uses dynamic branding variables */
 .landing-btn-primary {
   background: linear-gradient(135deg, var(--landing-primary-color, #6778ff) 0%, var(--landing-secondary-color, #a855f7) 100%);
+  color: #ffffff;
   transition: all 0.3s ease;
 }
 
 .landing-btn-primary:hover {
   background: linear-gradient(135deg, var(--landing-primary-hover, #8b99ff) 0%, var(--landing-secondary-hover, #c084fc) 100%);
+  color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 10px 30px color-mix(in srgb, var(--landing-primary-color, #6778ff) 40%, transparent);
 }
@@ -614,14 +618,14 @@
 }
 
 .landing-light .landing-chip-inactive {
-  background: #FFFFFF;
-  color: #666666;
-  border: 1px solid #E0E0E0;
+  background: #F5F5F5;
+  color: #424242;
+  border: 1px solid #D0D0D0;
 }
 
 .landing-light .landing-chip-inactive:hover {
-  background: #F4F4F4;
-  color: #333333;
+  background: #E8E8E8;
+  color: #212121;
 }
 
 /* Header glass effect for themes */
@@ -757,9 +761,11 @@
   color: #6778ff;
 }
 
-/* Hero section for light mode - lighter gradient background */
+/* Hero section for light mode - use same dark gradient as dark mode */
 .landing-light .animated-bg {
-  background: linear-gradient(135deg, #4a4a80 0%, #6060a0 50%, #4a4a80 100%);
+  background: linear-gradient(-45deg, #1a1a2e, #2a2a4e, #243358, #1a1a2e);
+  background-size: 400% 400%;
+  animation: bg-gradient 15s ease infinite;
 }
 
 .landing-light .animated-bg h2.text-white {

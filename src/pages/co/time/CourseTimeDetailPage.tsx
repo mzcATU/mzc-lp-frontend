@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
 import {
@@ -18,14 +18,12 @@ import {
   X,
   UserPlus,
   FileText,
-  GraduationCap,
   BookOpen,
   User,
   DollarSign,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, Badge, Input, Label, NativeSelect, Card, BackButton } from '@/components/common';
-import { EnrollmentTab } from '@/pages/co/enrollment';
 import {
   useTime,
   useUpdateTime,
@@ -35,12 +33,14 @@ import {
   useCloseTime,
   useArchiveTime,
 } from '@/hooks/co/useTimeQueries';
-import type { CourseTimeStatus, UpdateCourseTimeRequest, DeliveryType, EnrollmentMethod } from '@/types/co/time.types';
+import type { CourseTimeStatus, UpdateCourseTimeRequest, DeliveryType, EnrollmentMethod, DurationType } from '@/types/co/time.types';
 import {
   COURSE_TIME_STATUS_LABELS,
   DELIVERY_TYPE_LABELS,
   ENROLLMENT_METHOD_LABELS,
   COURSE_TIME_STATUS_TRANSITIONS,
+  DURATION_TYPE_LABELS,
+  DAY_OF_WEEK_LABELS,
 } from '@/types/co/time.types';
 
 interface CourseTimeDetailPageProps {
@@ -65,11 +65,9 @@ const t = {
   timeTitle: { ko: '차수명', en: 'Title' },
   status: { ko: '상태', en: 'Status' },
   description: { ko: '설명', en: 'Description' },
-  programInfo: { ko: '과정 정보', en: 'Course Information' },
-  programId: { ko: '과정 ID', en: 'Course ID' },
-  programTitle: { ko: '과정명', en: 'Course Title' },
-  courseId: { ko: '강의 ID', en: 'Course ID' },
-  courseTitle: { ko: '강의명', en: 'Course Title' },
+  courseInfo: { ko: '과정 정보', en: 'Course Information' },
+  courseId: { ko: '과정 ID', en: 'Course ID' },
+  courseTitle: { ko: '과정명', en: 'Course Title' },
   deliveryInfo: { ko: '진행 정보', en: 'Delivery Information' },
   deliveryType: { ko: '진행 방식', en: 'Delivery Type' },
   enrollmentMethod: { ko: '수강 신청 방식', en: 'Enrollment Method' },
@@ -77,6 +75,8 @@ const t = {
   periodInfo: { ko: '기간 정보', en: 'Period Information' },
   enrollmentPeriod: { ko: '모집 기간', en: 'Enrollment Period' },
   learningPeriod: { ko: '학습 기간', en: 'Learning Period' },
+  durationType: { ko: '학습 기간 유형', en: 'Duration Type' },
+  durationDays: { ko: '수강 일수', en: 'Duration Days' },
   capacityInfo: { ko: '정원 및 수강', en: 'Capacity & Enrollment' },
   capacity: { ko: '정원', en: 'Capacity' },
   currentEnrollment: { ko: '현재 수강 인원', en: 'Current Enrollment' },
@@ -103,9 +103,6 @@ const t = {
   statusChangeError: { ko: '상태 변경에 실패했습니다.', en: 'Failed to change status.' },
   noDescription: { ko: '설명 없음', en: 'No description' },
   noLocation: { ko: '장소 미지정', en: 'No location' },
-  // Tabs
-  tabBasicInfo: { ko: '기본 정보', en: 'Basic Info' },
-  tabEnrollments: { ko: '수강생', en: 'Enrollments' },
   // Additional Info
   createdAt: { ko: '생성일', en: 'Created' },
   allowLateEnrollment: { ko: '중간 합류', en: 'Late Enrollment' },
@@ -139,30 +136,11 @@ const statusBadgeVariant: Record<CourseTimeStatus, 'default' | 'secondary' | 'su
 export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDetailPageProps>) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { prefixPath } = useSubdomainPath();
   const timeId = parseInt(id || '0');
 
-  // URL의 tab 파라미터에 따라 초기 탭 설정
-  const getInitialTab = (): 'info' | 'enrollments' => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'students' || tabParam === 'enrollments') {
-      return 'enrollments';
-    }
-    return 'info';
-  };
-
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UpdateCourseTimeRequest>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'enrollments'>(getInitialTab);
-
-  // URL 파라미터 변경 시 탭 업데이트
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'students' || tabParam === 'enrollments') {
-      setActiveTab('enrollments');
-    }
-  }, [searchParams]);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -400,51 +378,10 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-border bg-bg-app sticky top-[89px] z-10">
-        <div className="px-8">
-          <div className="flex gap-1">
-            <button
-              onClick={() => setActiveTab('info')}
-              className={cn(
-                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
-                activeTab === 'info'
-                  ? 'text-text-primary'
-                  : 'text-text-secondary hover:text-text-primary'
-              )}
-            >
-              <FileText size={16} />
-              {getText('tabBasicInfo')}
-              {activeTab === 'info' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('enrollments')}
-              className={cn(
-                'px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2',
-                activeTab === 'enrollments'
-                  ? 'text-text-primary'
-                  : 'text-text-secondary hover:text-text-primary'
-              )}
-            >
-              <GraduationCap size={16} />
-              {getText('tabEnrollments')}
-              <Badge variant="secondary" className="ml-1">
-                {courseTime.currentEnrollment}
-              </Badge>
-              {activeTab === 'enrollments' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-neutral" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {/* 기본 정보 탭 */}
-        {activeTab === 'info' && (
+        {/* 기본 정보 */}
+        {(
           <div className="p-6 px-8 max-w-6xl">
             {/* Bento Grid 레이아웃 */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -467,15 +404,15 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     )}
                   </div>
 
-                  {/* 프로그램 정보 섹션 */}
+                  {/* 과정 정보 섹션 */}
                   <div className="pt-4 border-t border-border">
                     <div className="flex items-center gap-2 mb-3">
                       <BookOpen size={16} className="text-text-secondary" />
-                      <span className="text-sm font-medium text-text-secondary">{getText('programInfo')}</span>
+                      <span className="text-sm font-medium text-text-secondary">{getText('courseInfo')}</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-text-secondary">{getText('programTitle')}</Label>
+                        <Label className="text-text-secondary">{getText('courseTitle')}</Label>
                         <p className="text-text-primary font-medium">{courseTime.courseTitle || '-'}</p>
                       </div>
                       {courseTime.courseDescription && (
@@ -612,26 +549,72 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                   <div className="bg-bg-secondary p-4 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <Label className="text-text-secondary">{getText('learningPeriod')}</Label>
-                      {(() => {
-                        const today = new Date();
-                        const classStart = new Date(courseTime.classStartDate);
-                        const classEnd = new Date(courseTime.classEndDate);
-
-                        if (today < classStart) {
-                          const daysUntil = Math.ceil((classStart.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                          return <Badge variant="secondary">D-{daysUntil}</Badge>;
-                        } else if (today <= classEnd) {
-                          const daysLeft = Math.ceil((classEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                          return <Badge variant="default">{language === 'ko' ? `진행 중 (D-${daysLeft})` : `Ongoing (D-${daysLeft})`}</Badge>;
-                        } else {
-                          return <Badge variant="destructive">{language === 'ko' ? '종료' : 'Ended'}</Badge>;
-                        }
-                      })()}
+                      {courseTime.durationType && (
+                        <Badge variant="default">
+                          {DURATION_TYPE_LABELS[courseTime.durationType as DurationType]}
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-text-primary font-medium">
-                      {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate)}
-                    </p>
+                    {/* FIXED: 시작일 ~ 종료일 */}
+                    {courseTime.durationType === 'FIXED' && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
+                      </p>
+                    )}
+                    {/* RELATIVE: 시작일 + N일 */}
+                    {courseTime.durationType === 'RELATIVE' && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} + {courseTime.durationDays}일
+                      </p>
+                    )}
+                    {/* UNLIMITED: 시작일부터 무제한 */}
+                    {courseTime.durationType === 'UNLIMITED' && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} ~ {language === 'ko' ? '무제한' : 'Unlimited'}
+                      </p>
+                    )}
+                    {/* durationType이 없는 경우 (기존 데이터) */}
+                    {!courseTime.durationType && (
+                      <p className="text-text-primary font-medium">
+                        {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
+                      </p>
+                    )}
                   </div>
+
+                  {/* 정기 수업 일정 */}
+                  {courseTime.recurringSchedule && (
+                    <div className="bg-bg-brand-active/10 p-4 rounded-lg border border-action-primary/30 mt-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock size={16} className="text-action-primary" />
+                        <Label className="text-text-secondary">정기 수업 일정</Label>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-text-secondary">요일:</span>
+                          <div className="flex gap-1">
+                            {courseTime.recurringSchedule.daysOfWeek.map((day) => (
+                              <Badge key={day} variant="default" className="bg-action-primary text-white">
+                                {DAY_OF_WEEK_LABELS[day]}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-text-secondary">시간:</span>
+                          <span className="text-sm font-medium text-text-primary">
+                            {courseTime.recurringSchedule.startTime} ~ {courseTime.recurringSchedule.endTime}
+                          </span>
+                        </div>
+                        {courseTime.recurringSchedule.excludeHolidays && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="text-xs">
+                              공휴일 제외
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
@@ -753,17 +736,6 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                 )}
               </Card>
             </div>
-          </div>
-        )}
-
-        {/* 수강생 탭 */}
-        {activeTab === 'enrollments' && (
-          <div className="p-6 px-8">
-            <EnrollmentTab
-              courseTimeId={timeId}
-              courseTimeTitle={courseTime.title}
-              language={language}
-            />
           </div>
         )}
       </div>

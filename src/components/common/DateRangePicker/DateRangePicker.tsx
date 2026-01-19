@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
@@ -43,11 +44,11 @@ function DateRangePicker({
             {currentDate?.from ? (
               currentDate.to ? (
                 <>
-                  {format(currentDate.from, "LLL dd, y")} -{" "}
-                  {format(currentDate.to, "LLL dd, y")}
+                  {format(currentDate.from, "yyyy년 M월 d일", { locale: ko })} -{" "}
+                  {format(currentDate.to, "yyyy년 M월 d일", { locale: ko })}
                 </>
               ) : (
-                format(currentDate.from, "LLL dd, y")
+                format(currentDate.from, "yyyy년 M월 d일", { locale: ko })
               )
             ) : (
               <span>{placeholder}</span>
@@ -62,6 +63,7 @@ function DateRangePicker({
             selected={currentDate}
             onSelect={handleDateChange}
             numberOfMonths={2}
+            weekStartsOn={1}
           />
         </PopoverContent>
       </Popover>
@@ -77,6 +79,8 @@ function DatePicker({
   placeholder = "Pick a date",
   align = "start",
   disabled = false,
+  fromDate,
+  toDate,
 }: DatePickerProps) {
   const [internalDate, setInternalDate] = React.useState<Date | undefined>(
     date
@@ -84,6 +88,14 @@ function DatePicker({
 
   const currentDate = date ?? internalDate;
   const handleDateChange = onDateChange ?? setInternalDate;
+
+  // 날짜 제한 Matcher 배열 생성
+  const getDisabledMatchers = () => {
+    const matchers: Array<{ before: Date } | { after: Date }> = [];
+    if (fromDate) matchers.push({ before: fromDate });
+    if (toDate) matchers.push({ after: toDate });
+    return matchers.length > 0 ? matchers : undefined;
+  };
 
   return (
     <Popover>
@@ -98,7 +110,7 @@ function DatePicker({
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {currentDate ? format(currentDate, "PPP") : <span>{placeholder}</span>}
+          {currentDate ? format(currentDate, "yyyy년 M월 d일", { locale: ko }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align={align}>
@@ -107,6 +119,8 @@ function DatePicker({
           selected={currentDate}
           onSelect={handleDateChange}
           initialFocus
+          weekStartsOn={1}
+          disabled={getDisabledMatchers()}
         />
       </PopoverContent>
     </Popover>

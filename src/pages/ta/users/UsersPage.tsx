@@ -298,10 +298,12 @@ export function UsersPage() {
     setValue('name', user.name);
     setValue('email', user.email);
     setValue('systemRole', user.systemRole);
-    setValue('systemRoles', [user.systemRole]);  // 초기값으로 현재 역할 설정
+    // 사용자의 roles 배열이 있으면 그것을 사용, 없으면 systemRole 하나로 초기화
+    const initialRoles = user.roles && user.roles.length > 0 ? user.roles : [user.systemRole];
+    setValue('systemRoles', initialRoles);
     setValue('status', user.status);
     setIsEditDialogOpen(true);
-    // 다이얼로그 열리면 사용자의 실제 역할 목록 조회
+    // 다이얼로그 열리면 사용자의 실제 역할 목록 조회 (최신 데이터 보장)
     setTimeout(() => refetchUserRoles(), 100);
   };
 
@@ -332,14 +334,16 @@ export function UsersPage() {
 
       // 다중 역할 업데이트
       const currentRoles = selectedUserRoles || [selectedUser.systemRole];
-      const newRoles = data.systemRoles;
+      const newRoles = data.systemRoles || [];
 
-      // 역할이 변경된 경우에만 업데이트
+      // 역할이 변경된 경우에만 업데이트 (양방향 비교)
+      const currentSet = new Set(currentRoles);
+      const newSet = new Set(newRoles);
       const rolesChanged =
-        currentRoles.length !== newRoles.length ||
-        !currentRoles.every((r: SystemRole) => newRoles.includes(r));
+        currentSet.size !== newSet.size ||
+        ![...currentSet].every((r) => newSet.has(r));
 
-      if (rolesChanged) {
+      if (rolesChanged && newRoles.length > 0) {
         await updateRolesMutation.mutateAsync({
           id: selectedUser.id,
           request: { roles: newRoles },
@@ -736,31 +740,6 @@ export function UsersPage() {
           pageOf: '{current} / {total} 페이지',
         }}
       />
-
-      {/* 페이지네이션 */}
-      {usersData && usersData.totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            이전
-          </Button>
-          <span className="flex items-center px-4 text-sm text-text-secondary">
-            {page + 1} / {usersData.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= usersData.totalPages - 1}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            다음
-          </Button>
-        </div>
-      )}
 
       {/* 사용자 수정 다이얼로그 */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

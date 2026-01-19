@@ -14,23 +14,31 @@ export interface TenantIdentifier {
 
 /**
  * URL 경로에서 서브도메인 추출 (개발 환경용)
- * 경로 패턴: /{subdomain}/tu/* 또는 /{subdomain}/ta/*
+ * 경로 패턴: /{subdomain}/tu/* 또는 /{subdomain}/ta/* 또는 /{subdomain}/login 등
  *
  * @example
  * /mzc/tu/b2c/courses → 'mzc'
  * /samsung/ta/dashboard → 'samsung'
+ * /mzc/login → 'mzc'
+ * /mzc/register → 'mzc'
+ * /mzc/admin/login → 'mzc'
+ * /mzc/select-role → 'mzc'
  */
 export function extractSubdomainFromPath(): string | null {
   const pathname = window.location.pathname;
 
-  // 경로 기반 서브도메인 패턴: /{subdomain}/(tu|ta|co)/...
-  const regex = /^\/([^/]+)\/(tu|ta|co)(\/|$)/;
+  // 경로 기반 서브도메인 패턴: /{subdomain}/(tu|ta|co|admin|login|register|select-role)/...
+  const regex = /^\/([^/]+)\/(tu|ta|co|admin|login|register|select-role)(\/|$)/;
   const match = regex.exec(pathname);
   const subdomain = match?.[1];
 
   if (subdomain) {
-    // 시스템 경로는 제외
-    if (['admin', 'sa', 'auth', 'public'].includes(subdomain)) {
+    // 시스템 경로는 제외 (admin은 서브도메인으로 허용 - /{subdomain}/admin/login 패턴)
+    if (['sa', 'auth', 'public'].includes(subdomain)) {
+      return null;
+    }
+    // admin만 단독으로 오는 경우 (/admin/login)는 서브도메인이 아님
+    if (subdomain === 'admin') {
       return null;
     }
     return subdomain;
@@ -80,4 +88,43 @@ export function extractTenantIdentifier(): TenantIdentifier | null {
 
   // Custom Domain
   return { type: 'customDomain', identifier: hostname };
+}
+
+/**
+ * 서브도메인을 유지하는 로그인 경로 반환
+ * @example
+ * /mzc/tu/b2c → '/mzc/login'
+ * /samsung/ta/dashboard → '/samsung/login'
+ * /login → '/login'
+ */
+export function getLoginPath(): string {
+  const subdomain = extractSubdomainFromPath();
+  return subdomain ? `/${subdomain}/login` : '/login';
+}
+
+/**
+ * 서브도메인을 유지하는 회원가입 경로 반환
+ */
+export function getRegisterPath(): string {
+  const subdomain = extractSubdomainFromPath();
+  return subdomain ? `/${subdomain}/register` : '/register';
+}
+
+/**
+ * 서브도메인을 유지하는 홈 경로 반환
+ */
+export function getHomePath(): string {
+  const subdomain = extractSubdomainFromPath();
+  return subdomain ? `/${subdomain}/tu/b2c` : '/';
+}
+
+/**
+ * 서브도메인을 유지하는 어드민 로그인 경로 반환
+ * @example
+ * /mzc/ta/dashboard → '/mzc/admin/login'
+ * /ta/dashboard → '/admin/login'
+ */
+export function getAdminLoginPath(): string {
+  const subdomain = extractSubdomainFromPath();
+  return subdomain ? `/${subdomain}/admin/login` : '/admin/login';
 }

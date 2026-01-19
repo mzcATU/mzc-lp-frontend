@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -24,6 +25,8 @@ import {
   Briefcase,
   UserPlus,
   X,
+  XCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
@@ -33,6 +36,7 @@ import {
   DataTableColumnHeader,
   Label,
   Textarea,
+  Input,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -50,9 +54,9 @@ import {
   SelectValue,
 } from '@/components/common';
 import { useUsers, useUser, useChangeUserStatus, useUserEnrollmentStats, useUserInstructorStats } from '@/hooks/co/useUserQueries';
-import { useApprovedPrograms } from '@/hooks/co/useProgramQueries';
+import { useRegisteredCourses } from '@/hooks/tu/useCourseQueries';
 import { useTimes } from '@/hooks/co/useTimeQueries';
-import { useEnrollmentsByCourseTime, useForceEnroll } from '@/hooks/co/useEnrollmentQueries';
+import { useEnrollmentsByCourseTime, useForceEnroll, useCompleteEnrollment, useUpdateEnrollmentStatus } from '@/hooks/co/useEnrollmentQueries';
 import type { UserListResponse, TenantRole, UserStatus, UserFilterParams } from '@/types/co';
 import type { EnrollmentResponse, EnrollmentStatus } from '@/types/co/enrollment.types';
 import { USER_STATUS_LABELS, TENANT_ROLE_LABELS } from '@/types/co';
@@ -162,6 +166,19 @@ const t = {
   columnEnrollmentStatus: { ko: '수강 상태', en: 'Status' },
   // Learning detail modal
   learningDetail: { ko: '학습 상세 정보', en: 'Learning Details' },
+  // Enrollment actions
+  completeEnrollment: { ko: '수료 처리', en: 'Complete' },
+  dropEnrollment: { ko: '수강 취소', en: 'Cancel Enrollment' },
+  reinstateEnrollment: { ko: '수강 복귀', en: 'Reinstate' },
+  confirmComplete: { ko: '이 수강생을 수료 처리하시겠습니까?', en: 'Complete this enrollment?' },
+  confirmDrop: { ko: '수강 취소 사유를 입력하세요.', en: 'Enter cancellation reason.' },
+  confirmReinstate: { ko: '이 수강생을 다시 수강 상태로 복귀시키시겠습니까?', en: 'Reinstate this enrollment?' },
+  scoreLabel: { ko: '점수 (선택)', en: 'Score (optional)' },
+  scorePlaceholder: { ko: '0-100', en: '0-100' },
+  processing: { ko: '처리 중...', en: 'Processing...' },
+  completeSuccess: { ko: '수료 처리되었습니다.', en: 'Enrollment completed.' },
+  dropSuccess: { ko: '수강 취소되었습니다.', en: 'Enrollment cancelled.' },
+  reinstateSuccess: { ko: '수강 복귀되었습니다.', en: 'Enrollment reinstated.' },
 };
 
 const statusBadgeVariant: Record<UserStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
@@ -250,22 +267,26 @@ function EnrollmentStatsCell({ userId, field }: { userId: number; field: 'inProg
 type CompletionFilter = 'all' | 'COMPLETED' | 'ENROLLED' | 'NOT_COMPLETED';
 
 export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementPageProps>) {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedUserForDetail, setSelectedUserForDetail] = useState<UserListResponse | null>(null);
 
   // 새로운 필터 상태
-  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [selectedTimeId, setSelectedTimeId] = useState<number | null>(null);
   const [completionFilter, setCompletionFilter] = useState<CompletionFilter>('all');
+
+  // URL 파라미터에서 초기 필터값 적용 여부 추적
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 행 선택 상태 (사용자 ID 기반)
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
 
   // 강제 배정 모달 상태
   const [showEnrollModal, setShowEnrollModal] = useState(false);
-  const [enrollProgramId, setEnrollProgramId] = useState<number | null>(null);
+  const [enrollCourseId, setEnrollCourseId] = useState<number | null>(null);
   const [enrollTimeId, setEnrollTimeId] = useState<number | null>(null);
 
   // 학습 상세 모달용 선택된 enrollment
@@ -276,6 +297,13 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [targetStatus, setTargetStatus] = useState<UserStatus | null>(null);
   const [statusReason, setStatusReason] = useState('');
+
+  // 수강 관리 모달 상태
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showDropModal, setShowDropModal] = useState(false);
+  const [showReinstateModal, setShowReinstateModal] = useState(false);
+  const [completeScore, setCompleteScore] = useState('');
+  const [dropReason, setDropReason] = useState('');
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -297,10 +325,34 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const changeStatus = useChangeUserStatus();
 
   // 과정 목록 조회 (승인된 과정만)
-  const { data: programsData } = useApprovedPrograms();
+  const { data: coursesData } = useRegisteredCourses();
 
   // 전체 차수 목록 조회 (필터용 - 클라이언트에서 프로그램별 필터링)
   const { data: timesData } = useTimes({ page: 0, size: 500 });
+
+  // URL 파라미터에서 courseTimeId를 읽어 자동 선택
+  useEffect(() => {
+    if (isInitialized || !timesData?.content || !coursesData?.content) return;
+
+    const courseTimeIdParam = searchParams.get('courseTimeId');
+    if (courseTimeIdParam) {
+      const courseTimeId = parseInt(courseTimeIdParam);
+      const selectedTime = timesData.content.find((t) => t.id === courseTimeId);
+
+      if (selectedTime) {
+        // 해당 차수의 과정을 찾아서 먼저 선택
+        const matchingCourse = coursesData.content.find(
+          (c) => c.title === selectedTime.courseTitle
+        );
+        if (matchingCourse) {
+          setSelectedCourseId(matchingCourse.id);
+        }
+        // 차수 선택
+        setSelectedTimeId(courseTimeId);
+      }
+    }
+    setIsInitialized(true);
+  }, [timesData, coursesData, searchParams, isInitialized]);
 
   // 강제 배정 모달용 - 동일한 timesData 사용하고 클라이언트에서 필터링
 
@@ -374,51 +426,51 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   }), [filteredUsers, enrollmentsData?.content, isLearningView]);
 
   // 과정 옵션
-  const programOptions = useMemo(() => {
-    return (programsData?.content ?? []).map((p) => ({
-      value: String(p.id),
-      label: p.title,
+  const courseOptions = useMemo(() => {
+    return (coursesData?.content ?? []).map((c) => ({
+      value: String(c.courseId),
+      label: c.title,
     }));
-  }, [programsData]);
+  }, [coursesData]);
 
-  // 선택된 프로그램의 title 조회
-  const selectedProgramTitle = useMemo(() => {
-    if (!selectedProgramId) return null;
-    const program = programsData?.content?.find((p) => p.id === selectedProgramId);
-    return program?.title ?? null;
-  }, [selectedProgramId, programsData]);
+  // 선택된 과정의 title 조회
+  const selectedCourseTitle = useMemo(() => {
+    if (!selectedCourseId) return null;
+    const course = coursesData?.content?.find((c) => c.courseId === selectedCourseId);
+    return course?.title ?? null;
+  }, [selectedCourseId, coursesData]);
 
-  // 차수 옵션 - 선택된 프로그램 title로 클라이언트 필터링
+  // 차수 옵션 - 선택된 과정 title로 클라이언트 필터링
   const timeOptions = useMemo(() => {
     const allTimes = timesData?.content ?? [];
-    // 선택된 프로그램이 있으면 해당 프로그램의 차수만 필터링
-    const filteredTimes = selectedProgramTitle
-      ? allTimes.filter((t) => t.courseTitle === selectedProgramTitle)
+    // 선택된 과정이 있으면 해당 과정의 차수만 필터링
+    const filteredTimes = selectedCourseTitle
+      ? allTimes.filter((t) => t.courseTitle === selectedCourseTitle)
       : allTimes;
     return filteredTimes.map((t) => ({
       value: String(t.id),
       label: t.title,
     }));
-  }, [timesData, selectedProgramTitle]);
+  }, [timesData, selectedCourseTitle]);
 
-  // 강제 배정 모달용 프로그램 title 조회
-  const enrollProgramTitle = useMemo(() => {
-    if (!enrollProgramId) return null;
-    const program = programsData?.content?.find((p) => p.id === enrollProgramId);
-    return program?.title ?? null;
-  }, [enrollProgramId, programsData]);
+  // 강제 배정 모달용 과정 title 조회
+  const enrollCourseTitle = useMemo(() => {
+    if (!enrollCourseId) return null;
+    const course = coursesData?.content?.find((c) => c.courseId === enrollCourseId);
+    return course?.title ?? null;
+  }, [enrollCourseId, coursesData]);
 
   // 강제 배정 모달용 차수 옵션 - 클라이언트 필터링
   const enrollTimeOptions = useMemo(() => {
     const allTimes = timesData?.content ?? [];
-    const filteredTimes = enrollProgramTitle
-      ? allTimes.filter((t) => t.courseTitle === enrollProgramTitle)
+    const filteredTimes = enrollCourseTitle
+      ? allTimes.filter((t) => t.courseTitle === enrollCourseTitle)
       : [];
     return filteredTimes.map((t) => ({
       value: String(t.id),
       label: t.title,
     }));
-  }, [timesData, enrollProgramTitle]);
+  }, [timesData, enrollCourseTitle]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -461,9 +513,9 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   };
 
   // 과정 선택 핸들러
-  const handleProgramChange = (value: string) => {
-    const programId = value ? Number(value) : null;
-    setSelectedProgramId(programId);
+  const handleCourseChange = (value: string) => {
+    const courseId = value ? Number(value) : null;
+    setSelectedCourseId(courseId);
     setSelectedTimeId(null); // 차수 초기화
     setCompletionFilter('all'); // 수료여부 필터 초기화
     setSelectedUserIds(new Set()); // 행 선택 초기화
@@ -479,7 +531,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
   // 필터 초기화
   const handleClearFilters = () => {
-    setSelectedProgramId(null);
+    setSelectedCourseId(null);
     setSelectedTimeId(null);
     setCompletionFilter('all');
     setSearchQuery('');
@@ -489,7 +541,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
   // 강제 배정 모달 열기
   const handleOpenEnrollModal = () => {
-    setEnrollProgramId(null);
+    setEnrollCourseId(null);
     setEnrollTimeId(null);
     setShowEnrollModal(true);
   };
@@ -513,6 +565,63 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
       setSelectedUserIds(new Set());
     } catch (err) {
       console.error('Force enroll failed:', err);
+    }
+  };
+
+  // 수료/취소/복귀 mutations
+  const completeEnrollment = useCompleteEnrollment();
+  const updateEnrollmentStatus = useUpdateEnrollmentStatus();
+
+  // 수료 처리
+  const handleComplete = async () => {
+    if (!selectedEnrollment) return;
+    try {
+      await completeEnrollment.mutateAsync({
+        id: selectedEnrollment.id,
+        request: {
+          ...(completeScore && { score: Number(completeScore) }),
+        },
+      });
+      setShowCompleteModal(false);
+      setSelectedEnrollment(null);
+      setCompleteScore('');
+    } catch (err) {
+      console.error('Complete failed:', err);
+    }
+  };
+
+  // 수강 취소
+  const handleDrop = async () => {
+    if (!selectedEnrollment) return;
+    if (!dropReason.trim()) {
+      alert(getText('reasonRequired'));
+      return;
+    }
+    try {
+      await updateEnrollmentStatus.mutateAsync({
+        id: selectedEnrollment.id,
+        request: { status: 'DROPPED', reason: dropReason },
+      });
+      setShowDropModal(false);
+      setSelectedEnrollment(null);
+      setDropReason('');
+    } catch (err) {
+      console.error('Drop failed:', err);
+    }
+  };
+
+  // 수강 복귀
+  const handleReinstate = async () => {
+    if (!selectedEnrollment) return;
+    try {
+      await updateEnrollmentStatus.mutateAsync({
+        id: selectedEnrollment.id,
+        request: { status: 'ENROLLED' },
+      });
+      setShowReinstateModal(false);
+      setSelectedEnrollment(null);
+    } catch (err) {
+      console.error('Reinstate failed:', err);
     }
   };
 
@@ -700,6 +809,58 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     [language, changeStatus.isPending, allCurrentPageSelected, filteredUsers, selectedUserIds, toggleAllSelection, toggleUserSelection]
   );
 
+  // 학습 관리 뷰용 더보기 메뉴 렌더링
+  const renderEnrollmentMoreMenu = (item: EnrollmentResponse) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-bg-secondary transition-colors"
+          >
+            <MoreHorizontal size={16} className="text-text-secondary" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          {item.status === 'ENROLLED' && (
+            <>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedEnrollment(item);
+                  setShowCompleteModal(true);
+                }}
+              >
+                <CheckCircle size={14} />
+                {getText('completeEnrollment')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedEnrollment(item);
+                  setShowDropModal(true);
+                }}
+                variant="destructive"
+              >
+                <XCircle size={14} />
+                {getText('dropEnrollment')}
+              </DropdownMenuItem>
+            </>
+          )}
+          {item.status === 'DROPPED' && (
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedEnrollment(item);
+                setShowReinstateModal(true);
+              }}
+            >
+              <RotateCcw size={14} />
+              {getText('reinstateEnrollment')}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   // Case 2: 학습 관리 뷰 컬럼 (차수 선택 시)
   const learningViewColumns: ColumnDef<EnrollmentResponse>[] = useMemo(
     () => [
@@ -782,8 +943,38 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
           </span>
         ),
       },
+      {
+        id: 'actions',
+        header: () => <span className="sr-only">{getText('columnActions')}</span>,
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div
+              className="flex items-center justify-end gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {item.status === 'ENROLLED' && (
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedEnrollment(item);
+                    setShowCompleteModal(true);
+                  }}
+                  className="h-8"
+                >
+                  <CheckCircle size={14} />
+                  {getText('completeEnrollment')}
+                </Button>
+              )}
+              {renderEnrollmentMoreMenu(item)}
+            </div>
+          );
+        },
+        size: 180,
+      },
     ],
-    [language]
+    [language, completeEnrollment.isPending, updateEnrollmentStatus.isPending]
   );
 
   if (error) {
@@ -825,9 +1016,9 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
             {/* 과정 선택 (Autocomplete) */}
             <div className="w-64">
               <Combobox
-                options={programOptions}
-                value={selectedProgramId ? String(selectedProgramId) : undefined}
-                onValueChange={handleProgramChange}
+                options={courseOptions}
+                value={selectedCourseId ? String(selectedCourseId) : undefined}
+                onValueChange={handleCourseChange}
                 placeholder={getText('selectCourse')}
                 searchPlaceholder={getText('searchCourse')}
                 emptyMessage={getText('noResults')}
@@ -839,7 +1030,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
               <Select
                 value={selectedTimeId ? String(selectedTimeId) : ''}
                 onValueChange={handleTimeChange}
-                disabled={!selectedProgramId}
+                disabled={!selectedCourseId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={getText('selectTime')} />
@@ -874,7 +1065,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
             </div>
 
             {/* 필터 초기화 */}
-            {(selectedProgramId || selectedTimeId || completionFilter !== 'all') && (
+            {(selectedCourseId || selectedTimeId || completionFilter !== 'all') && (
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
                 <X size={14} />
                 {getText('clearFilters')}
@@ -1547,10 +1738,10 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
             <div>
               <Label className="text-text-secondary mb-2">{getText('selectCourseForEnroll')}</Label>
               <Combobox
-                options={programOptions}
-                value={enrollProgramId ? String(enrollProgramId) : undefined}
+                options={courseOptions}
+                value={enrollCourseId ? String(enrollCourseId) : undefined}
                 onValueChange={(value: string) => {
-                  setEnrollProgramId(value ? Number(value) : null);
+                  setEnrollCourseId(value ? Number(value) : null);
                   setEnrollTimeId(null);
                 }}
                 placeholder={getText('selectCourse')}
@@ -1565,7 +1756,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
               <Select
                 value={enrollTimeId ? String(enrollTimeId) : ''}
                 onValueChange={(value) => setEnrollTimeId(value ? Number(value) : null)}
-                disabled={!enrollProgramId}
+                disabled={!enrollCourseId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={getText('selectTime')} />
@@ -1594,6 +1785,128 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Complete Enrollment Modal */}
+      {showCompleteModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <GraduationCap size={20} className="text-status-success" />
+              {getText('confirmComplete')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName ?? `User ${selectedEnrollment.userId}`}
+            </p>
+            <div className="mb-4">
+              <Label className="text-text-secondary mb-2">{getText('scoreLabel')}</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={completeScore}
+                onChange={(e) => setCompleteScore(e.target.value)}
+                placeholder={getText('scorePlaceholder')}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowCompleteModal(false);
+                  setSelectedEnrollment(null);
+                  setCompleteScore('');
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleComplete}
+                disabled={completeEnrollment.isPending}
+              >
+                {completeEnrollment.isPending ? getText('processing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drop Enrollment Modal */}
+      {showDropModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <AlertCircle size={20} className="text-status-error" />
+              {getText('confirmDrop')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName ?? `User ${selectedEnrollment.userId}`}
+            </p>
+            <div className="mb-4">
+              <Label className="text-text-secondary mb-2">{getText('reason')} *</Label>
+              <Textarea
+                value={dropReason}
+                onChange={(e) => setDropReason(e.target.value)}
+                placeholder={getText('reasonPlaceholder')}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowDropModal(false);
+                  setSelectedEnrollment(null);
+                  setDropReason('');
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleDrop}
+                disabled={updateEnrollmentStatus.isPending || !dropReason.trim()}
+                className="bg-status-error hover:bg-status-error/90 text-white"
+              >
+                {updateEnrollmentStatus.isPending ? getText('processing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reinstate Enrollment Modal */}
+      {showReinstateModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <RotateCcw size={20} className="text-text-secondary" />
+              {getText('reinstateEnrollment')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName ?? `User ${selectedEnrollment.userId}`}
+            </p>
+            <p className="text-sm text-text-primary mb-4">
+              {getText('confirmReinstate')}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowReinstateModal(false);
+                  setSelectedEnrollment(null);
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleReinstate}
+                disabled={updateEnrollmentStatus.isPending}
+              >
+                {updateEnrollmentStatus.isPending ? getText('processing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -122,7 +122,7 @@ export function B2BLandingPage() {
         <HeroSection />
 
         {/* Category Bar */}
-        <div className="w-full px-4 md:px-8 lg:px-16 py-12">
+        <div className="w-full px-6 md:px-12 lg:px-16 py-12">
           <div className="flex flex-wrap items-center gap-3">
             {categoryOptions.map((cat) => (
               <button
@@ -143,7 +143,7 @@ export function B2BLandingPage() {
         </div>
 
         {/* 당신을 위한 필수 강의 */}
-        <section className="w-full px-4 md:px-8 lg:px-16 pb-20">
+        <section className="w-full px-6 md:px-12 lg:px-16 pb-20">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">
@@ -176,7 +176,7 @@ export function B2BLandingPage() {
 
         {/* 당신을 위한 추천 강의 */}
         <section className="landing-section-alt py-20">
-          <div className="w-full px-4 md:px-8 lg:px-16">
+          <div className="w-full px-6 md:px-12 lg:px-16">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold landing-text-primary">당신을 위한 추천 강의</h2>
@@ -188,12 +188,16 @@ export function B2BLandingPage() {
               <div className="flex justify-center items-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-[#6778ff]" />
               </div>
-            ) : (
+            ) : recommendedCourses.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {recommendedCourses.map((course) => (
                   <B2BCourseCard key={`rec-${course.id}`} {...course} />
                 ))}
               </div>
+            ) : (
+              <p className="text-center landing-text-muted py-10">
+                해당 카테고리에 강의가 없습니다.
+              </p>
             )}
           </div>
         </section>

@@ -93,18 +93,14 @@ export function B2BSettingsPage() {
   ];
 
   return (
-    <div className={`min-h-full p-6 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
-      <div className="max-w-2xl mx-auto">
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1
-            className={`text-2xl font-bold mb-2 ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}
-          >
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {language === 'ko' ? '설정' : 'Settings'}
           </h1>
-          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
             {language === 'ko'
               ? '계정 및 앱 환경을 관리하세요.'
               : 'Manage your account and app preferences.'}

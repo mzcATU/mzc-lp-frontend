@@ -22,10 +22,12 @@ import { useThemeStore } from '@/store/common/themeStore';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { Button, Card, CardContent, Badge } from '@/components/common';
 import type { EnrollmentStatus } from '@/services/tu/enrollmentService';
+import { getLoginPath } from '@/utils/tenantUtils';
 
 const statusLabels: Record<EnrollmentStatus, string> = {
   PENDING: '승인 대기',
   APPROVED: '수강 중',
+  ENROLLED: '수강 중',
   REJECTED: '반려됨',
   CANCELLED: '취소됨',
   COMPLETED: '완료',
@@ -34,6 +36,7 @@ const statusLabels: Record<EnrollmentStatus, string> = {
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',
+  ENROLLED: 'blue',
   REJECTED: 'red',
   CANCELLED: 'gray',
   COMPLETED: 'green',
@@ -115,7 +118,7 @@ export function MyPage() {
             <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               마이페이지를 이용하시려면 로그인해주세요
             </p>
-            <Button onClick={() => navigate('/login')}>로그인하기</Button>
+            <Button onClick={() => navigate(getLoginPath())}>로그인하기</Button>
           </div>
         </div>
         <LandingFooter />

@@ -3,7 +3,7 @@
  * 내 댓글 목록 페이지 (내가 댓글 단 게시글 목록)
  */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   MessageSquare,
   Heart,
@@ -13,12 +13,9 @@ import {
   ChevronRight,
   Loader2,
   User,
-  MessageCircle,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
-import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { useCommentedPosts } from '@/hooks/tu/useCommunityQueries';
 import { Badge, Button } from '@/components/common';
 import { POST_TYPE_LABELS } from '@/types/tu/community.types';
@@ -26,9 +23,7 @@ import { POST_TYPE_LABELS } from '@/types/tu/community.types';
 const PAGE_SIZE = 10;
 
 export function MyCommentsPage() {
-  const navigate = useNavigate();
   const { theme } = useThemeStore();
-  const { prefixPath } = useSubdomainPath();
   const isDark = theme === 'dark';
   const [page, setPage] = useState(0);
 
@@ -36,13 +31,6 @@ export function MyCommentsPage() {
 
   const posts = data?.posts || [];
   const totalPages = data?.totalPages || 0;
-  const totalCount = data?.totalCount || 0;
-
-  // 통계 계산
-  const totalInteractions = posts.reduce(
-    (sum, post) => sum + (post.likeCount || 0) + (post.commentCount || 0),
-    0
-  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -71,112 +59,17 @@ export function MyCommentsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8">
-      {/* 헤더 카드 */}
-      <div
-        className={`relative overflow-hidden rounded-2xl p-6 ${
-          isDark
-            ? 'bg-gradient-to-br from-emerald-500/20 via-teal-600/10 to-transparent border border-white/10'
-            : 'bg-gradient-to-br from-emerald-50 via-teal-50 to-white border border-gray-100'
-        }`}
-      >
-        <div className="relative z-10">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                내 댓글
-              </h1>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                내가 댓글을 작성한 게시글을 확인하세요
-              </p>
-            </div>
-            <Button
-              onClick={() => navigate(prefixPath('/tu/b2c/community'))}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              커뮤니티 가기
-            </Button>
-          </div>
-
-          {/* 통계 카드들 */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-            <div
-              className={`p-4 rounded-xl ${
-                isDark ? 'bg-white/5 backdrop-blur-sm' : 'bg-white/80 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-100'}`}>
-                  <MessageSquare
-                    className={`w-5 h-5 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}
-                  />
-                </div>
-                <div>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {totalCount}
-                  </p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    참여한 게시글
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`p-4 rounded-xl ${
-                isDark ? 'bg-white/5 backdrop-blur-sm' : 'bg-white/80 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-teal-500/20' : 'bg-teal-100'}`}>
-                  <Sparkles className={`w-5 h-5 ${isDark ? 'text-teal-400' : 'text-teal-600'}`} />
-                </div>
-                <div>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {totalInteractions}
-                  </p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    총 상호작용
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`p-4 rounded-xl col-span-2 md:col-span-1 ${
-                isDark ? 'bg-white/5 backdrop-blur-sm' : 'bg-white/80 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isDark ? 'bg-cyan-500/20' : 'bg-cyan-100'}`}>
-                  <User className={`w-5 h-5 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
-                </div>
-                <div>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {posts.length > 0 ? new Set(posts.map((p) => p.author?.id)).size : 0}
-                  </p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    소통한 작성자
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className={`min-h-full p-6 sm:p-8 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            내 댓글
+          </h1>
+          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+            내가 댓글을 작성한 게시글을 확인하세요
+          </p>
         </div>
-
-        {/* 배경 장식 */}
-        <div
-          className={`absolute -right-10 -top-10 w-40 h-40 rounded-full blur-3xl ${
-            isDark ? 'bg-emerald-500/20' : 'bg-emerald-200/50'
-          }`}
-        />
-        <div
-          className={`absolute -left-10 -bottom-10 w-32 h-32 rounded-full blur-3xl ${
-            isDark ? 'bg-teal-600/20' : 'bg-teal-200/50'
-          }`}
-        />
-      </div>
 
       {/* 게시글 목록 */}
       {isLoading ? (
@@ -186,31 +79,14 @@ export function MyCommentsPage() {
           />
         </div>
       ) : posts.length === 0 ? (
-        <div
-          className={`text-center py-16 rounded-2xl ${
-            isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-100'
-          }`}
-        >
-          <div
-            className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center ${
-              isDark ? 'bg-white/10' : 'bg-gray-100'
-            }`}
-          >
-            <MessageSquare className={`w-10 h-10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-          </div>
-          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        <div className="text-center py-20">
+          <MessageSquare className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+          <h3 className={`text-lg font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             아직 댓글을 작성한 게시글이 없어요
           </h3>
-          <p className={`text-sm mb-6 max-w-sm mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             커뮤니티에서 다양한 글에 의견을 남겨보세요
           </p>
-          <Button
-            onClick={() => navigate(prefixPath('/tu/b2c/community'))}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            커뮤니티 둘러보기
-          </Button>
         </div>
       ) : (
         <div
@@ -402,6 +278,7 @@ export function MyCommentsPage() {
           </Button>
         </div>
       )}
+      </div>
     </div>
   );
 }

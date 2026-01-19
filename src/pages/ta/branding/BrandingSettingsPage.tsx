@@ -358,7 +358,7 @@ const defaultBrandingSettings: BrandingSettings = {
   },
   company: { name: 'MZC Learn Platform' },
   logo: { lightPreview: null, darkPreview: null, faviconPreview: null },
-  colors: { primary: '#4C2D9A', secondary: '#6366F1' },
+  colors: { primary: '#4C2D9A', secondary: '#3D2478' },
   header: {
     enabled: true,
     showLogo: true,
@@ -2326,7 +2326,7 @@ const getExpandableItemIds = () => {
                       </div>
 
                       {/* 메뉴 아이템 */}
-                      {settings.sidebarTU.items.filter(item => item.visible).filter(item => !isCommunityRelated(item.label) || featureFormData.communityEnabled).slice(0, 5).map((item, idx) => {
+                      {settings.sidebarTU.items.filter(item => item.visible).filter(item => !isCommunityRelated(item.label) || featureFormData.communityEnabled).map((item, idx) => {
                         const isExpanded = expandedMenuItems.has(item.id);
                         const hasChildren = item.children && item.children.length > 0;
                         const IconComponent = item.icon ? iconMap[item.icon] : null;
@@ -2358,7 +2358,7 @@ const getExpandableItemIds = () => {
                               }`}
                             >
                               {IconComponent && <IconComponent className="w-4 h-4 flex-shrink-0" />}
-                              <span className="truncate">{item.label}</span>
+                              <span className={`truncate ${!item.label ? 'italic opacity-50' : ''}`}>{item.label || '(새 항목)'}</span>
                               {hasChildren && (
                                 <ChevronDown
                                   className={`ml-auto w-3 h-3 flex-shrink-0 transition-transform ${
@@ -2369,7 +2369,7 @@ const getExpandableItemIds = () => {
                             </div>
                             {hasChildren && isExpanded && (
                               <div className="ml-4 mt-1 space-y-1 relative z-20">
-                                {item.children!.filter(child => child.visible).slice(0, 3).map((child) => {
+                                {item.children!.filter(child => child.visible).map((child) => {
                                   const ChildIconComponent = child.icon ? iconMap[child.icon] : null;
                                   return (
                                     <div
@@ -2381,7 +2381,7 @@ const getExpandableItemIds = () => {
                                       }`}
                                     >
                                       {ChildIconComponent && <ChildIconComponent className="w-3 h-3 flex-shrink-0" />}
-                                      <span className="truncate">{child.label}</span>
+                                      <span className={`truncate ${!child.label ? 'italic opacity-50' : ''}`}>{child.label || '(새 항목)'}</span>
                                     </div>
                                   );
                                 })}
@@ -2444,7 +2444,7 @@ const getExpandableItemIds = () => {
                         <span className="opacity-0 group-hover:opacity-100 text-xs font-medium text-brand-primary bg-white px-2 py-1 rounded shadow">사이드바 (운영자) 설정</span>
                       </div>
                       <div className={`text-xs font-semibold mb-3 px-2 ${previewTheme === 'dark' ? 'text-[#9e9e9e]' : 'text-gray-400'}`}>관리 메뉴</div>
-                      {settings.sidebarCO.items.filter(item => item.visible).filter(item => !isCommunityRelated(item.label) || featureFormData.communityEnabled).slice(0, 6).map((item, idx) => {
+                      {settings.sidebarCO.items.filter(item => item.visible).filter(item => !isCommunityRelated(item.label) || featureFormData.communityEnabled).map((item, idx) => {
                         const isExpanded = expandedMenuItems.has(item.id);
                         const hasChildren = item.children && item.children.length > 0;
                         const IconComponent = item.icon ? iconMap[item.icon] : null;
@@ -2476,7 +2476,7 @@ const getExpandableItemIds = () => {
                               } : {}}
                             >
                               {IconComponent && <IconComponent className="w-4 h-4 flex-shrink-0" />}
-                              <span className="font-medium flex-1">{item.label}</span>
+                              <span className={`font-medium flex-1 ${!item.label ? 'italic opacity-50' : ''}`}>{item.label || '(새 항목)'}</span>
                               {hasChildren && (
                                 <ChevronDown
                                   className={`h-4 w-4 flex-shrink-0 transition-transform ${
@@ -2487,7 +2487,7 @@ const getExpandableItemIds = () => {
                             </div>
                             {hasChildren && isExpanded && (
                               <div className="ml-4 mt-1 space-y-1 relative z-20">
-                                {item.children!.filter(c => c.visible).slice(0, 3).map((child) => {
+                                {item.children!.filter(c => c.visible).map((child) => {
                                   const ChildIconComponent = child.icon ? iconMap[child.icon] : null;
                                   return (
                                     <div
@@ -2497,7 +2497,7 @@ const getExpandableItemIds = () => {
                                       }`}
                                     >
                                       {ChildIconComponent && <ChildIconComponent className="w-3 h-3 flex-shrink-0" />}
-                                      <span className="truncate">{child.label}</span>
+                                      <span className={`truncate ${!child.label ? 'italic opacity-50' : ''}`}>{child.label || '(새 항목)'}</span>
                                     </div>
                                   );
                                 })}

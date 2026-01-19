@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   BookOpen,
-  Calendar,
   Tag,
   Globe,
   FileText,
@@ -16,9 +15,12 @@ import {
   File,
   ChevronRight,
   ChevronDown,
+  Eye,
+  Award,
+  MessageSquare,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Button, Label, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
+import { Button, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse } from '@/types/common';
 import type { CurriculumItem } from '@/types/tu';
@@ -117,6 +119,7 @@ interface Step3ReviewProps {
   formData: CourseFormData;
   categories: CategoryResponse[];
   onGoToStep: (step: number) => void;
+  onPreview: () => void;
 }
 
 export function Step3Review({
@@ -124,6 +127,7 @@ export function Step3Review({
   formData,
   categories,
   onGoToStep,
+  onPreview,
 }: Readonly<Step3ReviewProps>) {
   const getText = (key: TranslationKey) =>
     language === 'ko' ? translations[key].ko : translations[key].en;
@@ -164,12 +168,28 @@ export function Step3Review({
   if (!formData.categoryId) warnings.push(getText('warningCategory'));
   if (formData.curriculumItems.length === 0) warnings.push(getText('warningLesson'));
 
+  // 카테고리 이름
+  const categoryName = formData.categoryId
+    ? categories.find((cat) => cat.id === formData.categoryId)?.name
+    : null;
+
+  // 난이도 레이블
+  const levelLabel = formData.level
+    ? levelOptions.find((opt) => opt.value === formData.level)?.label
+    : null;
+
   return (
     <div className="flex flex-col gap-6">
       {/* 헤더 */}
-      <div>
-        <h2 className="text-text-primary mb-2">{getText('reviewTitle')}</h2>
-        <p className="text-text-secondary m-0">{getText('reviewDesc')}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-text-primary mb-2">{getText('reviewTitle')}</h2>
+          <p className="text-text-secondary m-0">{getText('reviewDesc')}</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={onPreview} className="shrink-0">
+          <Eye size={14} />
+          {getText('preview')}
+        </Button>
       </div>
 
       {/* 경고 메시지 또는 완료 메시지 */}
@@ -210,114 +230,102 @@ export function Step3Review({
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4">
             {/* 강의명 */}
-            <div className="md:col-span-2">
-              <Label className="text-text-secondary text-sm">{getText('courseName')}</Label>
-              <p className="text-text-primary mt-1 mb-0">
-                {formData.title || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
-              </p>
-            </div>
-
-            {/* 강의 설명 */}
-            <div className="md:col-span-2">
-              <Label className="text-text-secondary text-sm">{getText('courseDescription')}</Label>
-              <p className="text-text-primary mt-1 mb-0 whitespace-pre-wrap">
-                {formData.description || (
-                  <span className="text-text-tertiary italic">{getText('notEntered')}</span>
-                )}
-              </p>
-            </div>
-
-            {/* 카테고리 */}
-            <div>
-              <Label className="text-text-secondary text-sm">{getText('category')}</Label>
-              <p className="text-text-primary mt-1 mb-0">
-                {formData.categoryId ? (
-                  categories.find((cat) => cat.id === formData.categoryId)?.name
-                ) : (
-                  <span className="text-text-tertiary italic">{getText('notEntered')}</span>
-                )}
-              </p>
-            </div>
-
-            {/* 난이도 */}
-            <div>
-              <Label className="text-text-secondary text-sm">{getText('difficulty')}</Label>
-              <p className="text-text-primary mt-1 mb-0">
-                {formData.level ? (
-                  levelOptions.find((opt) => opt.value === formData.level)?.label
-                ) : (
-                  <span className="text-text-tertiary italic">{getText('notEntered')}</span>
-                )}
-              </p>
-            </div>
-
-            {/* 수강 기간 */}
-            <div className="md:col-span-2">
-              <Label className="text-text-secondary text-sm flex items-center gap-1">
-                <Calendar size={14} />
-                {getText('period')}
-              </Label>
-              <p className="text-text-primary mt-1 mb-0">
-                {formData.startDate && formData.endDate ? (
-                  `${formData.startDate} ~ ${formData.endDate}`
-                ) : formData.startDate ? (
-                  `${formData.startDate} ~`
-                ) : formData.endDate ? (
-                  `~ ${formData.endDate}`
-                ) : (
-                  <span className="text-text-tertiary italic">{getText('noPeriod')}</span>
-                )}
-              </p>
-            </div>
-
-            {/* 태그 */}
-            <div className="md:col-span-2">
-              <Label className="text-text-secondary text-sm flex items-center gap-1">
-                <Tag size={14} />
-                {getText('tags')}
-              </Label>
-              <div className="mt-2">
-                {formData.tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {formData.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2.5 py-1 bg-bg-secondary text-text-primary text-sm rounded-md"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-text-tertiary italic">{getText('noTags')}</span>
-                )}
+            <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+              <BookOpen size={18} className="mt-0.5 shrink-0" style={{ color: '#5E35B1' }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-text-secondary text-xs mb-1">{getText('courseName')}</p>
+                <p className="text-text-primary font-medium m-0 text-sm">
+                  {formData.title || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                </p>
               </div>
             </div>
 
-            {/* 다국어 설정 */}
-            <div className="md:col-span-2">
-              <Label className="text-text-secondary text-sm flex items-center gap-1">
-                <Globe size={14} />
-                {getText('multiLanguage')}
-              </Label>
-              <p className="text-text-primary mt-1 mb-0">
-                {formData.multiLanguage.enabled ? (
-                  <>
-                    <span className="text-status-success">{getText('enabled')}</span>
-                    {formData.multiLanguage.languages.length > 0 && (
-                      <span className="text-text-secondary ml-2">
-                        ({formData.multiLanguage.languages.length}
-                        {getText('languageCount')}: {formData.multiLanguage.languages.map((l) => l.name).join(', ')})
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-text-tertiary">{getText('disabled')}</span>
-                )}
-              </p>
+            {/* 강의 소개 */}
+            <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+              <MessageSquare size={18} className="mt-0.5 shrink-0" style={{ color: '#7B1FA2' }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-text-secondary text-xs mb-1">강의 소개</p>
+                <p className="text-text-primary text-sm m-0 whitespace-pre-wrap leading-relaxed">
+                  {formData.description || (
+                    <span className="text-text-tertiary italic">{getText('notEntered')}</span>
+                  )}
+                </p>
+              </div>
             </div>
+
+            {/* 3열 그리드: 카테고리, 난이도, 수강 기간 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* 카테고리 */}
+              <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+                <Folder size={18} className="mt-0.5 shrink-0" style={{ color: '#F57C00' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-text-secondary text-xs mb-1">{getText('category')}</p>
+                  <p className="text-text-primary font-medium m-0 text-sm truncate">
+                    {categoryName || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                  </p>
+                </div>
+              </div>
+
+              {/* 난이도 */}
+              <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+                <Award size={18} className="mt-0.5 shrink-0" style={{ color: '#43A047' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-text-secondary text-xs mb-1">{getText('difficulty')}</p>
+                  <p className="text-text-primary font-medium m-0 text-sm truncate">
+                    {levelLabel || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 태그 */}
+            {formData.tags.length > 0 && (
+              <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+                <Tag size={18} className="mt-0.5 shrink-0" style={{ color: '#E91E63' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-text-secondary text-xs mb-1">{getText('tags')}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="px-2.5 py-1 bg-bg-default text-text-primary text-sm rounded-md"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 다국어 설정 */}
+            {formData.multiLanguage.enabled && formData.multiLanguage.languages.length > 0 && (
+              <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+                <Globe size={18} className="mt-0.5 shrink-0" style={{ color: '#00897B' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-text-secondary text-xs mb-1">{getText('multiLanguage')}</p>
+                  <p className="text-text-primary text-sm m-0 mb-2">
+                    <span className="text-status-success font-medium">{getText('enabled')}</span>
+                    <span className="text-text-secondary ml-2">
+                      ({formData.multiLanguage.languages.length}{getText('languageCount')})
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.multiLanguage.languages.map((lang, index) => (
+                      <span
+                        key={index}
+                        className="px-2.5 py-1 bg-bg-default text-text-primary text-sm rounded-md"
+                      >
+                        {lang.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -331,7 +339,7 @@ export function Step3Review({
               <h3 className="text-text-primary m-0 text-base font-medium">{getText('curriculum')}</h3>
               {formData.curriculumItems.length > 0 && (
                 <span className="text-text-secondary text-sm">
-                  ({language === 'ko' ? '폴더' : 'Folders'}: {itemCounts.folders}, {getText('totalContents')}: {itemCounts.contents})
+                  ({language === 'ko' ? '차시' : 'Lessons'}: {itemCounts.folders}, {getText('totalContents')}: {itemCounts.contents})
                 </span>
               )}
             </div>

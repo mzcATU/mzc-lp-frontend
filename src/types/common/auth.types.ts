@@ -31,6 +31,10 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface SwitchRoleRequest {
+  targetRole: TenantRole;
+}
+
 export interface UpdateProfileRequest {
   name?: string;
   phone?: string;
@@ -62,6 +66,7 @@ export interface UserDetailResponse {
   name: string;
   phone?: string;
   role: TenantRole;
+  roles?: TenantRole[];  // 다중 역할 (1:N) - TA에서 부여된 시스템 역할
   status: UserStatus;
   profileImageUrl?: string;
   department?: string;    // 부서 (개발팀, 회계팀 등)
@@ -82,6 +87,8 @@ export interface AuthUser {
   email: string;
   name: string;
   role: TenantRole;
+  roles?: TenantRole[];  // 1:N 역할 지원
+  currentRole?: TenantRole;  // 현재 선택된 역할
   tenantId?: number;
   tenantSubdomain?: string;
 }

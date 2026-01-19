@@ -5,12 +5,11 @@ import type {
   EnrollmentWithCurriculumResponse,
   EnrollmentPlayerData,
 } from '@/types/tu';
-import type { ProgramDetailResponse } from '@/types/common';
 
 /**
  * 수강 신청 상태
  */
-export type EnrollmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
+export type EnrollmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED' | 'ENROLLED';
 
 /**
  * 백엔드 EnrollmentResponse 타입 (실제 API 응답)
@@ -25,6 +24,7 @@ interface BackendEnrollmentResponse {
   progressPercent: number | null;
   score: number | null;
   completedAt: string | null;
+  actualEndDate: string | null;
 }
 
 /**
@@ -37,6 +37,8 @@ interface BackendCourseTimeResponse {
   programName: string | null;
   classStartDate: string;
   classEndDate: string;
+  snapshotId: number | null;
+  courseTitle: string | null;
 }
 
 /**
@@ -99,6 +101,7 @@ const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
 const mapStatusToBackend = (status: EnrollmentStatus): string | undefined => {
   const statusMap: Record<EnrollmentStatus, string> = {
     APPROVED: 'ENROLLED',
+    ENROLLED: 'ENROLLED',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'DROPPED',
     PENDING: 'ENROLLED', // PENDING은 백엔드에 없으므로 ENROLLED로
@@ -125,7 +128,7 @@ const transformEnrollment = (
   completedAt: backend.completedAt ?? undefined,
   progress: backend.progressPercent ?? 0,
   startDate: courseTimeInfo?.classStartDate ?? '',
-  endDate: courseTimeInfo?.classEndDate ?? '',
+  endDate: backend.actualEndDate ?? courseTimeInfo?.classEndDate ?? '',
 });
 
 /**
@@ -282,39 +285,20 @@ export const enrollmentService = {
 
   /**
    * 학습 플레이어용 Enrollment 데이터 조회
-   * - Enrollment + CourseTime + Program 정보를 조합하여 snapshotId까지 획득
+   * - Enrollment + CourseTime 정보를 조합하여 snapshotId까지 획득
    */
   getEnrollmentForPlayer: async (enrollmentId: number): Promise<EnrollmentPlayerData> => {
     // 1. 수강 정보 조회
-    // axiosInstance가 ApiResponse wrapper를 자동으로 언래핑하므로 .data만 사용
     const enrollmentRes = await axiosInstance.get<BackendEnrollmentResponse>(
       API_ENDPOINTS.ENROLLMENTS.BY_ID(enrollmentId)
     );
     const enrollment = enrollmentRes.data;
 
-    // 2. 차수(CourseTime) 정보 조회 - programId 획득
+    // 2. 차수(CourseTime) 정보 조회 - snapshotId 포함
     const courseTimeRes = await axiosInstance.get<BackendCourseTimeResponse>(
       API_ENDPOINTS.TIMES.BY_ID(enrollment.courseTimeId)
     );
     const courseTime = courseTimeRes.data;
-
-    // 3. 프로그램(Program) 정보 조회 - snapshotId 획득
-    let snapshotId = 0;
-    let programTitle = courseTime.programName ?? '';
-
-    if (courseTime.programId) {
-      try {
-        const programRes = await axiosInstance.get<ProgramDetailResponse>(
-          API_ENDPOINTS.PROGRAMS.BY_ID(courseTime.programId)
-        );
-        const program = programRes.data;
-        snapshotId = program.snapshotId ?? 0;
-        programTitle = program.title ?? programTitle;
-      } catch {
-        // 프로그램 조회 실패 시 snapshotId는 0으로 유지
-        console.warn('Failed to fetch program for player:', courseTime.programId);
-      }
-    }
 
     return {
       enrollmentId: enrollment.id,
@@ -322,8 +306,8 @@ export const enrollmentService = {
       courseTimeId: enrollment.courseTimeId,
       courseTimeName: courseTime.title,
       programId: courseTime.programId ?? 0,
-      programTitle,
-      snapshotId,
+      programTitle: courseTime.courseTitle ?? courseTime.programName ?? '',
+      snapshotId: courseTime.snapshotId ?? 0,
       status: enrollment.status,
       progressPercent: enrollment.progressPercent ?? 0,
       enrolledAt: enrollment.enrolledAt,

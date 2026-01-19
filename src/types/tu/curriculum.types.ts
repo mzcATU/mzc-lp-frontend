@@ -34,6 +34,8 @@ interface CurriculumItemBase {
 /** 폴더 타입 커리큘럼 항목 */
 export interface CurriculumFolderItem extends CurriculumItemBase {
   type: 'folder';
+  /** 백엔드 CourseItem ID (저장된 항목만 존재) */
+  itemId?: number;
   /** 하위 항목 목록 */
   children: CurriculumItem[];
 }
@@ -41,8 +43,12 @@ export interface CurriculumFolderItem extends CurriculumItemBase {
 /** 콘텐츠(LO) 타입 커리큘럼 항목 */
 export interface CurriculumContentItem extends CurriculumItemBase {
   type: 'content';
-  /** 콘텐츠 ID (백엔드에서 LO 자동 생성) */
-  contentId: number;
+  /** 백엔드 CourseItem ID (저장된 항목만 존재, 있으면 기존 항목) */
+  itemId?: number;
+  /** 콘텐츠 ID (신규 항목 생성 시 사용, 백엔드에서 LO 자동 생성) */
+  contentId?: number;
+  /** Learning Object ID (기존 항목, 읽기 전용) */
+  learningObjectId?: number;
   /** 원본 파일명 */
   originalFileName: string;
   /** 콘텐츠 타입 */
@@ -96,7 +102,7 @@ export function createFolderItem(
   };
 }
 
-/** 새 콘텐츠 항목 생성 */
+/** 새 콘텐츠 항목 생성 (신규 추가용) */
 export function createContentItem(
   contentId: number,
   originalFileName: string,
@@ -155,7 +161,10 @@ export function findParentInTree(
 // Conversion Functions (백엔드 ↔ 프론트엔드)
 // ============================================
 
-/** 백엔드 계층 응답을 프론트엔드 CurriculumItem으로 변환 */
+/**
+ * 백엔드 계층 응답을 프론트엔드 CurriculumItem으로 변환
+ * 저장된 항목은 itemId와 learningObjectId를 포함 (기존 항목 표시)
+ */
 export function convertHierarchyToCurriculumItems(
   items: CourseItemHierarchyResponse[],
   depth: number = 0
@@ -168,6 +177,7 @@ export function convertHierarchyToCurriculumItems(
         type: 'folder',
         depth,
         order: index,
+        itemId: item.itemId,
         isExpanded: true,
         children: convertHierarchyToCurriculumItems(item.children, depth + 1),
       };
@@ -178,7 +188,8 @@ export function convertHierarchyToCurriculumItems(
         type: 'content',
         depth,
         order: index,
-        contentId: item.learningObjectId!,
+        itemId: item.itemId,
+        learningObjectId: item.learningObjectId ?? undefined,
         originalFileName: item.itemName,
         contentType: '',
         displayName: item.displayName ?? undefined,

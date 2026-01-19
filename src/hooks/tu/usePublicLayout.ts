@@ -11,7 +11,7 @@ const DEFAULT_BANNER_ITEMS = [
     id: 'default-1',
     type: 'code' as const,
     imageUrl: null,
-    code: `<div class="flex flex-col items-start justify-center h-full px-8 md:px-16">
+    code: `<div class="flex flex-col items-start justify-center h-full pl-24 pr-6 md:pl-36 md:pr-12 lg:pl-44 lg:pr-16">
       <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20 mb-6">MZC LEARN</span>
       <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">Empower Your</h2>
       <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight bg-gradient-to-r from-[#6778ff] to-[#a855f7] bg-clip-text text-transparent">Future</h2>
@@ -25,7 +25,7 @@ const DEFAULT_BANNER_ITEMS = [
     id: 'default-2',
     type: 'code' as const,
     imageUrl: null,
-    code: `<div class="flex flex-col items-start justify-center h-full px-8 md:px-16">
+    code: `<div class="flex flex-col items-start justify-center h-full pl-24 pr-6 md:pl-36 md:pr-12 lg:pl-44 lg:pr-16">
       <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20 mb-6">ROADMAP</span>
       <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">Build Your</h2>
       <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight bg-gradient-to-r from-[#a855f7] to-[#ec4899] bg-clip-text text-transparent">Career</h2>
@@ -39,7 +39,7 @@ const DEFAULT_BANNER_ITEMS = [
     id: 'default-3',
     type: 'code' as const,
     imageUrl: null,
-    code: `<div class="flex flex-col items-start justify-center h-full px-8 md:px-16">
+    code: `<div class="flex flex-col items-start justify-center h-full pl-24 pr-6 md:pl-36 md:pr-12 lg:pl-44 lg:pr-16">
       <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20 mb-6">CLOUD</span>
       <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight">Master</h2>
       <h2 class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight bg-gradient-to-r from-[#6778ff] to-[#6bc2f0] bg-clip-text text-transparent">Cloud</h2>

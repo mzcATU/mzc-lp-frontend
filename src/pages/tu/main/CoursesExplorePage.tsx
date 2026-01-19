@@ -8,6 +8,7 @@ import { useCourseTimeCatalog, useCheckWishlistStatus, useToggleWishlist } from 
 import { useAuthStore } from '@/store/common/authStore';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
+import { getLoginPath } from '@/utils/tenantUtils';
 import type {
   CourseTimeCatalogResponse,
   CourseTimeCatalogParams,
@@ -93,7 +94,7 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
 
     if (!isAuthenticated) {
       toast.error('로그인이 필요합니다.');
-      navigate('/login', { state: { from: prefixPath(`/tu/b2c/times/${courseTime.id}`) } });
+      navigate(getLoginPath(), { state: { from: prefixPath(`/tu/b2c/times/${courseTime.id}`) } });
       return;
     }
 

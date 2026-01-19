@@ -3,6 +3,7 @@
  */
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
+import { designTokens } from '@/styles/admin-design-tokens';
 import type {
   HeaderSettings,
   SidebarSettings,
@@ -124,7 +125,12 @@ export const brandingService = {
     const { data } = await axiosInstance.get<TenantSettingsResponse>(
       API_ENDPOINTS.TENANT_SETTINGS.BASE
     );
-    return data;
+    // 색상이 null이거나 빈 문자열인 경우 기본 디자인 토큰 적용
+    return {
+      ...data,
+      primaryColor: data.primaryColor || designTokens.button.brand_default,
+      secondaryColor: data.secondaryColor || designTokens.button.brand_hover,
+    };
   },
 
   /** 디자인 설정 업데이트 */

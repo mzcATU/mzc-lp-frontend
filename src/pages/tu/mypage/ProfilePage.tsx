@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield, Info, Building2, Briefcase } from 'lucide-react';
+import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
@@ -33,6 +33,7 @@ import {
   useWithdraw,
 } from '@/hooks/common';
 import { userService } from '@/services/common/userService';
+import type { TenantRole } from '@/types/common/auth.types';
 
 export function ProfilePage() {
   const { theme } = useThemeStore();
@@ -53,7 +54,7 @@ export function ProfilePage() {
   const withdrawMutation = useWithdraw();
 
   // Local State
-  const [profileData, setProfileData] = useState({ name: '', department: '', position: '' });
+  const [profileData, setProfileData] = useState({ name: '' });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -72,8 +73,6 @@ export function ProfilePage() {
     if (profile) {
       setProfileData({
         name: profile.name,
-        department: profile.department || '',
-        position: profile.position || '',
       });
       if (profile.profileImageUrl) {
         const imageUrl = profile.profileImageUrl.startsWith('http')
@@ -84,30 +83,25 @@ export function ProfilePage() {
     }
   }, [profile, apiBaseUrl]);
 
-  // Fetch course roles on mount
+  // 시스템 역할(TenantRole) 기반으로 강의 개설 권한 상태 설정
   useEffect(() => {
-    const fetchCourseRoles = async () => {
-      try {
-        const roles = await userService.getMyCourseRoles();
-        console.log('CourseRoles API response:', roles);
+    if (profile) {
+      // profile.roles (다중 역할) 또는 profile.role (단일 역할) 사용
+      const userRoles: TenantRole[] = profile.roles || [profile.role];
+      console.log('User system roles:', userRoles);
 
-        if (Array.isArray(roles) && roles.length > 0) {
-          // OWNER > DESIGNER 우선순위로 체크
-          const hasOwner = roles.some((r: { role: string }) => r.role === 'OWNER');
-          const hasDesigner = roles.some((r: { role: string }) => r.role === 'DESIGNER');
+      // DESIGNER 역할이 있으면 강의 개설 권한 있음
+      // TENANT_ADMIN, OPERATOR도 강의 개설 권한 있는 것으로 처리
+      const designerRoles: TenantRole[] = ['DESIGNER', 'TENANT_ADMIN', 'OPERATOR'];
+      const hasDesignerRole = userRoles.some((r) => designerRoles.includes(r));
 
-          if (hasOwner) {
-            setDesignAuthStatus('OWNER');
-          } else if (hasDesigner) {
-            setDesignAuthStatus('DESIGNER');
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch course roles:', error);
+      if (hasDesignerRole) {
+        setDesignAuthStatus('DESIGNER');
+      } else {
+        setDesignAuthStatus('USER');
       }
-    };
-    fetchCourseRoles();
-  }, []);
+    }
+  }, [profile]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -147,8 +141,6 @@ export function ProfilePage() {
     try {
       await updateProfileMutation.mutateAsync({
         name: profileData.name,
-        department: profileData.department || undefined,
-        position: profileData.position || undefined,
       });
       toast.success('프로필 정보가 저장되었습니다.');
     } catch {
@@ -338,34 +330,6 @@ export function ProfilePage() {
                 onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
                 className={inputClass}
               />
-            </div>
-
-            {/* Department & Position */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-              <div>
-                <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <Building2 className="w-4 h-4" />
-                  부서
-                </Label>
-                <Input
-                  value={profileData.department}
-                  onChange={(e) => setProfileData((prev) => ({ ...prev, department: e.target.value }))}
-                  placeholder="예: 개발팀, 회계팀"
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <Briefcase className="w-4 h-4" />
-                  직급
-                </Label>
-                <Input
-                  value={profileData.position}
-                  onChange={(e) => setProfileData((prev) => ({ ...prev, position: e.target.value }))}
-                  placeholder="예: 대리, 과장, 팀장"
-                  className={inputClass}
-                />
-              </div>
             </div>
 
             {/* Email (Read-only) */}

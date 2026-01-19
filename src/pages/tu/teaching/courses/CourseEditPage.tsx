@@ -6,7 +6,7 @@
  * CourseCreatePage와 동일한 Step 구조 사용
  */
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Save, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/common';
@@ -27,7 +27,8 @@ interface CourseEditPageProps {
 }
 
 /**
- * 커리큘럼 트리를 재귀적으로 순회하며 API 호출
+ * 커리큘럼 트리를 재귀적으로 순회하며 API 호출 (신규 항목만)
+ * itemId가 있는 항목은 이미 저장된 항목이므로 건너뜀
  */
 async function createCurriculumItemsRecursively(
   courseId: number,
@@ -36,18 +37,41 @@ async function createCurriculumItemsRecursively(
 ): Promise<void> {
   for (const item of items) {
     if (isCurriculumFolder(item)) {
-      const folderResponse = await courseService.createFolder(courseId, {
-        folderName: item.name,
-        parentId: parentId ?? undefined,
-      });
+      let currentFolderId: number;
+
+      // itemId가 있으면 이미 저장된 폴더
+      if (item.itemId) {
+        currentFolderId = item.itemId;
+      } else {
+        // 새 폴더 생성
+        const folderResponse = await courseService.createFolder(courseId, {
+          folderName: item.name,
+          parentId: parentId ?? undefined,
+        });
+        currentFolderId = folderResponse.itemId;
+      }
+
+      // 하위 항목 재귀 생성
       if (item.children.length > 0) {
         await createCurriculumItemsRecursively(
           courseId,
           item.children,
-          folderResponse.itemId
+          currentFolderId
         );
       }
     } else if (isCurriculumContent(item)) {
+      // itemId가 있으면 이미 저장된 콘텐츠, 건너뜀
+      if (item.itemId) {
+        continue;
+      }
+
+      // contentId가 없으면 에러 (신규 항목인데 contentId가 없음)
+      if (!item.contentId) {
+        console.error('신규 콘텐츠 항목에 contentId가 없습니다:', item);
+        continue;
+      }
+
+      // 콘텐츠(차시) 생성 - contentId로 백엔드에서 LO 자동 생성
       await courseService.createItem(courseId, {
         itemName: item.name,
         parentId: parentId ?? undefined,
@@ -73,6 +97,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const { courseId } = useParams<{ courseId: string }>();
+  const [searchParams] = useSearchParams();
   const courseIdNum = Number(courseId);
 
   const { data: courseData, isLoading, isError } = useCourse(courseIdNum);
@@ -85,12 +110,11 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
-    startDate: '',
-    endDate: '',
     categoryId: null,
     tags: [],
     level: '',
     type: '',
+    estimatedHours: null,
     lessons: [], // deprecated
     curriculumItems: [],
     isDraft: false,
@@ -125,12 +149,11 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         title: courseData.title,
         description: courseData.description || '',
         thumbnailUrl: courseData.thumbnailUrl || '',
-        startDate: courseData.startDate || '',
-        endDate: courseData.endDate || '',
         categoryId: courseData.categoryId,
         tags: courseData.tags || [],
         level: courseData.level || '',
         type: courseData.type || '',
+        estimatedHours: courseData.estimatedHours,
         lessons: [], // deprecated
         curriculumItems: convertHierarchyToCurriculumItems(hierarchyData),
         isDraft: false,
@@ -140,14 +163,36 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         },
       });
       setIsInitialized(true);
+
+      // URL에서 step 파라미터 확인하여 초기 step 설정
+      const stepParam = searchParams.get('step');
+      if (stepParam) {
+        const step = parseInt(stepParam, 10);
+        if (step >= 1 && step <= 3) {
+          setCurrentStep(step);
+        }
+      }
     }
-  }, [courseData, hierarchyData, isInitialized]);
+  }, [courseData, hierarchyData, isInitialized, searchParams]);
 
   // 네비게이션 핸들러
   const handleNext = () => currentStep < totalSteps && setCurrentStep(currentStep + 1);
   const handlePrevious = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   const handleGoToStep = (step: number) => setCurrentStep(step);
   const handleClose = () => navigate(prefixPath('/tu/teaching/courses'));
+
+  /**
+   * 미리보기 - 새 탭에서 수강생 뷰로 강의 정보 표시
+   */
+  const handlePreview = () => {
+    const previewData = {
+      formData,
+      categories,
+      language,
+    };
+    sessionStorage.setItem('course-preview-data', JSON.stringify(previewData));
+    window.open(prefixPath('/tu/teaching/courses/preview'), '_blank');
+  };
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -166,8 +211,6 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
@@ -214,8 +257,6 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         level: formData.level || undefined,
         type: formData.type || undefined,
         categoryId: formData.categoryId ?? undefined,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
         tags: formData.tags.length > 0 ? formData.tags : undefined,
       };
 
@@ -342,6 +383,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
               formData={formData}
               categories={categories}
               onGoToStep={handleGoToStep}
+              onPreview={handlePreview}
             />
           )}
         </div>

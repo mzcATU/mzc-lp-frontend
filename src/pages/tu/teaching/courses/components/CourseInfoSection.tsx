@@ -1,20 +1,12 @@
-import { FileText, Calendar, Clock, Tag, ImageIcon } from 'lucide-react';
+import { FileText, Clock, Tag, ImageIcon, Pencil } from 'lucide-react';
+import { Button } from '@/components/common';
 import type { CourseDetailResponse } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
 
 interface CourseInfoSectionProps {
   course: CourseDetailResponse;
   categories: CategoryResponse[];
-}
-
-// 날짜 포맷팅
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
+  onEdit?: () => void;
 }
 
 // 난이도 라벨
@@ -31,7 +23,7 @@ const TYPE_LABELS: Record<string, string> = {
   BLENDED: '블렌디드',
 };
 
-export function CourseInfoSection({ course, categories }: Readonly<CourseInfoSectionProps>) {
+export function CourseInfoSection({ course, categories, onEdit }: Readonly<CourseInfoSectionProps>) {
   // categoryId로 카테고리 이름 찾기
   const getCategoryName = (categoryId: number | null): string => {
     if (!categoryId) return '-';
@@ -40,10 +32,18 @@ export function CourseInfoSection({ course, categories }: Readonly<CourseInfoSec
   };
   return (
     <div className="bg-bg-default border border-border rounded-lg p-6">
-      <h2 className="text-text-primary text-lg font-medium flex items-center gap-2 mb-4">
-        <FileText size={20} />
-        기본 정보
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-text-primary text-lg font-medium flex items-center gap-2">
+          <FileText size={20} />
+          기본 정보
+        </h2>
+        {onEdit && (
+          <Button variant="ghost" size="sm" onClick={onEdit} className="border border-border">
+            <Pencil size={14} />
+            수정
+          </Button>
+        )}
+      </div>
 
       <div className="space-y-6">
         {/* 썸네일 */}
@@ -107,24 +107,6 @@ export function CourseInfoSection({ course, categories }: Readonly<CourseInfoSec
             <label className="block text-sm text-text-secondary mb-1">카테고리</label>
             <p className="text-text-primary">
               {getCategoryName(course.categoryId)}
-            </p>
-          </div>
-        </div>
-
-        {/* 기간 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">시작일</label>
-            <p className="text-text-primary flex items-center gap-1">
-              <Calendar size={16} className="text-text-secondary" />
-              {formatDate(course.startDate)}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-1">종료일</label>
-            <p className="text-text-primary flex items-center gap-1">
-              <Calendar size={16} className="text-text-secondary" />
-              {formatDate(course.endDate)}
             </p>
           </div>
         </div>

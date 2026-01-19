@@ -8,3 +8,5 @@ export { CertificationsPage } from './CertificationsPage';
 export { MyPostsPage } from './MyPostsPage';
 export { MyCommentsPage } from './MyCommentsPage';
 export { UserNoticesPage } from './UserNoticesPage';
+export { SettingsPage } from './SettingsPage';
+export { PreferencesPage } from './PreferencesPage';

@@ -163,22 +163,22 @@ export function HeroSection() {
           </div>
         )}
 
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows - 텍스트와 겹치지 않도록 배경 강화 */}
         {totalSlides > 1 && (
           <>
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full glass hover:bg-white/20 transition-all z-20"
+              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 transition-all z-20 shadow-lg border border-white/20"
               aria-label={t.hero.prevSlide}
             >
-              <ChevronLeft className="w-6 h-6 text-white" />
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-lg" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full glass hover:bg-white/20 transition-all z-20"
+              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/60 transition-all z-20 shadow-lg border border-white/20"
               aria-label={t.hero.nextSlide}
             >
-              <ChevronRight className="w-6 h-6 text-white" />
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-lg" />
             </button>
           </>
         )}

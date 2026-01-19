@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useSubdomainPath } from '@/hooks/common';
 import {
@@ -8,143 +8,33 @@ import {
   FileText,
   Heart,
   Share2,
-  ChevronDown,
-  ChevronRight,
   Loader2,
   CheckCircle,
-  Calendar,
-  MapPin,
-  AlertCircle,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { B2BLandingHeader } from './components/B2BLandingHeader';
-import { CourseReviewSection } from '@/components/domain/course-review';
+import { B2BCurriculumSection } from './components/B2BCurriculumSection';
+import { B2BAnnouncementSection } from './components/B2BAnnouncementSection';
+import { B2BInstructorCard } from './components/B2BInstructorCard';
+import { B2BLearningPointsCard } from './components/B2BLearningPointsCard';
 import { useCourseTimeDetail, useEnroll, useMyEnrollments, useCheckWishlistStatus, useToggleWishlist } from '@/hooks/tu';
-import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
 import {
   DELIVERY_TYPE_LABELS,
   PROGRAM_LEVEL_LABELS,
-  ENROLLMENT_METHOD_LABELS,
-  COURSE_TIME_STATUS_LABELS,
 } from '@/types/tu/courseTimeCatalog.types';
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-}
-
-interface CurriculumSectionProps {
-  item: CurriculumItemResponse;
-  isExpanded: boolean;
-  onToggle: () => void;
-  isDark: boolean;
-}
-
-function CurriculumSection({ item, isExpanded, onToggle, isDark }: CurriculumSectionProps) {
-  if (!item.isFolder) {
-    return (
-      <div
-        className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
-          isDark
-            ? 'glass border-white/10 hover:bg-white/5'
-            : 'bg-white border-gray-200 hover:bg-gray-50'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              isDark ? 'bg-white/10' : 'bg-gray-100'
-            }`}
-          >
-            <PlayCircle className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
-          </div>
-          <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-            {item.itemName}
-          </span>
-        </div>
-        {item.duration && (
-          <span
-            className={`text-sm px-2 py-1 rounded-md ${
-              isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {Math.floor(item.duration / 60)}:{String(item.duration % 60).padStart(2, '0')}
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  const childCount = item.children?.length || 0;
-
-  return (
-    <div
-      className={`rounded-xl overflow-hidden border ${
-        isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
-      }`}
-    >
-      <button
-        onClick={onToggle}
-        className={`w-full flex items-center justify-between p-4 transition-colors ${
-          isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <ChevronDown
-            className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''} ${
-              isDark ? 'text-gray-400' : 'text-gray-500'
-            }`}
-          />
-          <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {item.itemName}
-          </span>
-        </div>
-        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-          {childCount}개 항목
-        </span>
-      </button>
-      {isExpanded && item.children && item.children.length > 0 && (
-        <div className={`border-t ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-          {item.children.map((child) => (
-            <div
-              key={child.id}
-              className={`flex items-center justify-between p-4 pl-12 transition-colors ${
-                isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    isDark ? 'bg-white/10' : 'bg-gray-100'
-                  }`}
-                >
-                  {child.isFolder ? (
-                    <FileText className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
-                  ) : (
-                    <PlayCircle className={`w-4 h-4 ${isDark ? 'text-[#6bc2f0]' : 'text-[#6778ff]'}`} />
-                  )}
-                </div>
-                <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{child.itemName}</span>
-              </div>
-              {child.duration && (
-                <span
-                  className={`text-sm px-2 py-1 rounded-md ${
-                    isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {Math.floor(child.duration / 60)}:{String(child.duration % 60).padStart(2, '0')}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+// 학습 포인트 Mock 데이터
+const MOCK_LEARNING_POINTS = [
+  '핵심 개념과 원리 이해',
+  '실무 적용 가능한 스킬 습득',
+  '프로젝트 기반 실습 경험',
+  '체계적인 학습 로드맵 제공',
+];
 
 /**
  * B2B 강의 상세 페이지
@@ -174,19 +64,9 @@ export function B2BCourseDetailPage() {
   );
   const { toggle: toggleWishlist, isLoading: isWishlistToggling } = useToggleWishlist();
 
-  const [expandedSections, setExpandedSections] = useState<number[]>([0]);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
-  const [activeTab, setActiveTab] = useState<'intro' | 'curriculum' | 'review'>('intro');
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
-
-  const toggleSection = (index: number) => {
-    if (expandedSections.includes(index)) {
-      setExpandedSections(expandedSections.filter((i) => i !== index));
-    } else {
-      setExpandedSections([...expandedSections, index]);
-    }
-  };
 
   const handleWishlistToggle = async () => {
     if (!isAuthenticated) {
@@ -314,545 +194,298 @@ export function B2BCourseDetailPage() {
 
   const canEnroll = courseTime.status === 'RECRUITING' || courseTime.status === 'ONGOING';
 
+  const handleCurriculumItemClick = (itemId: number) => {
+    console.log('Curriculum item clicked:', itemId);
+    // TODO: 학습 페이지로 이동
+  };
+
   return (
     <div className={`min-h-screen ${isDark ? 'landing-dark bg-[#1e1e1e]' : 'landing-light bg-gray-50'}`}>
       <B2BLandingHeader />
 
-      {/* Hero Section */}
-      <div
-        className={`py-12 ${
-          isDark
-            ? 'bg-gradient-to-b from-[#1a1a2e] to-[#1e1e1e]'
-            : 'bg-gradient-to-b from-gray-100 to-gray-50'
-        }`}
-      >
-        <div className="w-full px-4 md:px-8 lg:px-16">
-          <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
-            <div className="flex-1">
-              <nav
-                className={`flex items-center gap-2 text-sm mb-4 ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
-                }`}
-              >
-                <Link
-                  to="/tu/b2b/courses"
-                  className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-gray-900'}`}
-                >
-                  강의
-                </Link>
-                <ChevronRight className="w-4 h-4" />
-                <span className={isDark ? 'text-white' : 'text-gray-900'}>{courseTime.title}</span>
-              </nav>
-
-              {/* Tags (가격 관련 태그 제외) */}
-              <div className="flex gap-2 mb-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    courseTime.status === 'RECRUITING'
-                      ? 'bg-green-500/20 text-green-400'
-                      : courseTime.status === 'ONGOING'
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-gray-500/20 text-gray-400'
-                  }`}
-                >
-                  {COURSE_TIME_STATUS_LABELS[courseTime.status]}
-                </span>
-
-                {courseTime.isOnDemand && (
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0] text-white">
-                    상시모집
-                  </span>
-                )}
-
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {DELIVERY_TYPE_LABELS[courseTime.deliveryType]}
-                </span>
-              </div>
-
-              <h1
-                className={`text-3xl md:text-4xl font-bold mb-4 ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}
-              >
-                {courseTime.title}
-              </h1>
-
-              {courseTime.program?.description && (
-                <p className={`mb-6 leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {courseTime.program.description}
-                </p>
-              )}
-
-              <div className="flex flex-wrap items-center gap-4 mb-6">
-                {courseTime.currentEnrollment > 0 && (
-                  <div
-                    className={`flex items-center gap-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
-                  >
-                    <Users className="w-5 h-5" />
-                    <span>{courseTime.currentEnrollment.toLocaleString()}명 수강중</span>
-                  </div>
-                )}
-
-                {courseTime.program?.estimatedHours && (
-                  <div
-                    className={`flex items-center gap-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
-                  >
-                    <Clock className="w-5 h-5" />
-                    <span>총 {courseTime.program.estimatedHours}시간</span>
-                  </div>
-                )}
-
-                {levelLabel && (
-                  <div
-                    className={`flex items-center gap-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
-                  >
-                    <FileText className="w-5 h-5" />
-                    <span>{levelLabel}</span>
-                  </div>
-                )}
-              </div>
-
-              {instructorName && (
-                <div className="flex items-center gap-3 mb-8">
-                  {instructorImage ? (
-                    <img
-                      src={instructorImage}
-                      alt={instructorName}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        isDark ? 'bg-white/10' : 'bg-gray-200'
-                      }`}
-                    >
-                      <Users className="w-6 h-6" />
-                    </div>
-                  )}
-                  <div>
-                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {instructorName}
-                    </p>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      강사
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div
-                className={`rounded-xl overflow-hidden border ${
-                  isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
-                }`}
-              >
+      {/* Main Content - 2 Column Layout */}
+      <div className="w-full px-4 md:px-8 lg:px-16 py-8">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Left Column - Course Info */}
+            <div className="flex-1 min-w-0">
+              {/* Thumbnail Image with Enhanced Style */}
+              <div className="relative rounded-2xl overflow-hidden mb-6 shadow-xl">
                 <div className="relative aspect-video">
                   <img
                     src={thumbnailUrl}
                     alt={courseTime.title}
                     className="w-full h-full object-cover"
                   />
+                  {/* "언제든 수강 가능" Badge */}
+                  {courseTime.isOnDemand && (
+                    <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white text-sm font-bold flex items-center gap-2 shadow-lg">
+                      <Sparkles className="w-4 h-4" />
+                      <span>언제든 수강 가능</span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
 
-            {/* Right - Course Card (가격/장바구니 제외) */}
-            <div className="lg:w-96">
-              <div
-                className={`rounded-2xl overflow-hidden sticky top-24 border ${
-                  isDark ? 'glass border-white/10' : 'bg-white border-gray-200 shadow-lg'
+              {/* Title & Rating */}
+              <h1
+                className={`text-3xl md:text-4xl font-extrabold mb-4 leading-tight ${
+                  isDark ? 'text-white' : 'text-gray-900'
                 }`}
               >
-                <div className="p-6">
-                  {/* B2B: 가격 표시 없음 */}
+                {courseTime.title}
+              </h1>
 
-                  {!courseTime.isOnDemand && (
-                    <div
-                      className={`mb-4 p-3 rounded-lg ${
-                        isDark ? 'bg-white/5' : 'bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                        <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          모집 기간
-                        </span>
-                      </div>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {formatDate(courseTime.enrollStartDate)} ~ {formatDate(courseTime.enrollEndDate)}
-                      </p>
+              {/* Meta Info (Rating, Enrollment Count, etc.) */}
+              <div className="flex flex-wrap items-center gap-4 mb-4">
+                {/* TODO: 평점 API 추가 시 활성화 */}
+                {/* <div className="flex items-center gap-1.5">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-yellow-400 text-lg">⭐</span>
+                    ))}
+                  </div>
+                  <span className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    4.8
+                  </span>
+                  <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    (48개 리뷰)
+                  </span>
+                </div> */}
 
-                      <div className="flex items-center gap-2 mt-3 mb-2">
-                        <Clock className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                        <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          수강 기간
-                        </span>
-                      </div>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate)}
-                      </p>
-                    </div>
-                  )}
-
-                  {courseTime.capacity !== null && (
-                    <div
-                      className={`mb-4 p-3 rounded-lg ${
-                        courseTime.availableSeats <= 5
-                          ? 'bg-orange-500/10'
-                          : isDark
-                            ? 'bg-white/5'
-                            : 'bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          모집 인원
-                        </span>
-                        <span
-                          className={`text-sm font-medium ${
-                            courseTime.availableSeats <= 5
-                              ? 'text-orange-500'
-                              : isDark
-                                ? 'text-white'
-                                : 'text-gray-900'
-                          }`}
-                        >
-                          {courseTime.currentEnrollment} / {courseTime.capacity}명
-                          {courseTime.availableSeats <= 5 && ` (잔여 ${courseTime.availableSeats}석)`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
+                {courseTime.currentEnrollment > 0 && (
                   <div
-                    className={`mb-4 flex items-center gap-2 text-sm ${
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    }`}
+                    className={`flex items-center gap-1.5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
                   >
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{ENROLLMENT_METHOD_LABELS[courseTime.enrollmentMethod]} 방식</span>
+                    <TrendingUp className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {courseTime.currentEnrollment.toLocaleString()}명이 학습 중
+                    </span>
                   </div>
-
-                  {(courseTime.deliveryType === 'OFFLINE' || courseTime.deliveryType === 'BLENDED') &&
-                    courseTime.locationInfo && (
-                      <div
-                        className={`mb-4 flex items-start gap-2 text-sm ${
-                          isDark ? 'text-gray-400' : 'text-gray-600'
-                        }`}
-                      >
-                        <MapPin className="w-4 h-4 mt-0.5" />
-                        <span>{courseTime.locationInfo}</span>
-                      </div>
-                    )}
-
-                  {/* Buttons (장바구니 제외) */}
-                  <div className="space-y-3">
-                    {isAlreadyEnrolled ? (
-                      <>
-                        <button
-                          onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${existingEnrollment?.id}`))}
-                          className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-2"
-                        >
-                          <PlayCircle className="w-5 h-5" />
-                          학습 계속하기
-                        </button>
-                        <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          이미 수강 신청된 강의입니다
-                        </p>
-                      </>
-                    ) : canEnroll ? (
-                      <button
-                        onClick={handleEnroll}
-                        disabled={enrollMutation.isPending}
-                        className="w-full landing-btn-primary py-4 rounded-xl text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        {enrollMutation.isPending ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            신청 중...
-                          </>
-                        ) : (
-                          '수강 신청'
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed"
-                      >
-                        {courseTime.status === 'ONGOING'
-                          ? '진행 중인 강의입니다'
-                          : '모집이 마감되었습니다'}
-                      </button>
-                    )}
-
-                    <div className="flex gap-3">
-                      <button
-                        onClick={handleWishlistToggle}
-                        disabled={isWishlistToggling || isWishlistChecking}
-                        className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
-                          isWishlisted
-                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                            : isDark
-                              ? 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        {isWishlistToggling ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : (
-                          <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
-                        )}
-                        {isWishlisted ? '찜함' : '찜하기'}
-                      </button>
-                      <button
-                        onClick={handleShare}
-                        className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border ${
-                          isDark
-                            ? 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
-                            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                        }`}
-                      >
-                        <Share2 className="w-5 h-5" />
-                        공유
-                      </button>
-                    </div>
-                  </div>
-
-                  {courseTime.minProgressForCompletion && (
-                    <div
-                      className={`mt-6 pt-6 border-t text-sm ${
-                        isDark ? 'border-white/10 text-gray-400' : 'border-gray-200 text-gray-600'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span>수료 조건: 진도율 {courseTime.minProgressForCompletion}% 이상</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Tab Navigation (커뮤니티 탭 제외) */}
-      <div className={`border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-        <div className="w-full px-4 md:px-8 lg:px-16">
-          <div className="flex gap-8 max-w-4xl">
-            <button
-              onClick={() => setActiveTab('intro')}
-              className={`py-4 font-medium transition-colors relative ${
-                activeTab === 'intro'
-                  ? isDark
-                    ? 'text-white'
-                    : 'text-gray-900'
-                  : isDark
-                    ? 'text-gray-400 hover:text-gray-300'
-                    : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              강의 소개
-              {activeTab === 'intro' && (
-                <div
-                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-                    isDark ? 'bg-white' : 'bg-gray-900'
-                  }`}
-                />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('curriculum')}
-              className={`py-4 font-medium transition-colors relative ${
-                activeTab === 'curriculum'
-                  ? isDark
-                    ? 'text-white'
-                    : 'text-gray-900'
-                  : isDark
-                    ? 'text-gray-400 hover:text-gray-300'
-                    : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              커리큘럼
-              {activeTab === 'curriculum' && (
-                <div
-                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-                    isDark ? 'bg-white' : 'bg-gray-900'
-                  }`}
-                />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('review')}
-              className={`py-4 font-medium transition-colors relative ${
-                activeTab === 'review'
-                  ? isDark
-                    ? 'text-white'
-                    : 'text-gray-900'
-                  : isDark
-                    ? 'text-gray-400 hover:text-gray-300'
-                    : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              수강평
-              {activeTab === 'review' && (
-                <div
-                  className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-                    isDark ? 'bg-white' : 'bg-gray-900'
-                  }`}
-                />
-              )}
-            </button>
-            {/* B2B: 커뮤니티 탭 제외 */}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="w-full px-4 md:px-8 lg:px-16 py-12">
-        <div className="max-w-4xl">
-          {activeTab === 'intro' && (
-            <>
+              {/* Description */}
               {courseTime.program?.description && (
-                <section className="mb-12">
-                  <h2
-                    className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
-                  >
-                    강의 소개
-                  </h2>
+                <p
+                  className={`text-base leading-relaxed mb-6 ${
+                    isDark ? 'text-gray-300' : 'text-gray-600'
+                  }`}
+                >
+                  {courseTime.program.description}
+                </p>
+              )}
+
+              {/* Simple Meta Badges */}
+              <div className="flex flex-wrap gap-3 mb-8">
+                {levelLabel && (
                   <div
-                    className={`rounded-xl p-6 border ${
-                      isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
+                    className={`px-4 py-2.5 rounded-xl flex items-center gap-2 ${
+                      isDark ? 'bg-white/5' : 'bg-white border border-gray-200'
                     }`}
                   >
-                    <p className={`leading-relaxed whitespace-pre-wrap ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {courseTime.program.description}
-                    </p>
+                    <FileText className={`w-4 h-4 ${isDark ? 'text-[#6778ff]' : 'text-purple-600'}`} />
+                    <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {levelLabel}
+                    </span>
                   </div>
-                </section>
-              )}
+                )}
 
-              {courseTime.instructors.length > 0 && (
-                <section className="mb-12">
-                  <h2
-                    className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                <div
+                  className={`px-4 py-2.5 rounded-xl flex items-center gap-2 ${
+                    isDark ? 'bg-white/5' : 'bg-white border border-gray-200'
+                  }`}
+                >
+                  <PlayCircle className={`w-4 h-4 ${isDark ? 'text-[#6778ff]' : 'text-purple-600'}`} />
+                  <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {DELIVERY_TYPE_LABELS[courseTime.deliveryType]}
+                  </span>
+                </div>
+
+                {courseTime.program?.estimatedHours && (
+                  <div
+                    className={`px-4 py-2.5 rounded-xl flex items-center gap-2 ${
+                      isDark ? 'bg-white/5' : 'bg-white border border-gray-200'
+                    }`}
                   >
-                    강사 소개
-                  </h2>
-                  <div className="space-y-4">
-                    {courseTime.instructors.map((instructor) => (
-                      <div
-                        key={instructor.id}
-                        className={`rounded-xl p-6 border ${
-                          isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          {instructor.profileImageUrl ? (
-                            <img
-                              src={instructor.profileImageUrl}
-                              alt={instructor.name}
-                              className="w-16 h-16 rounded-full object-cover"
-                            />
-                          ) : (
+                    <Clock className={`w-4 h-4 ${isDark ? 'text-[#6778ff]' : 'text-purple-600'}`} />
+                    <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      총 {courseTime.program.estimatedHours}시간
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Announcements Section */}
+              <B2BAnnouncementSection courseTimeId={courseTimeId} isDark={isDark} />
+            </div>
+
+            {/* Right Column - Sticky Sidebar */}
+            <div className="lg:w-[420px] shrink-0">
+              <div className="sticky top-24 space-y-6">
+                {/* Curriculum Section */}
+                {isAlreadyEnrolled ? (
+                  <B2BCurriculumSection
+                    curriculum={courseTime.curriculum}
+                    enrollmentId={existingEnrollment?.id}
+                    onItemClick={handleCurriculumItemClick}
+                    isDark={isDark}
+                  />
+                ) : (
+                  <>
+                    {/* Enrollment Info Card */}
+                    <div
+                      className={`rounded-2xl overflow-hidden border ${
+                        isDark ? 'glass border-white/10' : 'bg-white border-gray-200 shadow-lg'
+                      }`}
+                    >
+                      <div className="p-6">
+                        {/* Capacity Progress */}
+                        {courseTime.capacity !== null && (
+                          <div
+                            className={`mb-5 p-4 rounded-xl ${
+                              isDark ? 'bg-white/5' : 'bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                수강 신청
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <Users className={`w-4 h-4 ${isDark ? 'text-[#6778ff]' : 'text-purple-600'}`} />
+                                <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                  {courseTime.currentEnrollment}/{courseTime.capacity}명
+                                </span>
+                              </div>
+                            </div>
                             <div
-                              className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                              className={`w-full h-1.5 rounded-full overflow-hidden ${
                                 isDark ? 'bg-white/10' : 'bg-gray-200'
                               }`}
                             >
-                              <Users className="w-8 h-8" />
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                                style={{
+                                  width: `${(courseTime.currentEnrollment / courseTime.capacity) * 100}%`,
+                                }}
+                              />
                             </div>
-                          )}
-                          <div>
-                            <h3
-                              className={`text-lg font-bold ${
-                                isDark ? 'text-white' : 'text-gray-900'
-                              }`}
-                            >
-                              {instructor.name}
-                            </h3>
-                            <span
-                              className={`text-sm px-2 py-0.5 rounded ${
-                                instructor.role === 'MAIN'
-                                  ? 'bg-[#6778ff]/20 text-[#6778ff]'
-                                  : isDark
-                                    ? 'bg-white/10 text-gray-400'
-                                    : 'bg-gray-100 text-gray-600'
-                              }`}
-                            >
-                              {instructor.role === 'MAIN'
-                                ? '주강사'
-                                : instructor.role === 'SUB'
-                                  ? '보조강사'
-                                  : '조교'}
-                            </span>
                           </div>
+                        )}
+
+                        {/* Completion Condition */}
+                        {courseTime.minProgressForCompletion && (
+                          <div
+                            className={`mb-6 p-3.5 rounded-xl border ${
+                              isDark
+                                ? 'bg-green-500/10 border-green-500/20'
+                                : 'bg-green-50 border-green-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              <span
+                                className={`text-sm font-semibold ${
+                                  isDark ? 'text-green-400' : 'text-green-700'
+                                }`}
+                              >
+                                진도율 {courseTime.minProgressForCompletion}% 이상 시 수료!
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Enroll Button */}
+                        {canEnroll ? (
+                          <button
+                            onClick={handleEnroll}
+                            disabled={enrollMutation.isPending}
+                            className="w-full py-4 rounded-xl font-bold text-lg text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#667eea] to-[#764ba2] hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                          >
+                            {enrollMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                신청 중...
+                              </>
+                            ) : (
+                              <>
+                                <PlayCircle className="w-5 h-5" />
+                                지금 바로 시작하기
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed"
+                          >
+                            모집이 마감되었습니다
+                          </button>
+                        )}
+
+                        {/* Wishlist & Share */}
+                        <div className="flex gap-3 mt-3">
+                          <button
+                            onClick={handleWishlistToggle}
+                            disabled={isWishlistToggling || isWishlistChecking}
+                            className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isWishlisted
+                                ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                : isDark
+                                  ? 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                                  : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                            }`}
+                          >
+                            {isWishlistToggling ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+                            )}
+                            <span className="text-sm">{isWishlisted ? '찜함' : '찜하기'}</span>
+                          </button>
+                          <button
+                            onClick={handleShare}
+                            className={`flex-1 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors border ${
+                              isDark
+                                ? 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                            }`}
+                          >
+                            <Share2 className="w-4 h-4" />
+                            <span className="text-sm">공유</span>
+                          </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </>
-          )}
+                    </div>
 
-          {activeTab === 'curriculum' && (
-            <section className="mb-12">
-              <h2
-                className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}
-              >
-                커리큘럼
-              </h2>
-              {courseTime.curriculum && courseTime.curriculum.length > 0 ? (
-                <div className="space-y-3">
-                  {courseTime.curriculum.map((item, index) => (
-                    <CurriculumSection
-                      key={item.id}
-                      item={item}
-                      isExpanded={expandedSections.includes(index)}
-                      onToggle={() => toggleSection(index)}
-                      isDark={isDark}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div
-                  className={`rounded-xl p-8 text-center border ${
-                    isDark ? 'glass border-white/10' : 'bg-white border-gray-200'
-                  }`}
-                >
-                  <FileText
-                    className={`w-12 h-12 mx-auto mb-4 ${
-                      isDark ? 'text-gray-600' : 'text-gray-300'
-                    }`}
+                    {/* Curriculum Preview Card */}
+                    {courseTime.curriculum.length > 0 && (
+                      <B2BCurriculumSection
+                        curriculum={courseTime.curriculum}
+                        onItemClick={handleCurriculumItemClick}
+                        isDark={isDark}
+                      />
+                    )}
+                  </>
+                )}
+
+                {/* Instructor Card */}
+                {instructorName && (
+                  <B2BInstructorCard
+                    instructorName={instructorName}
+                    instructorImage={instructorImage}
+                    isDark={isDark}
                   />
-                  <p className={`font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    커리큘럼 준비 중
-                  </p>
-                  <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                    상세 커리큘럼은 곧 업데이트될 예정입니다.
-                  </p>
-                </div>
-              )}
-            </section>
-          )}
+                )}
 
-          {activeTab === 'review' && (
-            <section className="mb-12">
-              <CourseReviewSection
-                timeId={courseTimeId}
-                isDark={isDark}
-                canWrite={isAlreadyEnrolled}
-              />
-            </section>
-          )}
+                {/* Learning Points Card */}
+                <B2BLearningPointsCard points={MOCK_LEARNING_POINTS} isDark={isDark} />
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
+
 
       <LandingFooter />
 

@@ -13,10 +13,10 @@ import {
   CourseTimeDetailPage,
 } from '@/pages/co/time';
 import {
-  ProgramListPage,
-  ProgramPendingPage,
-  ProgramDetailPage,
-} from '@/pages/co/program';
+  CourseListPage,
+  CoursePendingPage,
+  CourseDetailPage,
+} from '@/pages/co/course';
 import { InstructorAssignmentsPage } from '@/pages/co/instructor';
 import { UserManagementPage } from '@/pages/co/user';
 import { OperatorNoticesPage, OperatorNoticeInboxPage } from '@/pages/co/notices';
@@ -35,14 +35,14 @@ function CourseOperatorWrapper() {
   );
 }
 
-export const coRoutes = (
-  <Route path="/:subdomain/co" element={<CourseOperatorWrapper />}>
-    <Route index element={<DashboardPage />} />
+// CO 하위 라우트
+const coChildRoutes = (
+  <>
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}
-    <Route path="courses" element={<ProgramListPage />} />
-    <Route path="courses/pending" element={<ProgramPendingPage />} />
-    <Route path="courses/:id" element={<ProgramDetailPage />} />
+    <Route path="courses" element={<CourseListPage />} />
+    <Route path="courses/pending" element={<CoursePendingPage />} />
+    <Route path="courses/:id" element={<CourseDetailPage />} />
     {/* 교육 운영 관리 - 차수(CourseTime) */}
     <Route path="times" element={<CourseTimesPage />} />
     <Route path="times/create" element={<CourseTimeCreatePage />} />
@@ -68,5 +68,18 @@ export const coRoutes = (
     <Route path="settings/notifications" element={<SettingsNotificationsPage />} />
     <Route path="settings/appearance" element={<SettingsAppearancePage />} />
     <Route path="settings/content-defaults" element={<PlaceholderPage title="콘텐츠 기본 설정" />} />
-  </Route>
+  </>
+);
+
+export const coRoutes = (
+  <>
+    {/* 기본 테넌트용 (subdomain 없음) */}
+    <Route path="/co" element={<CourseOperatorWrapper />}>
+      {coChildRoutes}
+    </Route>
+    {/* 특정 테넌트용 (subdomain 있음) */}
+    <Route path="/:subdomain/co" element={<CourseOperatorWrapper />}>
+      {coChildRoutes}
+    </Route>
+  </>
 );

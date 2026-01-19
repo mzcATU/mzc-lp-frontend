@@ -4,9 +4,8 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { snapshotService } from '@/services/co/snapshotService';
-import { programService } from '@/services/co/programService';
-import type { CourseDetailResponse, CourseResponse } from '@/types/common/course.types';
-import type { ProgramLevel, ProgramType } from '@/types/common/program.types';
+import { courseService } from '@/services/common/courseService';
+import type { CourseDetailResponse, CourseResponse, CourseLevel, CourseType } from '@/types/common/course.types';
 
 // Query Keys
 export const programApplicationKeys = {
@@ -19,8 +18,8 @@ export interface CourseForApplication {
   title: string;
   description: string | null;
   thumbnailUrl: string | null;
-  level: ProgramLevel | null;
-  type: ProgramType | null;
+  level: CourseLevel | null;
+  type: CourseType | null;
   estimatedHours: number | null;
 }
 
@@ -33,8 +32,8 @@ export function toCourseForApplication(
     title: course.title,
     description: course.description,
     thumbnailUrl: course.thumbnailUrl,
-    level: course.level as ProgramLevel | null,
-    type: course.type as ProgramType | null,
+    level: course.level,
+    type: course.type,
     estimatedHours: course.estimatedHours,
   };
 }
@@ -64,8 +63,8 @@ export const useApplyProgram = () => {
           description: course.description ?? undefined,
         });
 
-        // 2. Program 생성
-        const program = await programService.createProgram({
+        // 2. Course 생성 (스냅샷 연결)
+        const createdCourse = await courseService.create({
           title: course.title,
           description: course.description ?? undefined,
           thumbnailUrl: course.thumbnailUrl ?? undefined,
@@ -75,13 +74,13 @@ export const useApplyProgram = () => {
           snapshotId: snapshot.snapshotId,
         });
 
-        // 3. Program 제출 (PENDING 상태로)
-        await programService.submitProgram(program.id);
+        // 3. Course 제출 (READY 상태로)
+        await courseService.ready(createdCourse.courseId);
 
         return {
           courseId: course.courseId,
           courseTitle: course.title,
-          programId: program.id,
+          programId: createdCourse.courseId,
           success: true,
         };
       } catch (error) {
@@ -118,8 +117,8 @@ export const useApplyProgramsBulk = () => {
             description: course.description ?? undefined,
           });
 
-          // 2. Program 생성
-          const program = await programService.createProgram({
+          // 2. Course 생성 (스냅샷 연결)
+          const createdCourse = await courseService.create({
             title: course.title,
             description: course.description ?? undefined,
             thumbnailUrl: course.thumbnailUrl ?? undefined,
@@ -129,13 +128,13 @@ export const useApplyProgramsBulk = () => {
             snapshotId: snapshot.snapshotId,
           });
 
-          // 3. Program 제출
-          await programService.submitProgram(program.id);
+          // 3. Course 제출
+          await courseService.ready(createdCourse.courseId);
 
           results.push({
             courseId: course.courseId,
             courseTitle: course.title,
-            programId: program.id,
+            programId: createdCourse.courseId,
             success: true,
           });
         } catch (error) {

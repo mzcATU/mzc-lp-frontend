@@ -83,12 +83,66 @@ export function Step1BasicInfo({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">{getText('courseDescription')}</Label>
+        <Label htmlFor="description">강의 소개</Label>
         <Textarea
           id="description"
           value={formData.description}
           onChange={(e) => onFormDataChange({ description: e.target.value })}
           placeholder={getText('courseDescriptionPlaceholder')}
+        />
+      </div>
+
+      {/* 카테고리, 난이도, 과정 유형 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="categoryId">
+            {getText('category')} <span className="text-status-error">*</span>
+          </Label>
+          <NativeSelect
+            id="categoryId"
+            value={formData.categoryId?.toString() ?? ''}
+            onChange={(e) =>
+              onFormDataChange({ categoryId: e.target.value ? Number(e.target.value) : null })
+            }
+            options={[
+              { value: '', label: getText('selectCategory') },
+              ...categories.map((cat) => ({ value: cat.id.toString(), label: cat.name })),
+            ]}
+            required
+          />
+        </div>
+
+        <NativeSelect
+          id="level"
+          label={getText('difficulty')}
+          value={formData.level}
+          onChange={(e) => onFormDataChange({ level: e.target.value as CourseLevel | '' })}
+          options={levelOptions}
+        />
+
+        <NativeSelect
+          id="type"
+          label={getText('courseType')}
+          value={formData.type}
+          onChange={(e) => onFormDataChange({ type: e.target.value as CourseType | '' })}
+          options={typeOptions}
+        />
+      </div>
+
+      {/* 예상 학습 시간 */}
+      <div className="space-y-2">
+        <Label htmlFor="estimatedHours">예상 학습시간 (시간)</Label>
+        <Input
+          id="estimatedHours"
+          type="number"
+          value={formData.estimatedHours ?? ''}
+          onChange={(e) =>
+            onFormDataChange({
+              estimatedHours: e.target.value ? Number(e.target.value) : null,
+            })
+          }
+          placeholder="예: 10"
+          min={1}
         />
       </div>
 
@@ -119,59 +173,6 @@ export function Step1BasicInfo({
         <p className="text-xs text-text-secondary">
           권장 크기: 400x250px, 지원 형식: JPG, PNG, WebP
         </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <NativeSelect
-          id="categoryId"
-          label={getText('category')}
-          value={formData.categoryId?.toString() ?? ''}
-          onChange={(e) =>
-            onFormDataChange({ categoryId: e.target.value ? Number(e.target.value) : null })
-          }
-          options={[
-            { value: '', label: getText('selectCategory') },
-            ...categories.map((cat) => ({ value: cat.id.toString(), label: cat.name })),
-          ]}
-        />
-
-        <NativeSelect
-          id="level"
-          label={getText('difficulty')}
-          value={formData.level}
-          onChange={(e) => onFormDataChange({ level: e.target.value as CourseLevel | '' })}
-          options={levelOptions}
-        />
-
-        <NativeSelect
-          id="type"
-          label={getText('courseType')}
-          value={formData.type}
-          onChange={(e) => onFormDataChange({ type: e.target.value as CourseType | '' })}
-          options={typeOptions}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="startDate">{getText('startDate')}</Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={formData.startDate}
-            onChange={(e) => onFormDataChange({ startDate: e.target.value })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="endDate">{getText('endDate')}</Label>
-          <Input
-            id="endDate"
-            type="date"
-            value={formData.endDate}
-            onChange={(e) => onFormDataChange({ endDate: e.target.value })}
-          />
-        </div>
       </div>
 
       <TagInput
@@ -245,7 +246,7 @@ export function Step1BasicInfo({
 
                   <div className="mb-3">
                     <Input
-                      label={`강의 이름 (${lang.name})`}
+                      label={`강의명 (${lang.name})`}
                       value={lang.courseName}
                       onChange={(e) => handleUpdateLanguage(index, { courseName: e.target.value })}
                       placeholder={`Enter course name in ${lang.name}`}
@@ -268,7 +269,7 @@ export function Step1BasicInfo({
         </CardContent>
       </Card>
 
-      <Alert variant="info">
+      <Alert variant="info" style={{ borderLeftColor: 'var(--color-btn-brand)' }} className="[&>svg]:text-[var(--color-btn-brand)]">
         <AlertDescription>
           <strong>Tip:</strong> 기본 정보는 나중에 수정할 수 있습니다. 다음 단계에서 차시를 구성하고
           콘텐츠를 추가할 수 있습니다.
