@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Edit2,
+  Eye,
   Trash2,
   Loader2,
   AlertCircle,
@@ -25,6 +25,8 @@ import { CourseInfoSection } from './components/CourseInfoSection';
 import { CourseCurriculumSection } from './components/CourseCurriculumSection';
 import type { CourseLevel, CourseType } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
+import type { CourseFormData } from '@/types/co/course.types';
+import { convertHierarchyToCurriculumItems } from '@/types/tu/curriculum.types';
 
 // 난이도별 Badge 컬러
 const levelBadgeColor: Record<CourseLevel, BadgeColor> = {
@@ -98,6 +100,37 @@ export function CourseDetailPage() {
       console.error('Delete failed:', err);
       alert('삭제에 실패했습니다.');
     }
+  };
+
+  // 수강생 화면 미리보기 핸들러
+  const handlePreview = () => {
+    // course 데이터를 CourseFormData 형태로 변환
+    const formData: CourseFormData = {
+      title: course?.title || '',
+      description: course?.description || '',
+      thumbnailUrl: course?.thumbnailUrl || undefined,
+      categoryId: course?.categoryId || null,
+      tags: course?.tags || [],
+      level: course?.level || '',
+      type: course?.type || '',
+      estimatedHours: course?.estimatedHours || null,
+      lessons: [],
+      curriculumItems: curriculum ? convertHierarchyToCurriculumItems(curriculum) : [],
+      isDraft: false,
+      multiLanguage: {
+        enabled: false,
+        languages: [],
+      },
+    };
+
+    const previewData = {
+      formData,
+      categories,
+      language: 'ko' as const,
+    };
+
+    sessionStorage.setItem('course-preview-data', JSON.stringify(previewData));
+    window.open(prefixPath('/tu/teaching/courses/preview'), '_blank');
   };
 
   // 콘텐츠 미리보기 핸들러
@@ -193,10 +226,10 @@ export function CourseDetailPage() {
               variant="ghost"
               size="sm"
               className="border border-border"
-              onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/edit`))}
+              onClick={handlePreview}
             >
-              <Edit2 size={16} />
-              수정
+              <Eye size={16} />
+              미리보기
             </Button>
             <Button
               variant="destructive"
