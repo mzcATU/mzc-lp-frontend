@@ -9,6 +9,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  cacheDir: path.resolve(__dirname, '.vite-cache'),
   optimizeDeps: {
     force: true,
   },

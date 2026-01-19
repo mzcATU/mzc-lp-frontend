@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -11,6 +11,9 @@ import {
   ChevronRight,
   Save,
   FolderTree,
+  Loader2,
+  UserPlus,
+  Check,
 } from 'lucide-react';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
@@ -38,44 +41,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/common';
-
-// 부서 타입
-interface Department {
-  id: string;
-  name: string;
-  code: string;
-  parentId?: string;
-  description?: string;
-  memberCount: number;
-  managerId?: string;
-  managerName?: string;
-  createdAt: Date;
-}
-
-// 샘플 부서 데이터
-const sampleDepartments: Department[] = [
-  { id: 'd1', name: '개발팀', code: 'DEV', memberCount: 45, managerName: '김철수', createdAt: new Date('2023-01-15') },
-  { id: 'd2', name: '프론트엔드팀', code: 'DEV-FE', parentId: 'd1', memberCount: 15, managerName: '이영희', createdAt: new Date('2023-02-01') },
-  { id: 'd3', name: '백엔드팀', code: 'DEV-BE', parentId: 'd1', memberCount: 20, managerName: '박민수', createdAt: new Date('2023-02-01') },
-  { id: 'd4', name: 'DevOps팀', code: 'DEV-OPS', parentId: 'd1', memberCount: 10, managerName: '최수진', createdAt: new Date('2023-02-01') },
-  { id: 'd5', name: '마케팅팀', code: 'MKT', memberCount: 23, managerName: '정민호', createdAt: new Date('2023-01-20') },
-  { id: 'd6', name: '인사팀', code: 'HR', memberCount: 15, managerName: '강서연', createdAt: new Date('2023-01-10') },
-  { id: 'd7', name: '영업팀', code: 'SALES', memberCount: 32, managerName: '윤태희', createdAt: new Date('2023-01-25') },
-  { id: 'd8', name: '디자인팀', code: 'DESIGN', memberCount: 8, managerName: '임재현', createdAt: new Date('2023-02-10') },
-];
+import { departmentService } from '@/services/ta/departmentService';
+import type { DepartmentResponse, DepartmentMemberResponse } from '@/types/ta/department.types';
 
 /**
  * TA 부서 관리 페이지
  * - 부서 생성/수정/삭제
  * - 계층 구조 관리
- * - 부서별 인원 현황
+ * - 부서별 인원 현황 (회원가입 시 선택한 부서 기준)
  */
 export const DepartmentManagementPage = () => {
-  const [departments, setDepartments] = useState<Department[]>(sampleDepartments);
+  const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  const [selectedDepartment, setSelectedDepartment] = useState<DepartmentResponse | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -83,68 +64,123 @@ export const DepartmentManagementPage = () => {
     description: '',
   });
 
-  // 필터링된 부서 목록
-  const filteredDepartments = departments.filter((dept) =>
-    dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dept.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 부서 멤버 목록 상태
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [members, setMembers] = useState<DepartmentMemberResponse[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [viewingDepartment, setViewingDepartment] = useState<DepartmentResponse | null>(null);
 
-  // 최상위 부서만 (parentId가 없는 것)
-  const topLevelDepartments = filteredDepartments.filter((d) => !d.parentId);
+  // 인원 추가 모달 상태
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [availableMembers, setAvailableMembers] = useState<DepartmentMemberResponse[]>([]);
+  const [availableMembersLoading, setAvailableMembersLoading] = useState(false);
+  const [addingMemberId, setAddingMemberId] = useState<number | null>(null);
+  const [searchAvailable, setSearchAvailable] = useState('');
 
-  // 하위 부서 가져오기
-  const getSubDepartments = (parentId: string) => {
-    return filteredDepartments.filter((d) => d.parentId === parentId);
+  // 부서 목록 조회
+  const fetchDepartments = async () => {
+    try {
+      setLoading(true);
+      const data = await departmentService.getTree();
+      setDepartments(data);
+    } catch (error) {
+      console.error('Failed to fetch departments:', error);
+      toast.error('부서 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 부서 생성
-  const handleCreate = () => {
-    const newDept: Department = {
-      id: `d${departments.length + 1}`,
-      name: formData.name,
-      code: formData.code,
-      parentId: formData.parentId || undefined,
-      description: formData.description,
-      memberCount: 0,
-      createdAt: new Date(),
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  // 모든 부서를 flat 리스트로 변환 (검색/통계용)
+  const flattenDepartments = (depts: DepartmentResponse[]): DepartmentResponse[] => {
+    const result: DepartmentResponse[] = [];
+    const flatten = (list: DepartmentResponse[]) => {
+      for (const dept of list) {
+        result.push(dept);
+        if (dept.children && dept.children.length > 0) {
+          flatten(dept.children);
+        }
+      }
     };
-    setDepartments([...departments, newDept]);
-    setShowCreateModal(false);
-    resetForm();
+    flatten(depts);
+    return result;
+  };
+
+  const allDepartments = flattenDepartments(departments);
+
+  // 필터링된 부서 목록
+  const filteredDepartments = searchTerm
+    ? allDepartments.filter((dept) =>
+        dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        dept.code.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : departments;
+
+  // 부서 생성
+  const handleCreate = async () => {
+    try {
+      await departmentService.create({
+        name: formData.name,
+        code: formData.code,
+        parentId: formData.parentId ? Number(formData.parentId) : undefined,
+        description: formData.description || undefined,
+      });
+      toast.success('부서가 생성되었습니다.');
+      setShowCreateModal(false);
+      resetForm();
+      fetchDepartments();
+    } catch (error) {
+      console.error('Failed to create department:', error);
+      toast.error('부서 생성에 실패했습니다.');
+    }
   };
 
   // 부서 수정
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!selectedDepartment) return;
-    setDepartments(
-      departments.map((d) =>
-        d.id === selectedDepartment.id
-          ? { ...d, name: formData.name, code: formData.code, description: formData.description }
-          : d
-      )
-    );
-    setShowEditModal(false);
-    resetForm();
+    try {
+      await departmentService.update(selectedDepartment.id, {
+        name: formData.name,
+        code: formData.code,
+        description: formData.description || undefined,
+      });
+      toast.success('부서가 수정되었습니다.');
+      setShowEditModal(false);
+      resetForm();
+      fetchDepartments();
+    } catch (error) {
+      console.error('Failed to update department:', error);
+      toast.error('부서 수정에 실패했습니다.');
+    }
   };
 
   // 부서 삭제
-  const handleDelete = (id: string) => {
-    // 하위 부서가 있는지 확인
-    const hasChildren = departments.some((d) => d.parentId === id);
-    if (hasChildren) {
-      toast.error('하위 부서가 있는 부서는 삭제할 수 없습니다.');
-      return;
+  const handleDelete = async (id: number) => {
+    try {
+      await departmentService.delete(id);
+      toast.success('부서가 삭제되었습니다.');
+      fetchDepartments();
+    } catch (error: any) {
+      console.error('Failed to delete department:', error);
+      if (error.response?.data?.message?.includes('하위 부서')) {
+        toast.error('하위 부서가 있는 부서는 삭제할 수 없습니다.');
+      } else {
+        toast.error('부서 삭제에 실패했습니다.');
+      }
     }
-    setDepartments(departments.filter((d) => d.id !== id));
   };
 
   // 수정 모달 열기
-  const openEditModal = (dept: Department) => {
+  const openEditModal = (dept: DepartmentResponse) => {
     setSelectedDepartment(dept);
     setFormData({
       name: dept.name,
       code: dept.code,
-      parentId: dept.parentId || '',
+      parentId: dept.parentId?.toString() || '',
       description: dept.description || '',
     });
     setShowEditModal(true);
@@ -156,17 +192,84 @@ export const DepartmentManagementPage = () => {
     setSelectedDepartment(null);
   };
 
-  // 통계
+  // 부서 멤버 조회
+  const handleViewMembers = async (dept: DepartmentResponse) => {
+    setViewingDepartment(dept);
+    setShowMembersModal(true);
+    setMembersLoading(true);
+    try {
+      const data = await departmentService.getMembers(dept.id);
+      setMembers(data);
+    } catch (error) {
+      console.error('Failed to fetch department members:', error);
+      toast.error('부서 인원 목록을 불러오는데 실패했습니다.');
+      setMembers([]);
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  // 인원 추가 모달 열기
+  const handleOpenAddMember = async () => {
+    if (!viewingDepartment) return;
+    setShowAddMemberModal(true);
+    setAvailableMembersLoading(true);
+    setSearchAvailable('');
+    try {
+      const data = await departmentService.getAvailableMembers(viewingDepartment.id);
+      setAvailableMembers(data);
+    } catch (error) {
+      console.error('Failed to fetch available members:', error);
+      toast.error('추가 가능한 인원 목록을 불러오는데 실패했습니다.');
+      setAvailableMembers([]);
+    } finally {
+      setAvailableMembersLoading(false);
+    }
+  };
+
+  // 부서에 인원 추가
+  const handleAddMember = async (userId: number) => {
+    if (!viewingDepartment) return;
+    setAddingMemberId(userId);
+    try {
+      await departmentService.addMember(viewingDepartment.id, userId);
+      toast.success('인원이 부서에 추가되었습니다.');
+      // 목록 갱신
+      const [newMembers, newAvailable] = await Promise.all([
+        departmentService.getMembers(viewingDepartment.id),
+        departmentService.getAvailableMembers(viewingDepartment.id),
+      ]);
+      setMembers(newMembers);
+      setAvailableMembers(newAvailable);
+      // 부서 목록도 갱신 (인원수 변경)
+      fetchDepartments();
+    } catch (error) {
+      console.error('Failed to add member:', error);
+      toast.error('인원 추가에 실패했습니다.');
+    } finally {
+      setAddingMemberId(null);
+    }
+  };
+
+  // 필터링된 추가 가능 인원
+  const filteredAvailableMembers = searchAvailable
+    ? availableMembers.filter(
+        (m) =>
+          m.name.toLowerCase().includes(searchAvailable.toLowerCase()) ||
+          m.email.toLowerCase().includes(searchAvailable.toLowerCase())
+      )
+    : availableMembers;
+
+  // 통계 (최상위 부서는 트리 구조의 departments 기준)
   const stats = {
-    total: departments.length,
-    topLevel: topLevelDepartments.length,
-    totalMembers: departments.reduce((sum, d) => sum + d.memberCount, 0),
+    total: allDepartments.length,
+    topLevel: departments.length,
+    totalMembers: allDepartments.reduce((sum, d) => sum + d.memberCount, 0),
   };
 
   // 부서 렌더링 (재귀적)
-  const renderDepartment = (dept: Department, level: number = 0) => {
-    const subDepts = getSubDepartments(dept.id);
-    const hasChildren = subDepts.length > 0;
+  const renderDepartment = (dept: DepartmentResponse, level: number = 0) => {
+    const hasChildren = dept.children && dept.children.length > 0;
 
     return (
       <div key={dept.id}>
@@ -207,12 +310,16 @@ export const DepartmentManagementPage = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleViewMembers(dept)}
+              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-black/5 transition-colors"
+              title="인원 목록 보기"
+            >
               <Users className="w-4 h-4" style={{ color: designTokens.text.placeholder }} />
               <span className="text-sm" style={{ color: designTokens.text.secondary }}>
                 {dept.memberCount}명
               </span>
-            </div>
+            </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -241,7 +348,7 @@ export const DepartmentManagementPage = () => {
         {/* 하위 부서 */}
         {hasChildren && (
           <div className="mt-2">
-            {subDepts.map((subDept) => renderDepartment(subDept, level + 1))}
+            {dept.children.map((child) => renderDepartment(child, level + 1))}
           </div>
         )}
       </div>
@@ -362,7 +469,11 @@ export const DepartmentManagementPage = () => {
             <CardTitle>부서 목록</CardTitle>
           </CardHeader>
           <CardContent>
-            {filteredDepartments.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.placeholder }} />
+              </div>
+            ) : filteredDepartments.length === 0 ? (
               <EmptyState
                 icon={Building2}
                 title="부서가 없습니다"
@@ -371,7 +482,7 @@ export const DepartmentManagementPage = () => {
               />
             ) : (
               <div className="space-y-2">
-                {topLevelDepartments.map((dept) => renderDepartment(dept))}
+                {(searchTerm ? filteredDepartments : departments).map((dept) => renderDepartment(dept))}
               </div>
             )}
           </CardContent>
@@ -404,14 +515,17 @@ export const DepartmentManagementPage = () => {
             </div>
             <div>
               <Label className="mb-2 block">상위 부서</Label>
-              <Select value={formData.parentId} onValueChange={(v) => setFormData({ ...formData, parentId: v })}>
+              <Select
+                value={formData.parentId || 'none'}
+                onValueChange={(v) => setFormData({ ...formData, parentId: v === 'none' ? '' : v })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="없음 (최상위 부서)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">없음 (최상위 부서)</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
+                  <SelectItem value="none">없음 (최상위 부서)</SelectItem>
+                  {allDepartments.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id.toString()}>
                       {dept.name} ({dept.code})
                     </SelectItem>
                   ))}
@@ -491,6 +605,196 @@ export const DepartmentManagementPage = () => {
             >
               <Save className="w-4 h-4 mr-1" />
               저장
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 부서 멤버 목록 모달 */}
+      <Dialog open={showMembersModal} onOpenChange={setShowMembersModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              {viewingDepartment?.name} 소속 인원
+              <Badge variant="gray" className="ml-2">
+                {members.length}명
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto py-4">
+            {membersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.placeholder }} />
+              </div>
+            ) : members.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="소속 인원이 없습니다"
+                description="이 부서에 등록된 인원이 없습니다."
+                className="py-12"
+              />
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr style={{ backgroundColor: designTokens.bg.secondary }}>
+                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
+                        이름
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
+                        직급
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
+                        이메일
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
+                        연락처
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {members.map((member, index) => (
+                      <tr
+                        key={member.id}
+                        className="border-t"
+                        style={{
+                          backgroundColor: index % 2 === 0 ? designTokens.bg.default : designTokens.bg.secondary,
+                        }}
+                      >
+                        <td className="px-4 py-3">
+                          <span className="font-medium" style={{ color: designTokens.text.primary }}>
+                            {member.name}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm" style={{ color: designTokens.text.secondary }}>
+                            {member.position || '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm" style={{ color: designTokens.text.secondary }}>
+                            {member.email}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm" style={{ color: designTokens.text.secondary }}>
+                            {member.phone || '-'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-shrink-0 flex justify-between pt-4 border-t">
+            <Button
+              onClick={handleOpenAddMember}
+              style={{
+                backgroundColor: designTokens.button.brand_default,
+                color: designTokens.button.brand_text,
+              }}
+            >
+              <UserPlus className="w-4 h-4 mr-1" />
+              인원 추가
+            </Button>
+            <Button variant="outline" onClick={() => setShowMembersModal(false)}>
+              닫기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 인원 추가 모달 */}
+      <Dialog open={showAddMemberModal} onOpenChange={setShowAddMemberModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              {viewingDepartment?.name}에 인원 추가
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-shrink-0 py-4 border-b">
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                style={{ color: designTokens.text.placeholder }}
+              />
+              <Input
+                placeholder="이름 또는 이메일로 검색..."
+                value={searchAvailable}
+                onChange={(e) => setSearchAvailable(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto py-4">
+            {availableMembersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: designTokens.text.placeholder }} />
+              </div>
+            ) : filteredAvailableMembers.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="추가 가능한 인원이 없습니다"
+                description={searchAvailable ? "검색 결과가 없습니다." : "모든 인원이 이미 이 부서에 소속되어 있습니다."}
+                className="py-12"
+              />
+            ) : (
+              <div className="space-y-2">
+                {filteredAvailableMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium" style={{ color: designTokens.text.primary }}>
+                          {member.name}
+                        </span>
+                        {member.position && (
+                          <Badge variant="gray" className="text-xs">
+                            {member.position}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm mt-0.5" style={{ color: designTokens.text.secondary }}>
+                        {member.email}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddMember(member.id)}
+                      disabled={addingMemberId === member.id}
+                      style={{
+                        backgroundColor: designTokens.button.brand_default,
+                        color: designTokens.button.brand_text,
+                      }}
+                    >
+                      {addingMemberId === member.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-1" />
+                          추가
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-shrink-0 flex justify-end pt-4 border-t">
+            <Button variant="outline" onClick={() => setShowAddMemberModal(false)}>
+              닫기
             </Button>
           </div>
         </DialogContent>

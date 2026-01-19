@@ -384,6 +384,9 @@ export const API_ENDPOINTS = {
     ACTIVE: '/departments/active',
     SEARCH: '/departments/search',
     BY_ID: (id: number) => `/departments/${id}`,
+    MEMBERS: (id: number) => `/departments/${id}/members`,
+    AVAILABLE_MEMBERS: (id: number) => `/departments/${id}/available-members`,
+    ADD_MEMBER: (departmentId: number, userId: number) => `/departments/${departmentId}/members/${userId}`,
   },
 
   // Member Pools (회원 풀) - TO 관리, TA 조회

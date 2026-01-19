@@ -132,14 +132,11 @@ export const tenantAdminMenuData: MenuItem[] = [
   },
   {
     id: 'operator-access',
-    label: { ko: '사용자 및 권한', en: 'User & Access Management' },
+    label: { ko: '사용자 및 조직', en: 'User & Organization' },
     icon: Users,
     subItems: [
       { id: 'user-mgmt', label: { ko: '사용자 관리', en: 'User Management' }, icon: Users, path: '/ta/users' },
-      { id: 'department-mgmt', label: { ko: '부서 관리', en: 'Department Management' }, icon: FolderTree, path: '/ta/users/departments' },
-      { id: 'employee-mgmt', label: { ko: '임직원 관리', en: 'Employee Management' }, icon: Building2, path: '/ta/users/employees' },
-      { id: 'user-group-roles', label: { ko: '그룹 및 역할', en: 'Groups & Roles' }, icon: Users, path: '/ta/users/groups' },
-      { id: 'access-permissions', label: { ko: '접근 권한', en: 'Access Permissions' }, icon: Shield, path: '/ta/users/permissions' },
+      { id: 'department-mgmt', label: { ko: '조직 관리', en: 'Organization' }, icon: FolderTree, path: '/ta/users/departments' },
     ],
   },
   {
@@ -156,7 +153,10 @@ export const tenantAdminMenuData: MenuItem[] = [
     id: 'notice-management',
     label: { ko: '공지사항 관리', en: 'Notice Management' },
     icon: Megaphone,
-    path: '/ta/notices',
+    subItems: [
+      { id: 'notice-manage', label: { ko: '공지사항', en: 'Notices' }, icon: FileEdit, path: '/ta/notices' },
+      { id: 'notice-distribution', label: { ko: '배포 관리', en: 'Distribution' }, icon: Send, path: '/ta/notices/distribution' },
+    ],
   },
   {
     id: 'settings',
