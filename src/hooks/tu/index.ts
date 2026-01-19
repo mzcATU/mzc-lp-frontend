@@ -87,6 +87,7 @@ export {
   useCourseItemsHierarchy,
   useUpdateCourse,
   useDeleteCourse,
+  useReadyCourse,
 } from './useCourseQueries';
 
 // Course Detail Hooks

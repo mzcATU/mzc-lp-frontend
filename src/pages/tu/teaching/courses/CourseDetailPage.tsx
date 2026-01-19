@@ -15,6 +15,7 @@ import {
   useCourseItemsHierarchy,
   useDeleteCourse,
   useLearningObject,
+  useReadyCourse,
 } from '@/hooks/tu';
 import { ContentPreviewModal } from '@/components/domain/tu/content/ContentPreviewModal';
 import type { ContentType } from '@/types/tu';
@@ -23,6 +24,7 @@ import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { categoryService } from '@/services/common';
 import { CourseInfoSection } from './components/CourseInfoSection';
 import { CourseCurriculumSection } from './components/CourseCurriculumSection';
+import { CourseApplyModal } from './components/CourseApplyModal';
 import type { CourseLevel, CourseType } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
 import type { CourseFormData } from '@/types/co/course.types';
@@ -67,10 +69,14 @@ export function CourseDetailPage() {
   const { data: course, isLoading, error } = useCourse(id);
   const { data: curriculum } = useCourseItemsHierarchy(id);
   const deleteCourseMutation = useDeleteCourse();
+  const readyCourseMutation = useReadyCourse();
 
   // 콘텐츠 미리보기 상태
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CourseItemHierarchyResponse | null>(null);
+
+  // 과정 등록 모달 상태
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
 
   // LO 조회 (selectedItem이 있을 때만)
   const { data: learningObject } = useLearningObject(selectedItem?.learningObjectId ?? 0);
@@ -142,6 +148,19 @@ export function CourseDetailPage() {
   const handleClosePreview = () => {
     setPreviewModalOpen(false);
     setSelectedItem(null);
+  };
+
+  // 과정 등록 핸들러
+  const handleApply = async () => {
+    try {
+      await readyCourseMutation.mutateAsync(id);
+      setApplyModalOpen(false);
+      alert('과정이 등록되었습니다. 운영자 검토 후 승인됩니다.');
+      navigate(prefixPath('/tu/teaching/courses'));
+    } catch (err) {
+      console.error('Apply failed:', err);
+      alert('과정 등록에 실패했습니다.');
+    }
   };
 
   // 로딩 상태
@@ -217,7 +236,7 @@ export function CourseDetailPage() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              onClick={() => navigate(prefixPath(`/tu/teaching/courses/${id}/apply`))}
+              onClick={() => setApplyModalOpen(true)}
             >
               <Send size={16} />
               과정 등록
@@ -272,6 +291,17 @@ export function CourseDetailPage() {
           fileName={selectedItem.displayName || selectedItem.itemName}
         />
       )}
+
+      {/* 과정 등록 확인 모달 */}
+      <CourseApplyModal
+        isOpen={applyModalOpen}
+        onClose={() => setApplyModalOpen(false)}
+        course={course}
+        curriculum={curriculum ?? []}
+        categories={categories}
+        onApply={handleApply}
+        isApplying={readyCourseMutation.isPending}
+      />
     </div>
   );
 }
