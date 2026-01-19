@@ -238,7 +238,7 @@ export const tenantUserMenuData: MenuItem[] = [
     label: { ko: '대시보드', en: 'Dashboard' },
     icon: LayoutDashboard,
     path: '/tu/dashboard',
-    roles: ['INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
+    roles: ['DESIGNER', 'INSTRUCTOR', 'OPERATOR', 'TENANT_ADMIN'],
   },
   {
     id: 'my-courses',
