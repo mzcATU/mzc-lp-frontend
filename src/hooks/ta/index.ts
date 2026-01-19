@@ -49,6 +49,7 @@ export { taDashboardKeys, useTaKpiDashboard } from './useDashboardQueries';
 export {
   analyticsKeys,
   useActivityLogs,
+  useSearchActivityLogs,
   useActivityStats,
   useRecentActivities,
 } from './useAnalyticsQueries';

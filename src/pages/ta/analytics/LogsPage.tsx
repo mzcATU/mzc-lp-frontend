@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from '@/components/common/Select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/common/Tabs';
-import { useActivityLogs, useActivityStats } from '@/hooks/ta';
+import { useSearchActivityLogs, useActivityStats } from '@/hooks/ta';
 import type { ActivityType } from '@/services/ta/analyticsService';
 import { analyticsService } from '@/services/ta/analyticsService';
 import { useUsers } from '@/hooks/ta/useUserQueries';
@@ -180,8 +180,12 @@ export function LogsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [categoryTab, setCategoryTab] = useState<CategoryKey>('all');
 
-  const { data: logsData, isLoading, error } = useActivityLogs({
+  // 검색 파라미터 - 날짜 미지정 시 undefined로 전달하여 전체 조회
+  const { data: logsData, isLoading, error } = useSearchActivityLogs({
+    userId: userFilter,
     type: typeFilter,
+    startDate: startDate ? new Date(startDate).toISOString() : undefined,
+    endDate: endDate ? new Date(endDate).toISOString() : undefined,
     page,
     size: 50,
   });
