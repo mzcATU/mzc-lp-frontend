@@ -56,7 +56,7 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
     let menuData = tenantUserMenuData;
 
     // 1. 역할 기반 필터링 (보유한 모든 역할 기반)
-    const rolesToCheck = (userRoles && userRoles.length > 0) ? Array.from(userRoles) : [];
+    const rolesToCheck = (userRoles && userRoles.length > 0) ? [...userRoles] : [];
     if (rolesToCheck.length > 0) {
       menuData = menuData
         .filter((item) => !item.roles || item.roles.some(role => rolesToCheck.includes(role)))
