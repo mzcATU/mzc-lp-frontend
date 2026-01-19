@@ -191,3 +191,21 @@ export const useUnreadyCourse = () => {
     },
   });
 };
+
+/**
+ * 과정 등록 신청 (DRAFT → READY)
+ * TU가 과정을 CO에게 검토 요청
+ */
+export const useReadyCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => courseService.ready(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: courseKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: courseKeys.myLists() });
+      queryClient.invalidateQueries({ queryKey: courseRegistrationKeys.readyLists() });
+    },
+  });
+};
