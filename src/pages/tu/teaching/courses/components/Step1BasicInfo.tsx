@@ -129,6 +129,23 @@ export function Step1BasicInfo({
         />
       </div>
 
+      {/* 예상 학습 시간 */}
+      <div className="space-y-2">
+        <Label htmlFor="estimatedHours">예상 학습시간 (시간)</Label>
+        <Input
+          id="estimatedHours"
+          type="number"
+          value={formData.estimatedHours ?? ''}
+          onChange={(e) =>
+            onFormDataChange({
+              estimatedHours: e.target.value ? Number(e.target.value) : null,
+            })
+          }
+          placeholder="예: 10"
+          min={1}
+        />
+      </div>
+
       {/* 썸네일 URL */}
       <div className="space-y-2">
         <Label htmlFor="thumbnailUrl" className="flex items-center gap-2">

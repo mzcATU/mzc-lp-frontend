@@ -172,6 +172,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     tags: [],
     level: '',
     type: '',
+    estimatedHours: null,
     lessons: [], // deprecated
     curriculumItems: [],
     isDraft: false,
@@ -256,6 +257,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           thumbnailUrl: course.thumbnailUrl || undefined,
           level: course.level || '',
           type: course.type || '',
+          estimatedHours: course.estimatedHours,
           categoryId: course.categoryId,
           tags: course.tags || [],
           curriculumItems,
@@ -356,6 +358,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       thumbnailUrl: formData.thumbnailUrl || undefined,
       level: formData.level || undefined,
       type: formData.type || undefined,
+      estimatedHours: formData.estimatedHours ?? undefined,
       categoryId: formData.categoryId ?? undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
     };
