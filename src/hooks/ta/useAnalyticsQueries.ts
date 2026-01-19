@@ -2,12 +2,13 @@
  * TA Analytics React Query Hooks
  */
 import { useQuery } from '@tanstack/react-query';
-import { analyticsService, ActivityLogsParams } from '@/services/ta/analyticsService';
+import { analyticsService, ActivityLogsParams, ActivityLogSearchParams } from '@/services/ta/analyticsService';
 
 // Query Keys
 export const analyticsKeys = {
   all: ['ta-analytics'] as const,
   logs: (params?: ActivityLogsParams) => [...analyticsKeys.all, 'logs', params] as const,
+  search: (params?: ActivityLogSearchParams) => [...analyticsKeys.all, 'search', params] as const,
   stats: (days: number) => [...analyticsKeys.all, 'stats', days] as const,
   recent: () => [...analyticsKeys.all, 'recent'] as const,
 };
@@ -21,6 +22,16 @@ export const useActivityLogs = (params?: ActivityLogsParams) => {
   return useQuery({
     queryKey: analyticsKeys.logs(params),
     queryFn: () => analyticsService.getLogs(params),
+    staleTime: 1000 * 60 * 2, // 2분
+    refetchOnWindowFocus: false,
+  });
+};
+
+/** 활동 로그 검색 (유저별, 유형별, 기간별 필터) */
+export const useSearchActivityLogs = (params?: ActivityLogSearchParams) => {
+  return useQuery({
+    queryKey: analyticsKeys.search(params),
+    queryFn: () => analyticsService.searchLogs(params || {}),
     staleTime: 1000 * 60 * 2, // 2분
     refetchOnWindowFocus: false,
   });
