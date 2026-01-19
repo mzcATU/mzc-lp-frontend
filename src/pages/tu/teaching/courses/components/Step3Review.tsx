@@ -18,6 +18,7 @@ import {
   Eye,
   Award,
   MessageSquare,
+  Clock,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
@@ -293,6 +294,17 @@ export function Step3Review({
                     {typeLabel || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* 예상 학습시간 */}
+            <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+              <Clock size={18} className="mt-0.5 shrink-0" style={{ color: '#7B1FA2' }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-text-secondary text-xs mb-1">예상 학습시간</p>
+                <p className="text-text-primary font-medium m-0 text-sm truncate">
+                  {formData.estimatedHours ? `${formData.estimatedHours}시간` : <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                </p>
               </div>
             </div>
 

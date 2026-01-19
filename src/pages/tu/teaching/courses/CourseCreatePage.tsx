@@ -256,19 +256,22 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           return;
         }
 
-        setFormData((prev) => ({
-          ...prev,
+        const loadedFormData: Partial<CourseFormData> = {
           title: course.title,
           description: course.description || '',
           thumbnailUrl: course.thumbnailUrl || undefined,
-          level: course.level || '',
-          type: course.type || '',
+          level: (course.level || '') as CourseFormData['level'],
+          type: (course.type || '') as CourseFormData['type'],
           estimatedHours: course.estimatedHours,
           categoryId: course.categoryId,
           tags: course.tags || [],
           curriculumItems,
           isDraft: !course.isComplete,
           lastSaved: course.updatedAt,
+        };
+        setFormData((prev) => ({
+          ...prev,
+          ...loadedFormData,
         }));
       } catch (error) {
         console.error('강의 불러오기 실패:', error);
@@ -279,6 +282,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       }
     };
     loadExistingCourse();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, navigate, prefixPath]);
 
   // 네비게이션 핸들러
@@ -787,6 +791,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
       </div>
     </div>
   );

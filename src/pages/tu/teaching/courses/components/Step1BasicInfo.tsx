@@ -83,12 +83,15 @@ export function Step1BasicInfo({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">강의 소개</Label>
+        <Label htmlFor="description">
+          강의 소개 <span className="text-status-error">*</span>
+        </Label>
         <Textarea
           id="description"
           value={formData.description}
           onChange={(e) => onFormDataChange({ description: e.target.value })}
           placeholder={getText('courseDescriptionPlaceholder')}
+          required
         />
       </div>
 
