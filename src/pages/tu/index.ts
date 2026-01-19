@@ -2,7 +2,6 @@ export {
   MyCoursesPage,
   MyContentPage,
   CourseCreatePage,
-  CourseEditPage,
   CourseDetailPage as TeachingCourseDetailPage,
   CoursePreviewPage,
   TuContentCreatePage,

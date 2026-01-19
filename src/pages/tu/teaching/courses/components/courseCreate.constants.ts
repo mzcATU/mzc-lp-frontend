@@ -120,8 +120,8 @@ export const translations = {
   completeError: { ko: '작성완료 처리에 실패했습니다. 다시 시도해주세요.', en: 'Failed to mark as complete. Please try again.' },
   completeConfirm: { ko: '작성완료 하시겠습니까? 완료 후에도 수정이 가능합니다.', en: 'Mark as complete? You can still edit it later.' },
   // 등록 (READY → REGISTERED)
-  register: { ko: '등록', en: 'Register' },
-  registering: { ko: '등록 중...', en: 'Registering...' },
+  register: { ko: '과정 등록', en: 'Register Course' },
+  registering: { ko: '과정 등록 중...', en: 'Registering Course...' },
   registerSuccess: { ko: '등록되었습니다. 운영자가 차수를 개설할 수 있습니다.', en: 'Course has been registered. Operators can now create sessions.' },
   registerError: { ko: '등록에 실패했습니다. 다시 시도해주세요.', en: 'Failed to register. Please try again.' },
   registerConfirm: { ko: '등록하시겠습니까? 등록 후에는 운영자가 차수를 개설할 수 있습니다.', en: 'Register this course? After registration, operators can create course sessions.' },

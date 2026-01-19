@@ -104,9 +104,20 @@ export const CourseCard = ({ course, labels, onManage, onEdit, hideActions = fal
 
       {/* Content */}
       <div className="p-5">
-        <h3 className="text-text-primary mb-4 text-base">{course.title}</h3>
+        <h3 className="text-text-primary mb-2 text-base">{course.title}</h3>
+        {course.category && (
+          <span
+            className="inline-block px-2 py-1 text-xs rounded-md font-medium mb-4"
+            style={{
+              color: designTokens.badge.indigo.text,
+              backgroundColor: designTokens.badge.indigo.bg
+            }}
+          >
+            {course.category}
+          </span>
+        )}
 
-        {/* Progress Bar */}
+        {/* Progress Bar - 콘텐츠 완성도 (임시 주석처리)
         <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-text-secondary">{labels.courseCompletion}</span>
@@ -121,6 +132,7 @@ export const CourseCard = ({ course, labels, onManage, onEdit, hideActions = fal
             />
           </div>
         </div>
+        */}
 
         {/* Footer Info */}
         <div className="flex justify-between items-center pt-4 border-t border-border">

@@ -6,7 +6,6 @@ import {
   MyCoursesPage,
   MyContentPage,
   CourseCreatePage,
-  CourseEditPage,
   CoursePreviewPage,
   TeachingCourseDetailPage,
   TuContentCreatePage,
@@ -62,7 +61,7 @@ export const tuTeachingRoutes = (
     <Route path="teaching/courses" element={<MyCoursesPage />} />
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
-    <Route path="teaching/courses/:courseId/edit" element={<CourseEditPage />} />
+    <Route path="teaching/courses/:courseId/edit" element={<CourseCreatePage />} />
     <Route path="teaching/content" element={<MyContentPage />} />
     <Route path="teaching/content/create" element={<TuContentCreatePage />} />
     <Route path="teaching/content/bulk-upload" element={<ContentBulkUploadPage />} />
@@ -82,7 +81,7 @@ export const tuTeachingRoutes = (
     <Route path="teaching/courses" element={<MyCoursesPage />} />
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
-    <Route path="teaching/courses/:courseId/edit" element={<CourseEditPage />} />
+    <Route path="teaching/courses/:courseId/edit" element={<CourseCreatePage />} />
 
 
     {/* 내 콘텐츠 */}

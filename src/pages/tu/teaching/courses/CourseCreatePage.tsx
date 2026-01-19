@@ -8,7 +8,7 @@
  * - Step3Review: 검토 및 저장
  */
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { ArrowLeft, ArrowRight, Save, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -152,9 +152,15 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const [searchParams] = useSearchParams();
-  const courseIdParam = searchParams.get('courseId');
+  const { courseId: urlCourseId } = useParams<{ courseId?: string }>();
 
-  const [currentStep, setCurrentStep] = useState(1);
+  // URL 파라미터 또는 쿼리스트링에서 courseId 가져오기
+  const courseIdParam = urlCourseId ?? searchParams.get('courseId');
+  // 쿼리스트링에서 step 가져오기 (기본값 1)
+  const stepParam = searchParams.get('step');
+  const initialStep = stepParam ? Math.min(Math.max(Number(stepParam), 1), 3) : 1;
+
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -250,19 +256,22 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           return;
         }
 
-        setFormData((prev) => ({
-          ...prev,
+        const loadedFormData: Partial<CourseFormData> = {
           title: course.title,
           description: course.description || '',
           thumbnailUrl: course.thumbnailUrl || undefined,
-          level: course.level || '',
-          type: course.type || '',
+          level: (course.level || '') as CourseFormData['level'],
+          type: (course.type || '') as CourseFormData['type'],
           estimatedHours: course.estimatedHours,
           categoryId: course.categoryId,
           tags: course.tags || [],
           curriculumItems,
           isDraft: !course.isComplete,
           lastSaved: course.updatedAt,
+        };
+        setFormData((prev) => ({
+          ...prev,
+          ...loadedFormData,
         }));
       } catch (error) {
         console.error('강의 불러오기 실패:', error);
@@ -273,6 +282,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       }
     };
     loadExistingCourse();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, navigate, prefixPath]);
 
   // 네비게이션 핸들러
@@ -516,17 +526,19 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 {getText('lastSaved')}: {new Date(formData.lastSaved).toLocaleString('ko-KR')}
               </span>
             )}
-            <Button
+{/*            <Button
               variant="ghost"
               onClick={() => alert('템플릿 불러오기 기능은 추후 구현됩니다.')}
               className="border border-border"
             >
               <FileText size={16} />
               {getText('loadTemplate')}
-            </Button>
-            <Button variant="ghost" onClick={handleClose} className="border border-border">
-              {getText('close')}
-            </Button>
+            </Button> */}
+            {!urlCourseId && (
+              <Button variant="ghost" onClick={handleClose} className="border border-border">
+                {getText('close')}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -779,6 +791,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import {
   Eye,
   Award,
   MessageSquare,
+  Clock,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button, Card, CardHeader, CardContent, Alert, AlertDescription } from '@/components/common';
@@ -25,7 +26,7 @@ import type { CourseFormData } from '@/types';
 import type { CategoryResponse } from '@/types/common';
 import type { CurriculumItem } from '@/types/tu';
 import { isCurriculumFolder, isCurriculumContent } from '@/types/tu';
-import { translations, levelOptions, type TranslationKey } from './courseCreate.constants';
+import { translations, levelOptions, typeOptions, type TranslationKey } from './courseCreate.constants';
 
 /** 커리큘럼 아이템 수 계산 (폴더/콘텐츠 분리) */
 function countCurriculumItems(items: CurriculumItem[]): { folders: number; contents: number } {
@@ -178,6 +179,11 @@ export function Step3Review({
     ? levelOptions.find((opt) => opt.value === formData.level)?.label
     : null;
 
+  // 유형 레이블
+  const typeLabel = formData.type
+    ? typeOptions.find((opt) => opt.value === formData.type)?.label
+    : null;
+
   return (
     <div className="flex flex-col gap-6">
       {/* 헤더 */}
@@ -279,6 +285,27 @@ export function Step3Review({
                 </div>
               </div>
 
+              {/* 유형 */}
+              <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+                <FileText size={18} className="mt-0.5 shrink-0" style={{ color: '#1976D2' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-text-secondary text-xs mb-1">{getText('courseType')}</p>
+                  <p className="text-text-primary font-medium m-0 text-sm truncate">
+                    {typeLabel || <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 예상 학습시간 */}
+            <div className="flex items-start gap-3 p-4 bg-bg-secondary rounded-lg">
+              <Clock size={18} className="mt-0.5 shrink-0" style={{ color: '#7B1FA2' }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-text-secondary text-xs mb-1">예상 학습시간</p>
+                <p className="text-text-primary font-medium m-0 text-sm truncate">
+                  {formData.estimatedHours ? `${formData.estimatedHours}시간` : <span className="text-text-tertiary italic">{getText('notEntered')}</span>}
+                </p>
+              </div>
             </div>
 
             {/* 태그 */}

@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Eye,
   Trash2,
   Loader2,
   AlertCircle,
   Send,
 } from 'lucide-react';
-import { Button, Badge } from '@/components/common';
+import { Button, Badge, BackButton } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
 import {
   useCourse,
@@ -182,14 +181,10 @@ export function CourseDetailPage() {
           <p className="text-text-secondary">
             {error ? '오류가 발생했습니다.' : '강의를 찾을 수 없습니다.'}
           </p>
-          <Button
-            variant="ghost"
-            className="mt-4 border border-border"
+          <BackButton
+            className="mt-4"
             onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
-          >
-            <ArrowLeft size={16} />
-            목록으로
-          </Button>
+          />
         </div>
       </div>
     );
@@ -200,15 +195,7 @@ export function CourseDetailPage() {
       <div className="p-8">
         {/* 뒤로가기 버튼 */}
         <div className="mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="border border-border"
-            onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
-          >
-            <ArrowLeft size={16} />
-            목록으로
-          </Button>
+          <BackButton onClick={() => navigate(prefixPath('/tu/teaching/courses'))} />
         </div>
 
         {/* Header Section - 목록 페이지와 동일한 스타일 */}
@@ -226,9 +213,6 @@ export function CourseDetailPage() {
                   {TYPE_LABELS[course.type]}
                 </Badge>
               )}
-              <span className="text-text-secondary text-sm">
-                {course.itemCount}차시
-              </span>
             </div>
           </div>
 

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
-import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit } from 'lucide-react';
+import { BookOpen, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { cn } from '@/utils/cn';
-import { Button, IconStatCard } from '@/components/common';
+import { Button, IconStatCard, ViewToggle, DataTable, DataTableColumnHeader, Checkbox } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
 import { useMyCourses, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
 import { courseService, categoryService } from '@/services/common';
@@ -17,6 +18,8 @@ type StatusFilter = 'all' | 'draft' | 'ready' | 'registered';
 interface MyCoursesPageProps {
   language?: 'ko' | 'en';
 }
+
+type ViewMode = 'grid' | 'list';
 
 const DEFAULT_THUMBNAIL = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
@@ -54,13 +57,13 @@ const t = {
   all: { ko: '전체', en: 'All' },
   draft: { ko: '작성중', en: 'Draft' },
   ready: { ko: '작성완료', en: 'Ready' },
-  registered: { ko: '등록됨', en: 'Registered' },
+  registered: { ko: '등록', en: 'Registered' },
   published: { ko: '발행됨', en: 'Published' },
   sortBy: { ko: '정렬', en: 'Sort By' },
   recent: { ko: '최신순', en: 'Recent' },
   studentCount: { ko: '수강생 순', en: 'Students' },
   titleSort: { ko: '제목순', en: 'Title' },
-  coursesCreated: { ko: '개설한 과정', en: 'Courses Created' },
+  coursesCreated: { ko: '전체 과정', en: 'All Courses' },
   totalStudents: { ko: '총 수강생', en: 'Total Students' },
   avgCompletion: { ko: '평균 완료율', en: 'Avg. Completion' },
   students: { ko: '수강생', en: 'Students' },
@@ -82,7 +85,16 @@ const t = {
   incompleteWarning: { ko: '작성을 완료해야 신청할 수 있습니다', en: 'Complete the course to apply' },
   continueEditing: { ko: '이어서 작성', en: 'Continue Editing' },
   viewDetails: { ko: '상세보기', en: 'View Details' },
-  register: { ko: '등록하기', en: 'Register' },
+  register: { ko: '과정 등록', en: 'Register Course' },
+  gridView: { ko: '카드', en: 'Card' },
+  listView: { ko: '리스트', en: 'List' },
+  columnTitle: { ko: '과정명', en: 'Course Title' },
+  columnCategory: { ko: '카테고리', en: 'Category' },
+  columnStatus: { ko: '상태', en: 'Status' },
+  columnLessons: { ko: '차시', en: 'Lessons' },
+  columnUpdated: { ko: '수정일', en: 'Updated' },
+  columnActions: { ko: '액션', en: 'Actions' },
+  courseCount: { ko: '개의 과정', en: ' courses' },
 };
 
 export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>) {
@@ -92,6 +104,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // API 연동
   const { data: coursesData, isLoading, error, refetch } = useMyCourses();
@@ -112,6 +125,174 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
+  // 원본 CourseResponse 보관 (신청 시 필요)
+  const courseResponses = coursesData?.content || [];
+
+  // API 응답을 UI용 Course 타입으로 변환
+  const courses = useMemo(() =>
+    courseResponses.map((response) => mapCourseResponseToCourse(response, categories)),
+    [courseResponses, categories]
+  );
+
+  const filteredCourses = useMemo(() => courses.filter((course) => {
+    if (filterStatus === 'all') return true;
+    if (filterStatus === 'draft') return course.courseStatus === 'DRAFT';
+    if (filterStatus === 'ready') return course.courseStatus === 'READY';
+    if (filterStatus === 'registered') return course.courseStatus === 'REGISTERED';
+    return true;
+  }), [courses, filterStatus]);
+
+  const sortedCourses = useMemo(() => [...filteredCourses].sort((a, b) => {
+    if (sortBy === 'students') return (b.students || 0) - (a.students || 0);
+    if (sortBy === 'title') return a.title.localeCompare(b.title);
+    return 0;
+  }), [filteredCourses, sortBy]);
+
+  const registeredCount = useMemo(() =>
+    courses.filter((c) => c.courseStatus === 'REGISTERED').length,
+    [courses]
+  );
+
+  // 상태별 뱃지 스타일 (designTokens.badge 기반)
+  const getStatusBadgeStyle = (status: CourseStatus): React.CSSProperties => {
+    switch (status) {
+      case 'DRAFT':
+        // orange: 작성중
+        return { backgroundColor: '#FDF3EC', color: '#B5663A' };
+      case 'READY':
+        // blue: 작성완료
+        return { backgroundColor: '#ECF3FA', color: '#3A6B9E' };
+      case 'REGISTERED':
+        // green: 등록
+        return { backgroundColor: '#EDF5EF', color: '#3D7A4A' };
+      default:
+        // gray
+        return { backgroundColor: '#F5F5F5', color: '#616161' };
+    }
+  };
+
+  const getStatusLabel = (status: CourseStatus) => {
+    switch (status) {
+      case 'DRAFT': return getText('draft');
+      case 'READY': return getText('ready');
+      case 'REGISTERED': return getText('registered');
+      default: return status;
+    }
+  };
+
+  // 리스트뷰 컬럼 정의 - Hook은 조건부 리턴 전에 호출되어야 함
+  const columns: ColumnDef<Course & { courseStatus: CourseStatus }>[] = useMemo(() => [
+    {
+      id: 'select',
+      header: () => (
+        <Checkbox
+          checked={sortedCourses.length > 0 && selectedCourseIds.size === sortedCourses.length}
+          onCheckedChange={() => toggleSelectAll(sortedCourses)}
+          aria-label={getText('selectAll')}
+        />
+      ),
+      cell: ({ row }) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={selectedCourseIds.has(row.original.id)}
+            onCheckedChange={() => toggleSelect(row.original.id)}
+            aria-label={`Select ${row.original.title}`}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'title',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={getText('columnTitle')} />
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <img
+            src={row.original.thumbnail}
+            alt={row.original.title}
+            className="w-12 h-8 rounded object-cover"
+          />
+          <p className="text-sm text-text-primary font-medium max-w-[300px] truncate">
+            {row.original.title}
+          </p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'courseStatus',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={getText('columnStatus')} />
+      ),
+      cell: ({ row }) => (
+        <span
+          className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full"
+          style={getStatusBadgeStyle(row.original.courseStatus)}
+        >
+          {getStatusLabel(row.original.courseStatus)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'lastAccessed',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={getText('columnUpdated')} />
+      ),
+      cell: ({ row }) => (
+        <p className="text-sm text-text-secondary">{row.original.lastAccessed}</p>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => null,
+      cell: ({ row }) => {
+        const course = row.original;
+        return (
+          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+            {course.courseStatus === 'DRAFT' ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="border border-border"
+                onClick={() => navigate(prefixPath(`/tu/teaching/courses/create?courseId=${course.id}`))}
+              >
+                <Edit size={14} />
+                {getText('continueEditing')}
+              </Button>
+            ) : course.courseStatus === 'READY' ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
+                >
+                  {getText('viewDetails')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="brand"
+                  onClick={() => handleRegister(course.id)}
+                >
+                  {getText('register')}
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
+              >
+                {getText('viewDetails')}
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ], [language, sortedCourses, selectedCourseIds, navigate, prefixPath]);
+
   // 체크박스 토글
   const toggleSelect = (courseId: string) => {
     setSelectedCourseIds((prev) => {
@@ -126,11 +307,11 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   };
 
   // 전체 선택/해제
-  const toggleSelectAll = (courses: Course[]) => {
-    if (selectedCourseIds.size === courses.length) {
+  const toggleSelectAll = (coursesToSelect: (Course & { courseStatus: CourseStatus })[]) => {
+    if (selectedCourseIds.size === coursesToSelect.length) {
       setSelectedCourseIds(new Set());
     } else {
-      setSelectedCourseIds(new Set(courses.map((c) => c.id)));
+      setSelectedCourseIds(new Set(coursesToSelect.map((c) => c.id)));
     }
   };
 
@@ -188,6 +369,8 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     }
   };
 
+  const isApplying = applyProgramsBulkMutation.isPending;
+
   // 로딩 상태
   if (isLoading) {
     return (
@@ -213,33 +396,6 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     );
   }
 
-  // 원본 CourseResponse 보관 (신청 시 필요)
-  const courseResponses = coursesData?.content || [];
-
-  // API 응답을 UI용 Course 타입으로 변환
-  const courses = courseResponses.map((response) => mapCourseResponseToCourse(response, categories));
-
-  const filteredCourses = courses.filter((course) => {
-    if (filterStatus === 'all') return true;
-    if (filterStatus === 'draft') return course.courseStatus === 'DRAFT';
-    if (filterStatus === 'ready') return course.courseStatus === 'READY';
-    if (filterStatus === 'registered') return course.courseStatus === 'REGISTERED';
-    return true;
-  });
-
-  const sortedCourses = [...filteredCourses].sort((a, b) => {
-    if (sortBy === 'students') return (b.students || 0) - (a.students || 0);
-    if (sortBy === 'title') return a.title.localeCompare(b.title);
-    return 0;
-  });
-
-  const totalStudents = courses.reduce((acc, c) => acc + (c.students || 0), 0);
-  const avgCompletion = courses.length > 0
-    ? Math.round(courses.reduce((acc, c) => acc + c.progress, 0) / courses.length)
-    : 0;
-
-  const isApplying = applyProgramsBulkMutation.isPending;
-
   return (
     <div className="p-8 bg-bg-app_default min-h-screen">
       {/* Header */}
@@ -255,10 +411,9 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
       </div>
 
       {/* Statistics Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
         <IconStatCard icon={<BookOpen size={20} />} label={getText('coursesCreated')} value={courses.length} />
-        <IconStatCard icon={<Users size={20} />} label={getText('totalStudents')} value={totalStudents} />
-        <IconStatCard icon={<TrendingUp size={20} className="text-status-success" />} label={getText('avgCompletion')} value={`${avgCompletion}%`} />
+        <IconStatCard icon={<Award size={20} />} label="등록된 과정" value={registeredCount} />
       </div>
 
       {/* Filters, Sort, and Bulk Actions */}
@@ -335,85 +490,116 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
         </div>
       </div>
 
-      {/* Course Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sortedCourses.map((course) => {
-          const isSelected = selectedCourseIds.has(course.id);
+      {/* View Toggle & Count */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-text-secondary">
+          {sortedCourses.length}{getText('courseCount')}
+        </p>
+        <ViewToggle
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          gridLabel={getText('gridView')}
+          listLabel={getText('listView')}
+        />
+      </div>
 
-          return (
-            <div key={course.id} className="relative">
-              {/* Checkbox */}
-              <button
-                onClick={() => toggleSelect(course.id)}
-                className={cn(
-                  'absolute top-3 right-3 z-10 p-1.5 rounded-md transition-colors',
-                  isSelected
-                    ? 'bg-btn-primary text-white'
-                    : 'bg-bg-secondary/80 text-text-secondary hover:bg-bg-secondary'
-                )}
-              >
-                {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
-              </button>
+      {/* Course List View */}
+      {viewMode === 'list' && sortedCourses.length > 0 && (
+        <DataTable
+          columns={columns}
+          data={sortedCourses}
+          showColumnToggle={false}
+          showPagination={false}
+          onRowClick={(course) => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
+          labels={{
+            noResults: getText('noCourses'),
+          }}
+        />
+      )}
 
-              {/* Course Card */}
-              <div className={cn(
-                'transition-all',
-                isSelected && 'ring-2 ring-btn-primary rounded-xl'
-              )}>
-                <CourseCard
-                  course={course}
-                  courseStatus={course.courseStatus}
-                  labels={{
-                    students: getText('students'),
-                    courseCompletion: getText('courseCompletion'),
-                    lessons: getText('lessons'),
-                    manageCourse: getText('manageCourse'),
-                  }}
-                  renderActions={
-                    course.courseStatus === 'DRAFT' ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="flex-1 border border-border"
-                        onClick={() => navigate(prefixPath(`/tu/teaching/courses/create?courseId=${course.id}`))}
-                      >
-                        <Edit size={14} />
-                        {getText('continueEditing')}
-                      </Button>
-                    ) : course.courseStatus === 'READY' ? (
-                      <>
+      {/* Course Grid View */}
+      {viewMode === 'grid' && sortedCourses.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedCourses.map((course) => {
+            const isSelected = selectedCourseIds.has(course.id);
+
+            return (
+              <div key={course.id} className="relative">
+                {/* Checkbox */}
+                <button
+                  onClick={() => toggleSelect(course.id)}
+                  className={cn(
+                    'absolute top-3 right-3 z-10 p-1.5 rounded-md transition-colors',
+                    isSelected
+                      ? 'bg-btn-primary text-white'
+                      : 'bg-bg-secondary/80 text-text-secondary hover:bg-bg-secondary'
+                  )}
+                >
+                  {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
+                </button>
+
+                {/* Course Card */}
+                <div className={cn(
+                  'transition-all',
+                  isSelected && 'ring-2 ring-btn-primary rounded-xl'
+                )}>
+                  <CourseCard
+                    course={course}
+                    courseStatus={course.courseStatus}
+                    labels={{
+                      students: getText('students'),
+                      courseCompletion: getText('courseCompletion'),
+                      lessons: getText('lessons'),
+                      manageCourse: getText('manageCourse'),
+                    }}
+                    renderActions={
+                      course.courseStatus === 'DRAFT' ? (
                         <Button
                           size="sm"
+                          variant="ghost"
+                          className="flex-1 border border-border"
+                          onClick={() => navigate(prefixPath(`/tu/teaching/courses/create?courseId=${course.id}`))}
+                        >
+                          <Edit size={14} />
+                          {getText('continueEditing')}
+                        </Button>
+                      ) : course.courseStatus === 'READY' ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
+                          >
+                            {getText('viewDetails')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="brand"
+                            className="flex-1"
+                            onClick={() => handleRegister(course.id)}
+                          >
+                            {getText('register')}
+                          </Button>
+                        </>
+                      ) : course.courseStatus === 'REGISTERED' ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="flex-1"
                           onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
                         >
                           {getText('viewDetails')}
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="brand"
-                          className="flex-1"
-                          onClick={() => handleRegister(course.id)}
-                        >
-                          {getText('register')}
-                        </Button>
-                      </>
-                    ) : course.courseStatus === 'REGISTERED' ? (
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => navigate(prefixPath(`/tu/teaching/courses/${course.id}`))}
-                      >
-                        {getText('viewDetails')}
-                      </Button>
-                    ) : null
-                  }
-                />
+                      ) : null
+                    }
+                  />
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Empty State */}
       {sortedCourses.length === 0 && (
