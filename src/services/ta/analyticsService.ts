@@ -160,21 +160,65 @@ export const analyticsService = {
     return data;
   },
 
-  /** 활동 로그 CSV 내보내기 URL 생성 */
-  getExportUrl(params?: {
+  /** 활동 로그 CSV 내보내기 (Blob 다운로드) */
+  async exportLogs(params?: {
     userId?: number;
     type?: ActivityType;
     startDate?: string;
     endDate?: string;
-  }): string {
-    const searchParams = new URLSearchParams();
-    if (params?.userId) searchParams.set('userId', params.userId.toString());
-    if (params?.type) searchParams.set('type', params.type);
-    if (params?.startDate) searchParams.set('startDate', params.startDate);
-    if (params?.endDate) searchParams.set('endDate', params.endDate);
+  }): Promise<void> {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/export`,
+        {
+          params,
+          responseType: 'blob',
+        }
+      );
 
-    const queryString = searchParams.toString();
-    const baseUrl = `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/export`;
-    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+      // Content-Type이 JSON이면 에러 응답임
+      const contentType = response.headers['content-type'];
+      if (contentType?.includes('application/json')) {
+        const text = await response.data.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.error?.message || '내보내기에 실패했습니다.');
+      }
+
+      // Blob으로 파일 다운로드
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `activity_logs_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      // axios 에러이고 blob 응답인 경우 에러 내용 읽기
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data instanceof Blob
+      ) {
+        const text = await error.response.data.text();
+        console.error('Export error response:', text);
+        try {
+          const errorData = JSON.parse(text);
+          throw new Error(errorData.error?.message || errorData.message || '내보내기에 실패했습니다.');
+        } catch {
+          // JSON 파싱 실패시 text 내용 그대로 사용
+          throw new Error(text || '내보내기에 실패했습니다.');
+        }
+      }
+      if (error instanceof Error && error.message) {
+        throw error;
+      }
+      throw new Error('CSV 내보내기에 실패했습니다. 권한을 확인해주세요.');
+    }
   },
 };

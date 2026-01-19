@@ -196,14 +196,19 @@ export function LogsPage() {
   const users = useMemo(() => usersData?.content || [], [usersData]);
 
   // 내보내기 핸들러
-  const handleExport = () => {
-    const exportUrl = analyticsService.getExportUrl({
-      userId: userFilter,
-      type: typeFilter,
-      startDate: startDate ? new Date(startDate).toISOString() : undefined,
-      endDate: endDate ? new Date(endDate).toISOString() : undefined,
-    });
-    window.open(exportUrl, '_blank');
+  const handleExport = async () => {
+    try {
+      await analyticsService.exportLogs({
+        userId: userFilter,
+        type: typeFilter,
+        startDate: startDate ? new Date(startDate).toISOString() : undefined,
+        endDate: endDate ? new Date(endDate).toISOString() : undefined,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      const message = error instanceof Error ? error.message : 'CSV 내보내기에 실패했습니다.';
+      alert(message);
+    }
   };
 
   // 필터 초기화
