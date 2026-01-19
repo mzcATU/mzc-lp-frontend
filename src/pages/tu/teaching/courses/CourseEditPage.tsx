@@ -114,6 +114,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
     tags: [],
     level: '',
     type: '',
+    estimatedHours: null,
     lessons: [], // deprecated
     curriculumItems: [],
     isDraft: false,
@@ -152,6 +153,7 @@ export function CourseEditPage({ language = 'ko' }: Readonly<CourseEditPageProps
         tags: courseData.tags || [],
         level: courseData.level || '',
         type: courseData.type || '',
+        estimatedHours: courseData.estimatedHours,
         lessons: [], // deprecated
         curriculumItems: convertHierarchyToCurriculumItems(hierarchyData),
         isDraft: false,
