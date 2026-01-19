@@ -94,8 +94,8 @@ export interface CourseTimeInstructor {
   status: 'ACTIVE' | 'REPLACED' | 'CANCELLED';
 }
 
-/** 과정 난이도 */
-export type CourseDifficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+/** 과정 난이도 (차수 상세용 - 대문자) */
+export type CourseTimeDifficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
 /** 차수 상세 조회 응답 (백엔드 CourseTimeDetailResponse 매칭) */
 export interface CourseTimeDetailResponse extends CourseTimeResponse {
@@ -104,7 +104,7 @@ export interface CourseTimeDetailResponse extends CourseTimeResponse {
   courseDescription: string | null; // Phase 3: programDescription → courseDescription
   description: string | null; // 차수 설명
   courseCategory: string | null; // 과정 카테고리 (예: "직무 역량 > 영업")
-  courseDifficulty: CourseDifficulty | null; // 과정 난이도
+  courseDifficulty: CourseTimeDifficulty | null; // 과정 난이도
   courseThumbnailUrl: string | null; // 과정 썸네일 URL
   maxWaitingCount: number | null;
   minProgressForCompletion: number | null;
@@ -296,16 +296,16 @@ export const QUALITY_RATING_LABELS: Record<QualityRating, string> = {
   CAUTION: '주의 필요',
 };
 
-/** CourseDifficulty 라벨 맵 */
-export const COURSE_DIFFICULTY_LABELS: Record<CourseDifficulty, string> = {
+/** CourseTimeDifficulty 라벨 맵 */
+export const COURSE_DIFFICULTY_LABELS: Record<CourseTimeDifficulty, string> = {
   BEGINNER: '초급',
   INTERMEDIATE: '중급',
   ADVANCED: '고급',
 };
 
-/** CourseDifficulty 색상 맵 (UI용) */
+/** CourseTimeDifficulty 색상 맵 (UI용) */
 export const COURSE_DIFFICULTY_COLORS: Record<
-  CourseDifficulty,
+  CourseTimeDifficulty,
   { bg: string; text: string; border: string }
 > = {
   BEGINNER: { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
