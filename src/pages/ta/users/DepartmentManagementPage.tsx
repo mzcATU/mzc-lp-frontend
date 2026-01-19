@@ -45,12 +45,12 @@ import { departmentService } from '@/services/ta/departmentService';
 import type { DepartmentResponse, DepartmentMemberResponse } from '@/types/ta/department.types';
 
 /**
- * TA 부서 관리 페이지
+ * TA 부서 관리 컴포넌트 (탭용)
  * - 부서 생성/수정/삭제
  * - 계층 구조 관리
  * - 부서별 인원 현황 (회원가입 시 선택한 부서 기준)
  */
-export const DepartmentManagementPage = () => {
+export const DepartmentsContent = () => {
   const [departments, setDepartments] = useState<DepartmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -356,36 +356,21 @@ export const DepartmentManagementPage = () => {
   };
 
   return (
-    <div
-      className="p-10 min-h-full"
-      style={{ backgroundColor: designTokens.bg.app_default }}
-    >
-      <div className="max-w-[1400px] mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1
-              className="text-[28px] font-semibold mb-2"
-              style={{ color: designTokens.text.primary }}
-            >
-              부서 관리
-            </h1>
-            <p className="text-sm" style={{ color: designTokens.text.secondary }}>
-              조직의 부서 구조를 관리합니다.
-            </p>
-          </div>
-          <Button
-            className="gap-2"
-            onClick={() => setShowCreateModal(true)}
-            style={{
-              backgroundColor: designTokens.button.brand_default,
-              color: designTokens.button.brand_text,
-            }}
-          >
-            <Plus className="w-4 h-4" />
-            부서 추가
-          </Button>
-        </div>
+    <div>
+      {/* 액션 버튼 */}
+      <div className="flex justify-end mb-6">
+        <Button
+          className="gap-2"
+          onClick={() => setShowCreateModal(true)}
+          style={{
+            backgroundColor: designTokens.button.brand_default,
+            color: designTokens.button.brand_text,
+          }}
+        >
+          <Plus className="w-4 h-4" />
+          부서 추가
+        </Button>
+      </div>
 
         {/* 통계 카드 */}
         <div className="grid grid-cols-3 gap-4 mb-6">
@@ -487,7 +472,6 @@ export const DepartmentManagementPage = () => {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* 부서 생성 모달 */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
@@ -799,6 +783,33 @@ export const DepartmentManagementPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+// 기존 DepartmentManagementPage - 호환성 유지용 (독립 페이지로 사용 시)
+export const DepartmentManagementPage = () => {
+  return (
+    <div
+      className="p-10 min-h-full"
+      style={{ backgroundColor: designTokens.bg.app_default }}
+    >
+      <div className="max-w-[1400px] mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1
+              className="text-[28px] font-semibold mb-2"
+              style={{ color: designTokens.text.primary }}
+            >
+              부서 관리
+            </h1>
+            <p className="text-sm" style={{ color: designTokens.text.secondary }}>
+              조직의 부서 구조를 관리합니다.
+            </p>
+          </div>
+        </div>
+        <DepartmentsContent />
+      </div>
     </div>
   );
 };

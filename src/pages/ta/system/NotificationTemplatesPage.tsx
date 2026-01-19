@@ -41,7 +41,8 @@ import type {
 } from '@/types/ta/notificationTemplate.types';
 import { CATEGORY_CONFIG, TRIGGER_VARIABLES } from '@/types/ta/notificationTemplate.types';
 
-export function NotificationTemplatesPage() {
+// 탭용 콘텐츠 컴포넌트 (NoticeAndNotificationPage에서 사용)
+export function NotificationTemplatesContent() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -219,23 +220,18 @@ export function NotificationTemplatesPage() {
   };
 
   return (
-    <div className="p-6">
-      <AdminPageHeader
-        title="알림 템플릿 관리"
-        description="시스템에서 발송되는 알림 템플릿을 관리합니다"
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleInitialize} disabled={initializeMutation.isPending}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              기본 템플릿 초기화
-            </Button>
-            <Button onClick={handleOpenCreateDialog} disabled={availableTriggers.length === 0}>
-              <Plus className="mr-2 h-4 w-4" />
-              템플릿 추가
-            </Button>
-          </div>
-        }
-      />
+    <div>
+      {/* 액션 버튼 영역 */}
+      <div className="flex justify-end gap-2 mb-6">
+        <Button variant="outline" onClick={handleInitialize} disabled={initializeMutation.isPending}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          기본 템플릿 초기화
+        </Button>
+        <Button onClick={handleOpenCreateDialog} disabled={availableTriggers.length === 0}>
+          <Plus className="mr-2 h-4 w-4" />
+          템플릿 추가
+        </Button>
+      </div>
 
       <Tabs value={categoryFilter} onValueChange={setCategoryFilter} className="mb-6">
         <TabsList>
@@ -516,6 +512,21 @@ export function NotificationTemplatesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// 기존 NotificationTemplatesPage - 호환성 유지용 (독립 페이지로 사용 시)
+export function NotificationTemplatesPage() {
+  return (
+    <div className="p-6">
+      <AdminPageHeader
+        title="알림 템플릿 관리"
+        description="시스템에서 발송되는 알림 템플릿을 관리합니다"
+      />
+      <div className="mt-6">
+        <NotificationTemplatesContent />
+      </div>
     </div>
   );
 }

@@ -9,10 +9,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  cacheDir: path.resolve(__dirname, '.vite-cache'),
-  optimizeDeps: {
-    force: true,
-  },
   server: {
     port: 3000,
     proxy: {

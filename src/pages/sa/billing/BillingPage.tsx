@@ -59,7 +59,8 @@ const billingStatusColors = {
   OVERDUE: 'bg-red-100 text-red-700',
 };
 
-export function BillingPage() {
+// 탭용 콘텐츠 컴포넌트 (TenantManagementPage에서 사용)
+export function BillingContent() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -75,17 +76,14 @@ export function BillingPage() {
   };
 
   return (
-    <div className="p-6">
-      <AdminPageHeader
-        title="구독 관리"
-        description="테넌트 구독 및 결제 현황을 관리합니다"
-        actions={
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            내보내기
-          </Button>
-        }
-      />
+    <div>
+      {/* 액션 버튼 */}
+      <div className="flex justify-end mb-6">
+        <Button variant="outline">
+          <Download className="mr-2 h-4 w-4" />
+          내보내기
+        </Button>
+      </div>
 
       {/* Stats */}
       <AdminStatsGrid columns={4} className="mb-6">
@@ -193,6 +191,21 @@ export function BillingPage() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// 기존 BillingPage - 호환성 유지용 (독립 페이지로 사용 시)
+export function BillingPage() {
+  return (
+    <div className="p-6">
+      <AdminPageHeader
+        title="구독 관리"
+        description="테넌트 구독 및 결제 현황을 관리합니다"
+      />
+      <div className="mt-6">
+        <BillingContent />
+      </div>
     </div>
   );
 }

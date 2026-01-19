@@ -1,18 +1,18 @@
 // Super Admin pages
 export { DashboardPage } from "./dashboard";
-export { TenantsPage, TenantDetailPage } from "./tenants";
+export { TenantsPage, TenantsContent, TenantDetailPage, TenantManagementPage } from "./tenants";
 
 // Billing
-export { BillingPage, TenantStatusPage } from "./billing";
+export { BillingPage, BillingContent, TenantStatusPage, TenantStatusContent } from "./billing";
 
 // System
-export { DomainSettingsPage, OperatorsPage, BrandingSettingsPage, EmailTemplatesPage } from "./system";
+export { DomainSettingsPage, OperatorsPage, BrandingSettingsPage } from "./system";
 
 // Notices
-export { NoticesPage, NoticeDistributionPage } from "./notices";
+export { NoticesPage } from "./notices";
 
 // Analytics
-export { UsagePage, ActivityPage, LogsPage } from "./analytics";
+export { AnalyticsPage } from "./analytics";
 
 // Settings
 export { SystemSettingsPage, TenantDefaultsPage } from "./settings";

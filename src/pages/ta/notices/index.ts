@@ -1,4 +1,5 @@
-export { TenantNoticesPage } from './TenantNoticesPage';
+export { TenantNoticesPage, NoticesContent } from './TenantNoticesPage';
 export { SystemNoticesPage } from './SystemNoticesPage';
 export { NoticeInboxPage } from './NoticeInboxPage';
-export { NoticeDistributionPage } from './NoticeDistributionPage';
+export { NoticeDistributionPage, DistributionContent } from './NoticeDistributionPage';
+export { NoticeAndNotificationPage } from './NoticeAndNotificationPage';
