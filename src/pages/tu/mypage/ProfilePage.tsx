@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield, Info, Building2, Briefcase } from 'lucide-react';
+import { User, Camera, Save, Loader2, Lock, Mail, Calendar, AlertTriangle, CheckCircle, Shield, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useThemeStore } from '@/store/common/themeStore';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
@@ -54,7 +54,7 @@ export function ProfilePage() {
   const withdrawMutation = useWithdraw();
 
   // Local State
-  const [profileData, setProfileData] = useState({ name: '', department: '', position: '' });
+  const [profileData, setProfileData] = useState({ name: '' });
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -73,8 +73,6 @@ export function ProfilePage() {
     if (profile) {
       setProfileData({
         name: profile.name,
-        department: profile.department || '',
-        position: profile.position || '',
       });
       if (profile.profileImageUrl) {
         const imageUrl = profile.profileImageUrl.startsWith('http')
@@ -143,8 +141,6 @@ export function ProfilePage() {
     try {
       await updateProfileMutation.mutateAsync({
         name: profileData.name,
-        department: profileData.department || undefined,
-        position: profileData.position || undefined,
       });
       toast.success('프로필 정보가 저장되었습니다.');
     } catch {
@@ -334,34 +330,6 @@ export function ProfilePage() {
                 onChange={(e) => setProfileData((prev) => ({ ...prev, name: e.target.value }))}
                 className={inputClass}
               />
-            </div>
-
-            {/* Department & Position */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-              <div>
-                <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <Building2 className="w-4 h-4" />
-                  부서
-                </Label>
-                <Input
-                  value={profileData.department}
-                  onChange={(e) => setProfileData((prev) => ({ ...prev, department: e.target.value }))}
-                  placeholder="예: 개발팀, 회계팀"
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <Label className={`flex items-center gap-2 mb-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <Briefcase className="w-4 h-4" />
-                  직급
-                </Label>
-                <Input
-                  value={profileData.position}
-                  onChange={(e) => setProfileData((prev) => ({ ...prev, position: e.target.value }))}
-                  placeholder="예: 대리, 과장, 팀장"
-                  className={inputClass}
-                />
-              </div>
             </div>
 
             {/* Email (Read-only) */}
