@@ -183,6 +183,30 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
   const totalSteps = 3;
 
+  // 완성도 체크: 작성완료 상태로 저장하려면 모든 필수 항목이 있어야 함
+  const isComplete =
+    !!formData.title?.trim() &&
+    !!formData.description?.trim() &&
+    !!formData.categoryId &&
+    formData.curriculumItems.length > 0;
+
+  // 누락된 필드 목록 반환
+  const getMissingFields = (): string[] => {
+    const missing: string[] = [];
+    if (!formData.title?.trim()) missing.push('강의명');
+    if (!formData.description?.trim()) missing.push('설명');
+    if (!formData.categoryId) missing.push('카테고리');
+    if (formData.curriculumItems.length === 0) missing.push('차시');
+    return missing;
+  };
+
+  // 완성도 미충족 시 자동으로 임시저장 선택
+  useEffect(() => {
+    if (!isComplete && !saveAsDraft) {
+      setSaveAsDraft(true);
+    }
+  }, [isComplete, saveAsDraft]);
+
   const getText = (key: TranslationKey) =>
     language === 'ko' ? translations[key].ko : translations[key].en;
 
@@ -704,16 +728,19 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
               {/* 작성완료 옵션 */}
               <label
-                className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                className={`flex items-start gap-3 p-4 rounded-lg border-2 transition-colors ${
+                  !isComplete ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                }`}
                 style={{
-                  borderColor: !saveAsDraft ? designTokens.badge.blue.text : designTokens.bg.border,
-                  backgroundColor: !saveAsDraft ? `${designTokens.badge.blue.bg}40` : 'transparent'
+                  borderColor: !saveAsDraft && isComplete ? designTokens.badge.blue.text : designTokens.bg.border,
+                  backgroundColor: !saveAsDraft && isComplete ? `${designTokens.badge.blue.bg}40` : 'transparent'
                 }}
-                onClick={() => setSaveAsDraft(false)}
+                onClick={() => isComplete && setSaveAsDraft(false)}
               >
                 <Checkbox
-                  checked={!saveAsDraft}
-                  onCheckedChange={(checked) => setSaveAsDraft(!checked)}
+                  checked={!saveAsDraft && isComplete}
+                  onCheckedChange={(checked) => isComplete && setSaveAsDraft(!checked)}
+                  disabled={!isComplete}
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -731,6 +758,11 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                   <p className="text-sm text-text-secondary">
                     작성을 완료하고 목록에 "작성완료" 상태로 표시됩니다.
                   </p>
+                  {!isComplete && (
+                    <p className="text-xs text-red-500 mt-1">
+                      작성완료하려면 다음 항목이 필요합니다: {getMissingFields().join(', ')}
+                    </p>
+                  )}
                 </div>
               </label>
             </div>
