@@ -36,6 +36,7 @@ type StatusFilter = EnrollmentStatus | 'all';
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',
+  ENROLLED: 'blue',
   REJECTED: 'red',
   CANCELLED: 'gray',
   COMPLETED: 'green',
@@ -44,6 +45,7 @@ const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' |
 const statusIcons: Record<EnrollmentStatus, React.ReactNode> = {
   PENDING: <AlertCircle className="w-4 h-4" />,
   APPROVED: <PlayCircle className="w-4 h-4" />,
+  ENROLLED: <PlayCircle className="w-4 h-4" />,
   REJECTED: <XCircle className="w-4 h-4" />,
   CANCELLED: <XCircle className="w-4 h-4" />,
   COMPLETED: <CheckCircle className="w-4 h-4" />,
@@ -80,6 +82,7 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
     APPROVED: t.learning.statusApproved,
+    ENROLLED: t.learning.statusApproved,
     REJECTED: t.learning.statusRejected,
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
@@ -158,6 +161,7 @@ export function MyLearningPage() {
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
     APPROVED: t.learning.statusApproved,
+    ENROLLED: t.learning.statusApproved,
     REJECTED: t.learning.statusRejected,
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,

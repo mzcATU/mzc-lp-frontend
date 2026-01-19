@@ -14,6 +14,7 @@ import {
   Folder,
   ChevronRight,
   Loader2,
+  X,
 } from 'lucide-react';
 import { useTranslation } from '@/store/common/languageStore';
 import { useThemeStore } from '@/store/common/themeStore';
@@ -38,6 +39,7 @@ interface CurriculumSidebarProps {
   progressRecords: ProgressRecordResponse[];
   onItemSelect: (itemId: number, contentId: number, contentType: PlayerContentType, externalUrl?: string | null, downloadable?: boolean | null) => void;
   demoItems?: DemoItem[];
+  onClose?: () => void;
 }
 
 // 콘텐츠 타입별 아이콘
@@ -214,6 +216,7 @@ export function CurriculumSidebar({
   progressRecords,
   onItemSelect,
   demoItems,
+  onClose,
 }: CurriculumSidebarProps) {
   const { t } = useTranslation();
   const { theme } = useThemeStore();
@@ -314,13 +317,28 @@ export function CurriculumSidebar({
   return (
     <div className={`h-full flex flex-col ${isDark ? 'bg-[#12121a]' : 'bg-white'}`}>
       {/* 헤더 */}
-      <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
-        <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          {t.player.curriculum}
-        </h3>
-        <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-          {completedCount} / {totalCount} {t.learning.completed}
-        </p>
+      <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-start justify-between gap-3`}>
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {t.player.curriculum}
+          </h3>
+          <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            {completedCount} / {totalCount} {t.learning.completed}
+          </p>
+        </div>
+        {/* 모바일 닫기 버튼 */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className={`md:hidden p-2 rounded-lg transition-colors ${
+              isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-500'
+            }`}
+            aria-label="커리큘럼 닫기"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* 아이템 목록 */}

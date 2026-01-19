@@ -36,6 +36,7 @@ type StatusFilter = EnrollmentStatus | 'all';
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',
+  ENROLLED: 'blue',
   REJECTED: 'red',
   CANCELLED: 'gray',
   COMPLETED: 'green',
@@ -44,6 +45,7 @@ const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' |
 const statusIcons: Record<EnrollmentStatus, React.ReactNode> = {
   PENDING: <AlertCircle className="w-4 h-4" />,
   APPROVED: <PlayCircle className="w-4 h-4" />,
+  ENROLLED: <PlayCircle className="w-4 h-4" />,
   REJECTED: <XCircle className="w-4 h-4" />,
   CANCELLED: <XCircle className="w-4 h-4" />,
   COMPLETED: <CheckCircle className="w-4 h-4" />,
@@ -80,6 +82,7 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
     APPROVED: t.learning.statusApproved,
+    ENROLLED: t.learning.statusApproved, // ENROLLED는 APPROVED와 동일하게 표시
     REJECTED: t.learning.statusRejected,
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
@@ -111,8 +114,8 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
           {enrollment.courseTimeName}
         </p>
 
-        {/* Progress Bar (only for APPROVED status) */}
-        {enrollment.status === 'APPROVED' && enrollment.progress !== undefined && (
+        {/* Progress Bar (only for APPROVED or ENROLLED status) */}
+        {(enrollment.status === 'APPROVED' || enrollment.status === 'ENROLLED') && enrollment.progress !== undefined && (
           <div className="mb-3">
             <div className={`flex items-center justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               <span>{t.learning.progress}</span>
@@ -128,8 +131,8 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
           <span>{formatDate(enrollment.startDate)} ~ {formatDate(enrollment.endDate)}</span>
         </div>
 
-        {/* Continue Learning Button (only for APPROVED) */}
-        {enrollment.status === 'APPROVED' && (
+        {/* Continue Learning Button (only for APPROVED or ENROLLED) */}
+        {(enrollment.status === 'APPROVED' || enrollment.status === 'ENROLLED') && (
           <Button
             variant="brand"
             className="w-full mt-4"
@@ -158,6 +161,7 @@ export function B2BMyLearningPage() {
   const statusLabels: Record<EnrollmentStatus, string> = {
     PENDING: t.learning.statusPending,
     APPROVED: t.learning.statusApproved,
+    ENROLLED: t.learning.statusApproved, // ENROLLED는 APPROVED와 동일하게 표시
     REJECTED: t.learning.statusRejected,
     CANCELLED: t.learning.statusCancelled,
     COMPLETED: t.learning.statusCompleted,
@@ -167,12 +171,12 @@ export function B2BMyLearningPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
-  // API 파라미터 - "수강 중인 강의" 페이지이므로 APPROVED 상태만 조회
+  // API 파라미터 - "수강 중인 강의" 페이지이므로 ENROLLED/APPROVED 상태 조회
   // 필터에서 다른 상태를 선택하면 해당 상태로 조회
   const params: EnrollmentFilterParams = {
     page,
     size: 12,
-    status: statusFilter !== 'all' ? statusFilter : 'APPROVED',
+    status: statusFilter !== 'all' ? statusFilter : 'ENROLLED',
   };
 
   const { data, isLoading, isError } = useMyEnrollments(params);
@@ -184,11 +188,11 @@ export function B2BMyLearningPage() {
   ) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
-    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
+    navigate(prefixPath(`/tu/b2b/mypage/learning/${enrollmentId}`));
   };
 
   const handleContinueLearning = (enrollmentId: number) => {
-    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}/player`));
+    navigate(prefixPath(`/tu/b2b/player/${enrollmentId}`));
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -259,7 +263,7 @@ export function B2BMyLearningPage() {
                   >
                     {t.landing.all}
                   </Button>
-                  {(['APPROVED', 'PENDING', 'COMPLETED', 'CANCELLED', 'REJECTED'] as EnrollmentStatus[]).map((status) => (
+                  {(['ENROLLED', 'APPROVED', 'PENDING', 'COMPLETED', 'CANCELLED', 'REJECTED'] as EnrollmentStatus[]).map((status) => (
                     <Button
                       key={status}
                       variant={statusFilter === status ? 'brand' : 'outline'}

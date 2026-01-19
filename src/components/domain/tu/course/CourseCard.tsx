@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Pencil } from 'lucide-react';
-import { Button, CategoryBadge } from '@/components/common';
+import { Button } from '@/components/common';
 import { useSubdomainPath } from '@/hooks/common';
 import type { Course } from '@/types';
+import type { CourseStatus } from '@/types/common/course.types';
+import { designTokens } from '@/styles/admin-design-tokens';
 
 export interface CourseCardLabels {
   students: string;
@@ -21,6 +23,8 @@ interface CourseCardProps {
   hideActions?: boolean;
   /** 커스텀 액션 버튼 영역 (hideActions와 함께 사용) */
   renderActions?: ReactNode;
+  /** 강의 상태 (DRAFT, READY, REGISTERED) */
+  courseStatus?: CourseStatus;
 }
 
 /**
@@ -29,9 +33,48 @@ interface CourseCardProps {
  * - 콘텐츠 완성도 진행 바
  * - 마지막 접근 시간, 관리/수정 버튼
  */
-export const CourseCard = ({ course, labels, onManage, onEdit, hideActions = false, renderActions }: Readonly<CourseCardProps>) => {
+export const CourseCard = ({ course, labels, onManage, onEdit, hideActions = false, renderActions, courseStatus }: Readonly<CourseCardProps>) => {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
+
+  // 상태별 배지 설정
+  const getStatusBadge = () => {
+    if (!courseStatus) return null;
+
+    const statusConfig = {
+      DRAFT: {
+        label: '작성중',
+        style: {
+          color: designTokens.badge.orange.text,
+          backgroundColor: designTokens.badge.orange.bg
+        }
+      },
+      READY: {
+        label: '작성완료',
+        style: {
+          color: designTokens.badge.blue.text,
+          backgroundColor: designTokens.badge.blue.bg
+        }
+      },
+      REGISTERED: {
+        label: '등록됨',
+        style: {
+          color: designTokens.badge.green.text,
+          backgroundColor: designTokens.badge.green.bg
+        }
+      },
+    };
+
+    const config = statusConfig[courseStatus];
+    return (
+      <span
+        className="px-2 py-1 text-xs rounded-md font-medium"
+        style={config.style}
+      >
+        {config.label}
+      </span>
+    );
+  };
 
   const handleManage = () => {
     if (onManage) {
@@ -54,17 +97,14 @@ export const CourseCard = ({ course, labels, onManage, onEdit, hideActions = fal
       {/* Thumbnail */}
       <div className="relative w-full h-44 overflow-hidden">
         <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-        <div className="absolute top-3 left-3">
-          <CategoryBadge category={course.category} />
+        <div className="absolute top-3 left-3 flex gap-2">
+          {getStatusBadge()}
         </div>
       </div>
 
       {/* Content */}
       <div className="p-5">
-        <h3 className="text-text-primary mb-2 text-base">{course.title}</h3>
-        <p className="text-text-secondary text-sm mb-4">
-          {labels.students}: {course.students}명
-        </p>
+        <h3 className="text-text-primary mb-4 text-base">{course.title}</h3>
 
         {/* Progress Bar */}
         <div className="mb-4">

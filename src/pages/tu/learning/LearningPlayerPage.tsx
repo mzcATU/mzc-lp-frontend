@@ -101,7 +101,7 @@ export function LearningPlayerPage() {
   const [currentDownloadable, setCurrentDownloadable] = useState<boolean>(true);
   const [playedPercent, setPlayedPercent] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [showDemoBanner, setShowDemoBanner] = useState(true);
 
   // Refs
@@ -399,6 +399,11 @@ export function LearningPlayerPage() {
     setPlayedPercent(0);
     setIsCompleted(progressRecords.some((r) => r.itemId === itemId && r.completed));
 
+    // 모바일에서 커리큘럼 선택 시 사이드바 닫기
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+
     // URL 업데이트
     const basePath = isDemoMode ? '/tu/b2c/mypage/learning/demo/player' : `/tu/b2c/mypage/learning/${enrollmentId}/player`;
     navigate(prefixPath(`${basePath}/${itemId}`), { replace: true });
@@ -511,7 +516,7 @@ export function LearningPlayerPage() {
       </header>
 
       {/* 메인 콘텐츠 */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div className="flex flex-1 overflow-hidden min-h-0 relative">
         {/* 플레이어 영역 */}
         <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
           {/* 플레이어 컨테이너 */}
@@ -578,22 +583,36 @@ export function LearningPlayerPage() {
           </div>
         </main>
 
-        {/* 사이드바 - 토글 가능 */}
+        {/* 사이드바 - 데스크톱에서는 사이드바, 모바일에서는 오버레이 */}
         <aside
-          className={`shrink-0 border-l transition-all duration-300 overflow-hidden ${
-            sidebarOpen ? 'w-80' : 'w-0'
-          } ${isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-gray-200'}`}
+          className={`shrink-0 border-l transition-all duration-300 overflow-hidden
+            md:relative md:block
+            ${sidebarOpen ? 'md:w-80' : 'md:w-0'}
+            ${sidebarOpen ? 'fixed inset-0 z-50 w-full md:relative md:inset-auto md:z-auto md:w-80' : 'hidden md:block'}
+            ${isDark ? 'bg-[#12121a] border-white/10' : 'bg-white border-gray-200'}`}
         >
-          <div className="w-80 h-full">
+          <div className="w-full md:w-80 h-full">
             <CurriculumSidebar
               snapshotId={snapshotId}
               currentItemId={currentItemId}
               progressRecords={progressRecords}
               onItemSelect={handleItemSelect}
               demoItems={isDemoMode ? demoCurriculumItems : undefined}
+              onClose={() => setSidebarOpen(false)}
             />
           </div>
         </aside>
+
+        {/* 모바일 오버레이 배경 */}
+        {sidebarOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 bg-black/50 z-40 md:hidden cursor-default"
+            onClick={() => setSidebarOpen(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setSidebarOpen(false)}
+            aria-label="커리큘럼 닫기"
+          />
+        )}
       </div>
 
       {/* 하단 컨트롤 바 - 전체 너비 */}

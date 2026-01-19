@@ -3,8 +3,8 @@
  */
 
 export const translations = {
-  title: { ko: '강의 디자인', en: 'Course Design' },
-  editTitle: { ko: '강의 수정', en: 'Edit Course' },
+  title: { ko: '과정 설계', en: 'Course Design' },
+  editTitle: { ko: '과정 수정', en: 'Edit Course' },
   editSubmit: { ko: '수정 완료', en: 'Save Changes' },
   loadTemplate: { ko: '템플릿 불러오기', en: 'Load Template' },
   close: { ko: '닫기', en: 'Close' },
@@ -51,8 +51,8 @@ export const translations = {
   externalLink: { ko: '외부 링크', en: 'External Link' },
   loadExisting: { ko: '기존 콘텐츠 불러오기', en: 'Load Existing Content' },
   deleteLesson: { ko: '차시 삭제', en: 'Delete Lesson' },
-  reviewTitle: { ko: '강의 정보 검토', en: 'Review Course Information' },
-  reviewDesc: { ko: '등록할 강의 정보를 확인하세요. 수정이 필요하면 각 섹션의 수정 버튼을 눌러주세요.', en: 'Please review your course information. Click edit to modify each section.' },
+  reviewTitle: { ko: '과정 설계 검토', en: 'Review Course Design' },
+  reviewDesc: { ko: '설계한 과정 정보를 확인하세요. 수정이 필요하면 각 섹션의 수정 버튼을 눌러주세요.', en: 'Please review your course design. Click edit to modify each section.' },
   edit: { ko: '수정', en: 'Edit' },
   basicInfo: { ko: '기본 정보', en: 'Basic Information' },
   tags: { ko: '태그', en: 'Tags' },

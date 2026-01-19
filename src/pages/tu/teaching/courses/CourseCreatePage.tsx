@@ -10,9 +10,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
-import { ArrowLeft, ArrowRight, Save, FileText, Loader2, CheckCircle, Upload } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button } from '@/components/common';
+import { Button, Checkbox } from '@/components/common';
+import { designTokens } from '@/styles/admin-design-tokens';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/common/Dialog';
 import { courseService, categoryService } from '@/services/common';
 import type { CourseFormData } from '@/types';
 import type { CategoryResponse, CreateCourseRequest } from '@/types/common';
@@ -105,12 +114,13 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [courseId, setCourseId] = useState<number | null>(
     courseIdParam ? Number(courseIdParam) : null
   );
   const [courseStatus, setCourseStatus] = useState<'DRAFT' | 'READY' | 'REGISTERED'>('DRAFT');
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveAsDraft, setSaveAsDraft] = useState(false);
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
@@ -205,69 +215,46 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
   const handleGoToStep = (step: number) => setCurrentStep(step);
   const handleClose = () => navigate(prefixPath('/tu/teaching/courses'));
 
-  const handleSaveDraft = async () => {
+  // 저장 버튼 클릭 시 모달 열기
+  const handleSaveClick = () => {
     if (!formData.title) {
       alert('강의명을 입력해주세요.');
       return;
     }
+    setSaveAsDraft(false); // 기본값: 작성완료
+    setSaveDialogOpen(true);
+  };
 
+  // 실제 저장 처리
+  const handleSaveConfirm = async () => {
     setIsSaving(true);
+    setSaveDialogOpen(false);
+
     try {
-      const request: CreateCourseRequest = {
-        title: formData.title,
-        description: formData.description || undefined,
-        thumbnailUrl: formData.thumbnailUrl || undefined,
-        level: formData.level || undefined,
-        type: formData.type || undefined,
-        categoryId: formData.categoryId ?? undefined,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
-        tags: formData.tags.length > 0 ? formData.tags : undefined,
-      };
+      const targetCourseId = await saveCourse();
+      if (!targetCourseId) throw new Error('저장 실패');
 
-      let targetCourseId = courseId;
+      // 저장 성공 후 최신 데이터 재조회하여 동기화
+      const hierarchyData = await courseService.getItemsHierarchy(targetCourseId);
+      const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
+      setFormData((prev) => ({
+        ...prev,
+        curriculumItems,
+        lastSaved: new Date().toISOString(),
+      }));
 
-      if (courseId) {
-        // 기존 강의 수정
-        await courseService.update(courseId, request);
-
-        // 신규 항목만 추가 (기존 항목은 유지)
-        if (formData.curriculumItems.length > 0) {
-          await createCurriculumItemsRecursively(courseId, formData.curriculumItems, null);
-        }
+      if (saveAsDraft) {
+        // 임시저장 (DRAFT 상태 유지)
+        setCourseStatus('DRAFT');
+        alert('임시저장되었습니다.');
+        navigate(prefixPath('/tu/teaching/courses'));
       } else {
-        // 새 강의 생성
-        const response = await courseService.create(request);
-        targetCourseId = response.courseId;
-        setCourseId(response.courseId);
-        // URL 업데이트 (뒤로가기 시에도 courseId 유지)
-        navigate(prefixPath(`/tu/teaching/courses/create?courseId=${response.courseId}`), { replace: true });
-
-        // 회차/콘텐츠 생성 (모두 신규)
-        if (formData.curriculumItems.length > 0) {
-          await createCurriculumItemsRecursively(response.courseId, formData.curriculumItems, null);
-        }
+        // 작성완료 (DRAFT → READY)
+        await courseService.ready(targetCourseId);
+        setCourseStatus('READY');
+        alert('저장되었습니다.');
+        navigate(prefixPath('/tu/teaching/courses'));
       }
-
-      // 저장 후 최신 회차 계층구조 다시 로드하여 ID 동기화
-      if (targetCourseId) {
-        const hierarchyData = await courseService.getItemsHierarchy(targetCourseId);
-        const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
-        setFormData((prev) => ({
-          ...prev,
-          curriculumItems,
-          isDraft: true,
-          lastSaved: new Date().toISOString(),
-        }));
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          isDraft: true,
-          lastSaved: new Date().toISOString(),
-        }));
-      }
-
-      alert('저장되었습니다.');
     } catch (error) {
       console.error('저장 실패:', error);
       alert('저장에 실패했습니다. 다시 시도해주세요.');
@@ -319,45 +306,6 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
     return targetCourseId;
   };
 
-  /**
-   * 작성완료 (DRAFT → READY)
-   * 완성 요건 충족 + 임시저장 마크 불필요, 추후 리스트에서 등록 가능
-   */
-  const handleComplete = async () => {
-    if (!formData.title) {
-      alert('강의명을 입력해주세요.');
-      return;
-    }
-
-    if (!confirm(getText('completeConfirm'))) return;
-
-    setIsCompleting(true);
-    try {
-      const targetCourseId = await saveCourse();
-      if (!targetCourseId) throw new Error('저장 실패');
-
-      // 저장 성공 후 최신 데이터 재조회하여 동기화
-      const hierarchyData = await courseService.getItemsHierarchy(targetCourseId);
-      const curriculumItems = convertHierarchyToCurriculumItems(hierarchyData);
-      setFormData((prev) => ({
-        ...prev,
-        curriculumItems,
-        lastSaved: new Date().toISOString(),
-      }));
-
-      // 작성완료 API 호출 (DRAFT → READY)
-      await courseService.ready(targetCourseId);
-      setCourseStatus('READY');
-
-      alert(getText('completeSuccess'));
-      navigate(prefixPath('/tu/teaching/courses'));
-    } catch (error) {
-      console.error('작성완료 실패:', error);
-      alert(getText('completeError'));
-    } finally {
-      setIsCompleting(false);
-    }
-  };
 
   /**
    * 등록 (DRAFT → READY → REGISTERED 또는 READY → REGISTERED)
@@ -492,27 +440,31 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
 
       {/* Progress Steps */}
       <div className="bg-bg-app border-b border-border px-6 py-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-2">
+        <div className="max-w-5xl mx-auto flex justify-center">
+          <div className="flex items-center gap-2 max-w-2xl w-full">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex-1 flex items-center gap-2">
-                <div
+                <button
+                  type="button"
+                  onClick={() => handleGoToStep(step)}
                   className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm',
-                    currentStep >= step ? 'bg-btn-brand text-white' : 'bg-border text-text-secondary'
+                    'w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm cursor-pointer transition-colors',
+                    currentStep >= step ? 'bg-btn-brand text-white hover:opacity-90' : 'bg-border text-text-secondary hover:bg-border-hover'
                   )}
                 >
                   {step}
-                </div>
-                <span
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleGoToStep(step)}
                   className={cn(
-                    'text-sm',
+                    'text-sm cursor-pointer hover:underline',
                     currentStep >= step ? 'text-text-primary' : 'text-text-secondary',
                     currentStep === step && 'font-medium'
                   )}
                 >
                   {stepLabels[step - 1]}
-                </span>
+                </button>
                 {step < 3 && (
                   <div
                     className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-brand' : 'bg-border')}
@@ -567,18 +519,38 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                 {getText('previous')}
               </Button>
             )}
-            <Button
-              variant="ghost"
-              onClick={handleSaveDraft}
-              disabled={isSaving}
-              className="border border-border"
-            >
-              {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              {isSaving ? '저장 중...' : getText('saveDraft')}
-            </Button>
           </div>
 
           <div className="flex gap-3">
+            {/* 저장 버튼 - 모든 스텝에서 표시 */}
+            {(courseStatus === 'DRAFT' || courseStatus === 'READY') && (
+              <Button
+                variant="ghost"
+                onClick={handleSaveClick}
+                disabled={isSaving || isRegistering || !formData.title || !formData.categoryId}
+                className="border border-border"
+                title={
+                  !formData.title
+                    ? '강의명을 입력해주세요'
+                    : !formData.categoryId
+                      ? '카테고리를 선택해주세요'
+                      : undefined
+                }
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    저장 중...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    저장
+                  </>
+                )}
+              </Button>
+            )}
+
             {currentStep < totalSteps ? (
               <Button onClick={handleNext}>
                 {getText('next')}
@@ -586,48 +558,11 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
               </Button>
             ) : (
               <>
-                {/* DRAFT, READY 상태: 작성완료 버튼 (수정 후 작성완료 재확인 가능) */}
-                {(courseStatus === 'DRAFT' || courseStatus === 'READY') && (
-                  <Button
-                    variant="ghost"
-                    onClick={handleComplete}
-                    disabled={
-                      isCompleting ||
-                      isRegistering ||
-                      !formData.title ||
-                      !formData.categoryId ||
-                      formData.curriculumItems.length === 0
-                    }
-                    className="border border-border"
-                    title={
-                      !formData.title
-                        ? '강의명을 입력해주세요'
-                        : !formData.categoryId
-                          ? '카테고리를 선택해주세요'
-                          : formData.curriculumItems.length === 0
-                            ? '최소 1개의 차시가 필요합니다'
-                            : undefined
-                    }
-                  >
-                    {isCompleting ? (
-                      <>
-                        <Loader2 size={18} className="animate-spin" />
-                        {getText('completing')}
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={18} />
-                        {getText('completeWriting')}
-                      </>
-                    )}
-                  </Button>
-                )}
-
                 {/* 등록 버튼 (DRAFT → REGISTERED 또는 READY → REGISTERED) */}
                 <Button
                   onClick={handleRegister}
                   disabled={
-                    isCompleting ||
+                    isSaving ||
                     isRegistering ||
                     !formData.title ||
                     !formData.categoryId ||
@@ -650,7 +585,7 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
                     </>
                   ) : (
                     <>
-                      <Upload size={18} />
+                      <FileText size={18} />
                       {getText('register')}
                     </>
                   )}
@@ -659,6 +594,90 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
             )}
           </div>
         </div>
+
+        {/* 저장 모달 */}
+        <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>저장</DialogTitle>
+              <DialogDescription>
+                과정을 어떤 상태로 저장하시겠습니까?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-3">
+              {/* 임시저장 옵션 */}
+              <label
+                className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                style={{
+                  borderColor: saveAsDraft ? designTokens.badge.orange.text : designTokens.bg.border,
+                  backgroundColor: saveAsDraft ? `${designTokens.badge.orange.bg}40` : 'transparent'
+                }}
+              >
+                <Checkbox
+                  checked={saveAsDraft}
+                  onCheckedChange={(checked) => setSaveAsDraft(!!checked)}
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-medium">임시저장</p>
+                    <span
+                      className="px-2 py-0.5 text-xs rounded-md font-medium"
+                      style={{
+                        color: designTokens.badge.orange.text,
+                        backgroundColor: designTokens.badge.orange.bg
+                      }}
+                    >
+                      작성중
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-secondary">
+                    나중에 계속 수정할 수 있으며, 목록에 "작성중" 상태로 표시됩니다.
+                  </p>
+                </div>
+              </label>
+
+              {/* 작성완료 옵션 */}
+              <label
+                className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                style={{
+                  borderColor: !saveAsDraft ? designTokens.badge.blue.text : designTokens.bg.border,
+                  backgroundColor: !saveAsDraft ? `${designTokens.badge.blue.bg}40` : 'transparent'
+                }}
+                onClick={() => setSaveAsDraft(false)}
+              >
+                <Checkbox
+                  checked={!saveAsDraft}
+                  onCheckedChange={(checked) => setSaveAsDraft(!checked)}
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-medium">작성완료</p>
+                    <span
+                      className="px-2 py-0.5 text-xs rounded-md font-medium"
+                      style={{
+                        color: designTokens.badge.blue.text,
+                        backgroundColor: designTokens.badge.blue.bg
+                      }}
+                    >
+                      작성완료
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-secondary">
+                    작성을 완료하고 목록에 "작성완료" 상태로 표시됩니다.
+                  </p>
+                </div>
+              </label>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setSaveDialogOpen(false)}>
+                취소
+              </Button>
+              <Button onClick={handleSaveConfirm}>
+                저장
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

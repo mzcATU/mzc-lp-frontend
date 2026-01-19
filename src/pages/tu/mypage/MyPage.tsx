@@ -27,6 +27,7 @@ import { getLoginPath } from '@/utils/tenantUtils';
 const statusLabels: Record<EnrollmentStatus, string> = {
   PENDING: '승인 대기',
   APPROVED: '수강 중',
+  ENROLLED: '수강 중',
   REJECTED: '반려됨',
   CANCELLED: '취소됨',
   COMPLETED: '완료',
@@ -35,6 +36,7 @@ const statusLabels: Record<EnrollmentStatus, string> = {
 const statusColors: Record<EnrollmentStatus, 'blue' | 'green' | 'red' | 'gray' | 'orange'> = {
   PENDING: 'orange',
   APPROVED: 'blue',
+  ENROLLED: 'blue',
   REJECTED: 'red',
   CANCELLED: 'gray',
   COMPLETED: 'green',

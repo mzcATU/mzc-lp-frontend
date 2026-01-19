@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
-import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit, AlertTriangle } from 'lucide-react';
+import { BookOpen, Users, TrendingUp, Award, Plus, Filter, Loader2, AlertCircle, Send, CheckSquare, Square, Edit } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button, IconStatCard } from '@/components/common';
 import { CourseCard } from '@/components/domain/tu/course';
 import { useMyCourses, useApplyProgramsBulk, toCourseForApplication } from '@/hooks/tu';
-import { courseService } from '@/services/common/courseService';
+import { courseService, categoryService } from '@/services/common';
 import type { Course } from '@/types';
 import type { CourseResponse, CourseStatus } from '@/types/common/course.types';
+import type { CategoryResponse } from '@/types/common';
 
 /** 과정 상태 필터 타입 */
 type StatusFilter = 'all' | 'draft' | 'ready' | 'registered';
@@ -20,7 +21,15 @@ interface MyCoursesPageProps {
 const DEFAULT_THUMBNAIL = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop';
 
 /** CourseResponse를 UI용 Course 타입으로 변환 */
-function mapCourseResponseToCourse(response: CourseResponse): Course & { isComplete: boolean; courseStatus: CourseStatus } {
+function mapCourseResponseToCourse(
+  response: CourseResponse,
+  categories: CategoryResponse[]
+): Course & { isComplete: boolean; courseStatus: CourseStatus } {
+  // categoryId로 카테고리 이름 찾기
+  const categoryName = response.categoryId
+    ? categories.find((cat) => cat.id === response.categoryId)?.name || '미분류'
+    : '미분류';
+
   return {
     id: String(response.courseId),
     title: response.title,
@@ -29,7 +38,7 @@ function mapCourseResponseToCourse(response: CourseResponse): Course & { isCompl
     totalLessons: response.itemCount,
     completedLessons: response.itemCount,
     thumbnail: response.thumbnailUrl || DEFAULT_THUMBNAIL,
-    category: response.tags?.[0] || '미분류',
+    category: categoryName,
     students: 0,
     lastAccessed: new Date(response.updatedAt).toLocaleDateString('ko-KR'),
     status: response.status === 'REGISTERED' ? 'active' : 'draft',
@@ -39,9 +48,9 @@ function mapCourseResponseToCourse(response: CourseResponse): Course & { isCompl
 }
 
 const t = {
-  title: { ko: '강의 디자인', en: 'Course Design' },
-  subtitle: { ko: '개설한 강의를 관리하고 수강생을 확인하세요', en: 'Manage your courses and track student progress' },
-  createCourse: { ko: '강의 생성', en: 'Create Course' },
+  title: { ko: '과정 설계', en: 'Course Design' },
+  subtitle: { ko: '과정을 설계하고 관리하세요', en: 'Design and manage your courses' },
+  createCourse: { ko: '과정 생성', en: 'Create Course' },
   all: { ko: '전체', en: 'All' },
   draft: { ko: '작성중', en: 'Draft' },
   ready: { ko: '작성완료', en: 'Ready' },
@@ -82,10 +91,24 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'students' | 'title'>('recent');
   const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
 
   // API 연동
   const { data: coursesData, isLoading, error, refetch } = useMyCourses();
   const applyProgramsBulkMutation = useApplyProgramsBulk();
+
+  // 카테고리 목록 조회
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -194,7 +217,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   const courseResponses = coursesData?.content || [];
 
   // API 응답을 UI용 Course 타입으로 변환
-  const courses = courseResponses.map(mapCourseResponseToCourse);
+  const courses = courseResponses.map((response) => mapCourseResponseToCourse(response, categories));
 
   const filteredCourses = courses.filter((course) => {
     if (filterStatus === 'all') return true;
@@ -319,14 +342,6 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
 
           return (
             <div key={course.id} className="relative">
-              {/* Status Badge - 썸네일 우측 하단 */}
-              {course.courseStatus === 'DRAFT' && (
-                <div className="absolute top-[10rem] left-3 z-10 px-2 py-1 rounded-md bg-status-warning text-white text-xs font-medium flex items-center gap-1 shadow-sm">
-                  <AlertTriangle size={12} />
-                  {getText('draft')}
-                </div>
-              )}
-
               {/* Checkbox */}
               <button
                 onClick={() => toggleSelect(course.id)}
@@ -347,6 +362,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
               )}>
                 <CourseCard
                   course={course}
+                  courseStatus={course.courseStatus}
                   labels={{
                     students: getText('students'),
                     courseCompletion: getText('courseCompletion'),

@@ -1,7 +1,7 @@
 import { useState, useEffect, ComponentType } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
-import { Bell, CheckCheck, Trash2, Settings, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight, Zap } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Heart, MessageSquare, BookOpen, Megaphone, Loader2, FileText, AlertCircle, ChevronRight, Zap } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingFooter } from '@/components/landing/LandingFooter';
@@ -23,9 +23,9 @@ const notificationTypes: { id: NotificationType | 'all'; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: 'COMMENT', label: '댓글' },
   { id: 'LIKE', label: '좋아요' },
-  { id: 'COURSE', label: '강의' },
-  { id: 'NOTICE', label: '공지사항' },
-  { id: 'SYSTEM', label: '시스템' },
+  { id: 'COURSE', label: '내 학습' },
+  { id: 'NOTICE', label: '공지' },
+  { id: 'SYSTEM', label: '중요 알림' },
   { id: 'ASSIGNMENT', label: '과제' },
 ];
 
@@ -260,13 +260,6 @@ export function NotificationsPage({
               {unreadCount > 0 ? `읽지 않은 알림 ${unreadCount}개` : '모든 알림을 확인했습니다'}
             </p>
           </div>
-          <button className={`p-2 rounded-lg transition-colors ${
-            isDark
-              ? 'text-gray-400 hover:text-white hover:bg-white/10'
-              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-          }`}>
-            <Settings className="w-6 h-6" />
-          </button>
         </div>
 
         {/* Filter Tabs */}
