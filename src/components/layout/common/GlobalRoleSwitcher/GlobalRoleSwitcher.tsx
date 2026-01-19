@@ -100,10 +100,8 @@ export function GlobalRoleSwitcher({
     if (rolesToCheck.includes('USER')) {
       roles.push('USER');
     }
-    if (rolesToCheck.includes('DESIGNER')) {
-      roles.push('DS');
-    }
-    if (rolesToCheck.includes('INSTRUCTOR')) {
+    // DESIGNER와 INSTRUCTOR를 하나의 TU로 통합
+    if (rolesToCheck.includes('DESIGNER') || rolesToCheck.includes('INSTRUCTOR')) {
       roles.push('TU');
     }
     if (rolesToCheck.includes('OPERATOR')) {
@@ -132,7 +130,18 @@ export function GlobalRoleSwitcher({
     setIsLoading(true);
     try {
       // 역할 전환 API 호출
-      const targetRole = globalRoleToTenantRole[role];
+      // TU 선택 시: INSTRUCTOR 우선, 없으면 DESIGNER
+      const rolesToCheck = userRoles && userRoles.length > 0
+        ? userRoles
+        : (userRole ? [userRole] : []);
+
+      let targetRole: TenantRole;
+      if (role === 'TU') {
+        targetRole = rolesToCheck.includes('INSTRUCTOR') ? 'INSTRUCTOR' : 'DESIGNER';
+      } else {
+        targetRole = globalRoleToTenantRole[role];
+      }
+
       const response = await authService.switchRole({ targetRole });
 
       // 새 토큰 저장

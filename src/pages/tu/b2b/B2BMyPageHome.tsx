@@ -16,6 +16,7 @@ import {
   Globe,
   Loader2,
   Camera,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/common/auth';
@@ -278,7 +279,7 @@ export function B2BMyPageHome() {
               {/* 프로필 수정 버튼 */}
               <Button
                 variant="outline"
-                onClick={() => navigate(prefixPath('/tu/b2c/mypage/profile'))}
+                onClick={() => navigate(prefixPath('/tu/b2b/mypage/profile'))}
                 className={isDark ? 'border-white/30 text-white bg-white/10 hover:bg-white/20' : ''}
               >
                 {t.mypage.editProfile}
@@ -286,6 +287,41 @@ export function B2BMyPageHome() {
             </div>
           </div>
         </section>
+
+        {/* 부서/직급 미입력 안내 배너 */}
+        {profile && (!profile.department || !profile.position) && (
+          <section className="mb-8">
+            <button
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/profile'))}
+              className={`w-full p-4 rounded-xl flex items-center gap-4 transition-all hover:scale-[1.01] ${
+                isDark
+                  ? 'bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20'
+                  : 'bg-amber-50 border border-amber-200 hover:bg-amber-100'
+              }`}
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  isDark ? 'bg-amber-500/20' : 'bg-amber-100'
+                }`}
+              >
+                <AlertTriangle className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+              </div>
+              <div className="flex-1 text-left">
+                <p className={`font-medium ${isDark ? 'text-amber-300' : 'text-amber-800'}`}>
+                  {language === 'ko'
+                    ? '부서와 직급 정보를 입력해 주세요'
+                    : 'Please enter your department and position'}
+                </p>
+                <p className={`text-sm ${isDark ? 'text-amber-400/70' : 'text-amber-600'}`}>
+                  {language === 'ko'
+                    ? '프로필 정보를 완성하면 더 나은 학습 경험을 제공받을 수 있습니다.'
+                    : 'Complete your profile for a better learning experience.'}
+                </p>
+              </div>
+              <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+            </button>
+          </section>
+        )}
 
         {/* 학습 통계 */}
         <section className="mb-8">

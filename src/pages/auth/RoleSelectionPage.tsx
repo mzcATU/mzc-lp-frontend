@@ -12,8 +12,8 @@ interface CardData {
   image: string;
   icon: React.ReactNode;
   themeColor: 'blue' | 'purple' | 'green' | 'orange';
-  delay: number;
-  path: string;
+  path?: string; // 단일 경로 (옵셔널)
+  getPath?: (userRoles: string[]) => string; // 역할 기반 경로 결정 함수
   roles: string[]; // 이 카드를 표시할 역할들
 }
 
@@ -26,7 +26,6 @@ const ALL_CARD_DATA: CardData[] = [
     image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <GraduationCap size={32} className="text-blue-400" />,
     themeColor: 'blue',
-    delay: 0.3,
     path: '/tu/b2c',
     roles: ['USER'],
   },
@@ -37,9 +36,20 @@ const ALL_CARD_DATA: CardData[] = [
     image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <Shield size={32} className="text-purple-400" />,
     themeColor: 'purple',
-    delay: 0.35,
-    path: '/ta/dashboard',
-    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'OPERATOR', 'INSTRUCTOR', 'DESIGNER'],
+    getPath: (userRoles: string[]) => {
+      // 역할 우선순위: TENANT_ADMIN > OPERATOR > INSTRUCTOR/DESIGNER
+      if (userRoles.includes('TENANT_ADMIN') || userRoles.includes('SYSTEM_ADMIN')) {
+        return '/ta/dashboard';
+      }
+      if (userRoles.includes('OPERATOR')) {
+        return '/co/dashboard';
+      }
+      if (userRoles.includes('INSTRUCTOR') || userRoles.includes('DESIGNER')) {
+        return '/tu/dashboard';
+      }
+      return '/ta/dashboard'; // 기본값
+    },
+    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'OPERATOR', 'DESIGNER', 'INSTRUCTOR'],
   },
 ];
 
@@ -150,7 +160,11 @@ export function RoleSelectionPage() {
   }, [user?.roles]);
 
   const handleSelect = (card: CardData) => {
-    navigate(prefixPath(card.path));
+    const userRoles = user?.roles || [];
+    const targetPath = card.getPath
+      ? card.getPath(Array.from(userRoles))
+      : card.path || '/';
+    navigate(prefixPath(targetPath));
   };
 
   const userName = user?.name || '사용자';
