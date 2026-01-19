@@ -233,11 +233,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
     return 0;
   });
 
-  const totalStudents = courses.reduce((acc, c) => acc + (c.students || 0), 0);
   const registeredCount = courses.filter((c) => c.courseStatus === 'REGISTERED').length;
-  const avgCompletion = courses.length > 0
-    ? Math.round(courses.reduce((acc, c) => acc + c.progress, 0) / courses.length)
-    : 0;
 
   const isApplying = applyProgramsBulkMutation.isPending;
 
