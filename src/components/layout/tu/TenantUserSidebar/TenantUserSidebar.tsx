@@ -59,10 +59,10 @@ export function TenantUserSidebar(props: TenantUserSidebarProps) {
     const rolesToCheck: TenantRole[] = (userRoles && userRoles.length > 0) ? [...userRoles] : [];
     if (rolesToCheck.length > 0) {
       menuData = menuData
-        .filter((item) => !item.roles || item.roles.some((role) => rolesToCheck.includes(role as TenantRole)))
+        .filter((item) => !item.roles || item.roles.some((role) => (rolesToCheck as string[]).includes(role)))
         .map((item) => ({
           ...item,
-          subItems: item.subItems?.filter((sub) => !sub.roles || sub.roles.some((role) => rolesToCheck.includes(role as TenantRole))),
+          subItems: item.subItems?.filter((sub) => !sub.roles || sub.roles.some((role) => (rolesToCheck as string[]).includes(role))),
         }));
     }
 
