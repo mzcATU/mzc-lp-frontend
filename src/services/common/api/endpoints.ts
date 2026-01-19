@@ -313,9 +313,11 @@ export const API_ENDPOINTS = {
   // Analytics (TA, SA)
   ANALYTICS: {
     // TA용 (테넌트 단위)
+    TA_BASE: '/admin/analytics',
     TA_LOGS: '/admin/analytics/logs',
     TA_STATS: '/admin/analytics/stats',
     TA_RECENT: '/admin/analytics/recent',
+    TA_TYPES: '/admin/analytics/types',
     // SA용 (전체 시스템)
     SA_LOGS: '/sa/analytics/logs',
     SA_STATS: '/sa/analytics/stats',

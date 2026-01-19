@@ -11,32 +11,35 @@ interface CardData {
   description: string;
   image: string;
   icon: React.ReactNode;
-  themeColor: 'blue' | 'purple';
+  themeColor: 'blue' | 'purple' | 'green' | 'orange';
+  delay: number;
   path: string;
   roles: string[]; // 이 카드를 표시할 역할들
 }
 
-// 학습자 모드 / 관리자 모드 2개 카드
+// 전체 카드 설정 데이터 (학습자 / 관리자 2개로 구분)
 const ALL_CARD_DATA: CardData[] = [
   {
-    id: 'learner',
+    id: 'user',
     title: '학습자 모드',
     description: '교육 프로그램에 참여하고, 나의 학습 현황을 확인하세요.',
     image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <GraduationCap size={32} className="text-blue-400" />,
     themeColor: 'blue',
+    delay: 0.3,
     path: '/tu/b2c',
     roles: ['USER'],
   },
   {
     id: 'admin',
     title: '관리자 모드',
-    description: '테넌트 설정, 사용자 관리, 콘텐츠 운영 기능을 사용하세요.',
+    description: '교육 과정 운영, 강의 제작, 사용자 관리 등 관리 기능을 사용하세요.',
     image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
     icon: <Shield size={32} className="text-purple-400" />,
     themeColor: 'purple',
+    delay: 0.35,
     path: '/ta/dashboard',
-    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'OPERATOR', 'DESIGNER', 'INSTRUCTOR'],
+    roles: ['TENANT_ADMIN', 'SYSTEM_ADMIN', 'OPERATOR', 'INSTRUCTOR', 'DESIGNER'],
   },
 ];
 
@@ -48,7 +51,7 @@ interface SelectionCardProps {
   icon: React.ReactNode;
   onClick: () => void;
   delay: number;
-  themeColor: 'blue' | 'purple';
+  themeColor: 'blue' | 'purple' | 'green' | 'orange';
 }
 
 function SelectionCard({
@@ -63,11 +66,15 @@ function SelectionCard({
   const accentClasses = {
     blue: 'group-hover:shadow-blue-500/20 group-hover:border-blue-500/50',
     purple: 'group-hover:shadow-purple-500/20 group-hover:border-purple-500/50',
+    green: 'group-hover:shadow-green-500/20 group-hover:border-green-500/50',
+    orange: 'group-hover:shadow-orange-500/20 group-hover:border-orange-500/50',
   }[themeColor];
 
   const buttonClasses = {
     blue: 'bg-blue-600 hover:bg-blue-500',
     purple: 'bg-purple-600 hover:bg-purple-500',
+    green: 'bg-green-600 hover:bg-green-500',
+    orange: 'bg-orange-600 hover:bg-orange-500',
   }[themeColor];
 
   return (
@@ -186,7 +193,7 @@ export function RoleSelectionPage() {
         </motion.p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 w-full max-w-4xl z-10">
+      <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl z-10">
         {availableCards.map((card, index) => (
           <SelectionCard
             key={card.id}
@@ -195,7 +202,7 @@ export function RoleSelectionPage() {
             image={card.image}
             icon={card.icon}
             onClick={() => handleSelect(card)}
-            delay={0.3 + index * 0.15}
+            delay={0.3 + index * 0.1}
             themeColor={card.themeColor}
           />
         ))}

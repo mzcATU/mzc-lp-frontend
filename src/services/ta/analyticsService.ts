@@ -90,6 +90,23 @@ export interface ActivityLogsParams {
   size?: number;
 }
 
+// 검색 파라미터
+export interface ActivityLogSearchParams {
+  userId?: number;
+  type?: ActivityType;
+  startDate?: string;
+  endDate?: string;
+  keyword?: string;
+  page?: number;
+  size?: number;
+}
+
+// 활동 유형 정보
+export interface ActivityTypeInfo {
+  type: ActivityType;
+  description: string;
+}
+
 export const analyticsService = {
   /** 활동 로그 목록 조회 */
   async getLogs(params?: ActivityLogsParams): Promise<Page<ActivityLogResponse>> {
@@ -115,5 +132,49 @@ export const analyticsService = {
       API_ENDPOINTS.ANALYTICS.TA_RECENT
     );
     return data;
+  },
+
+  /** 활동 로그 검색 */
+  async searchLogs(params: ActivityLogSearchParams): Promise<Page<ActivityLogResponse>> {
+    const { data } = await axiosInstance.get<Page<ActivityLogResponse>>(
+      `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/search`,
+      { params }
+    );
+    return data;
+  },
+
+  /** 특정 사용자 활동 로그 조회 */
+  async getLogsByUser(userId: number, params?: { page?: number; size?: number }): Promise<Page<ActivityLogResponse>> {
+    const { data } = await axiosInstance.get<Page<ActivityLogResponse>>(
+      `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/users/${userId}`,
+      { params }
+    );
+    return data;
+  },
+
+  /** 활동 유형 목록 조회 */
+  async getActivityTypes(): Promise<ActivityTypeInfo[]> {
+    const { data } = await axiosInstance.get<ActivityTypeInfo[]>(
+      API_ENDPOINTS.ANALYTICS.TA_TYPES
+    );
+    return data;
+  },
+
+  /** 활동 로그 CSV 내보내기 URL 생성 */
+  getExportUrl(params?: {
+    userId?: number;
+    type?: ActivityType;
+    startDate?: string;
+    endDate?: string;
+  }): string {
+    const searchParams = new URLSearchParams();
+    if (params?.userId) searchParams.set('userId', params.userId.toString());
+    if (params?.type) searchParams.set('type', params.type);
+    if (params?.startDate) searchParams.set('startDate', params.startDate);
+    if (params?.endDate) searchParams.set('endDate', params.endDate);
+
+    const queryString = searchParams.toString();
+    const baseUrl = `${API_ENDPOINTS.ANALYTICS.TA_LOGS}/export`;
+    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
   },
 };
