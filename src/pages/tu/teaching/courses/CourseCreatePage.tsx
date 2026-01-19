@@ -104,6 +104,50 @@ async function createCurriculumItemsRecursively(
 //   }
 // }
 
+// 완성도 검증을 위한 필드 레이블 매핑
+const FIELD_LABELS: Record<string, string> = {
+  title: '제목',
+  description: '설명',
+  categoryId: '카테고리',
+  items: '차시',
+};
+
+/**
+ * 과정 완성도 검증 (백엔드와 동일한 기준)
+ * @returns 누락된 필드 목록 (한글 레이블)
+ */
+function validateCourseCompleteness(formData: CourseFormData): string[] {
+  const missingFields: string[] = [];
+
+  if (!formData.title?.trim()) {
+    missingFields.push(FIELD_LABELS.title);
+  }
+  if (!formData.description?.trim()) {
+    missingFields.push(FIELD_LABELS.description);
+  }
+  if (!formData.categoryId) {
+    missingFields.push(FIELD_LABELS.categoryId);
+  }
+  if (!formData.curriculumItems?.length) {
+    missingFields.push(FIELD_LABELS.items);
+  }
+
+  return missingFields;
+}
+
+/**
+ * CM017 에러 응답에서 누락 필드 추출
+ */
+function extractMissingFieldsFromError(error: any): string[] | null {
+  const errorCode = error?.response?.data?.error?.code;
+  if (errorCode !== 'CM017') return null;
+
+  const data = error?.response?.data?.data;
+  if (!Array.isArray(data)) return null;
+
+  return data.map((field: string) => FIELD_LABELS[field] || field);
+}
+
 export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageProps>) {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
@@ -245,11 +289,29 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
         alert('임시저장되었습니다.');
         navigate(prefixPath('/tu/teaching/courses'));
       } else {
-        // 작성완료 (DRAFT → READY)
-        await courseService.ready(targetCourseId);
-        setCourseStatus('READY');
-        alert('저장되었습니다.');
-        navigate(prefixPath('/tu/teaching/courses'));
+        // 작성완료 (DRAFT → READY) - 사전 검증
+        const missingFields = validateCourseCompleteness(formData);
+        if (missingFields.length > 0) {
+          alert(`다음 항목을 입력해주세요: ${missingFields.join(', ')}`);
+          setIsSaving(false);
+          return;
+        }
+
+        try {
+          await courseService.ready(targetCourseId);
+          setCourseStatus('READY');
+          alert('저장되었습니다.');
+          navigate(prefixPath('/tu/teaching/courses'));
+        } catch (readyError: any) {
+          // CM017 에러 시 상세 메시지 표시
+          const serverMissingFields = extractMissingFieldsFromError(readyError);
+          if (serverMissingFields) {
+            alert(`다음 항목을 입력해주세요: ${serverMissingFields.join(', ')}`);
+          } else {
+            alert('작성완료 처리에 실패했습니다. 저장은 완료되었습니다.');
+          }
+          return;
+        }
       }
     } catch (error) {
       console.error('저장 실패:', error);
@@ -311,6 +373,13 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
       return;
     }
 
+    // 사전 검증 (등록 전 완성도 체크)
+    const missingFields = validateCourseCompleteness(formData);
+    if (missingFields.length > 0) {
+      alert(`다음 항목을 입력해주세요: ${missingFields.join(', ')}`);
+      return;
+    }
+
     if (!confirm(getText('registerConfirm'))) return;
 
     setIsRegistering(true);
@@ -335,10 +404,13 @@ export function CourseCreatePage({ language = 'ko' }: Readonly<CourseCreatePageP
           // DRAFT → READY
           await courseService.ready(targetCourseId);
           setCourseStatus('READY');
-        } catch (error) {
+        } catch (error: any) {
           console.error('저장 또는 작성완료 실패:', error);
-          // 어느 단계에서 실패했는지에 따라 다른 메시지
-          if (!targetCourseId) {
+          // CM017 에러 시 상세 메시지 표시
+          const serverMissingFields = extractMissingFieldsFromError(error);
+          if (serverMissingFields) {
+            alert(`다음 항목을 입력해주세요: ${serverMissingFields.join(', ')}`);
+          } else if (!targetCourseId) {
             alert('저장에 실패했습니다. 다시 시도해주세요.');
           } else {
             alert('작성완료 처리에 실패했습니다. 저장은 완료되었습니다.');
