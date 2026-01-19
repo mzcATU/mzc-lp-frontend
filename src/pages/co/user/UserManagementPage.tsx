@@ -330,10 +330,35 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   // 전체 차수 목록 조회 (필터용 - 클라이언트에서 프로그램별 필터링)
   const { data: timesData } = useTimes({ page: 0, size: 500 });
 
-  // URL 파라미터에서 courseTimeId를 읽어 자동 선택
+  // URL 파라미터에서 courseId, timeId를 읽어 자동 선택
   useEffect(() => {
     if (isInitialized || !timesData?.content || !coursesData?.content) return;
 
+    // 새로운 방식: courseId와 timeId 파라미터 지원
+    const courseIdParam = searchParams.get('courseId');
+    const timeIdParam = searchParams.get('timeId');
+
+    if (courseIdParam && timeIdParam) {
+      const courseId = parseInt(courseIdParam);
+      const timeId = parseInt(timeIdParam);
+
+      // 과정 선택
+      const matchingCourse = coursesData.content.find((c) => c.courseId === courseId);
+      if (matchingCourse) {
+        setSelectedCourseId(matchingCourse.courseId);
+      }
+
+      // 차수 선택
+      const selectedTime = timesData.content.find((t) => t.id === timeId);
+      if (selectedTime) {
+        setSelectedTimeId(timeId);
+      }
+
+      setIsInitialized(true);
+      return;
+    }
+
+    // 기존 방식: courseTimeId 파라미터 지원 (하위 호환)
     const courseTimeIdParam = searchParams.get('courseTimeId');
     if (courseTimeIdParam) {
       const courseTimeId = parseInt(courseTimeIdParam);

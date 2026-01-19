@@ -11,7 +11,6 @@ import {
   Archive,
   Users,
   Calendar,
-  MapPin,
   Clock,
   Loader2,
   Save,
@@ -20,10 +19,35 @@ import {
   FileText,
   BookOpen,
   User,
-  DollarSign,
+  CheckCircle2,
+  FileEdit,
+  Megaphone,
+  GraduationCap,
+  Lock,
+  Package,
+  Zap,
+  ClipboardList,
+  BarChart3,
+  ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { Button, Badge, Input, Label, NativeSelect, Card, BackButton } from '@/components/common';
+import {
+  Button,
+  Badge,
+  Input,
+  NativeSelect,
+  Card,
+  BackButton,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/common';
 import {
   useTime,
   useUpdateTime,
@@ -41,6 +65,8 @@ import {
   COURSE_TIME_STATUS_TRANSITIONS,
   DURATION_TYPE_LABELS,
   DAY_OF_WEEK_LABELS,
+  COURSE_DIFFICULTY_LABELS,
+  COURSE_DIFFICULTY_COLORS,
 } from '@/types/co/time.types';
 
 interface CourseTimeDetailPageProps {
@@ -95,8 +121,11 @@ const t = {
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   notFound: { ko: '차수를 찾을 수 없습니다.', en: 'Course time not found.' },
-  confirmDelete: { ko: '정말 삭제하시겠습니까?', en: 'Are you sure you want to delete?' },
-  confirmStatusChange: { ko: '상태를 변경하시겠습니까?', en: 'Are you sure you want to change status?' },
+  confirmDelete: { ko: '차수 삭제', en: 'Delete Course Time' },
+  confirmDeleteDesc: { ko: '이 차수를 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.', en: 'Are you sure you want to delete this course time? This action cannot be undone.' },
+  confirmStatusChange: { ko: '상태 변경', en: 'Change Status' },
+  confirmStatusChangeDesc: { ko: '상태를 변경하시겠습니까? 이 작업은 취소할 수 없습니다.', en: 'Are you sure you want to change the status? This action cannot be undone.' },
+  confirm: { ko: '확인', en: 'Confirm' },
   updateSuccess: { ko: '수정되었습니다.', en: 'Updated successfully.' },
   updateError: { ko: '수정에 실패했습니다.', en: 'Failed to update.' },
   deleteSuccess: { ko: '삭제되었습니다.', en: 'Deleted successfully.' },
@@ -109,7 +138,16 @@ const t = {
   allowLateEnrollmentYes: { ko: '허용', en: 'Allowed' },
   allowLateEnrollmentNo: { ko: '비허용', en: 'Not Allowed' },
   minProgressForCompletion: { ko: '수료 기준', en: 'Completion Criteria' },
-  alwaysOpen: { ko: '상시모집', en: 'Always Open' },
+  alwaysOpen: { ko: '수시 모집', en: 'Rolling Admission' },
+  // Quick Actions
+  quickActions: { ko: '빠른 작업', en: 'Quick Actions' },
+  viewEnrollments: { ko: '수강생 목록', en: 'View Enrollments' },
+  viewEnrollmentsDesc: { ko: '수강 신청 현황 보기', en: 'View enrollment status' },
+  attendanceManagement: { ko: '출결 관리', en: 'Attendance' },
+  attendanceManagementDesc: { ko: '출석 현황 관리', en: 'Manage attendance' },
+  gradeManagement: { ko: '성적 관리', en: 'Grades' },
+  gradeManagementDesc: { ko: '성적 및 수료 관리', en: 'Manage grades' },
+  comingSoon: { ko: '준비 중', en: 'Coming Soon' },
 };
 
 // 백엔드 에러 코드 → 사용자 친화적 메시지 매핑
@@ -141,6 +179,8 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<UpdateCourseTimeRequest>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [statusChangeDialogOpen, setStatusChangeDialogOpen] = useState(false);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -214,9 +254,9 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
   };
 
   const handleDelete = async () => {
-    if (!confirm(getText('confirmDelete'))) return;
     try {
       await deleteTime.mutateAsync(timeId);
+      setDeleteDialogOpen(false);
       toast.success(getText('deleteSuccess'));
       navigate(prefixPath('/co/times'));
     } catch (err) {
@@ -243,7 +283,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
   };
 
   const handleStatusTransition = async () => {
-    if (!courseTime || !confirm(getText('confirmStatusChange'))) return;
+    if (!courseTime) return;
 
     try {
       switch (courseTime.status) {
@@ -260,6 +300,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
           await archiveTime.mutateAsync(timeId);
           break;
       }
+      setStatusChangeDialogOpen(false);
     } catch (err) {
       console.error('Status transition failed:', err);
       toast.error(getErrorMessage(err));
@@ -283,7 +324,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
     const isLoading = openTime.isPending || startTime.isPending || closeTime.isPending || archiveTime.isPending;
 
     return (
-      <Button onClick={handleStatusTransition} disabled={isLoading} variant="brand">
+      <Button onClick={() => setStatusChangeDialogOpen(true)} disabled={isLoading} variant="brand">
         {isLoading ? <Loader2 size={16} className="animate-spin" /> : action.icon}
         <span>{getText(action.label)}</span>
       </Button>
@@ -326,14 +367,22 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                 onClick={() => navigate(prefixPath('/co/times'))}
                 label={getText('back')}
               />
-              <div>
-                <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
+                {isEditing ? (
+                  <Input
+                    value={editData.title || ''}
+                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                    className="text-xl font-bold h-auto py-1 min-w-[300px]"
+                  />
+                ) : (
                   <h1 className="text-text-primary mb-0">{courseTime.title}</h1>
-                  <Badge variant={statusBadgeVariant[courseTime.status]}>
-                    {COURSE_TIME_STATUS_LABELS[courseTime.status]}
-                  </Badge>
-                </div>
-                <p className="text-text-secondary text-sm m-0">ID: {courseTime.id}</p>
+                )}
+                <Badge variant={statusBadgeVariant[courseTime.status]}>
+                  {COURSE_TIME_STATUS_LABELS[courseTime.status]}
+                </Badge>
+                <span className="text-text-placeholder text-xs">
+                  ID: {courseTime.id}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -365,7 +414,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     <span>{getText('clone')}</span>
                   </Button>
                   {courseTime.status === 'DRAFT' && (
-                    <Button variant="ghost" onClick={handleDelete} disabled={deleteTime.isPending}>
+                    <Button variant="ghost" onClick={() => setDeleteDialogOpen(true)} disabled={deleteTime.isPending}>
                       <Trash2 size={20} className="text-status-error" />
                       <span className="text-status-error">{getText('delete')}</span>
                     </Button>
@@ -380,113 +429,295 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {/* 기본 정보 */}
+        {/* Status Stepper */}
+        <div className="px-8 py-4 border-b border-border bg-bg-primary">
+          <div className="max-w-4xl mx-auto">
+            {(() => {
+              const statusOrder: CourseTimeStatus[] = ['DRAFT', 'RECRUITING', 'ONGOING', 'CLOSED', 'ARCHIVED'];
+              const currentIndex = statusOrder.indexOf(courseTime.status);
+              const statusIcons: Record<CourseTimeStatus, React.ReactNode> = {
+                DRAFT: <FileEdit size={16} />,
+                RECRUITING: <Megaphone size={16} />,
+                ONGOING: <GraduationCap size={16} />,
+                CLOSED: <Lock size={16} />,
+                ARCHIVED: <Package size={16} />,
+              };
+
+              return (
+                <div className="flex items-center justify-between">
+                  {statusOrder.map((status, index) => {
+                    const isCompleted = index < currentIndex;
+                    const isCurrent = index === currentIndex;
+                    const isUpcoming = index > currentIndex;
+
+                    return (
+                      <div key={status} className="flex items-center flex-1">
+                        {/* Step */}
+                        <div className="flex flex-col items-center">
+                          <div
+                            className={cn(
+                              'w-10 h-10 rounded-full flex items-center justify-center transition-all',
+                              isCompleted && 'bg-status-success text-white',
+                              isCurrent && 'bg-action-primary text-white ring-4 ring-action-primary/20',
+                              isUpcoming && 'bg-bg-secondary text-text-placeholder'
+                            )}
+                          >
+                            {isCompleted ? <CheckCircle2 size={20} /> : statusIcons[status]}
+                          </div>
+                          <span
+                            className={cn(
+                              'text-xs mt-2 font-medium',
+                              isCompleted && 'text-status-success',
+                              isCurrent && 'text-action-primary',
+                              isUpcoming && 'text-text-placeholder'
+                            )}
+                          >
+                            {COURSE_TIME_STATUS_LABELS[status]}
+                          </span>
+                        </div>
+                        {/* Connector Line */}
+                        {index < statusOrder.length - 1 && (
+                          <div
+                            className={cn(
+                              'flex-1 h-0.5 mx-2',
+                              index < currentIndex ? 'bg-status-success' : 'bg-border'
+                            )}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* 메인 콘텐츠 */}
         {(
           <div className="p-6 px-8 max-w-6xl">
             {/* Bento Grid 레이아웃 */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* 기본 정보 + 프로그램 정보 (통합, 2열 차지) */}
+              {/* 기본 정보 (2열 차지) */}
               <Card className="p-6 lg:col-span-2">
                 <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
                   <FileText size={18} className="text-text-secondary" />
                   {getText('basicInfo')}
                 </h2>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-text-secondary">{getText('timeTitle')}</Label>
-                    {isEditing ? (
-                      <Input
-                        value={editData.title || ''}
-                        onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                <div className="flex gap-6">
+                  {/* 썸네일 이미지 */}
+                  <div className="shrink-0">
+                    {courseTime.courseThumbnailUrl ? (
+                      <img
+                        src={courseTime.courseThumbnailUrl}
+                        alt={courseTime.courseTitle || ''}
+                        className="w-32 h-24 object-cover rounded-lg bg-bg-secondary"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
                       />
-                    ) : (
-                      <p className="text-text-primary font-medium text-lg">{courseTime.title}</p>
-                    )}
-                  </div>
-
-                  {/* 과정 정보 섹션 */}
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <BookOpen size={16} className="text-text-secondary" />
-                      <span className="text-sm font-medium text-text-secondary">{getText('courseInfo')}</span>
+                    ) : null}
+                    <div className={cn(
+                      'w-32 h-24 rounded-lg bg-indigo-100 flex items-center justify-center',
+                      courseTime.courseThumbnailUrl && 'hidden'
+                    )}>
+                      <BookOpen size={40} className="text-indigo-400" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-text-secondary">{getText('courseTitle')}</Label>
-                        <p className="text-text-primary font-medium">{courseTime.courseTitle || '-'}</p>
-                      </div>
-                      {courseTime.courseDescription && (
-                        <div className="md:col-span-2">
-                          <Label className="text-text-secondary">{getText('description')}</Label>
-                          <p className="text-text-primary whitespace-pre-wrap text-sm">{courseTime.courseDescription}</p>
-                        </div>
+                  </div>
+                  {/* 2열 그리드 레이아웃 */}
+                  <div className="flex-1 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3">
+                    {/* 과정 */}
+                    <span className="text-sm text-text-secondary self-start pt-0.5">{getText('courseTitle')}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => navigate(prefixPath(`/co/courses/${courseTime.courseId}`))}
+                        className="group flex items-center gap-1.5 hover:text-action-primary transition-colors"
+                      >
+                        <span className="text-sm font-medium text-text-primary group-hover:text-action-primary">
+                          {courseTime.courseTitle || '-'}
+                        </span>
+                        <ExternalLink size={12} className="text-text-placeholder group-hover:text-action-primary" />
+                      </button>
+                      {/* 카테고리 (있을 때만) */}
+                      {courseTime.courseCategory && (
+                        <span className="text-xs text-text-secondary">
+                          · {courseTime.courseCategory}
+                        </span>
+                      )}
+                      {/* 난이도 뱃지 (있을 때만) */}
+                      {courseTime.courseDifficulty && (
+                        <Badge
+                          className={cn(
+                            COURSE_DIFFICULTY_COLORS[courseTime.courseDifficulty].bg,
+                            COURSE_DIFFICULTY_COLORS[courseTime.courseDifficulty].text,
+                            COURSE_DIFFICULTY_COLORS[courseTime.courseDifficulty].border
+                          )}
+                        >
+                          {COURSE_DIFFICULTY_LABELS[courseTime.courseDifficulty]}
+                        </Badge>
                       )}
                     </div>
-                  </div>
 
-                  <div className="pt-2 border-t border-border">
-                    <Label className="text-text-secondary">{getText('createdAt')}</Label>
-                    <p className="text-text-primary text-sm">{formatDateTime(courseTime.createdAt)}</p>
+                    {/* 설명 - 위계 구분 전략 */}
+                    {(() => {
+                      const hasTimeDesc = !!courseTime.description;
+                      const hasCourseDesc = !!courseTime.courseDescription;
+                      const isSameContent = hasTimeDesc && hasCourseDesc &&
+                        courseTime.description?.trim() === courseTime.courseDescription?.trim();
+
+                      // 둘 다 없으면 표시 안함
+                      if (!hasTimeDesc && !hasCourseDesc) return null;
+
+                      // 내용이 같으면 하나만 표시
+                      if (isSameContent) {
+                        return (
+                          <>
+                            <span className="text-sm text-text-secondary self-start pt-0.5">{getText('description')}</span>
+                            <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
+                              {courseTime.description}
+                            </p>
+                          </>
+                        );
+                      }
+
+                      // 둘 다 있고 내용이 다르면 위계 구분하여 표시
+                      if (hasTimeDesc && hasCourseDesc) {
+                        return (
+                          <>
+                            <span className="text-sm text-text-secondary self-start pt-0.5">{getText('description')}</span>
+                            <div className="space-y-3">
+                              {/* 과정 설명 (Base) */}
+                              <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
+                                {courseTime.courseDescription}
+                              </p>
+                              {/* 차수 설명 (Override) */}
+                              <div className="relative pl-0 py-1 before:absolute before:left-[-12px] before:top-0 before:bottom-0 before:w-0.5 before:bg-amber-400">
+                                <p className="text-xs font-medium text-amber-700 mb-1">
+                                  {language === 'ko' ? '차수 설명' : 'Session Description'}
+                                </p>
+                                <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
+                                  {courseTime.description}
+                                </p>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      }
+
+                      // 차수 설명만 있을 때
+                      if (hasTimeDesc) {
+                        return (
+                          <>
+                            <span className="text-sm text-text-secondary self-start pt-0.5">{getText('description')}</span>
+                            <div className="relative pl-0 py-1 before:absolute before:left-[-12px] before:top-0 before:bottom-0 before:w-0.5 before:bg-amber-400">
+                              <p className="text-xs font-medium text-amber-700 mb-1">
+                                {language === 'ko' ? '차수 설명' : 'Session Description'}
+                              </p>
+                              <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
+                                {courseTime.description}
+                              </p>
+                            </div>
+                          </>
+                        );
+                      }
+
+                      // 과정 설명만 있을 때 (Fallback)
+                      return (
+                        <>
+                          <span className="text-sm text-text-secondary self-start pt-0.5">{getText('description')}</span>
+                          <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
+                            {courseTime.courseDescription}
+                          </p>
+                        </>
+                      );
+                    })()}
+
+                    {/* 생성일 */}
+                    <span className="text-sm text-text-secondary self-start pt-0.5">{getText('createdAt')}</span>
+                    <span className="text-sm text-text-primary">
+                      {formatDateTime(courseTime.createdAt)}
+                    </span>
                   </div>
                 </div>
               </Card>
 
-              {/* 정원 현황 (Progress Bar 포함) */}
+              {/* 정원 현황 */}
               <Card className="p-6">
                 <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
                   <Users size={18} className="text-text-secondary" />
                   {getText('capacityInfo')}
                 </h2>
-                <div className="space-y-4">
-                  {/* Progress Bar */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <Label className="text-text-secondary">{getText('currentEnrollment')}</Label>
-                      <span className="text-text-primary font-semibold">
-                        {courseTime.currentEnrollment}
-                        <span className="text-text-secondary font-normal">
-                          {' / '}{courseTime.capacity || getText('unlimited')}
-                        </span>
-                      </span>
-                    </div>
-                    {courseTime.capacity ? (
-                      <div className="w-full bg-bg-secondary rounded-full h-3 overflow-hidden">
-                        <div
-                          className={cn(
-                            'h-full rounded-full transition-all duration-500',
-                            (courseTime.currentEnrollment / courseTime.capacity) >= 0.9
-                              ? 'bg-status-error'
-                              : (courseTime.currentEnrollment / courseTime.capacity) >= 0.7
-                              ? 'bg-status-warning'
-                              : 'bg-status-success'
-                          )}
-                          style={{ width: `${Math.min(100, (courseTime.currentEnrollment / courseTime.capacity) * 100)}%` }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-full bg-bg-secondary rounded-full h-3">
-                        <div className="h-full rounded-full bg-status-info w-1/4" />
-                      </div>
-                    )}
-                    {courseTime.capacity && (
-                      <p className="text-xs text-text-secondary mt-1">
-                        {Math.round((courseTime.currentEnrollment / courseTime.capacity) * 100)}% {language === 'ko' ? '모집 완료' : 'filled'}
-                      </p>
-                    )}
-                  </div>
+                {(() => {
+                  const isUnlimited = !courseTime.capacity || courseTime.capacity >= 2147483647;
+                  const isUnlimitedSeats = courseTime.availableSeats === null || courseTime.availableSeats >= 2147483647;
+                  const capacity = courseTime.capacity ?? 1;
+                  const fillPercentage = isUnlimited ? 0 : (courseTime.currentEnrollment / capacity) * 100;
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="bg-bg-secondary p-3 rounded-lg">
-                      <Label className="text-text-secondary text-xs">{getText('availableSeats')}</Label>
-                      <p className="text-text-primary text-xl font-bold">
-                        {courseTime.availableSeats ?? '∞'}
-                      </p>
-                    </div>
-                    <div className="bg-bg-secondary p-3 rounded-lg">
-                      <Label className="text-text-secondary text-xs flex items-center gap-1">
-                        <DollarSign size={12} />
-                        {getText('price')}
-                      </Label>
+                  return (
+                    <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3">
+                      {/* 정원 */}
+                      <span className="text-sm text-text-secondary">{getText('capacity')}</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {isUnlimited ? getText('unlimited') : `${courseTime.capacity}${language === 'ko' ? '명' : ''}`}
+                      </span>
+
+                      {/* 현재 수강 */}
+                      <span className="text-sm text-text-secondary">{getText('currentEnrollment')}</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {courseTime.currentEnrollment}{language === 'ko' ? '명' : ''}
+                      </span>
+
+                      {/* 잔여석 (제한된 경우만) */}
+                      {!isUnlimited && (
+                        <>
+                          <span className="text-sm text-text-secondary">{getText('availableSeats')}</span>
+                          <span className={cn(
+                            'text-sm font-medium',
+                            (courseTime.availableSeats ?? 0) === 0 ? 'text-status-error' : 'text-status-success'
+                          )}>
+                            {isUnlimitedSeats
+                              ? getText('unlimited')
+                              : (courseTime.availableSeats ?? 0) === 0
+                                ? (language === 'ko' ? '마감' : 'Full')
+                                : `${courseTime.availableSeats}${language === 'ko' ? '명' : ''}`
+                            }
+                          </span>
+                        </>
+                      )}
+
+                      {/* Progress Bar (제한된 경우만) */}
+                      {!isUnlimited && (
+                        <>
+                          <span className="text-sm text-text-secondary self-center">
+                            {language === 'ko' ? '모집률' : 'Fill Rate'}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 bg-bg-secondary rounded-full h-2 overflow-hidden">
+                              <div
+                                className={cn(
+                                  'h-full rounded-full transition-all duration-500',
+                                  fillPercentage >= 90
+                                    ? 'bg-status-error'
+                                    : fillPercentage >= 70
+                                    ? 'bg-status-warning'
+                                    : 'bg-status-success'
+                                )}
+                                style={{ width: `${Math.min(100, fillPercentage)}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-text-secondary w-12">
+                              {Math.round(fillPercentage)}%
+                            </span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* 구분선 */}
+                      <div className="col-span-2 border-t border-border my-1" />
+
+                      {/* 가격 */}
+                      <span className="text-sm text-text-secondary">{getText('price')}</span>
                       {isEditing ? (
                         <Input
                           type="number"
@@ -498,136 +729,193 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                             })
                           }
                           placeholder="0 = 무료"
-                          className="mt-1"
+                          className="w-32"
                         />
                       ) : (
-                        <p className="text-text-primary text-xl font-bold">
+                        <span className="text-sm font-medium text-text-primary">
                           {formatPrice(courseTime.price, courseTime.isFree)}
-                        </p>
+                        </span>
                       )}
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </Card>
 
-              {/* 기간 정보 (D-Day 배지 포함) */}
+              {/* 기간 정보 */}
               <Card className="p-6 lg:col-span-2">
                 <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
                   <Calendar size={18} className="text-text-secondary" />
                   {getText('periodInfo')}
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* 모집 기간 */}
-                  <div className="bg-bg-secondary p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-text-secondary">{getText('enrollmentPeriod')}</Label>
+
+                {/* 2단 분할 레이아웃 */}
+                <div className="flex gap-6">
+                  {/* 좌측: 모집 기간 */}
+                  <div className="flex-1 space-y-2">
+                    {/* 헤더 + 뱃지 */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm font-medium text-text-secondary">
+                        {getText('enrollmentPeriod')}
+                      </h3>
                       {(() => {
                         const today = new Date();
                         const enrollStart = new Date(courseTime.enrollStartDate);
                         const enrollEnd = new Date(courseTime.enrollEndDate);
-                        const isAlwaysOpen = courseTime.enrollEndDate === '9999-12-31';
+                        const classStart = new Date(courseTime.classStartDate);
+                        const dayBeforeClassStart = new Date(classStart);
+                        dayBeforeClassStart.setDate(dayBeforeClassStart.getDate() - 1);
+                        const isAlwaysOpen = courseTime.enrollEndDate === '9999-12-31' ||
+                          enrollEnd.toDateString() === dayBeforeClassStart.toDateString();
 
                         if (isAlwaysOpen) {
                           return <Badge variant="success">{getText('alwaysOpen')}</Badge>;
                         } else if (today < enrollStart) {
                           const daysUntil = Math.ceil((enrollStart.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                          return <Badge variant="secondary">D-{daysUntil}</Badge>;
+                          return (
+                            <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+                              {language === 'ko' ? `모집 예정 (D-${daysUntil})` : `Upcoming (D-${daysUntil})`}
+                            </Badge>
+                          );
                         } else if (today <= enrollEnd) {
                           const daysLeft = Math.ceil((enrollEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          if (daysLeft <= 3) {
+                            return <Badge variant="destructive">{language === 'ko' ? `마감 임박 (D-${daysLeft})` : `Closing Soon (D-${daysLeft})`}</Badge>;
+                          } else if (daysLeft <= 7) {
+                            return <Badge variant="warning">{language === 'ko' ? `모집 중 (D-${daysLeft})` : `Open (D-${daysLeft})`}</Badge>;
+                          }
                           return <Badge variant="success">{language === 'ko' ? `모집 중 (D-${daysLeft})` : `Open (D-${daysLeft})`}</Badge>;
                         } else {
                           return <Badge variant="destructive">{language === 'ko' ? '모집 종료' : 'Closed'}</Badge>;
                         }
                       })()}
                     </div>
-                    <p className="text-text-primary font-medium">
-                      {formatDate(courseTime.enrollStartDate)} ~ {formatDate(courseTime.enrollEndDate)}
+                    {/* 날짜 데이터 */}
+                    <p className="text-sm font-medium text-text-primary">
+                      {(() => {
+                        const classStart = new Date(courseTime.classStartDate);
+                        const enrollEnd = new Date(courseTime.enrollEndDate);
+                        const dayBeforeClassStart = new Date(classStart);
+                        dayBeforeClassStart.setDate(dayBeforeClassStart.getDate() - 1);
+                        const isAlwaysOpen = courseTime.enrollEndDate === '9999-12-31' ||
+                          enrollEnd.toDateString() === dayBeforeClassStart.toDateString();
+
+                        if (isAlwaysOpen) {
+                          return `${formatDate(courseTime.enrollStartDate)} ~`;
+                        }
+                        return `${formatDate(courseTime.enrollStartDate)} ~ ${formatDate(courseTime.enrollEndDate)}`;
+                      })()}
                     </p>
                   </div>
 
-                  {/* 학습 기간 */}
-                  <div className="bg-bg-secondary p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-text-secondary">{getText('learningPeriod')}</Label>
+                  {/* 수직 구분선 */}
+                  <div className="w-px bg-border" />
+
+                  {/* 우측: 학습 기간 */}
+                  <div className="flex-1 space-y-2">
+                    {/* 헤더 + 뱃지 */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm font-medium text-text-secondary">
+                        {getText('learningPeriod')}
+                      </h3>
                       {courseTime.durationType && (
-                        <Badge variant="default">
+                        <Badge variant="secondary">
                           {DURATION_TYPE_LABELS[courseTime.durationType as DurationType]}
                         </Badge>
                       )}
                     </div>
-                    {/* FIXED: 시작일 ~ 종료일 */}
-                    {courseTime.durationType === 'FIXED' && (
-                      <p className="text-text-primary font-medium">
-                        {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
-                      </p>
-                    )}
-                    {/* RELATIVE: 시작일 + N일 */}
-                    {courseTime.durationType === 'RELATIVE' && (
-                      <p className="text-text-primary font-medium">
-                        {formatDate(courseTime.classStartDate)} + {courseTime.durationDays}일
-                      </p>
-                    )}
-                    {/* UNLIMITED: 시작일부터 무제한 */}
-                    {courseTime.durationType === 'UNLIMITED' && (
-                      <p className="text-text-primary font-medium">
-                        {formatDate(courseTime.classStartDate)} ~ {language === 'ko' ? '무제한' : 'Unlimited'}
-                      </p>
-                    )}
-                    {/* durationType이 없는 경우 (기존 데이터) */}
-                    {!courseTime.durationType && (
-                      <p className="text-text-primary font-medium">
-                        {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
-                      </p>
-                    )}
-                  </div>
+                    {/* 날짜 데이터 */}
+                    <div className="space-y-1">
+                      {/* FIXED: 시작일 ~ 종료일 */}
+                      {courseTime.durationType === 'FIXED' && (
+                        <p className="text-sm font-medium text-text-primary">
+                          {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
+                        </p>
+                      )}
+                      {/* RELATIVE: 수강 신청일로부터 N일간 */}
+                      {courseTime.durationType === 'RELATIVE' && (
+                        <>
+                          <p className="text-sm text-text-primary">
+                            {language === 'ko' ? '수강 신청일로부터 ' : 'From enrollment, '}
+                            <span className="font-bold text-indigo-600">
+                              {courseTime.durationDays}{language === 'ko' ? '일간' : ' days'}
+                            </span>
+                          </p>
+                          <p className="text-xs text-text-secondary">
+                            ({formatDate(courseTime.classStartDate)} {language === 'ko' ? '부터 수강 가능' : 'onwards'})
+                          </p>
+                        </>
+                      )}
+                      {/* UNLIMITED: 시작일부터 무제한 */}
+                      {courseTime.durationType === 'UNLIMITED' && (
+                        <p className="text-sm font-medium text-text-primary">
+                          {formatDate(courseTime.classStartDate)} ~
+                        </p>
+                      )}
+                      {/* durationType이 없는 경우 */}
+                      {!courseTime.durationType && (
+                        <p className="text-sm font-medium text-text-primary">
+                          {formatDate(courseTime.classStartDate)} ~ {formatDate(courseTime.classEndDate || '')}
+                        </p>
+                      )}
+                    </div>
 
-                  {/* 정기 수업 일정 */}
-                  {courseTime.recurringSchedule && (
-                    <div className="bg-bg-brand-active/10 p-4 rounded-lg border border-action-primary/30 mt-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock size={16} className="text-action-primary" />
-                        <Label className="text-text-secondary">정기 수업 일정</Label>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-text-secondary">요일:</span>
+                    {/* 정기 수업 일정 */}
+                    {courseTime.recurringSchedule && (
+                      <div className="pt-2 mt-2 border-t border-border">
+                        <p className="text-xs text-text-secondary mb-1.5">
+                          {language === 'ko' ? '정기 수업' : 'Schedule'}
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <div className="flex gap-1">
                             {courseTime.recurringSchedule.daysOfWeek.map((day) => (
-                              <Badge key={day} variant="default" className="bg-action-primary text-white">
+                              <Badge key={day} className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">
                                 {DAY_OF_WEEK_LABELS[day]}
                               </Badge>
                             ))}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-text-secondary">시간:</span>
-                          <span className="text-sm font-medium text-text-primary">
+                          <span className="text-sm text-text-primary">
                             {courseTime.recurringSchedule.startTime} ~ {courseTime.recurringSchedule.endTime}
                           </span>
                         </div>
                         {courseTime.recurringSchedule.excludeHolidays && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="secondary" className="text-xs">
-                              공휴일 제외
-                            </Badge>
-                          </div>
+                          <Badge variant="secondary" className="text-xs mt-1">
+                            {language === 'ko' ? '공휴일 제외' : 'Excl. Holidays'}
+                          </Badge>
                         )}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
+                {/* 하단: 공통 메타 정보 */}
+                <div className="mt-4 pt-4 border-t border-border flex items-center gap-4 flex-wrap">
+                  {/* 중간 합류 */}
                   <div className="flex items-center gap-2">
-                    <Label className="text-text-secondary">{getText('allowLateEnrollment')}</Label>
-                    <Badge variant={courseTime.allowLateEnrollment ? 'success' : 'secondary'}>
-                      {courseTime.allowLateEnrollment ? getText('allowLateEnrollmentYes') : getText('allowLateEnrollmentNo')}
-                    </Badge>
+                    <span className="text-sm text-text-secondary">{getText('allowLateEnrollment')}</span>
+                    {(() => {
+                      const isUnlimitedWithNoCapacity = courseTime.durationType === 'UNLIMITED' &&
+                        (!courseTime.capacity || courseTime.capacity >= 2147483647);
+                      const isAllowed = isUnlimitedWithNoCapacity || courseTime.allowLateEnrollment;
+                      return (
+                        <Badge variant={isAllowed ? 'success' : 'secondary'}>
+                          {isAllowed ? getText('allowLateEnrollmentYes') : getText('allowLateEnrollmentNo')}
+                        </Badge>
+                      );
+                    })()}
                   </div>
+
+                  {/* 세로 구분선 */}
+                  {courseTime.minProgressForCompletion && (
+                    <div className="h-4 w-px bg-border" />
+                  )}
+
+                  {/* 수료 기준 */}
                   {courseTime.minProgressForCompletion && (
                     <div className="flex items-center gap-2">
-                      <Label className="text-text-secondary">{getText('minProgressForCompletion')}</Label>
-                      <Badge variant="default">{courseTime.minProgressForCompletion}%</Badge>
+                      <span className="text-sm text-text-secondary">{getText('minProgressForCompletion')}</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {courseTime.minProgressForCompletion}%
+                      </span>
                     </div>
                   )}
                 </div>
@@ -639,70 +927,66 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                   <Play size={18} className="text-text-secondary" />
                   {getText('deliveryInfo')}
                 </h2>
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-text-secondary">{getText('deliveryType')}</Label>
-                    {isEditing ? (
-                      <NativeSelect
-                        value={editData.deliveryType || courseTime.deliveryType}
-                        onChange={(e) =>
-                          setEditData({ ...editData, deliveryType: e.target.value as DeliveryType })
-                        }
-                        options={Object.entries(DELIVERY_TYPE_LABELS).map(([value, label]) => ({
-                          value,
-                          label,
-                        }))}
-                      />
-                    ) : (
-                      <p className="text-text-primary font-medium">
-                        {DELIVERY_TYPE_LABELS[courseTime.deliveryType]}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-text-secondary">{getText('enrollmentMethod')}</Label>
-                    {isEditing ? (
-                      <NativeSelect
-                        value={editData.enrollmentMethod || courseTime.enrollmentMethod}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            enrollmentMethod: e.target.value as EnrollmentMethod,
-                          })
-                        }
-                        options={Object.entries(ENROLLMENT_METHOD_LABELS).map(([value, label]) => ({
-                          value,
-                          label,
-                        }))}
-                      />
-                    ) : (
-                      <p className="text-text-primary font-medium">
-                        {ENROLLMENT_METHOD_LABELS[courseTime.enrollmentMethod]}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-text-secondary flex items-center gap-1">
-                      <MapPin size={14} />
-                      {getText('location')}
-                    </Label>
-                    {isEditing ? (
-                      <Input
-                        value={editData.location || ''}
-                        onChange={(e) => setEditData({ ...editData, location: e.target.value })}
-                      />
-                    ) : (
-                      <p className="text-text-primary">
-                        {courseTime.locationInfo || getText('noLocation')}
-                      </p>
-                    )}
-                  </div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3">
+                  {/* 진행 방식 */}
+                  <span className="text-sm text-text-secondary">{getText('deliveryType')}</span>
+                  {isEditing ? (
+                    <NativeSelect
+                      value={editData.deliveryType || courseTime.deliveryType}
+                      onChange={(e) =>
+                        setEditData({ ...editData, deliveryType: e.target.value as DeliveryType })
+                      }
+                      options={Object.entries(DELIVERY_TYPE_LABELS).map(([value, label]) => ({
+                        value,
+                        label,
+                      }))}
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-text-primary">
+                      {DELIVERY_TYPE_LABELS[courseTime.deliveryType]}
+                    </span>
+                  )}
+
+                  {/* 수강 신청 방식 */}
+                  <span className="text-sm text-text-secondary">{getText('enrollmentMethod')}</span>
+                  {isEditing ? (
+                    <NativeSelect
+                      value={editData.enrollmentMethod || courseTime.enrollmentMethod}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          enrollmentMethod: e.target.value as EnrollmentMethod,
+                        })
+                      }
+                      options={Object.entries(ENROLLMENT_METHOD_LABELS).map(([value, label]) => ({
+                        value,
+                        label,
+                      }))}
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-text-primary">
+                      {ENROLLMENT_METHOD_LABELS[courseTime.enrollmentMethod]}
+                    </span>
+                  )}
+
+                  {/* 장소 */}
+                  <span className="text-sm text-text-secondary">{getText('location')}</span>
+                  {isEditing ? (
+                    <Input
+                      value={editData.location || ''}
+                      onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-text-primary">
+                      {courseTime.locationInfo || getText('noLocation')}
+                    </span>
+                  )}
                 </div>
               </Card>
 
               {/* 강사 정보 (전체 너비) */}
               <Card className="p-6 lg:col-span-3">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
                     <User size={18} className="text-text-secondary" />
                     {getText('instructors')}
@@ -719,15 +1003,25 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                     {courseTime.instructors.map((instructor) => (
                       <div
                         key={instructor.id}
-                        className="flex items-center justify-between p-3 bg-bg-secondary rounded-lg"
+                        className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg"
                       >
-                        <div>
-                          <p className="text-text-primary font-medium">{instructor.userName}</p>
-                          <p className="text-text-secondary text-sm">{instructor.userEmail}</p>
+                        {/* 이니셜 아바타 */}
+                        <div className={cn(
+                          'w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0',
+                          instructor.role === 'MAIN' ? 'bg-action-primary' : 'bg-text-secondary'
+                        )}>
+                          {instructor.userName?.charAt(0)?.toUpperCase() || '?'}
                         </div>
-                        <Badge variant={instructor.role === 'MAIN' ? 'default' : 'secondary'}>
-                          {getText(instructor.role)}
-                        </Badge>
+                        {/* 이름 + 배지 + 이메일 */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-text-primary font-medium truncate">{instructor.userName}</p>
+                            <Badge variant={instructor.role === 'MAIN' ? 'default' : 'secondary'} className="shrink-0">
+                              {getText(instructor.role)}
+                            </Badge>
+                          </div>
+                          <p className="text-text-secondary text-sm truncate">{instructor.userEmail}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -735,10 +1029,150 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                   <p className="text-text-secondary text-center py-4">{getText('noInstructors')}</p>
                 )}
               </Card>
+
+              {/* Quick Actions (전체 너비) */}
+              <Card className="p-6 lg:col-span-3">
+                <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <Zap size={18} className="text-text-secondary" />
+                  {getText('quickActions')}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* 수강생 목록 */}
+                  <button
+                    onClick={() => navigate(prefixPath(`/co/users?courseId=${courseTime.courseId}&timeId=${timeId}`))}
+                    className="flex items-center gap-4 p-4 bg-bg-secondary rounded-lg hover:bg-bg-secondary/80 transition-colors text-left group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-action-primary/10 flex items-center justify-center shrink-0">
+                      <Users size={24} className="text-action-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-text-primary font-medium">{getText('viewEnrollments')}</p>
+                      <p className="text-text-secondary text-sm">{getText('viewEnrollmentsDesc')}</p>
+                    </div>
+                    <ChevronRight size={20} className="text-text-placeholder group-hover:text-text-secondary transition-colors" />
+                  </button>
+
+                  {/* 출결 관리 */}
+                  <button
+                    disabled={!['ONGOING'].includes(courseTime.status)}
+                    onClick={() => toast.info(getText('comingSoon'))}
+                    className={cn(
+                      'flex items-center gap-4 p-4 bg-bg-secondary rounded-lg transition-colors text-left group',
+                      ['ONGOING'].includes(courseTime.status)
+                        ? 'hover:bg-bg-secondary/80 cursor-pointer'
+                        : 'opacity-50 cursor-not-allowed'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-12 h-12 rounded-full flex items-center justify-center shrink-0',
+                      ['ONGOING'].includes(courseTime.status)
+                        ? 'bg-status-success/10'
+                        : 'bg-bg-primary'
+                    )}>
+                      <ClipboardList size={24} className={cn(
+                        ['ONGOING'].includes(courseTime.status)
+                          ? 'text-status-success'
+                          : 'text-text-placeholder'
+                      )} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-text-primary font-medium">{getText('attendanceManagement')}</p>
+                        <Badge variant="secondary" className="text-xs">{getText('comingSoon')}</Badge>
+                      </div>
+                      <p className="text-text-secondary text-sm">{getText('attendanceManagementDesc')}</p>
+                    </div>
+                    <ChevronRight size={20} className="text-text-placeholder" />
+                  </button>
+
+                  {/* 성적 관리 */}
+                  <button
+                    disabled={!['ONGOING', 'CLOSED'].includes(courseTime.status)}
+                    onClick={() => toast.info(getText('comingSoon'))}
+                    className={cn(
+                      'flex items-center gap-4 p-4 bg-bg-secondary rounded-lg transition-colors text-left group',
+                      ['ONGOING', 'CLOSED'].includes(courseTime.status)
+                        ? 'hover:bg-bg-secondary/80 cursor-pointer'
+                        : 'opacity-50 cursor-not-allowed'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-12 h-12 rounded-full flex items-center justify-center shrink-0',
+                      ['ONGOING', 'CLOSED'].includes(courseTime.status)
+                        ? 'bg-status-warning/10'
+                        : 'bg-bg-primary'
+                    )}>
+                      <BarChart3 size={24} className={cn(
+                        ['ONGOING', 'CLOSED'].includes(courseTime.status)
+                          ? 'text-status-warning'
+                          : 'text-text-placeholder'
+                      )} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-text-primary font-medium">{getText('gradeManagement')}</p>
+                        <Badge variant="secondary" className="text-xs">{getText('comingSoon')}</Badge>
+                      </div>
+                      <p className="text-text-secondary text-sm">{getText('gradeManagementDesc')}</p>
+                    </div>
+                    <ChevronRight size={20} className="text-text-placeholder" />
+                  </button>
+                </div>
+              </Card>
             </div>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 size={20} className="text-status-error" />
+              {getText('confirmDelete')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {getText('confirmDeleteDesc')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{getText('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-status-error hover:bg-status-error/90"
+            >
+              {deleteTime.isPending ? (
+                <Loader2 size={16} className="animate-spin mr-2" />
+              ) : (
+                <Trash2 size={16} className="mr-2" />
+              )}
+              {getText('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Status Change Confirmation Dialog */}
+      <AlertDialog open={statusChangeDialogOpen} onOpenChange={setStatusChangeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{getText('confirmStatusChange')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {getText('confirmStatusChangeDesc')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{getText('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleStatusTransition}>
+              {(openTime.isPending || startTime.isPending || closeTime.isPending || archiveTime.isPending) ? (
+                <Loader2 size={16} className="animate-spin mr-2" />
+              ) : null}
+              {getText('confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

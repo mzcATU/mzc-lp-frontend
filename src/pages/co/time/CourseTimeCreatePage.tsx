@@ -492,6 +492,10 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         enrollEndDate = classStart.toISOString().split('T')[0];
       }
 
+      // UNLIMITED + 정원 무제한인 경우 중간 합류 허용을 true로 설정
+      const isUnlimitedWithNoCapacity = formData.durationType === 'UNLIMITED' && !formData.capacity;
+      const allowLateEnrollment = isUnlimitedWithNoCapacity ? true : (formData.allowLateEnrollment ?? false);
+
       const request: CreateCourseTimeRequest = {
         ...formData,
         enrollEndDate,
@@ -500,6 +504,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         isFree: priceNum === 0,
         locationInfo: formData.locationInfo?.trim() || undefined,
         description: formData.description?.trim() || undefined,
+        allowLateEnrollment,
       };
 
       console.log('[CourseTimeCreatePage] request:', request);
