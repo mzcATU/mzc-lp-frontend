@@ -4,6 +4,10 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        pretendard: ['Pretendard', 'sans-serif'],
+      },
       colors: {
         // shadcn/ui Semantic Tokens
         background: 'var(--background)',
