@@ -38,7 +38,6 @@ function CourseOperatorWrapper() {
 // CO 하위 라우트
 const coChildRoutes = (
   <>
-    <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 교육 과정 탐색 */}
     <Route path="courses" element={<CourseListPage />} />

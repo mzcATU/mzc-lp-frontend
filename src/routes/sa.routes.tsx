@@ -38,7 +38,6 @@ function SuperAdminWrapper() {
 
 export const saRoutes = (
   <Route path="/sa" element={<SuperAdminWrapper />}>
-    <Route index element={<DashboardPage />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 테넌트 관리 */}
     <Route path="tenants" element={<TenantsPage />} />
