@@ -204,28 +204,8 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
         {/* 배정 목록 섹션 */}
         {!isLoading && (
           <>
-            {/* 섹션 헤더 + 뷰 전환 버튼 */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-medium m-0" style={{ color: designTokens.text.primary }}>
-                  {getText('myAssignments')}
-                </h2>
-                <span className="text-sm" style={{ color: designTokens.text.secondary }}>
-                  {filteredAssignments.length}{getText('assignmentCount')}
-                </span>
-              </div>
-
-              {/* 뷰 전환 버튼 */}
-              <ViewToggle
-                viewMode={viewType}
-                onViewModeChange={setViewType}
-                gridLabel={getText('cardView')}
-                listLabel={getText('listView')}
-              />
-            </div>
-
             {/* 필터 + 탭 버튼 + 정렬 */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-6 flex gap-4 items-center flex-wrap">
               {/* 필터 아이콘 + 탭 버튼들 */}
               <div className="flex gap-2 items-center">
                 <Filter size={18} className="text-text-secondary" />
@@ -248,19 +228,30 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
               </div>
 
               {/* 정렬 드롭다운 */}
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as 'latest' | 'oldest')}
-                className="px-3 py-2 rounded-md text-sm border cursor-pointer outline-none"
-                style={{
-                  backgroundColor: designTokens.bg.default,
-                  color: designTokens.text.primary,
-                  borderColor: designTokens.bg.border,
-                }}
-              >
-                <option value="latest">{getText('latest')}</option>
-                <option value="oldest">{getText('oldest')}</option>
-              </select>
+              <div className="flex gap-2 items-center ml-auto">
+                <span className="text-sm text-text-secondary">{getText('latest').includes('최신') ? '정렬:' : 'Sort by:'}</span>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as 'latest' | 'oldest')}
+                  className="px-3 py-2 bg-bg-secondary text-text-primary border border-border rounded-md text-sm cursor-pointer"
+                >
+                  <option value="latest">{getText('latest')}</option>
+                  <option value="oldest">{getText('oldest')}</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 뷰 전환 & 카운트 */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-text-secondary">
+                {filteredAssignments.length}{getText('assignmentCount')}
+              </p>
+              <ViewToggle
+                viewMode={viewType}
+                onViewModeChange={setViewType}
+                gridLabel={getText('cardView')}
+                listLabel={getText('listView')}
+              />
             </div>
 
             {/* 빈 상태 */}
