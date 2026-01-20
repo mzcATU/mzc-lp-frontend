@@ -36,6 +36,8 @@ export interface UserListResponse {
   systemRole: TenantRole;
   status: UserStatus;
   organizationName: string | null;
+  department?: string | null;  // 부서
+  position?: string | null;    // 직급
   lastLoginAt: string | null;
   createdAt: string;
 }

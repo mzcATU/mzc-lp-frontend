@@ -193,6 +193,12 @@ const t = {
   userAssignmentOptional: { ko: '(선택사항)', en: '(Optional)' },
   enrollReason: { ko: '배정 사유 (선택)', en: 'Enrollment Reason (Optional)' },
   enrollReasonPlaceholder: { ko: '사유를 입력하세요...', en: 'Enter reason...' },
+  departmentFilter: { ko: '부서', en: 'Department' },
+  positionFilter: { ko: '직급', en: 'Position' },
+  allDepartments: { ko: '전체 부서', en: 'All Departments' },
+  allPositions: { ko: '전체 직급', en: 'All Positions' },
+  noDepartment: { ko: '부서 없음', en: 'No Department' },
+  noPosition: { ko: '직급 없음', en: 'No Position' },
   // Error messages
   errorInstructorConflict: { ko: '강사 일정 충돌', en: 'Instructor Schedule Conflict' },
   errorConflictingTimes: { ko: '충돌하는 차수', en: 'Conflicting course times' },
@@ -226,6 +232,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [enrollReason, setEnrollReason] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [positionFilter, setPositionFilter] = useState<string>('all');
 
   // URL에서 courseId 쿼리 파라미터 읽기
   const initialCourseId = searchParams.get('courseId');
@@ -247,17 +255,46 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     return usersData?.content ?? [];
   }, [usersData]);
 
-  // 수강생 선발용 전체 사용자 목록 (검색 필터링 적용)
+  // 부서/직급 목록 추출 (필터 옵션용)
+  const { departments, positions } = useMemo(() => {
+    const users = allUsersData?.content ?? [];
+    const deptSet = new Set<string>();
+    const posSet = new Set<string>();
+    users.forEach((u) => {
+      if (u.department) deptSet.add(u.department);
+      if (u.position) posSet.add(u.position);
+    });
+    return {
+      departments: Array.from(deptSet).sort(),
+      positions: Array.from(posSet).sort(),
+    };
+  }, [allUsersData]);
+
+  // 수강생 선발용 전체 사용자 목록 (검색 + 부서/직급 필터링 적용)
   const availableUsers = useMemo(() => {
     const users = allUsersData?.content ?? [];
-    if (!userSearchQuery.trim()) return users;
-    const query = userSearchQuery.toLowerCase();
-    return users.filter(
-      (u) =>
-        u.name?.toLowerCase().includes(query) ||
-        u.email?.toLowerCase().includes(query)
-    );
-  }, [allUsersData, userSearchQuery]);
+    return users.filter((u) => {
+      // 텍스트 검색 (이름, 이메일, 부서, 직급)
+      if (userSearchQuery.trim()) {
+        const query = userSearchQuery.toLowerCase();
+        const matchesSearch =
+          u.name?.toLowerCase().includes(query) ||
+          u.email?.toLowerCase().includes(query) ||
+          u.department?.toLowerCase().includes(query) ||
+          u.position?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      // 부서 필터
+      if (departmentFilter !== 'all' && u.department !== departmentFilter) {
+        return false;
+      }
+      // 직급 필터
+      if (positionFilter !== 'all' && u.position !== positionFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [allUsersData, userSearchQuery, departmentFilter, positionFilter]);
 
   // 선택된 과정 정보
   const [selectedCourse, setSelectedCourse] = useState<CourseRegistrationResponse | null>(null);
@@ -543,9 +580,27 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       const isUnlimitedWithNoCapacity = formData.durationType === 'UNLIMITED' && !formData.capacity;
       const allowLateEnrollment = isUnlimitedWithNoCapacity ? true : (formData.allowLateEnrollment ?? false);
 
+      // durationType에 따라 불필요한 필드 정리
+      let classEndDate = formData.classEndDate;
+      let durationDays = formData.durationDays;
+
+      if (formData.durationType === 'FIXED') {
+        // FIXED: classEndDate 필수, durationDays 불필요
+        durationDays = null;
+      } else if (formData.durationType === 'RELATIVE') {
+        // RELATIVE: durationDays 필수, classEndDate 불필요
+        classEndDate = null;
+      } else if (formData.durationType === 'UNLIMITED') {
+        // UNLIMITED: 둘 다 불필요
+        classEndDate = null;
+        durationDays = null;
+      }
+
       const request: CreateCourseTimeRequest = {
         ...formData,
         enrollEndDate,
+        classEndDate,
+        durationDays,
         capacity: formData.capacity === 0 ? null : formData.capacity,
         price: priceNum.toString(),
         isFree: priceNum === 0,
@@ -614,6 +669,9 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       navigate(prefixPath('/co/times'));
     } catch (err: unknown) {
       console.error('Create failed:', err);
+      // 상세 에러 응답 출력
+      const axiosError = err as { response?: { data?: unknown } };
+      console.error('Error response data:', axiosError?.response?.data);
 
       // 에러 응답 파싱
       const axiosErr = err as { response?: { data?: { error?: { code?: string; message?: string }; data?: Array<{ conflictingTimeTitle?: string; classStartDate?: string; classEndDate?: string }> } } };
@@ -634,8 +692,61 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         // 모집 종료일 validation 에러
         toast.error(getText('errorEnrollEndBeforeClassStart'));
       } else if (errorCode === 'C001') {
-        // 일반 validation 에러
-        toast.error(errorData?.error?.message || getText('errorValidation'));
+        // 일반 validation 에러 - 제약 조건 메시지 매핑
+        const errorMessage = errorData?.error?.message || '';
+
+        // 제약 조건 키 추출 (예: "R10: constraint.deliveryType.locationRequired" → "constraint.deliveryType.locationRequired")
+        const constraintMatch = errorMessage.match(/constraint\.[\w.]+/);
+        const constraintKey = constraintMatch?.[0];
+
+        // 제약 조건별 사용자 친화적 메시지 매핑
+        const constraintMessages: Record<string, { ko: string; en: string }> = {
+          'constraint.deliveryType.locationRequired': {
+            ko: '오프라인/블렌디드/실시간 온라인 진행 방식에서는 장소 정보가 필수입니다.',
+            en: 'Location is required for offline, blended, or live online delivery types.',
+          },
+          'constraint.enrollment.capacityRequired': {
+            ko: '모집 인원은 필수 입력 항목입니다.',
+            en: 'Enrollment capacity is required.',
+          },
+          'constraint.enrollment.endDateRequired': {
+            ko: '모집 마감일은 필수 입력 항목입니다.',
+            en: 'Enrollment end date is required.',
+          },
+          'constraint.date.startBeforeEnd': {
+            ko: '시작일은 종료일보다 이전이어야 합니다.',
+            en: 'Start date must be before end date.',
+          },
+          'constraint.date.classStartRequired': {
+            ko: '교육 시작일은 필수 입력 항목입니다.',
+            en: 'Class start date is required.',
+          },
+          'constraint.date.classEndRequired': {
+            ko: '교육 종료일은 필수 입력 항목입니다.',
+            en: 'Class end date is required.',
+          },
+          'constraint.duration.daysRequired': {
+            ko: '수강 기간(일수)은 필수 입력 항목입니다.',
+            en: 'Duration days is required.',
+          },
+          'constraint.title.required': {
+            ko: '차수 제목은 필수 입력 항목입니다.',
+            en: 'Course time title is required.',
+          },
+        };
+
+        const friendlyMessage = constraintKey && constraintMessages[constraintKey]
+          ? constraintMessages[constraintKey][language]
+          : errorMessage || getText('errorValidation');
+
+        toast.error(friendlyMessage);
+      } else if (errorCode === 'C002') {
+        // 서버 내부 에러
+        toast.error(
+          language === 'ko'
+            ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+            : 'A server error occurred. Please try again later.'
+        );
       } else {
         // 기타 에러
         toast.error(errorData?.error?.message || getText('createError'));
@@ -1827,21 +1938,52 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 </div>
               </div>
 
-              {/* 사용자 검색 */}
-              <div className="space-y-2">
+              {/* 사용자 검색 및 필터 */}
+              <div className="space-y-3">
                 <Label>{getText('selectUsersToEnroll')}</Label>
-                <div className="relative">
-                  <Search
-                    size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder"
-                  />
-                  <Input
-                    type="text"
-                    placeholder={getText('searchUserPlaceholder')}
-                    value={userSearchQuery}
-                    onChange={(e) => setUserSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+                <div className="flex gap-3">
+                  {/* 검색 */}
+                  <div className="relative flex-1">
+                    <Search
+                      size={18}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder"
+                    />
+                    <Input
+                      type="text"
+                      placeholder={getText('searchUserPlaceholder')}
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {/* 부서 필터 - 데이터 있을 때만 표시 */}
+                  {departments.length > 0 && (
+                    <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                      <SelectTrigger size="sm" className="w-[120px]">
+                        <SelectValue placeholder={getText('allDepartments')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{getText('allDepartments')}</SelectItem>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {/* 직급 필터 - 데이터 있을 때만 표시 */}
+                  {positions.length > 0 && (
+                    <Select value={positionFilter} onValueChange={setPositionFilter}>
+                      <SelectTrigger size="sm" className="w-[100px]">
+                        <SelectValue placeholder={getText('allPositions')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{getText('allPositions')}</SelectItem>
+                        {positions.map((pos) => (
+                          <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
 
@@ -1875,7 +2017,14 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                         className="w-4 h-4 rounded border-border accent-btn-brand"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
+                          {(user.department || user.position) && (
+                            <span className="text-xs text-text-placeholder">
+                              {[user.department, user.position].filter(Boolean).join(' · ')}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-text-secondary truncate">{user.email}</p>
                       </div>
                     </label>
