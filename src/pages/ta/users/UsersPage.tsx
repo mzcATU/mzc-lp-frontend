@@ -124,6 +124,7 @@ export function UsersContent() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [sortBy, setSortBy] = useState<string | undefined>(undefined);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -143,7 +144,7 @@ export function UsersContent() {
     status: statusFilter !== 'all' ? statusFilter as UserStatus : undefined,
     systemRole: roleFilter !== 'all' ? roleFilter as SystemRole : undefined,
     page,
-    size: 10,
+    size: pageSize,
     sortBy,
     sortDirection,
   });
@@ -630,7 +631,10 @@ export function UsersContent() {
       </div>
 
       {/* 역할별 탭 필터 */}
-      <Tabs value={roleFilter} onValueChange={setRoleFilter} className="mb-6">
+      <Tabs value={roleFilter} onValueChange={(value) => {
+        setRoleFilter(value);
+        setPage(0); // 필터 변경 시 첫 페이지로 이동
+      }} className="mb-6">
         <TabsList>
           <TabsTrigger value="all">
             전체 사용자
@@ -678,11 +682,17 @@ export function UsersContent() {
           <Input
             placeholder="이름 또는 이메일 검색..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(0); // 검색어 변경 시 첫 페이지로 이동
+            }}
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(value) => {
+          setStatusFilter(value);
+          setPage(0); // 필터 변경 시 첫 페이지로 이동
+        }}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="상태" />
           </SelectTrigger>
@@ -716,6 +726,15 @@ export function UsersContent() {
             setSortDirection('desc');
           }
           setPage(0); // 정렬 변경 시 첫 페이지로 이동
+        }}
+        manualPagination={true}
+        pageCount={usersData?.totalPages || 0}
+        pageIndex={page}
+        pageSize={pageSize}
+        onPageChange={(newPage) => setPage(newPage)}
+        onPageSizeChange={(newSize) => {
+          setPageSize(newSize);
+          setPage(0); // 페이지 크기 변경 시 첫 페이지로 이동
         }}
         labels={{
           noResults: '사용자가 없습니다.',
