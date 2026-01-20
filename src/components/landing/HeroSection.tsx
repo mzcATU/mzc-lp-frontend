@@ -99,16 +99,25 @@ export function HeroSection() {
     return null;
   }
 
-  return (
-    <div className="w-full overflow-hidden relative animated-bg py-8 md:py-12">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#6778ff]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 right-20 w-96 h-96 bg-[#a855f7]/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-40 right-40 w-48 h-48 bg-[#6bc2f0]/10 rounded-full blur-3xl"></div>
-      </div>
+  // 브랜딩 배너(이미지/코드)가 있는지 확인
+  const hasBrandingBanner = brandingBannerItems.length > 0;
 
-      <div className="w-full px-4 md:px-8 lg:px-16 h-[400px] md:h-[500px] flex items-center justify-between relative">
+  return (
+    <div className="w-full overflow-hidden relative">
+      {/* 브랜딩 배너가 없을 때만 기본 배경 표시 */}
+      {!hasBrandingBanner && (
+        <>
+          <div className="absolute inset-0 animated-bg" />
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-20 left-10 w-72 h-72 bg-[#6778ff]/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-10 right-20 w-96 h-96 bg-[#a855f7]/10 rounded-full blur-3xl"></div>
+            <div className="absolute top-40 right-40 w-48 h-48 bg-[#6bc2f0]/10 rounded-full blur-3xl"></div>
+          </div>
+        </>
+      )}
+
+      <div className="w-full h-[400px] md:h-[500px] flex items-center justify-between relative">
         {/* 브랜딩 배너 슬라이드 (TA 브랜딩 설정에서 추가) */}
         {brandingBannerSlide && (
           <div
