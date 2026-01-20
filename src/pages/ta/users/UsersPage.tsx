@@ -55,6 +55,7 @@ import { Checkbox } from '@/components/common/Checkbox';
 import { designTokens } from '@/styles/admin-design-tokens';
 import {
   useUsers,
+  useUser,
   useUpdateUser,
   useUpdateUserRoles,
   useDeleteUser,
@@ -157,6 +158,9 @@ export function UsersContent() {
   // 선택한 사용자의 역할 조회 (다이얼로그 열릴 때)
   const { data: selectedUserRoles, refetch: refetchUserRoles } = useUserRoles(selectedUser?.id || 0);
 
+  // 선택한 사용자의 상세 정보 조회 (부서, 직급 등)
+  const { data: selectedUserDetail } = useUser(selectedUser?.id || 0);
+
   const { register, handleSubmit, reset, setValue, watch } = useForm<UserFormData>({
     defaultValues: {
       systemRole: 'USER',
@@ -188,6 +192,14 @@ export function UsersContent() {
       setValue('systemRoles', selectedUserRoles);
     }
   }, [selectedUserRoles, isEditDialogOpen, setValue]);
+
+  // 사용자 상세 정보가 로드되면 부서/직급 form에 반영
+  useEffect(() => {
+    if (selectedUserDetail && isEditDialogOpen) {
+      setValue('department', selectedUserDetail.department || '');
+      setValue('position', selectedUserDetail.position || '');
+    }
+  }, [selectedUserDetail, isEditDialogOpen, setValue]);
 
   const columns: ColumnDef<AdminUser>[] = [
     {
@@ -299,6 +311,8 @@ export function UsersContent() {
     setSelectedUser(user);
     setValue('name', user.name);
     setValue('email', user.email);
+    setValue('department', user.department || '');
+    setValue('position', user.position || '');
     setValue('systemRole', user.systemRole);
     // 사용자의 roles 배열이 있으면 그것을 사용, 없으면 systemRole 하나로 초기화
     const initialRoles = user.roles && user.roles.length > 0 ? user.roles : [user.systemRole];
