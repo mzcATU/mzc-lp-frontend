@@ -11,6 +11,8 @@ import type {
   CancelAssignmentRequest,
   InstructorAssignmentFilterParams,
   InstructorAssignmentListResponse,
+  InstructorAvailabilityCheckRequest,
+  InstructorAvailabilityResponse,
 } from '@/types/co/instructorAssignment.types';
 import type { PageResponse } from '@/types/common/api.types';
 
@@ -94,5 +96,33 @@ export const instructorAssignmentService = {
       API_ENDPOINTS.TIMES.INSTRUCTOR_BY_ID(timeId, assignmentId),
       { data: request }
     );
+  },
+
+  // ============================================
+  // 강사 가용성 체크
+  // ============================================
+
+  /** 여러 강사 가용성 벌크 체크 */
+  async checkAvailability(
+    request: InstructorAvailabilityCheckRequest
+  ): Promise<InstructorAvailabilityResponse[]> {
+    const { data } = await axiosInstance.post<InstructorAvailabilityResponse[]>(
+      API_ENDPOINTS.INSTRUCTORS.AVAILABILITY_CHECK,
+      request
+    );
+    return data;
+  },
+
+  /** 단일 강사 가용성 체크 */
+  async checkUserAvailability(
+    userId: number,
+    startDate: string,
+    endDate: string
+  ): Promise<InstructorAvailabilityResponse> {
+    const { data } = await axiosInstance.get<InstructorAvailabilityResponse>(
+      API_ENDPOINTS.INSTRUCTORS.USER_AVAILABILITY(userId),
+      { params: { startDate, endDate } }
+    );
+    return data;
   },
 };

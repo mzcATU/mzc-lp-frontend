@@ -219,6 +219,12 @@ export const API_ENDPOINTS = {
     MY_STATISTICS: '/users/me/instructor-statistics',
   },
 
+  // Instructors (강사 가용성 체크)
+  INSTRUCTORS: {
+    AVAILABILITY_CHECK: '/instructors/availability/check',
+    USER_AVAILABILITY: (userId: number) => `/users/${userId}/availability`,
+  },
+
   // Snapshots (TO)
   SNAPSHOTS: {
     BASE: '/snapshots',

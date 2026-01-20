@@ -347,7 +347,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   // 강사 일정 충돌 정보
   const [conflictInfo, setConflictInfo] = useState<{
-    conflicts: Array<{ conflictingTimeTitle: string; classStartDate: string; classEndDate: string }>;
+    conflicts: Array<{ conflictingTimeTitle: string; classStartDate: string; classEndDate: string; instructorName?: string }>;
   } | null>(null);
 
   // 강사 배정 상태
@@ -610,6 +610,75 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       };
 
       console.log('[CourseTimeCreatePage] request:', request);
+
+      // 강사 가용성 체크 (차수 생성 전)
+      if (assignedInstructors.length > 0 && request.classStartDate) {
+        // classEndDate가 없으면 (UNLIMITED) 시작일 + 1년으로 가정
+        const checkEndDate = request.classEndDate || (() => {
+          const d = new Date(request.classStartDate);
+          d.setFullYear(d.getFullYear() + 1);
+          return d.toISOString().split('T')[0];
+        })();
+
+        console.log('[CourseTimeCreatePage] Checking instructor availability:', {
+          userIds: assignedInstructors.map((i) => i.userId),
+          startDate: request.classStartDate,
+          endDate: checkEndDate,
+        });
+
+        try {
+          const availabilityResults = await instructorAssignmentService.checkAvailability({
+            userIds: assignedInstructors.map((i) => i.userId),
+            startDate: request.classStartDate,
+            endDate: checkEndDate,
+          });
+
+          console.log('[CourseTimeCreatePage] Availability results:', availabilityResults);
+
+          // 충돌 있는 강사 확인
+          const conflictingInstructors = availabilityResults.filter((r) => !r.available);
+          if (conflictingInstructors.length > 0) {
+            console.log('[CourseTimeCreatePage] Conflicts found:', conflictingInstructors);
+            // 충돌 정보 설정 및 Step 2로 이동
+            const conflicts = conflictingInstructors.flatMap((instructor) => {
+              const instructorName = assignedInstructors.find((i) => i.userId === instructor.userId)?.userName || '';
+              // conflictingAssignments 배열이 없으면 기본 충돌 정보 생성
+              if (!instructor.conflictingAssignments || instructor.conflictingAssignments.length === 0) {
+                return [{
+                  conflictingTimeTitle: language === 'ko' ? '기존 배정 차수' : 'Existing assignment',
+                  classStartDate: request.classStartDate,
+                  classEndDate: checkEndDate,
+                  instructorName,
+                }];
+              }
+              return instructor.conflictingAssignments.map((c) => ({
+                conflictingTimeTitle: c.timeName,
+                classStartDate: c.startDate,
+                classEndDate: c.endDate,
+                instructorName,
+              }));
+            });
+            setConflictInfo({ conflicts });
+            setCurrentStep(2);
+            toast.error(
+              language === 'ko'
+                ? `강사 일정이 ${conflicts.length}건 충돌합니다. 학습 기간을 조정해주세요.`
+                : `${conflicts.length} instructor schedule conflict(s) found. Please adjust the learning period.`
+            );
+            return;
+          }
+        } catch (availErr) {
+          console.error('Availability check failed:', availErr);
+          // 가용성 체크 실패 시 에러 표시하고 차수 생성 중단
+          toast.error(
+            language === 'ko'
+              ? '강사 일정 확인에 실패했습니다. 잠시 후 다시 시도해주세요.'
+              : 'Failed to check instructor availability. Please try again.'
+          );
+          return;
+        }
+      }
+
       const createdTime = await createTime.mutateAsync(request);
 
       // 강사 배정 처리
@@ -824,30 +893,49 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
   }, [initialCourseId, registeredCourses, selectedCourse]);
 
-  // Owner를 주강사로 자동 추가
+  // 과정 개설자를 주강사로 자동 추가
   const handleUseOwnerToggle = (checked: boolean) => {
     setUseOwnerAsInstructor(checked);
-    if (checked && selectedCourse?.ownerId) {
-      // Owner가 이미 목록에 있는지 확인
-      const ownerExists = assignedInstructors.some((i) => i.userId === selectedCourse.ownerId);
-      if (!ownerExists) {
+    if (checked && selectedCourse?.creatorId) {
+      // 개설자가 이미 목록에 있는지 확인
+      const creatorExists = assignedInstructors.some((i) => i.userId === selectedCourse.creatorId);
+      if (!creatorExists) {
         // MAIN이 이미 있으면 제거
         const withoutMain = assignedInstructors.filter((i) => i.role !== 'MAIN');
         setAssignedInstructors([
           ...withoutMain,
           {
-            userId: selectedCourse.ownerId,
-            userName: selectedCourse.ownerName || '',
-            userEmail: selectedCourse.ownerEmail || '',
+            userId: selectedCourse.creatorId,
+            userName: selectedCourse.creatorName || '',
+            userEmail: '',
             role: 'MAIN',
           },
         ]);
       }
-    } else if (!checked && selectedCourse?.ownerId) {
-      // Owner 제거
-      setAssignedInstructors((prev) => prev.filter((i) => i.userId !== selectedCourse.ownerId));
+    } else if (!checked && selectedCourse?.creatorId) {
+      // 개설자 제거
+      setAssignedInstructors((prev) => prev.filter((i) => i.userId !== selectedCourse.creatorId));
     }
   };
+
+  // 과정 선택 시 개설자 자동 배정
+  useEffect(() => {
+    if (useOwnerAsInstructor && selectedCourse?.creatorId) {
+      const creatorExists = assignedInstructors.some((i) => i.userId === selectedCourse.creatorId);
+      if (!creatorExists) {
+        const withoutMain = assignedInstructors.filter((i) => i.role !== 'MAIN');
+        setAssignedInstructors([
+          ...withoutMain,
+          {
+            userId: selectedCourse.creatorId,
+            userName: selectedCourse.creatorName || '',
+            userEmail: '',
+            role: 'MAIN',
+          },
+        ]);
+      }
+    }
+  }, [selectedCourse?.creatorId]);
 
   const stepLabels = useMemo(() => {
     const labels = [getText('step1'), getText('step2'), getText('step3'), getText('step4')];
@@ -995,11 +1083,11 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                             </span>
                           </div>
                         )}
-                        {/* Owner 정보 */}
+                        {/* 개설자 정보 */}
                         <div>
                           <span className="text-text-secondary">{getText('owner')}: </span>
                           <span className="text-text-primary">
-                            {selectedCourse.ownerName || getText('noOwner')}
+                            {selectedCourse.creatorName || getText('noOwner')}
                           </span>
                         </div>
                       </div>
@@ -1056,6 +1144,46 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
           {/* Step 2: 일정 및 모집 */}
           {currentStep === 2 && (
             <div className="flex flex-col gap-8">
+              {/* 강사 일정 충돌 경고 - 최상단 배치 */}
+              {conflictInfo && (
+                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center mt-0.5">
+                      <span className="text-white text-sm font-bold">!</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-red-800 text-base">{getText('errorInstructorConflict')}</p>
+                      <p className="text-sm text-red-600 mt-1">{getText('errorConflictingTimes')}:</p>
+                      <ul className="mt-2 space-y-1">
+                        {conflictInfo.conflicts.map((c, i) => (
+                          <li key={i} className="text-sm text-red-700 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                            {c.instructorName && (
+                              <span className="text-red-800 font-medium">[{c.instructorName}]</span>
+                            )}
+                            <span className="font-medium">{c.conflictingTimeTitle}</span>
+                            <span className="text-red-500">({c.classStartDate} ~ {c.classEndDate})</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-sm text-red-700 mt-3 font-medium">
+                        {language === 'ko'
+                          ? '아래에서 학습 기간을 수정하여 충돌을 해결해주세요.'
+                          : 'Please modify the learning period below to resolve conflicts.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setConflictInfo(null)}
+                      className="text-red-400 hover:text-red-600 p-1"
+                      title={language === 'ko' ? '닫기' : 'Close'}
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 진행 방식 - RadioOptionCard */}
               <div className="space-y-3">
                 <Label>{getText('deliveryType')}</Label>
@@ -1552,41 +1680,6 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 );
               })()}
 
-              {/* 강사 일정 충돌 경고 */}
-              {conflictInfo && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
-                      <span className="text-red-600 text-xs font-bold">!</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-red-800">{getText('errorInstructorConflict')}</p>
-                      <p className="text-sm text-red-600 mt-1">{getText('errorConflictingTimes')}:</p>
-                      <ul className="mt-2 space-y-1">
-                        {conflictInfo.conflicts.map((c, i) => (
-                          <li key={i} className="text-sm text-red-700 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                            <span className="font-medium">{c.conflictingTimeTitle}</span>
-                            <span className="text-red-500">({c.classStartDate} ~ {c.classEndDate})</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-sm text-red-600 mt-3">
-                        {language === 'ko'
-                          ? '위 기간과 겹치지 않도록 학습 기간을 조정해주세요.'
-                          : 'Please adjust the learning period to avoid conflicts.'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setConflictInfo(null)}
-                      className="text-red-400 hover:text-red-600"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -1751,8 +1844,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 {getText('instructorAssignmentHint')}
               </p>
 
-              {/* Owner를 주강사로 배정 옵션 */}
-              {selectedCourse?.ownerId && (
+              {/* 과정 개설자를 주강사로 배정 옵션 */}
+              {selectedCourse?.creatorId && (
                 <div className="bg-bg-subtle rounded-lg p-4 border border-border">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1763,7 +1856,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       <div>
                         <span className="font-medium text-text-primary">{getText('useOwnerAsInstructor')}</span>
                         <p className="text-sm text-text-secondary mt-0.5">
-                          {selectedCourse.ownerName} ({selectedCourse.ownerEmail})
+                          {selectedCourse.creatorName}
                         </p>
                       </div>
                     </div>
