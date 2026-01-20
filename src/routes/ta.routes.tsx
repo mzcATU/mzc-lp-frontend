@@ -39,7 +39,7 @@ const taChildRoutes = (
   <>
     <Route index element={<Navigate to="dashboard" replace />} />
     <Route path="dashboard" element={<DashboardPage />} />
-    {/* 시스템 기반 관리 */}
+    {/* 도메인 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
     {/* 브랜딩 설정 (통합) */}
     <Route path="branding" element={<BrandingSettingsPage />} />
