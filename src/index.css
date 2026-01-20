@@ -137,6 +137,24 @@
   --landing-body-font: 'Pretendard', sans-serif;
 }
 
+/* TU Landing Page Font Application */
+.tu-landing h1,
+.tu-landing h2,
+.tu-landing h3,
+.tu-landing h4,
+.tu-landing h5,
+.tu-landing h6 {
+  font-family: var(--landing-heading-font), 'Pretendard', sans-serif;
+}
+
+.tu-landing p,
+.tu-landing span,
+.tu-landing div,
+.tu-landing a,
+.tu-landing li {
+  font-family: var(--landing-body-font), 'Pretendard', sans-serif;
+}
+
 @layer base {
   * {
     @apply border-border;
