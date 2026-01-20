@@ -27,7 +27,7 @@ import {
   useTenantNoticeDistributionSummary,
   useTenantNoticeDistributionDetail,
 } from '@/hooks/ta/useTenantNoticeQueries';
-import type { TenantNoticeType, NoticeTargetAudience, UserDistributionInfo } from '@/types/ta/tenantNotice.types';
+import type { TenantNoticeType, NoticeTargetAudience } from '@/types/ta/tenantNotice.types';
 
 const typeConfig: Record<TenantNoticeType, { label: string; color: string }> = {
   GENERAL: { label: '일반', color: 'bg-gray-100 text-gray-700' },
@@ -89,7 +89,7 @@ export function DistributionContent() {
     <div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -119,19 +119,6 @@ export function DistributionContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Eye className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{summary?.totalReadCount || 0}</p>
-                <p className="text-sm text-text-secondary">총 열람</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
               <div className="p-2 bg-yellow-100 rounded-lg">
                 <Users className="h-5 w-5 text-yellow-600" />
               </div>
@@ -144,26 +131,13 @@ export function DistributionContent() {
         </Card>
       </div>
 
-      {/* Average Read Rate */}
-      {summary && summary.averageReadRate > 0 && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">평균 열람율</span>
-              <span className="text-sm font-bold">{summary.averageReadRate.toFixed(1)}%</span>
-            </div>
-            <Progress value={summary.averageReadRate} className="h-2" />
-          </CardContent>
-        </Card>
-      )}
-
       {/* Distribution List */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>배포 현황</CardTitle>
-              <CardDescription>공지사항별 배포 및 열람 현황입니다</CardDescription>
+              <CardDescription>공지사항별 배포 현황입니다</CardDescription>
             </div>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
@@ -187,7 +161,6 @@ export function DistributionContent() {
               {filteredDistributions.map((dist) => {
                 const typeConf = typeConfig[dist.noticeType] || typeConfig.GENERAL;
                 const sentPercent = dist.totalUsers > 0 ? (dist.sentCount / dist.totalUsers) * 100 : 0;
-                const readPercent = dist.sentCount > 0 ? (dist.readCount / dist.sentCount) * 100 : 0;
 
                 return (
                   <div key={dist.noticeId} className="p-4 border rounded-lg hover:bg-bg-secondary">
@@ -203,21 +176,12 @@ export function DistributionContent() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-text-secondary">발송 현황</span>
-                          <span>{dist.sentCount} / {dist.totalUsers} 명</span>
-                        </div>
-                        <Progress value={sentPercent} className="h-2" />
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-text-secondary">발송 현황</span>
+                        <span>{dist.sentCount} / {dist.totalUsers} 명</span>
                       </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-text-secondary">열람율</span>
-                          <span>{dist.readCount} / {dist.sentCount} ({readPercent.toFixed(0)}%)</span>
-                        </div>
-                        <Progress value={readPercent} className="h-2" />
-                      </div>
+                      <Progress value={sentPercent} className="h-2" />
                     </div>
 
                     <div className="flex justify-end mt-3">
@@ -276,55 +240,11 @@ export function DistributionContent() {
           {noticeDetail && (
             <div className="space-y-4">
               {/* Summary */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-3 bg-bg-secondary rounded-lg text-center">
-                  <p className="text-2xl font-bold">{noticeDetail.sentCount}</p>
-                  <p className="text-sm text-text-secondary">배포됨</p>
+              <div className="flex justify-center">
+                <div className="p-4 bg-bg-secondary rounded-lg text-center min-w-[200px]">
+                  <p className="text-3xl font-bold">{noticeDetail.sentCount}</p>
+                  <p className="text-sm text-text-secondary mt-1">배포 완료</p>
                 </div>
-                <div className="p-3 bg-bg-secondary rounded-lg text-center">
-                  <p className="text-2xl font-bold">{noticeDetail.readCount}</p>
-                  <p className="text-sm text-text-secondary">열람</p>
-                </div>
-                <div className="p-3 bg-bg-secondary rounded-lg text-center">
-                  <p className="text-2xl font-bold">
-                    {noticeDetail.sentCount > 0
-                      ? ((noticeDetail.readCount / noticeDetail.sentCount) * 100).toFixed(0)
-                      : 0}%
-                  </p>
-                  <p className="text-sm text-text-secondary">열람율</p>
-                </div>
-              </div>
-
-              {/* User List */}
-              <div className="border rounded-lg max-h-80 overflow-y-auto">
-                <table className="w-full">
-                  <thead className="bg-bg-secondary sticky top-0">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-medium">사용자</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">이메일</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">역할</th>
-                      <th className="px-4 py-2 text-center text-sm font-medium">상태</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">열람일시</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {noticeDetail.userDistributions.map((user: UserDistributionInfo) => (
-                      <tr key={user.userId} className="border-t">
-                        <td className="px-4 py-2 text-sm">{user.userName}</td>
-                        <td className="px-4 py-2 text-sm text-text-secondary">{user.userEmail}</td>
-                        <td className="px-4 py-2 text-sm">{user.userRole}</td>
-                        <td className="px-4 py-2 text-center">
-                          {user.isRead ? (
-                            <Badge className="bg-green-100 text-green-700">읽음</Badge>
-                          ) : (
-                            <Badge className="bg-gray-100 text-gray-600">미읽음</Badge>
-                          )}
-                        </td>
-                        <td className="px-4 py-2 text-sm">{formatDate(user.readAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </div>
           )}
