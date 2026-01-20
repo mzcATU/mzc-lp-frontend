@@ -59,11 +59,16 @@ export function extractSubdomainFromPath(): string | null {
 export function extractTenantIdentifier(): TenantIdentifier | null {
   const hostname = window.location.hostname;
 
-  // 로컬 개발 환경 - 경로 기반 서브도메인 확인
+  // 로컬 개발 환경 - 경로 기반 서브도메인 또는 커스텀 도메인 확인
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     const pathSubdomain = extractSubdomainFromPath();
     if (pathSubdomain) {
-      return { type: 'subdomain', identifier: pathSubdomain };
+      // 도메인 형태인지 확인 (.com, .net, .org 등 포함)
+      const isCustomDomain = /\.[a-z]{2,}$/i.test(pathSubdomain);
+      return {
+        type: isCustomDomain ? 'customDomain' : 'subdomain',
+        identifier: pathSubdomain
+      };
     }
     return null; // 기본 브랜딩 사용
   }

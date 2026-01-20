@@ -1,4 +1,4 @@
-import { Route, Outlet } from 'react-router-dom';
+import { Route, Outlet, Navigate } from 'react-router-dom';
 import { TenantAdminLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import {
@@ -37,6 +37,7 @@ function TenantAdminWrapper() {
 // TA 하위 라우트 (Admin 메뉴)
 const taChildRoutes = (
   <>
+    <Route index element={<Navigate to="dashboard" replace />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 시스템 기반 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
