@@ -1,143 +1,179 @@
 import { useState } from 'react';
-import {
-  Globe,
-  Shield,
-  Plus,
-  Trash2,
-  RefreshCw,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-} from 'lucide-react';
+import { Globe, ExternalLink, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
-import { Button } from '@/components/common/Button';
 import { Badge } from '@/components/common/Badge';
-import { Switch } from '@/components/common/Switch';
-
-// Mock 데이터
-const mockDomains: {
-  id: number;
-  domain: string;
-  type: 'PRIMARY' | 'CUSTOM';
-  sslStatus: 'ACTIVE' | 'PENDING' | 'EXPIRED';
-  sslExpiry: string;
-  tenantName: string;
-  createdAt: string;
-}[] = [
-  { id: 1, domain: 'learn.megazone.com', type: 'CUSTOM', sslStatus: 'ACTIVE', sslExpiry: '2026-06-15', tenantName: '메가존클라우드', createdAt: '2025-01-15' },
-  { id: 2, domain: 'edu.samsung.com', type: 'CUSTOM', sslStatus: 'ACTIVE', sslExpiry: '2026-03-20', tenantName: '삼성전자', createdAt: '2025-02-10' },
-  { id: 3, domain: 'mzc.lp.cloud', type: 'PRIMARY', sslStatus: 'ACTIVE', sslExpiry: '2026-12-01', tenantName: '기본 도메인', createdAt: '2024-01-01' },
-  { id: 4, domain: 'training.kakao.com', type: 'CUSTOM', sslStatus: 'PENDING', sslExpiry: '-', tenantName: '카카오', createdAt: '2025-12-28' },
-];
-
-const sslStatusConfig = {
-  ACTIVE: { label: '활성', icon: CheckCircle, color: 'bg-green-100 text-green-700' },
-  PENDING: { label: '발급중', icon: Clock, color: 'bg-yellow-100 text-yellow-700' },
-  EXPIRED: { label: '만료됨', icon: AlertCircle, color: 'bg-red-100 text-red-700' },
-};
+import { Button } from '@/components/common/Button';
+import { Skeleton } from '@/components/common/Skeleton';
+import { useTenants, useDeleteCustomDomain } from '@/hooks/sa';
+import { toast } from 'sonner';
 
 export function DomainSettingsPage() {
-  const [domains] = useState(mockDomains);
-  const [forceHttps, setForceHttps] = useState(true);
-  const [autoRenewSsl, setAutoRenewSsl] = useState(true);
+  const [deletingDomainId, setDeletingDomainId] = useState<number | null>(null);
+
+  // 모든 테넌트 조회 (페이지네이션 없이)
+  const { data: tenantsData, isLoading, isError } = useTenants({ size: 1000 });
+  const deleteCustomDomain = useDeleteCustomDomain();
+
+  const tenants = tenantsData?.content || [];
+
+  // 도메인 목록 생성 (subdomain + customDomain)
+  const domains = tenants.flatMap((tenant) => {
+    const domainList = [];
+
+    // 기본 서브도메인 (항상 존재)
+    domainList.push({
+      id: `${tenant.tenantId}-subdomain`,
+      tenantId: tenant.tenantId,
+      subdomain: tenant.subdomain,
+      domain: `${tenant.subdomain}.mzc-lp.com`,
+      type: 'SUBDOMAIN' as const,
+      tenantName: tenant.name,
+      tenantCode: tenant.code,
+      createdAt: tenant.createdAt,
+    });
+
+    // 커스텀 도메인 (있는 경우에만)
+    if (tenant.customDomain) {
+      domainList.push({
+        id: `${tenant.tenantId}-custom`,
+        tenantId: tenant.tenantId,
+        subdomain: tenant.subdomain,
+        domain: tenant.customDomain,
+        type: 'CUSTOM' as const,
+        tenantName: tenant.name,
+        tenantCode: tenant.code,
+        createdAt: tenant.createdAt,
+      });
+    }
+
+    return domainList;
+  });
+
+  // DNS 검증 상태 확인 (간단하게: 커스텀 도메인은 확인 필요로 표시)
+  const getDnsStatus = (domain: typeof domains[0]) => {
+    if (domain.type === 'SUBDOMAIN') {
+      return { status: 'verified', label: '검증됨', icon: CheckCircle2, color: 'bg-green-100 text-green-700' };
+    }
+    // 커스텀 도메인은 DNS 확인 필요
+    return { status: 'pending', label: 'DNS 확인 필요', icon: AlertCircle, color: 'bg-yellow-100 text-yellow-700' };
+  };
+
+  // 커스텀 도메인 삭제
+  const handleDeleteCustomDomain = async (tenantId: number, domainName: string) => {
+    if (!confirm(`정말로 "${domainName}" 커스텀 도메인을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setDeletingDomainId(tenantId);
+    try {
+      await deleteCustomDomain.mutateAsync(tenantId);
+      toast.success('커스텀 도메인이 삭제되었습니다.');
+    } catch (error) {
+      toast.error('커스텀 도메인 삭제에 실패했습니다.');
+      console.error('Delete custom domain error:', error);
+    } finally {
+      setDeletingDomainId(null);
+    }
+  };
 
   return (
     <div className="p-6">
       <AdminPageHeader
-        title="도메인 및 SSL 설정"
-        description="시스템 도메인과 SSL 인증서를 관리합니다"
-        actions={
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            도메인 추가
-          </Button>
-        }
+        title="도메인 관리"
+        description="시스템에 등록된 테넌트 도메인을 관리합니다"
       />
-
-      {/* Global Settings */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>전역 설정</CardTitle>
-          <CardDescription>모든 도메인에 적용되는 설정입니다</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">HTTPS 강제 적용</p>
-              <p className="text-sm text-text-secondary">모든 HTTP 요청을 HTTPS로 리다이렉트합니다</p>
-            </div>
-            <Switch checked={forceHttps} onCheckedChange={setForceHttps} />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">SSL 인증서 자동 갱신</p>
-              <p className="text-sm text-text-secondary">만료 30일 전에 자동으로 갱신합니다</p>
-            </div>
-            <Switch checked={autoRenewSsl} onCheckedChange={setAutoRenewSsl} />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Domain List */}
       <Card>
         <CardHeader>
           <CardTitle>등록된 도메인</CardTitle>
-          <CardDescription>시스템에 등록된 도메인 목록입니다</CardDescription>
+          <CardDescription>
+            각 테넌트의 서브도메인과 커스텀 도메인 목록입니다
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {domains.map((domain) => {
-              const statusConfig = sslStatusConfig[domain.sslStatus];
-              const StatusIcon = statusConfig.icon;
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={`skeleton-${i}`} className="h-48 w-full" />
+              ))}
+            </div>
+          ) : isError ? (
+            <div className="text-center py-12 text-text-secondary">
+              <p>도메인 목록을 불러오는데 실패했습니다.</p>
+            </div>
+          ) : domains.length === 0 ? (
+            <div className="text-center py-12 text-text-secondary">
+              <Globe className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>등록된 도메인이 없습니다.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {domains.map((domain) => {
+                const dnsStatus = getDnsStatus(domain);
+                const DnsIcon = dnsStatus.icon;
+                const isDeleting = deletingDomainId === domain.tenantId;
 
-              return (
-                <div key={domain.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-bg-secondary">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-bg-secondary rounded-lg">
-                      {domain.type === 'PRIMARY' ? (
-                        <Shield className="h-5 w-5 text-brand-primary" />
-                      ) : (
-                        <Globe className="h-5 w-5 text-text-secondary" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{domain.domain}</p>
-                        {domain.type === 'PRIMARY' && (
-                          <Badge variant="outline">기본</Badge>
-                        )}
+                return (
+                  <Card key={domain.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 bg-brand-primary/10 rounded-lg">
+                          <Globe className="h-6 w-6 text-brand-primary" />
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge variant={domain.type === 'SUBDOMAIN' ? 'default' : 'secondary'}>
+                            {domain.type === 'SUBDOMAIN' ? '서브도메인' : '커스텀'}
+                          </Badge>
+                          {/* DNS 상태 배지 */}
+                          <div className="flex items-center gap-1">
+                            <DnsIcon className="h-3 w-3" />
+                            <Badge className={dnsStatus.color}>{dnsStatus.label}</Badge>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-text-secondary">{domain.tenantName}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="flex items-center gap-1">
-                        <StatusIcon className="h-4 w-4" />
-                        <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-semibold text-lg break-all">{domain.domain}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-sm text-text-secondary">{domain.tenantName}</p>
+                            <span className="text-xs text-text-tertiary">({domain.tenantCode})</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2">
+                          <a
+                            href={`http://localhost:3000/${domain.subdomain}/tu/b2c`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-brand-primary hover:underline font-medium"
+                          >
+                            사이트 열기
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+
+                          {/* 커스텀 도메인 삭제 버튼 */}
+                          {domain.type === 'CUSTOM' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="ml-auto text-red-500 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => handleDeleteCustomDomain(domain.tenantId, domain.domain)}
+                              disabled={isDeleting}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      {domain.sslExpiry !== '-' && (
-                        <p className="text-xs text-text-secondary mt-1">만료: {domain.sslExpiry}</p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm">
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                      {domain.type !== 'PRIMARY' && (
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

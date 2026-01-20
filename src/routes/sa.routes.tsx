@@ -9,19 +9,13 @@ import {
 } from '@/pages/common';
 import {
   DashboardPage,
-  TenantsPage,
+  TenantManagementPage,
   TenantDetailPage,
-  BillingPage,
-  TenantStatusPage,
   DomainSettingsPage,
   OperatorsPage,
   BrandingSettingsPage,
-  EmailTemplatesPage,
   NoticesPage,
-  NoticeDistributionPage,
-  UsagePage,
-  ActivityPage,
-  LogsPage,
+  AnalyticsPage,
   SystemSettingsPage,
   TenantDefaultsPage,
 } from '@/pages/sa';
@@ -39,23 +33,17 @@ function SuperAdminWrapper() {
 export const saRoutes = (
   <Route path="/sa" element={<SuperAdminWrapper />}>
     <Route path="dashboard" element={<DashboardPage />} />
-    {/* 테넌트 관리 */}
-    <Route path="tenants" element={<TenantsPage />} />
+    {/* 테넌트 관리 (통합 페이지) */}
+    <Route path="tenants" element={<TenantManagementPage />} />
     <Route path="tenants/:id" element={<TenantDetailPage />} />
-    <Route path="tenants/billing" element={<BillingPage />} />
-    <Route path="tenants/status" element={<TenantStatusPage />} />
     {/* 시스템 환경 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
     <Route path="system/operators" element={<OperatorsPage />} />
     <Route path="system/branding" element={<BrandingSettingsPage />} />
-    <Route path="system/email-templates" element={<EmailTemplatesPage />} />
     {/* 글로벌 공지 관리 */}
     <Route path="notices" element={<NoticesPage />} />
-    <Route path="notices/distribution" element={<NoticeDistributionPage />} />
     {/* 데이터 및 로그 분석 */}
-    <Route path="analytics/usage" element={<UsagePage />} />
-    <Route path="analytics/activity" element={<ActivityPage />} />
-    <Route path="analytics/logs" element={<LogsPage />} />
+    <Route path="analytics" element={<AnalyticsPage />} />
     {/* 설정 */}
     <Route path="settings" element={<SettingsPage />} />
     <Route path="settings/security" element={<SettingsSecurityPage />} />

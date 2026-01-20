@@ -1,2 +1,2 @@
-export { BillingPage } from './BillingPage';
-export { TenantStatusPage } from './TenantStatusPage';
+export { BillingPage, BillingContent } from './BillingPage';
+export { TenantStatusPage, TenantStatusContent } from './TenantStatusPage';

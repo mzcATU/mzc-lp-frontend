@@ -7,6 +7,7 @@ export {
   useCreateTenant,
   useUpdateTenant,
   useDeleteTenant,
+  useDeleteCustomDomain,
 } from './useTenantQueries';
 
 export {
@@ -43,3 +44,9 @@ export {
   useUpdateSystemSettings,
   useUpdateTenantDefaults,
 } from './useSystemSettingsQueries';
+
+export {
+  systemAdminKeys,
+  useSystemAdmins,
+  useCreateSystemAdmin,
+} from './useSystemAdminQueries';

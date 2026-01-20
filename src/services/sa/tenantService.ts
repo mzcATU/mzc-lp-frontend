@@ -70,6 +70,11 @@ export const tenantService = {
     await axiosInstance.delete(API_ENDPOINTS.TENANTS.BY_ID(id));
   },
 
+  /** 커스텀 도메인 삭제 */
+  async deleteCustomDomain(tenantId: number): Promise<void> {
+    await axiosInstance.delete(API_ENDPOINTS.TENANTS.CUSTOM_DOMAIN(tenantId));
+  },
+
   // ============================================
   // Statistics
   // ============================================

@@ -2,10 +2,7 @@
  * 부서 관리 관련 타입 정의
  */
 
-// 부서 상태
-export type DepartmentStatus = 'ACTIVE' | 'INACTIVE';
-
-// 부서 응답
+// 부서 응답 (Backend DepartmentResponse와 일치)
 export interface DepartmentResponse {
   id: number;
   name: string;
@@ -13,10 +10,11 @@ export interface DepartmentResponse {
   description: string | null;
   parentId: number | null;
   parentName: string | null;
-  level: number;
+  managerId: number | null;
+  managerName: string | null;
   sortOrder: number;
-  status: DepartmentStatus;
-  employeeCount: number;
+  isActive: boolean;
+  memberCount: number;
   children: DepartmentResponse[];
   createdAt: string;
   updatedAt: string;
@@ -28,8 +26,8 @@ export interface CreateDepartmentRequest {
   code: string;
   description?: string;
   parentId?: number;
+  managerId?: number;
   sortOrder?: number;
-  status?: DepartmentStatus;
 }
 
 // 부서 수정 요청
@@ -38,6 +36,16 @@ export interface UpdateDepartmentRequest {
   code?: string;
   description?: string;
   parentId?: number;
+  managerId?: number;
   sortOrder?: number;
-  status?: DepartmentStatus;
+}
+
+// 부서 멤버 응답 (Backend DepartmentMemberResponse와 일치)
+export interface DepartmentMemberResponse {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  position: string | null;
+  role: string | null;
 }

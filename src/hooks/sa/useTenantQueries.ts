@@ -96,3 +96,15 @@ export const useDeleteTenant = () => {
     },
   });
 };
+
+/** 커스텀 도메인 삭제 */
+export const useDeleteCustomDomain = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (tenantId: number) => tenantService.deleteCustomDomain(tenantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tenantKeys.lists() });
+    },
+  });
+};

@@ -107,6 +107,40 @@ export interface ActivityTypeInfo {
   description: string;
 }
 
+// 리포트 타입
+export type ReportType = 'USERS' | 'COURSES' | 'LEARNING' | 'COMPLETION' | 'ENGAGEMENT';
+
+// 내보내기 형식
+export type ExportFormat = 'CSV' | 'XLSX' | 'PDF';
+
+// 리포트 기간
+export type ReportPeriod = 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR' | 'ALL';
+
+// 리포트 타입 응답
+export interface ReportTypeResponse {
+  type: ReportType;
+  name: string;
+  description: string;
+}
+
+// 내보내기 작업 응답
+export interface ExportJobResponse {
+  id: number;
+  reportType: string;
+  format: string;
+  period: string;
+  status: 'COMPLETED' | 'PROCESSING' | 'FAILED';
+  createdAt: string;
+  fileSize?: string;
+}
+
+// 내보내기 통계 응답
+export interface ReportExportStatsResponse {
+  monthlyCount: number;
+  totalSize: string;
+  mostPopular: string;
+}
+
 export const analyticsService = {
   /** 활동 로그 목록 조회 */
   async getLogs(params?: ActivityLogsParams): Promise<Page<ActivityLogResponse>> {
@@ -184,9 +218,8 @@ export const analyticsService = {
         throw new Error(errorData.error?.message || '내보내기에 실패했습니다.');
       }
 
-      // Blob으로 파일 다운로드
-      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
+      // response.data는 이미 Blob이므로 그대로 사용
+      const url = window.URL.createObjectURL(response.data);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `activity_logs_${Date.now()}.csv`);
@@ -220,5 +253,117 @@ export const analyticsService = {
       }
       throw new Error('CSV 내보내기에 실패했습니다. 권한을 확인해주세요.');
     }
+  },
+
+  /** 리포트 유형 목록 조회 */
+  async getReportTypes(): Promise<ReportTypeResponse[]> {
+    const { data } = await axiosInstance.get<ReportTypeResponse[]>(
+      `${API_ENDPOINTS.ANALYTICS.TA_BASE}/reports/types`
+    );
+    return data;
+  },
+
+  /** 리포트 내보내기 (CSV/XLSX/PDF) */
+  async exportReport(params: {
+    reportType: ReportType;
+    format: ExportFormat;
+    period: ReportPeriod;
+  }): Promise<void> {
+    try {
+      // arraybuffer로 요청하여 바이너리 데이터를 정확하게 받음
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ANALYTICS.TA_BASE}/reports/export`,
+        {
+          params,
+          responseType: 'arraybuffer',
+        }
+      );
+
+      // Content-Type 확인
+      const contentType = response.headers['content-type'] || '';
+
+      // Content-Type이 JSON이면 에러 응답임
+      if (contentType.includes('application/json')) {
+        const decoder = new TextDecoder('utf-8');
+        const text = decoder.decode(response.data);
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.error?.message || '리포트 생성에 실패했습니다.');
+      }
+
+      // Content-Type에 따른 파일 확장자 결정
+      let extension = '.csv';
+      let mimeType = 'text/csv;charset=utf-8';
+      if (params.format === 'XLSX') {
+        extension = '.xlsx';
+        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      } else if (params.format === 'PDF') {
+        extension = '.pdf';
+        mimeType = 'application/pdf';
+      }
+
+      // 디버깅: response.data 상태 확인
+      console.log('Export response:', {
+        dataType: typeof response.data,
+        isArrayBuffer: response.data instanceof ArrayBuffer,
+        byteLength: response.data instanceof ArrayBuffer ? response.data.byteLength : 'N/A',
+        contentType,
+      });
+
+      // ArrayBuffer를 Blob으로 변환
+      const blob = new Blob([response.data], { type: mimeType });
+
+      console.log('Final blob:', { size: blob.size, type: blob.type });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${params.reportType.toLowerCase()}_report_${Date.now()}${extension}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      // axios 에러이고 arraybuffer 응답인 경우 에러 내용 읽기
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data instanceof ArrayBuffer
+      ) {
+        const decoder = new TextDecoder('utf-8');
+        const text = decoder.decode(error.response.data);
+        console.error('Export error response:', text);
+        try {
+          const errorData = JSON.parse(text);
+          throw new Error(errorData.error?.message || errorData.message || '리포트 생성에 실패했습니다.');
+        } catch {
+          throw new Error(text || '리포트 생성에 실패했습니다.');
+        }
+      }
+      if (error instanceof Error && error.message) {
+        throw error;
+      }
+      throw new Error('리포트 생성에 실패했습니다. 권한을 확인해주세요.');
+    }
+  },
+
+  /** 내보내기 이력 조회 */
+  async getExportHistory(limit: number = 10): Promise<ExportJobResponse[]> {
+    const { data } = await axiosInstance.get<ExportJobResponse[]>(
+      `${API_ENDPOINTS.ANALYTICS.TA_BASE}/reports/history`,
+      { params: { limit } }
+    );
+    return data;
+  },
+
+  /** 내보내기 통계 조회 */
+  async getExportStats(): Promise<ReportExportStatsResponse> {
+    const { data } = await axiosInstance.get<ReportExportStatsResponse>(
+      `${API_ENDPOINTS.ANALYTICS.TA_BASE}/reports/stats`
+    );
+    return data;
   },
 };

@@ -49,7 +49,8 @@ const mockTenantStatus: {
   { id: 6, name: 'SK텔레콤', code: 'skt', status: 'ACTIVE', plan: 'ENTERPRISE', users: { current: 320, max: 500 }, courses: { current: 55, max: 100 }, storage: { current: 120, max: 200 }, lastActivity: '2025-12-30 11:00', trend: 'up' },
 ];
 
-export function TenantStatusPage() {
+// 탭용 콘텐츠 컴포넌트 (TenantManagementPage에서 사용)
+export function TenantStatusContent() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
@@ -76,12 +77,7 @@ export function TenantStatusPage() {
   };
 
   return (
-    <div className="p-6">
-      <AdminPageHeader
-        title="전체 현황 조회"
-        description="모든 테넌트의 사용 현황을 모니터링합니다"
-      />
-
+    <div>
       {/* Overall Stats */}
       <AdminStatsGrid columns={4} className="mb-6">
         <AdminStatsCard
@@ -217,6 +213,21 @@ export function TenantStatusPage() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// 기존 TenantStatusPage - 호환성 유지용 (독립 페이지로 사용 시)
+export function TenantStatusPage() {
+  return (
+    <div className="p-6">
+      <AdminPageHeader
+        title="전체 현황 조회"
+        description="모든 테넌트의 사용 현황을 모니터링합니다"
+      />
+      <div className="mt-6">
+        <TenantStatusContent />
+      </div>
     </div>
   );
 }

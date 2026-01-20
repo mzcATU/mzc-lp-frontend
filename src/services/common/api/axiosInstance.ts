@@ -59,8 +59,8 @@ axiosInstance.interceptors.request.use(
 // Response interceptor: ApiResponse wrapper 처리 및 토큰 갱신
 axiosInstance.interceptors.response.use(
   (response) => {
-    // blob 응답은 ApiResponse wrapper 처리를 건너뜀
-    if (response.config.responseType === 'blob') {
+    // blob, arraybuffer 응답은 ApiResponse wrapper 처리를 건너뜀
+    if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {
       return response;
     }
     // ApiResponse wrapper에서 data 추출

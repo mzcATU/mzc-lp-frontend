@@ -10,3 +10,5 @@ export type {
   UpdateSystemSettingsRequest,
   UpdateTenantDefaultsRequest,
 } from './systemSettingsService';
+export { saUserService } from './saUserService';
+export type { SystemAdminFilterParams } from './saUserService';

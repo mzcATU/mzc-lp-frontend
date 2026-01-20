@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Send,
-  Users,
+  Building2,
   CheckCircle,
   Eye,
   Search,
@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Pin,
 } from 'lucide-react';
-import { AdminPageHeader } from '@/components/domain/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -23,36 +22,27 @@ import {
   DialogDescription,
 } from '@/components/common/Dialog';
 import {
-  useTenantNoticeDistributionStats,
-  useTenantNoticeDistributionSummary,
-  useTenantNoticeDistributionDetail,
-} from '@/hooks/ta/useTenantNoticeQueries';
-import type { TenantNoticeType, NoticeTargetAudience, UserDistributionInfo } from '@/types/ta/tenantNotice.types';
+  useDistributionStats,
+  useDistributionSummary,
+  useDistributionStatsForNotice,
+} from '@/hooks/sa';
+import type { TenantDistributionInfo } from '@/types/admin';
 
-const typeConfig: Record<TenantNoticeType, { label: string; color: string }> = {
+const typeConfig: Record<string, { label: string; color: string }> = {
   GENERAL: { label: '일반', color: 'bg-gray-100 text-gray-700' },
-  IMPORTANT: { label: '중요', color: 'bg-blue-100 text-blue-700' },
-  URGENT: { label: '긴급', color: 'bg-red-100 text-red-700' },
+  UPDATE: { label: '업데이트', color: 'bg-blue-100 text-blue-700' },
+  SYSTEM: { label: '시스템', color: 'bg-yellow-100 text-yellow-700' },
   EVENT: { label: '이벤트', color: 'bg-purple-100 text-purple-700' },
 };
 
-const audienceConfig: Record<NoticeTargetAudience, string> = {
-  ALL: '전체',
-  OPERATOR: '운영자',
-  USER: '사용자',
-  DESIGNER: '설계자',
-  INSTRUCTOR: '강사',
-};
-
-// 탭용 콘텐츠 컴포넌트 (NoticeAndNotificationPage에서 사용)
-export function DistributionContent() {
+export function NoticeDistributionContent() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [page, setPage] = useState(0);
   const [selectedNotice, setSelectedNotice] = useState<number | null>(null);
 
-  const { data: statsData, isLoading } = useTenantNoticeDistributionStats({ page, size: 10 });
-  const { data: summary } = useTenantNoticeDistributionSummary();
-  const { data: noticeDetail } = useTenantNoticeDistributionDetail(selectedNotice || 0);
+  const { data: statsData, isLoading } = useDistributionStats({ page, size: 10 });
+  const { data: summary } = useDistributionSummary();
+  const { data: noticeDetail } = useDistributionStatsForNotice(selectedNotice || 0);
 
   const distributions = statsData?.content || [];
   const totalPages = statsData?.totalPages || 0;
@@ -87,7 +77,6 @@ export function DistributionContent() {
 
   return (
     <div>
-
       {/* Stats Summary */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <Card>
@@ -133,11 +122,11 @@ export function DistributionContent() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-yellow-100 rounded-lg">
-                <Users className="h-5 w-5 text-yellow-600" />
+                <Building2 className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{summary?.totalTargetUsers || 0}</p>
-                <p className="text-sm text-text-secondary">대상 사용자</p>
+                <p className="text-2xl font-bold">{summary?.totalTenants || 0}</p>
+                <p className="text-sm text-text-secondary">대상 테넌트</p>
               </div>
             </div>
           </CardContent>
@@ -186,7 +175,7 @@ export function DistributionContent() {
             <div className="space-y-4">
               {filteredDistributions.map((dist) => {
                 const typeConf = typeConfig[dist.noticeType] || typeConfig.GENERAL;
-                const sentPercent = dist.totalUsers > 0 ? (dist.sentCount / dist.totalUsers) * 100 : 0;
+                const sentPercent = dist.totalTenants > 0 ? (dist.sentCount / dist.totalTenants) * 100 : 0;
                 const readPercent = dist.sentCount > 0 ? (dist.readCount / dist.sentCount) * 100 : 0;
 
                 return (
@@ -196,7 +185,6 @@ export function DistributionContent() {
                         {dist.isPinned && <Pin className="h-4 w-4 text-yellow-500" />}
                         <h3 className="font-medium">{dist.noticeTitle}</h3>
                         <Badge className={typeConf.color}>{typeConf.label}</Badge>
-                        <Badge variant="outline">{audienceConfig[dist.targetAudience]}</Badge>
                       </div>
                       <span className="text-sm text-text-secondary">
                         {formatDate(dist.publishedAt)}
@@ -207,7 +195,7 @@ export function DistributionContent() {
                       <div>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-text-secondary">발송 현황</span>
-                          <span>{dist.sentCount} / {dist.totalUsers} 명</span>
+                          <span>{dist.sentCount} / {dist.totalTenants} 테넌트</span>
                         </div>
                         <Progress value={sentPercent} className="h-2" />
                       </div>
@@ -295,32 +283,32 @@ export function DistributionContent() {
                 </div>
               </div>
 
-              {/* User List */}
+              {/* Tenant List */}
               <div className="border rounded-lg max-h-80 overflow-y-auto">
                 <table className="w-full">
                   <thead className="bg-bg-secondary sticky top-0">
                     <tr>
-                      <th className="px-4 py-2 text-left text-sm font-medium">사용자</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">이메일</th>
-                      <th className="px-4 py-2 text-left text-sm font-medium">역할</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium">테넌트</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium">코드</th>
                       <th className="px-4 py-2 text-center text-sm font-medium">상태</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium">배포일시</th>
                       <th className="px-4 py-2 text-left text-sm font-medium">열람일시</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {noticeDetail.userDistributions.map((user: UserDistributionInfo) => (
-                      <tr key={user.userId} className="border-t">
-                        <td className="px-4 py-2 text-sm">{user.userName}</td>
-                        <td className="px-4 py-2 text-sm text-text-secondary">{user.userEmail}</td>
-                        <td className="px-4 py-2 text-sm">{user.userRole}</td>
+                    {noticeDetail.tenantDistributions.map((tenant: TenantDistributionInfo) => (
+                      <tr key={tenant.tenantId} className="border-t">
+                        <td className="px-4 py-2 text-sm">{tenant.tenantName}</td>
+                        <td className="px-4 py-2 text-sm text-text-secondary">{tenant.tenantCode}</td>
                         <td className="px-4 py-2 text-center">
-                          {user.isRead ? (
+                          {tenant.isRead ? (
                             <Badge className="bg-green-100 text-green-700">읽음</Badge>
                           ) : (
                             <Badge className="bg-gray-100 text-gray-600">미읽음</Badge>
                           )}
                         </td>
-                        <td className="px-4 py-2 text-sm">{formatDate(user.readAt)}</td>
+                        <td className="px-4 py-2 text-sm">{formatDate(tenant.distributedAt)}</td>
+                        <td className="px-4 py-2 text-sm">{formatDate(tenant.readAt)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -330,21 +318,6 @@ export function DistributionContent() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-// 기존 NoticeDistributionPage - 호환성 유지용 (독립 페이지로 사용 시)
-export function NoticeDistributionPage() {
-  return (
-    <div className="p-6">
-      <AdminPageHeader
-        title="공지사항 배포 관리"
-        description="공지사항의 사용자별 배포 현황을 관리합니다"
-      />
-      <div className="mt-6">
-        <DistributionContent />
-      </div>
     </div>
   );
 }
