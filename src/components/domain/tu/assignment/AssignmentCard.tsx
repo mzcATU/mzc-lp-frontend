@@ -1,7 +1,7 @@
 /**
  * 강사 배정 카드 컴포넌트 (개선 버전)
  */
-import { FileText, Users, Clock } from 'lucide-react';
+import { Users, Clock } from 'lucide-react';
 import { InstructorRoleBadge } from './InstructorRoleBadge';
 import { AssignmentStatusBadge } from './AssignmentStatusBadge';
 import { designTokens } from '@/styles/admin-design-tokens';
@@ -40,10 +40,9 @@ export function AssignmentCard({
   const getText = (key: keyof typeof t) => t[key][language];
 
   // 통계 정보 활용 (있으면 실제 데이터, 없으면 기본값)
-  // timeName이 있으면 사용, 없으면 courseName 사용, 둘 다 없으면 기본값
-  const courseName = timeStats?.timeName || timeStats?.courseName || `차수 ${assignment.timeId}`;
+  // timeName이 있으면 사용, 없으면 courseName 사용, 둘 다 없으면 timeId만 표시
+  const courseName = timeStats?.timeName || timeStats?.courseName || String(assignment.timeId);
   const studentCount = timeStats?.totalStudents ?? 0;
-  const completionRate = timeStats?.completionRate ?? 0;
 
   // 기간 정보는 아직 API에서 제공하지 않으므로 배정일 사용
   const startDate = assignment.assignedAt;
@@ -81,12 +80,6 @@ export function AssignmentCard({
       {/* Content */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-sm" style={{ color: designTokens.text.secondary }}>
-          <FileText size={14} />
-          <span>{getText('courseTime')}:</span>
-          <span className="font-medium" style={{ color: designTokens.text.primary }}>{assignment.timeId}</span>
-        </div>
-
-        <div className="flex items-center gap-2 text-sm" style={{ color: designTokens.text.secondary }}>
           <Users size={14} />
           <span>{getText('students')}:</span>
           <span className="font-medium" style={{ color: designTokens.text.primary }}>{studentCount}명</span>
@@ -98,26 +91,6 @@ export function AssignmentCard({
           <span className="text-xs" style={{ color: designTokens.text.primary }}>
             {formatDate(startDate)} ~ {formatDate(endDate)}
           </span>
-        </div>
-
-        {/* 진행률 바 (수료율 표시) */}
-        <div className="mt-2">
-          <div className="flex justify-between mb-1">
-            <span className="text-xs" style={{ color: designTokens.text.secondary }}>{getText('progress')}</span>
-            <span className="text-xs font-medium" style={{ color: designTokens.text.primary }}>{completionRate}%</span>
-          </div>
-          <div
-            className="h-1.5 rounded-full overflow-hidden"
-            style={{ backgroundColor: designTokens.bg.secondary }}
-          >
-            <div
-              className="h-full transition-all duration-300"
-              style={{
-                width: `${completionRate}%`,
-                backgroundColor: designTokens.status.success_text,
-              }}
-            />
-          </div>
         </div>
       </div>
     </button>

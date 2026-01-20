@@ -216,14 +216,12 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
               </div>
 
               {/* 뷰 전환 버튼 */}
-              {filteredAssignments.length > 0 && (
-                <ViewToggle
-                  viewMode={viewType}
-                  onViewModeChange={setViewType}
-                  gridLabel={getText('cardView')}
-                  listLabel={getText('listView')}
-                />
-              )}
+              <ViewToggle
+                viewMode={viewType}
+                onViewModeChange={setViewType}
+                gridLabel={getText('cardView')}
+                listLabel={getText('listView')}
+              />
             </div>
 
             {/* 필터 + 탭 버튼 + 정렬 */}
@@ -250,21 +248,19 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
               </div>
 
               {/* 정렬 드롭다운 */}
-              {filteredAssignments.length > 0 && (
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as 'latest' | 'oldest')}
-                  className="px-3 py-2 rounded-md text-sm border cursor-pointer outline-none"
-                  style={{
-                    backgroundColor: designTokens.bg.default,
-                    color: designTokens.text.primary,
-                    borderColor: designTokens.bg.border,
-                  }}
-                >
-                  <option value="latest">{getText('latest')}</option>
-                  <option value="oldest">{getText('oldest')}</option>
-                </select>
-              )}
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as 'latest' | 'oldest')}
+                className="px-3 py-2 rounded-md text-sm border cursor-pointer outline-none"
+                style={{
+                  backgroundColor: designTokens.bg.default,
+                  color: designTokens.text.primary,
+                  borderColor: designTokens.bg.border,
+                }}
+              >
+                <option value="latest">{getText('latest')}</option>
+                <option value="oldest">{getText('oldest')}</option>
+              </select>
             </div>
 
             {/* 빈 상태 */}
@@ -320,9 +316,6 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                         {getText('courseName')}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
-                        {getText('timeNumber')}
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                         {getText('role')}
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
@@ -330,9 +323,6 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                         배정일
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
-                        {getText('progress')}
                       </th>
                     </tr>
                   </thead>
@@ -353,10 +343,7 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                           }}
                         >
                           <td className="px-4 py-4 font-medium" style={{ color: designTokens.text.primary }}>
-                            {stats?.courseName || `차수 ${assignment.timeId}`}
-                          </td>
-                          <td className="px-4 py-4" style={{ color: designTokens.text.primary }}>
-                            {assignment.timeId}
+                            {stats?.courseName || String(assignment.timeId)}
                           </td>
                           <td className="px-4 py-4">
                             <span
@@ -374,25 +361,6 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
                           </td>
                           <td className="px-4 py-4 text-sm" style={{ color: designTokens.text.secondary }}>
                             {new Date(assignment.assignedAt).toLocaleDateString('ko-KR')}
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2 min-w-[120px]">
-                              <div
-                                className="flex-1 h-1.5 rounded-full overflow-hidden"
-                                style={{ backgroundColor: designTokens.bg.secondary }}
-                              >
-                                <div
-                                  className="h-full"
-                                  style={{
-                                    width: `${stats?.completionRate ?? 0}%`,
-                                    backgroundColor: designTokens.status.success_text,
-                                  }}
-                                />
-                              </div>
-                              <span className="text-xs font-medium min-w-[40px] text-right" style={{ color: designTokens.text.primary }}>
-                                {stats?.completionRate ?? 0}%
-                              </span>
-                            </div>
                           </td>
                         </tr>
                       );
