@@ -96,7 +96,7 @@ export const tenantAdminMenuData: MenuItem[] = [
   },
   {
     id: 'system-foundation',
-    label: { ko: '시스템 기반 관리', en: 'System Foundation' },
+    label: { ko: '도메인 관리', en: 'Domain Management' },
     icon: Server,
     path: '/ta/system/domain',
   },
