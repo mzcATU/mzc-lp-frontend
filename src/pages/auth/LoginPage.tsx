@@ -85,9 +85,9 @@ export const LoginPage = () => {
         <div className="text-center mb-8">
           <Link
             to={homePath}
-            className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center bg-gradient-to-r from-[#6778ff] to-[#a855f7] hover:opacity-90 transition-opacity cursor-pointer"
+            className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-[#6778ff] via-[#a855f7] to-[#6bc2f0] shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform cursor-pointer"
           >
-            <LogIn className="w-6 h-6 text-white" />
+            <span className="text-white font-bold text-xl">M</span>
           </Link>
           <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             로그인
