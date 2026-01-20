@@ -121,6 +121,7 @@ const statusBadgeVariant: Record<EnrollmentStatus, 'default' | 'secondary' | 'su
   COMPLETED: 'success',
   DROPPED: 'destructive',
   FAILED: 'default',
+  REJECTED: 'destructive',
 };
 
 // 아이콘 색상별 스타일 (디자인 토큰 기반)

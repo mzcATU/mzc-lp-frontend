@@ -7,7 +7,7 @@
 // ============================================
 
 /** 수강 상태 */
-export type EnrollmentStatus = 'PENDING' | 'ENROLLED' | 'COMPLETED' | 'DROPPED' | 'FAILED';
+export type EnrollmentStatus = 'PENDING' | 'ENROLLED' | 'COMPLETED' | 'DROPPED' | 'FAILED' | 'REJECTED';
 
 /** 수강 타입 */
 export type EnrollmentType = 'VOLUNTARY' | 'MANDATORY';
@@ -126,6 +126,7 @@ export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
   COMPLETED: '수료',
   DROPPED: '중도 탈락',
   FAILED: '미이수',
+  REJECTED: '승인 거절',
 };
 
 export const ENROLLMENT_TYPE_LABELS: Record<EnrollmentType, string> = {

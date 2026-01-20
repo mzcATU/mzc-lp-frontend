@@ -94,8 +94,8 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
   const now = new Date();
   const startDate = enrollment.startDate ? new Date(enrollment.startDate) : null;
   const endDate = enrollment.endDate ? new Date(enrollment.endDate) : null;
-  const isBeforeClassStart = startDate && now < startDate;
-  const isAfterClassEnd = endDate && now > endDate;
+  const isBeforeClassStart = startDate ? now < startDate : false;
+  const isAfterClassEnd = endDate ? now > endDate : false;
   const isPending = enrollment.status === 'PENDING';
 
   // 학습하기 버튼 비활성화 조건
