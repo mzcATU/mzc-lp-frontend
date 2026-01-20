@@ -52,7 +52,7 @@ const t = {
 export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPageProps>) {
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
-  const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
+  const [viewType, setViewType] = useState<'grid' | 'list'>('list');
   const [selectedTab, setSelectedTab] = useState<'all' | 'active' | 'ended'>('all');
   const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
 
