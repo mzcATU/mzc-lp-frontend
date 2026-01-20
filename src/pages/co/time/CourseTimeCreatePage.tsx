@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
@@ -43,6 +43,15 @@ import {
   ToggleGroup,
   ToggleGroupItem,
   Combobox,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/common';
 import { useCreateTime } from '@/hooks/co/useTimeQueries';
 import { useRegisteredCourses } from '@/hooks/tu/useCourseQueries';
@@ -350,6 +359,11 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     conflicts: Array<{ conflictingTimeTitle: string; classStartDate: string; classEndDate: string; instructorName?: string }>;
   } | null>(null);
 
+  // 학습 기간 카드 ref (충돌 시 자동 스크롤용)
+  const learningPeriodRef = useRef<HTMLDivElement>(null);
+  // 장소 입력 필드 ref (검증 실패 시 자동 스크롤용)
+  const locationInputRef = useRef<HTMLDivElement>(null);
+
   // 강사 배정 상태
   const [assignedInstructors, setAssignedInstructors] = useState<InstructorAssignment[]>([]);
   const [selectedInstructorId, setSelectedInstructorId] = useState<string>('');
@@ -376,6 +390,11 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       }
       if (formData.durationType === 'RELATIVE' && (!formData.durationDays || formData.durationDays <= 0)) {
         newErrors.durationDays = getText('required');
+      }
+
+      // 오프라인/블렌디드 진행 방식에서는 장소 필수
+      if ((formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && !formData.locationInfo?.trim()) {
+        newErrors.locationInfo = getText('required');
       }
 
       // 날짜 유효성 검사
@@ -418,6 +437,14 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
 
     setErrors(newErrors);
+
+    // 장소 에러 시 해당 필드로 스크롤
+    if (newErrors.locationInfo && locationInputRef.current) {
+      setTimeout(() => {
+        locationInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -604,15 +631,20 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         capacity: formData.capacity === 0 ? null : formData.capacity,
         price: priceNum.toString(),
         isFree: priceNum === 0,
-        locationInfo: formData.locationInfo?.trim() || undefined,
+        // 백엔드가 JSON 타입을 기대하므로 객체 형태로 변환
+        locationInfo: formData.locationInfo?.trim()
+          ? JSON.stringify({ address: formData.locationInfo.trim() })
+          : undefined,
         description: formData.description?.trim() || undefined,
         allowLateEnrollment,
+        assignDesignerAsMainInstructor: useOwnerAsInstructor, // DESIGNER 자동 배정 여부
       };
 
       console.log('[CourseTimeCreatePage] request:', request);
 
-      // 강사 가용성 체크 (차수 생성 전)
-      if (assignedInstructors.length > 0 && request.classStartDate) {
+      // 강사 가용성 체크 (차수 생성 전) - ONLINE 방식은 비동기이므로 충돌 검증 제외
+      const needsConflictCheck = formData.deliveryType !== 'ONLINE';
+      if (needsConflictCheck && assignedInstructors.length > 0 && request.classStartDate) {
         // classEndDate가 없으면 (UNLIMITED) 시작일 + 1년으로 가정
         const checkEndDate = request.classEndDate || (() => {
           const d = new Date(request.classStartDate);
@@ -682,8 +714,14 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       const createdTime = await createTime.mutateAsync(request);
 
       // 강사 배정 처리
-      if (assignedInstructors.length > 0 && createdTime?.id) {
-        const assignmentPromises = assignedInstructors.map((instructor) =>
+      // useOwnerAsInstructor가 true면 백엔드에서 DESIGNER를 MAIN 강사로 자동 배정하므로 제외
+      // false면 모든 강사를 프론트엔드에서 배정
+      const instructorsToAssign = useOwnerAsInstructor
+        ? assignedInstructors.filter((instructor) => instructor.userId !== selectedCourse?.creatorId)
+        : assignedInstructors;
+
+      if (instructorsToAssign.length > 0 && createdTime?.id) {
+        const assignmentPromises = instructorsToAssign.map((instructor) =>
           instructorAssignmentService.assignInstructor(createdTime.id, {
             userId: instructor.userId,
             role: instructor.role,
@@ -771,8 +809,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         // 제약 조건별 사용자 친화적 메시지 매핑
         const constraintMessages: Record<string, { ko: string; en: string }> = {
           'constraint.deliveryType.locationRequired': {
-            ko: '오프라인/블렌디드/실시간 온라인 진행 방식에서는 장소 정보가 필수입니다.',
-            en: 'Location is required for offline, blended, or live online delivery types.',
+            ko: '오프라인/블렌디드 진행 방식에서는 장소 정보가 필수입니다.',
+            en: 'Location is required for offline or blended delivery types.',
           },
           'constraint.enrollment.capacityRequired': {
             ko: '모집 인원은 필수 입력 항목입니다.',
@@ -936,6 +974,16 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       }
     }
   }, [selectedCourse?.creatorId]);
+
+  // 충돌 발생 시 학습 기간 카드로 자동 스크롤
+  useEffect(() => {
+    if (conflictInfo && currentStep === 2 && learningPeriodRef.current) {
+      // 약간의 딜레이 후 스크롤 (DOM 업데이트 대기)
+      setTimeout(() => {
+        learningPeriodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [conflictInfo, currentStep]);
 
   const stepLabels = useMemo(() => {
     const labels = [getText('step1'), getText('step2'), getText('step3'), getText('step4')];
@@ -1144,46 +1192,6 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
           {/* Step 2: 일정 및 모집 */}
           {currentStep === 2 && (
             <div className="flex flex-col gap-8">
-              {/* 강사 일정 충돌 경고 - 최상단 배치 */}
-              {conflictInfo && (
-                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center mt-0.5">
-                      <span className="text-white text-sm font-bold">!</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-red-800 text-base">{getText('errorInstructorConflict')}</p>
-                      <p className="text-sm text-red-600 mt-1">{getText('errorConflictingTimes')}:</p>
-                      <ul className="mt-2 space-y-1">
-                        {conflictInfo.conflicts.map((c, i) => (
-                          <li key={i} className="text-sm text-red-700 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                            {c.instructorName && (
-                              <span className="text-red-800 font-medium">[{c.instructorName}]</span>
-                            )}
-                            <span className="font-medium">{c.conflictingTimeTitle}</span>
-                            <span className="text-red-500">({c.classStartDate} ~ {c.classEndDate})</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-sm text-red-700 mt-3 font-medium">
-                        {language === 'ko'
-                          ? '아래에서 학습 기간을 수정하여 충돌을 해결해주세요.'
-                          : 'Please modify the learning period below to resolve conflicts.'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setConflictInfo(null)}
-                      className="text-red-400 hover:text-red-600 p-1"
-                      title={language === 'ko' ? '닫기' : 'Close'}
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* 진행 방식 - RadioOptionCard */}
               <div className="space-y-3">
                 <Label>{getText('deliveryType')}</Label>
@@ -1239,17 +1247,21 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     <p className="text-sm text-text-secondary">{getText('capacityHint')}</p>
                   </div>
 
-                  {/* 장소 (오프라인/블렌디드인 경우) */}
+                  {/* 장소 (오프라인/블렌디드인 경우 필수) */}
                   {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="locationInfo">{getText('location')}</Label>
+                    <div ref={locationInputRef} className="space-y-2">
+                      <Label htmlFor="locationInfo">{getText('location')} *</Label>
                       <Input
                         id="locationInfo"
                         type="text"
                         placeholder={getText('locationPlaceholder')}
                         value={formData.locationInfo || ''}
                         onChange={(e) => handleInputChange('locationInfo', e.target.value)}
+                        className={errors.locationInfo ? 'border-status-error' : ''}
                       />
+                      {errors.locationInfo && (
+                        <p className="text-sm text-status-error">{errors.locationInfo}</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1384,11 +1396,53 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               </div>
 
               {/* 학습 기간 - Card로 그룹화, DurationType별 조건부 렌더링 */}
-              <div className="bg-bg-secondary rounded-lg p-5 border border-border">
+              <div
+                ref={learningPeriodRef}
+                className={cn(
+                  'bg-bg-secondary rounded-lg p-5 border',
+                  conflictInfo ? 'border-red-300 ring-2 ring-red-100' : 'border-border'
+                )}
+              >
                 <div className="flex items-center gap-2 text-text-primary mb-4">
                   <Clock size={20} />
                   <h3 className="font-medium m-0">{getText('learningPeriod')}</h3>
                 </div>
+
+                {/* 충돌 정보 인라인 표시 - 학습 기간 수정 위치에서 바로 확인 가능 */}
+                {conflictInfo && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 text-red-700 text-sm font-medium">
+                        <span className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-bold">!</span>
+                        </span>
+                        {getText('errorInstructorConflict')} ({conflictInfo.conflicts.length}건)
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setConflictInfo(null)}
+                        className="text-red-400 hover:text-red-600 p-0.5"
+                        title={language === 'ko' ? '닫기' : 'Close'}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <ul className="pl-6 space-y-1">
+                      {conflictInfo.conflicts.map((c, i) => (
+                        <li key={i} className="text-sm text-red-600">
+                          {c.instructorName && <span className="font-medium">[{c.instructorName}] </span>}
+                          <span className="font-medium">{c.conflictingTimeTitle}</span>
+                          <span className="text-red-500 ml-1">({c.classStartDate} ~ {c.classEndDate})</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-red-600 mt-2 pl-6">
+                      {language === 'ko'
+                        ? '위 기간과 겹치지 않도록 학습 기간을 수정해주세요.'
+                        : 'Please adjust the learning period to avoid overlapping with the above.'}
+                    </p>
+                  </div>
+                )}
 
                 {/* FIXED: 시작일 + 종료일 (총 일수 자동 계산) */}
                 {formData.durationType === 'FIXED' && (
@@ -2016,18 +2070,43 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       <p className="text-sm text-text-secondary mt-1">{getText('userAssignmentLater')}</p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setSelectedUserIds([]);
-                      setEnrollReason('');
-                      handleSubmit();
-                    }}
-                    disabled={createTime.isPending || forceEnroll.isPending}
-                    className="flex-shrink-0 bg-white border border-border text-text-primary hover:bg-bg-secondary"
-                  >
-                    {getText('skip')}
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        disabled={createTime.isPending || forceEnroll.isPending}
+                        className="flex-shrink-0 bg-white border border-border text-text-primary hover:bg-bg-secondary"
+                      >
+                        {getText('skip')}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {language === 'ko' ? '수강생 배정을 건너뛰시겠습니까?' : 'Skip user assignment?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {language === 'ko'
+                            ? '수강생 배정 없이 차수가 생성됩니다. 나중에 차수 상세 페이지에서 수강생을 배정할 수 있습니다.'
+                            : 'The course time will be created without any user assignments. You can assign users later from the course time detail page.'}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>
+                          {language === 'ko' ? '취소' : 'Cancel'}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            setSelectedUserIds([]);
+                            setEnrollReason('');
+                            handleSubmit();
+                          }}
+                        >
+                          {language === 'ko' ? '건너뛰고 생성' : 'Skip and Create'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
 
@@ -2081,71 +2160,91 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               </div>
 
               {/* 사용자 목록 (체크박스) */}
-              <div className="border border-border rounded-lg max-h-[300px] overflow-auto">
-                {isLoadingAllUsers ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 size={24} className="animate-spin text-text-secondary" />
-                  </div>
-                ) : availableUsers.length === 0 ? (
-                  <div className="text-center py-8 text-text-secondary">
-                    <Users size={32} className="mx-auto mb-2 text-text-placeholder" />
-                    <p className="text-sm">검색 결과가 없습니다</p>
-                  </div>
-                ) : (
-                  availableUsers.map((user) => (
-                    <label
-                      key={user.id}
-                      className="flex items-center gap-3 p-3 hover:bg-bg-secondary cursor-pointer border-b border-border last:border-0 transition-colors"
-                    >
+              <div className="border border-border rounded-lg overflow-hidden">
+                {/* 리스트 헤더: 전체 선택/해제 + 선택 상태 */}
+                {!isLoadingAllUsers && availableUsers.length > 0 && (
+                  <div className="flex items-center justify-between px-3 py-2 bg-bg-secondary border-b border-border sticky top-0 z-10">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedUserIds.includes(user.id)}
+                        checked={availableUsers.length > 0 && selectedUserIds.length === availableUsers.length}
+                        ref={(el) => {
+                          if (el) {
+                            el.indeterminate = selectedUserIds.length > 0 && selectedUserIds.length < availableUsers.length;
+                          }
+                        }}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedUserIds([...selectedUserIds, user.id]);
+                            setSelectedUserIds(availableUsers.map((u) => u.id));
                           } else {
-                            setSelectedUserIds(selectedUserIds.filter((id) => id !== user.id));
+                            setSelectedUserIds([]);
                           }
                         }}
                         className="w-4 h-4 rounded border-border accent-btn-brand"
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
-                          {(user.department || user.position) && (
-                            <span className="text-xs text-text-placeholder">
-                              {[user.department, user.position].filter(Boolean).join(' · ')}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-text-secondary truncate">{user.email}</p>
-                      </div>
+                      <span className="text-sm font-medium text-text-primary">전체 선택</span>
                     </label>
-                  ))
+                    <span className="text-sm text-text-secondary">
+                      <span className={cn(
+                        "font-medium",
+                        selectedUserIds.length > 0 ? "text-action-primary" : "text-text-placeholder"
+                      )}>
+                        {selectedUserIds.length}
+                      </span>
+                      <span className="text-text-placeholder"> / {availableUsers.length}명</span>
+                    </span>
+                  </div>
                 )}
-              </div>
 
-              {/* 선택된 사용자 수 표시 */}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-text-secondary">
-                  {selectedUserIds.length > 0 ? (
-                    <>
-                      <span className="font-medium text-text-primary">{selectedUserIds.length}</span>
-                      {getText('selectedUsersCount')}
-                    </>
+                {/* 사용자 목록 */}
+                <div className="max-h-[260px] overflow-auto">
+                  {isLoadingAllUsers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 size={24} className="animate-spin text-text-secondary" />
+                    </div>
+                  ) : availableUsers.length === 0 ? (
+                    <div className="text-center py-8 text-text-secondary">
+                      <Users size={32} className="mx-auto mb-2 text-text-placeholder" />
+                      <p className="text-sm">검색 결과가 없습니다</p>
+                    </div>
                   ) : (
-                    getText('noUsersSelected')
+                    availableUsers.map((user) => (
+                      <label
+                        key={user.id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 cursor-pointer border-b border-border last:border-0 transition-colors",
+                          selectedUserIds.includes(user.id)
+                            ? "bg-blue-50"
+                            : "hover:bg-bg-secondary"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedUserIds.includes(user.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUserIds([...selectedUserIds, user.id]);
+                            } else {
+                              setSelectedUserIds(selectedUserIds.filter((id) => id !== user.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-border accent-btn-brand"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
+                            {(user.department || user.position) && (
+                              <span className="text-xs text-text-placeholder">
+                                {[user.department, user.position].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                        </div>
+                      </label>
+                    ))
                   )}
-                </span>
-                {selectedUserIds.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedUserIds([])}
-                    className="text-text-secondary hover:text-status-error transition-colors"
-                  >
-                    전체 해제
-                  </button>
-                )}
+                </div>
               </div>
 
               {/* 배정 사유 (선택) */}

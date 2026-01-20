@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -288,6 +289,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [enrollCourseId, setEnrollCourseId] = useState<number | null>(null);
   const [enrollTimeId, setEnrollTimeId] = useState<number | null>(null);
+  const [enrollCourseSearch, setEnrollCourseSearch] = useState('');
 
   // 학습 상세 모달용 선택된 enrollment
   const [selectedEnrollment, setSelectedEnrollment] = useState<EnrollmentResponse | null>(null);
@@ -375,7 +377,12 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
         // 차수 선택
         setSelectedTimeId(courseTimeId);
       }
+      setIsInitialized(true);
+      return;
     }
+
+    // 배정 모드: assignToTimeId 파라미터는 차수 필터 없이 전체 사용자 목록만 표시
+    // (파라미터가 있어도 특별한 처리 없이 전체 사용자 표시)
     setIsInitialized(true);
   }, [timesData, coursesData, searchParams, isInitialized]);
 
@@ -497,6 +504,15 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     }));
   }, [timesData, enrollCourseTitle]);
 
+  // 강제 배정 모달용 과정 옵션 - 검색 필터링
+  const filteredEnrollCourseOptions = useMemo(() => {
+    if (!enrollCourseSearch.trim()) return courseOptions;
+    const searchLower = enrollCourseSearch.toLowerCase();
+    return courseOptions.filter((option) =>
+      option.label.toLowerCase().includes(searchLower)
+    );
+  }, [courseOptions, enrollCourseSearch]);
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
       year: 'numeric',
@@ -566,6 +582,26 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
 
   // 강제 배정 모달 열기
   const handleOpenEnrollModal = () => {
+    // assignToTimeId 파라미터가 있으면 해당 차수와 과정을 자동 선택
+    const assignToTimeIdParam = searchParams.get('assignToTimeId');
+    if (assignToTimeIdParam && timesData?.content && coursesData?.content) {
+      const assignTimeId = parseInt(assignToTimeIdParam);
+      const targetTime = timesData.content.find((t) => t.id === assignTimeId);
+
+      if (targetTime) {
+        const matchingCourse = coursesData.content.find(
+          (c) => c.title === targetTime.courseTitle
+        );
+        if (matchingCourse) {
+          setEnrollCourseId(matchingCourse.courseId);
+        }
+        setEnrollTimeId(assignTimeId);
+        setShowEnrollModal(true);
+        return;
+      }
+    }
+
+    // 기본 동작: 초기화 후 모달 열기
     setEnrollCourseId(null);
     setEnrollTimeId(null);
     setShowEnrollModal(true);
@@ -578,6 +614,10 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     const userIdsArray = Array.from(selectedUserIds);
     if (userIdsArray.length === 0) return;
 
+    // 선택된 차수 정보 저장 (성공 메시지용)
+    const selectedTime = timesData?.content?.find((t) => t.id === enrollTimeId);
+    const enrollCount = userIdsArray.length;
+
     try {
       await forceEnroll.mutateAsync({
         courseTimeId: enrollTimeId,
@@ -588,6 +628,10 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
       });
       setShowEnrollModal(false);
       setSelectedUserIds(new Set());
+
+      // 성공 메시지 표시
+      const timeTitle = selectedTime?.title ?? '선택한 차수';
+      toast.success(`${enrollCount}명이 "${timeTitle}"에 배정되었습니다.`);
     } catch (err) {
       console.error('Force enroll failed:', err);
     }
@@ -1760,19 +1804,49 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
             </div>
 
             {/* 과정 선택 */}
-            <div>
-              <Label className="text-text-secondary mb-2">{getText('selectCourseForEnroll')}</Label>
-              <Combobox
-                options={courseOptions}
-                value={enrollCourseId ? String(enrollCourseId) : undefined}
-                onValueChange={(value: string) => {
+            <div className="space-y-2">
+              <Label className="text-text-secondary">{getText('selectCourseForEnroll')}</Label>
+              <Select
+                value={enrollCourseId ? String(enrollCourseId) : ''}
+                onValueChange={(value) => {
                   setEnrollCourseId(value ? Number(value) : null);
                   setEnrollTimeId(null);
+                  setEnrollCourseSearch('');
                 }}
-                placeholder={getText('selectCourse')}
-                searchPlaceholder={getText('searchCourse')}
-                emptyMessage={getText('noResults')}
-              />
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={getText('selectCourse')} />
+                </SelectTrigger>
+                <SelectContent className="max-h-72 overflow-hidden">
+                  <div className="sticky top-0 bg-popover p-2 border-b border-border">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-placeholder" />
+                      <Input
+                        value={enrollCourseSearch}
+                        onChange={(e) => setEnrollCourseSearch(e.target.value)}
+                        placeholder={getText('searchCourse')}
+                        className="pl-8 h-8 text-sm"
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-52 overflow-y-auto">
+                    {filteredEnrollCourseOptions.length > 0 ? (
+                      filteredEnrollCourseOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="py-6 text-center text-sm text-text-placeholder">
+                        {getText('noResults')}
+                      </div>
+                    )}
+                  </div>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* 차수 선택 */}
@@ -1783,10 +1857,10 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
                 onValueChange={(value) => setEnrollTimeId(value ? Number(value) : null)}
                 disabled={!enrollCourseId}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder={getText('selectTime')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-60">
                   {enrollTimeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
