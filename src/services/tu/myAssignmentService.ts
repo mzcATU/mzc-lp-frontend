@@ -16,6 +16,8 @@ import type {
 interface BackendEnrollmentResponse {
   id: number;
   userId: number;
+  userName: string | null;
+  userEmail: string | null;
   courseTimeId: number;
   enrolledAt: string;
   type: string;
@@ -97,8 +99,8 @@ export const myAssignmentService = {
     const enrollments: CourseTimeEnrollmentItem[] = pageData.content.map((e) => ({
       enrollmentId: e.id,
       userId: e.userId,
-      userName: `User ${e.userId}`, // 백엔드가 userName 미제공
-      userEmail: '', // 백엔드가 userEmail 미제공
+      userName: e.userName || `User ${e.userId}`,
+      userEmail: e.userEmail || '',
       status: mapStatus(e.status),
       progress: e.progressPercent ?? 0,
       enrolledAt: e.enrolledAt,

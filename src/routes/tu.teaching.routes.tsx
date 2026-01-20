@@ -90,7 +90,7 @@ export const tuTeachingRoutes = (
     <Route path="teaching/content/bulk-upload" element={<ContentBulkUploadPage />} />
     <Route path="teaching/content/:id" element={<ContentDetailPage />} />
 
-    {/* 내 과제 */}
+    {/* 내 교수 관리 */}
     <Route path="teaching/assignments" element={<MyAssignmentsPage />} />
     <Route path="teaching/assignments/:id" element={<AssignmentDetailPage />} />
 
