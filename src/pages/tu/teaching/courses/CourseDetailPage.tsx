@@ -216,15 +216,19 @@ export function CourseDetailPage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - 상태별 조건부 렌더링 */}
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={() => setApplyModalOpen(true)}
-            >
-              <Send size={16} />
-              과정 등록
-            </Button>
+            {/* 과정 등록 버튼 - READY 상태에서만 표시 */}
+            {course.status === 'READY' && (
+              <Button
+                size="sm"
+                onClick={() => setApplyModalOpen(true)}
+              >
+                <Send size={16} />
+                과정 등록
+              </Button>
+            )}
+            {/* 미리보기 버튼 - 항상 표시 */}
             <Button
               variant="ghost"
               size="sm"
@@ -234,15 +238,18 @@ export function CourseDetailPage() {
               <Eye size={16} />
               미리보기
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDelete}
-              disabled={deleteCourseMutation.isPending}
-            >
-              <Trash2 size={16} />
-              삭제
-            </Button>
+            {/* 삭제 버튼 - DRAFT, READY 상태에서만 표시 */}
+            {course.status !== 'REGISTERED' && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleteCourseMutation.isPending}
+              >
+                <Trash2 size={16} />
+                삭제
+              </Button>
+            )}
           </div>
         </div>
 
@@ -252,14 +259,14 @@ export function CourseDetailPage() {
           <CourseInfoSection
             course={course}
             categories={categories}
-            onEdit={() => navigate(prefixPath(`/tu/teaching/courses/${id}/edit?step=1`))}
+            onEdit={course.status !== 'REGISTERED' ? () => navigate(prefixPath(`/tu/teaching/courses/${id}/edit?step=1`)) : undefined}
           />
 
           {/* 커리큘럼 섹션 */}
           <CourseCurriculumSection
             itemCount={course.itemCount}
             curriculum={curriculum ?? []}
-            onEdit={() => navigate(prefixPath(`/tu/teaching/courses/${id}/edit?step=2`))}
+            onEdit={course.status !== 'REGISTERED' ? () => navigate(prefixPath(`/tu/teaching/courses/${id}/edit?step=2`)) : undefined}
             onPreviewContent={handlePreviewContent}
           />
         </div>
