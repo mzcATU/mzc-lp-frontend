@@ -31,6 +31,7 @@ import {
   ChevronRight,
   ExternalLink,
 } from 'lucide-react';
+import { CloneCourseTimeDialog } from '@/components/domain/co';
 import { cn } from '@/utils/cn';
 import {
   Button,
@@ -181,6 +182,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
   const [editData, setEditData] = useState<UpdateCourseTimeRequest>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [statusChangeDialogOpen, setStatusChangeDialogOpen] = useState(false);
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -409,7 +411,7 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
                       <span>{getText('edit')}</span>
                     </Button>
                   )}
-                  <Button variant="ghost" onClick={() => navigate(prefixPath(`/co/times/${timeId}/clone`))}>
+                  <Button variant="ghost" onClick={() => setCloneDialogOpen(true)}>
                     <Copy size={20} />
                     <span>{getText('clone')}</span>
                   </Button>
@@ -1173,6 +1175,14 @@ export function CourseTimeDetailPage({ language = 'ko' }: Readonly<CourseTimeDet
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Clone Course Time Dialog */}
+      <CloneCourseTimeDialog
+        open={cloneDialogOpen}
+        onOpenChange={setCloneDialogOpen}
+        courseTime={courseTime}
+        language={language}
+      />
     </div>
   );
 }

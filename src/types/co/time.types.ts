@@ -173,13 +173,30 @@ export interface UpdateCourseTimeRequest {
   location?: string;
 }
 
-/** 차수 복제 요청 */
+/**
+ * 차수 복제 요청 (백엔드 CloneCourseTimeRequest 매칭)
+ * - 기본/기간/운영 설정만 수정 가능
+ * - 고급 설정(진행방식, 신청방식, 수료기준, 중간합류)은 원본 그대로 복사
+ */
 export interface CloneCourseTimeRequest {
+  // 기본 정보 (필수)
   title: string;
-  enrollmentStartDate: string;
-  enrollmentEndDate: string;
-  startDate: string;
-  endDate: string;
+  description?: string;
+
+  // 기간 설정 (필수)
+  enrollStartDate: string; // 모집 시작일 (YYYY-MM-DD)
+  enrollEndDate: string; // 모집 종료일 (YYYY-MM-DD)
+  classStartDate: string; // 학습 시작일 (YYYY-MM-DD)
+  classEndDate?: string | null; // 학습 종료일 - FIXED: 필수, RELATIVE/UNLIMITED: null
+
+  // 운영 설정 (선택 - 없으면 원본 복사)
+  capacity?: number | null; // 정원 (null = 무제한)
+  price?: string | null; // 가격
+  isFree?: boolean; // 무료 여부
+  locationInfo?: string | null; // 장소 정보
+
+  // 정기 일정 (체크박스로 복사 여부 선택)
+  copyRecurringSchedule?: boolean; // true: 원본 일정 복사, false: 일정 없이 생성
 }
 
 // ============================================
