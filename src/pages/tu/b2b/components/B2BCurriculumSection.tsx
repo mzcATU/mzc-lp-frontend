@@ -1,7 +1,12 @@
-import { PlayCircle, Video, BookOpen } from 'lucide-react';
+import { useMemo } from 'react';
+import { PlayCircle, Video, BookOpen, FileText, Image, Music, Link as LinkIcon, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useSubdomainPath } from '@/hooks/common';
+import axiosInstance from '@/services/common/api/axiosInstance';
+import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import type { CurriculumItemResponse } from '@/types/tu/courseTimeCatalog.types';
+import type { ProgressRecordResponse } from '@/types/tu';
 
 interface B2BCurriculumSectionProps {
   curriculum: CurriculumItemResponse[];
@@ -19,12 +24,26 @@ function formatDuration(seconds?: number): string {
   return remainMinutes > 0 ? `${hours}시간 ${remainMinutes}분` : `${hours}시간`;
 }
 
-function getIcon(isFolder: boolean, isDark: boolean) {
+// 콘텐츠 타입별 아이콘 매핑
+const contentTypeIcons: Record<string, React.ReactNode> = {
+  VIDEO: <Video className="w-4 h-4" />,
+  AUDIO: <Music className="w-4 h-4" />,
+  DOCUMENT: <FileText className="w-4 h-4" />,
+  IMAGE: <Image className="w-4 h-4" />,
+  EXTERNAL_LINK: <LinkIcon className="w-4 h-4" />,
+};
+
+function getIcon(isFolder: boolean, itemType: string | null | undefined, isDark: boolean) {
+  const iconClass = isDark ? 'text-gray-400' : 'text-gray-500';
+
   if (isFolder) {
-    return <BookOpen className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />;
+    return <BookOpen className={`w-4 h-4 ${iconClass}`} />;
   }
-  // TODO: itemType에 따라 아이콘 분기 (백엔드 API 확장 시)
-  return <Video className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />;
+
+  const upperType = itemType?.toUpperCase() || 'VIDEO';
+  const icon = contentTypeIcons[upperType] || <Video className="w-4 h-4" />;
+
+  return <span className={iconClass}>{icon}</span>;
 }
 
 function flattenCurriculum(items: CurriculumItemResponse[]): CurriculumItemResponse[] {
@@ -44,12 +63,33 @@ export function B2BCurriculumSection({ curriculum, enrollmentId, onItemClick, is
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
 
+  // 진도 API 조회
+  const { data: progressData } = useQuery({
+    queryKey: ['enrollment', 'progress', enrollmentId],
+    queryFn: async () => {
+      const response = await axiosInstance.get<ProgressRecordResponse[]>(
+        API_ENDPOINTS.ENROLLMENTS.ITEMS_PROGRESS(enrollmentId!)
+      );
+      return response.data;
+    },
+    enabled: !!enrollmentId,
+  });
+
+  // 진도 데이터를 Map으로 변환
+  const progressMap = useMemo(() => {
+    const map = new Map<number, ProgressRecordResponse>();
+    progressData?.forEach((record) => {
+      map.set(record.itemId, record);
+    });
+    return map;
+  }, [progressData]);
+
   // 트리 구조를 평탄화
   const flatItems = flattenCurriculum(curriculum);
   const totalItems = flatItems.filter(item => !item.isFolder).length;
 
-  // TODO: 실제 진도율 API 연동 시 교체
-  const completedCount = 0;
+  // 진도율 계산
+  const completedCount = progressData?.filter(p => p.completed).length ?? 0;
   const progressPercent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
 
   const handleStartLearning = () => {
@@ -63,6 +103,8 @@ export function B2BCurriculumSection({ curriculum, enrollmentId, onItemClick, is
 
   const renderItem = (item: CurriculumItemResponse, depth: number = 0) => {
     const hasChildren = item.children && item.children.length > 0;
+    const progress = progressMap.get(item.id);
+    const isCompleted = progress?.completed ?? false;
 
     return (
       <div key={item.id}>
@@ -74,7 +116,7 @@ export function B2BCurriculumSection({ curriculum, enrollmentId, onItemClick, is
           } ${item.isFolder ? 'cursor-default' : 'cursor-pointer'}`}
           style={{ paddingLeft: `${24 + depth * 16}px` }}
         >
-          <div className="shrink-0">{getIcon(item.isFolder, isDark)}</div>
+          <div className="shrink-0">{getIcon(item.isFolder, item.itemType, isDark)}</div>
 
           <div className="flex-1 min-w-0 text-left">
             <p
@@ -92,11 +134,15 @@ export function B2BCurriculumSection({ curriculum, enrollmentId, onItemClick, is
           </div>
 
           {!item.isFolder && (
-            <div
-              className={`w-5 h-5 rounded-full border-2 shrink-0 ${
-                isDark ? 'border-white/20' : 'border-gray-300'
-              }`}
-            />
+            isCompleted ? (
+              <CheckCircle className="w-5 h-5 shrink-0 text-green-500" />
+            ) : (
+              <div
+                className={`w-5 h-5 rounded-full border-2 shrink-0 ${
+                  isDark ? 'border-white/20' : 'border-gray-300'
+                }`}
+              />
+            )
           )}
         </button>
 
