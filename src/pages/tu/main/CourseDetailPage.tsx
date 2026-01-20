@@ -329,7 +329,7 @@ export function CourseDetailPage() {
       },
       onError: (error: Error & { response?: { data?: { error?: { code?: string; message?: string } } } }) => {
         const errorCode = error.response?.data?.error?.code;
-        const errorMessage = error.response?.data?.error?.message;
+        const errorMessage = error.response?.data?.error?.message ?? '';
 
         // 에러 코드별 사용자 친화적 메시지
         const errorMessages: Record<string, string> = {
@@ -337,7 +337,22 @@ export function CourseDetailPage() {
           'SIS008': '승인 대기 중입니다. 승인 후 학습할 수 있습니다.',
         };
 
-        toast.error(errorMessages[errorCode ?? ''] || errorMessage || '수강 신청에 실패했습니다.');
+        // 에러 메시지 패턴 매칭 (영문 메시지 → 한글 변환)
+        const getLocalizedMessage = (message: string): string | null => {
+          if (message.includes('Enrollment period is closed')) {
+            return '수강 신청 기간이 종료되었습니다.';
+          }
+          if (message.includes('already enrolled')) {
+            return '이미 수강 신청된 강의입니다.';
+          }
+          if (message.includes('No available seats')) {
+            return '정원이 마감되었습니다.';
+          }
+          return null;
+        };
+
+        const localizedMessage = errorMessages[errorCode ?? ''] || getLocalizedMessage(errorMessage);
+        toast.error(localizedMessage || '수강 신청에 실패했습니다.');
       },
     });
   };

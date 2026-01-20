@@ -89,11 +89,13 @@ export interface PageResponse<T> {
  */
 const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
   const statusMap: Record<string, EnrollmentStatus> = {
+    PENDING: 'PENDING',
     ENROLLED: 'APPROVED',
     IN_PROGRESS: 'APPROVED',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'CANCELLED',
     DROPPED: 'CANCELLED',
+    REJECTED: 'REJECTED',
   };
   return statusMap[status] || 'PENDING';
 };
@@ -103,12 +105,12 @@ const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
  */
 const mapStatusToBackend = (status: EnrollmentStatus): string | undefined => {
   const statusMap: Record<EnrollmentStatus, string> = {
+    PENDING: 'PENDING',
     APPROVED: 'ENROLLED',
     ENROLLED: 'ENROLLED',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'DROPPED',
-    PENDING: 'ENROLLED', // PENDING은 백엔드에 없으므로 ENROLLED로
-    REJECTED: 'DROPPED', // REJECTED도 백엔드에 없으므로 DROPPED로
+    REJECTED: 'REJECTED',
   };
   return statusMap[status];
 };

@@ -219,21 +219,30 @@ export function MyLearningPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
-  // API 파라미터 - "수강 중인 강의" 페이지이므로 APPROVED 상태만 조회
-  // 필터에서 다른 상태를 선택하면 해당 상태로 조회
+  // API 파라미터 - 전체 선택 시 status 파라미터 생략하여 모든 상태 조회
   const params: EnrollmentFilterParams = {
     page,
     size: 12,
-    status: statusFilter !== 'all' ? statusFilter : 'APPROVED',
+    status: statusFilter !== 'all' ? statusFilter : undefined,
   };
 
   const { data, isLoading, isError } = useMyEnrollments(params);
 
-  // 검색 필터링 (클라이언트 사이드)
-  const filteredContent = data?.content.filter((enrollment) =>
-    enrollment.programTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    enrollment.courseTimeName.toLowerCase().includes(searchQuery.toLowerCase())
-  ) ?? [];
+  // 검색 필터링 + 상태 필터링 (클라이언트 사이드)
+  // "전체" 선택 시 COMPLETED는 제외 (수강 중인 강의 페이지이므로)
+  const filteredContent = data?.content.filter((enrollment) => {
+    // 검색어 필터
+    const matchesSearch =
+      enrollment.programTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      enrollment.courseTimeName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // "전체" 선택 시 COMPLETED 제외 (수강 중 + 승인 대기만 표시)
+    const matchesStatus = statusFilter === 'all'
+      ? enrollment.status !== 'COMPLETED'
+      : true;
+
+    return matchesSearch && matchesStatus;
+  }) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
     navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));

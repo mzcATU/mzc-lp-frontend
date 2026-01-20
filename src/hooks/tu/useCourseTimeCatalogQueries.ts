@@ -5,6 +5,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { courseTimeCatalogService } from '@/services/tu/courseTimeCatalogService';
 import { extractTenantIdentifier } from '@/utils/tenantUtils';
+import { useAuthStore } from '@/store/common/authStore';
 import type { CourseTimeCatalogParams } from '@/types/tu/courseTimeCatalog.types';
 
 // 현재 서브도메인 가져오기
@@ -13,13 +14,13 @@ function getCurrentSubdomain(): string | null {
   return tenant?.type === 'subdomain' ? tenant.identifier : null;
 }
 
-// Query Keys (서브도메인 포함)
+// Query Keys (서브도메인 + 인증 상태 포함)
 export const courseTimeCatalogKeys = {
   all: ['courseTimeCatalog'] as const,
-  catalog: (params?: CourseTimeCatalogParams, subdomain?: string | null) =>
-    [...courseTimeCatalogKeys.all, 'catalog', subdomain, params] as const,
-  detail: (id: number, subdomain?: string | null) =>
-    [...courseTimeCatalogKeys.all, 'detail', subdomain, id] as const,
+  catalog: (params?: CourseTimeCatalogParams, subdomain?: string | null, isAuthenticated?: boolean) =>
+    [...courseTimeCatalogKeys.all, 'catalog', subdomain, isAuthenticated, params] as const,
+  detail: (id: number, subdomain?: string | null, isAuthenticated?: boolean) =>
+    [...courseTimeCatalogKeys.all, 'detail', subdomain, isAuthenticated, id] as const,
 };
 
 /**
@@ -29,8 +30,9 @@ export const courseTimeCatalogKeys = {
  */
 export function useCourseTimeCatalog(params?: CourseTimeCatalogParams, enabled = true) {
   const subdomain = getCurrentSubdomain();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery({
-    queryKey: courseTimeCatalogKeys.catalog(params, subdomain),
+    queryKey: courseTimeCatalogKeys.catalog(params, subdomain, isAuthenticated),
     queryFn: () => courseTimeCatalogService.getCatalog(params),
     enabled,
     staleTime: 1000 * 60 * 5, // 5분
@@ -44,8 +46,9 @@ export function useCourseTimeCatalog(params?: CourseTimeCatalogParams, enabled =
  */
 export function useCourseTimeDetail(id: number, enabled = true) {
   const subdomain = getCurrentSubdomain();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return useQuery({
-    queryKey: courseTimeCatalogKeys.detail(id, subdomain),
+    queryKey: courseTimeCatalogKeys.detail(id, subdomain, isAuthenticated),
     queryFn: () => courseTimeCatalogService.getDetail(id),
     enabled: enabled && !!id,
     staleTime: 1000 * 60 * 5, // 5분
