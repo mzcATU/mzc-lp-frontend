@@ -1,15 +1,17 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Building2, Loader2, Users, BookOpen } from 'lucide-react';
-import { ColumnDef } from '@tanstack/react-table';
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Building2, Loader2, Users, BookOpen, HardDrive, BarChart3 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
   AdminPageHeader,
+  AdminStatsCard,
+  AdminStatsGrid,
   StatusBadge,
   PlanBadge,
 } from '@/components/domain/admin';
-import { DataTable, DataTableColumnHeader } from '@/components/common/DataTable';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/common/Card';
+import { Progress } from '@/components/common/Progress';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import {
@@ -71,7 +73,8 @@ interface CreatedTenantInfo {
   tempPassword: string;
 }
 
-export function TenantsPage() {
+// 탭용 콘텐츠 컴포넌트 (TenantManagementPage에서 사용)
+export function TenantsContent() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -114,101 +117,34 @@ export function TenantsPage() {
   const totalStats = useMemo(() => {
     const totalUsers = tenants.reduce((sum, t) => sum + (t.userCount || 0), 0);
     const totalCourses = tenants.reduce((sum, t) => sum + (t.courseCount || 0), 0);
-    return { totalUsers, totalCourses, totalTenants: tenants.length };
-  }, [tenants]);
+    const totalStorage = tenants.reduce((sum, t) => sum + (t.storageUsed || 0), 0);
+    return { totalUsers, totalCourses, totalTenants: tenantsData?.totalElements || tenants.length, totalStorage };
+  }, [tenants, tenantsData]);
 
-  const columns: ColumnDef<Tenant>[] = [
-    {
-      accessorKey: 'name',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="테넌트명" />
-      ),
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-brand-primary" />
-          </div>
-          <div>
-            <div className="font-medium">{row.original.name}</div>
-            <div className="text-sm text-text-secondary">{row.original.code}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: '상태',
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    },
-    {
-      accessorKey: 'plan',
-      header: '플랜',
-      cell: ({ row }) => <PlanBadge plan={row.original.plan} />,
-    },
-    {
-      accessorKey: 'userCount',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="사용자" />
-      ),
-      cell: ({ row }) => (
-        <span className="text-text-secondary">{(row.original.userCount || 0).toLocaleString()}명</span>
-      ),
-    },
-    {
-      accessorKey: 'courseCount',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="강좌" />
-      ),
-      cell: ({ row }) => (
-        <span className="text-text-secondary">{row.original.courseCount || 0}개</span>
-      ),
-    },
-    {
-      accessorKey: 'createdAt',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="생성일" />
-      ),
-      cell: ({ row }) => (
-        <span className="text-text-secondary">
-          {new Date(row.original.createdAt).toLocaleDateString('ko-KR')}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleViewDetail(row.original)}>
-              <Eye className="mr-2 h-4 w-4" />
-              상세 보기
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleEdit(row.original)}>
-              <Edit className="mr-2 h-4 w-4" />
-              수정
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setDeleteTarget(row.original)}
-              className="text-red-600"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              삭제
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ];
+  // 플랜별 최대 한도
+  const getPlanLimits = (plan: PlanType) => {
+    const limits = {
+      BASIC: { users: 50, courses: 20, storage: 10 },
+      PRO: { users: 200, courses: 50, storage: 50 },
+      ENTERPRISE: { users: 500, courses: 100, storage: 200 },
+    };
+    return limits[plan] || limits.BASIC;
+  };
+
+  // 사용량 색상
+  const getUsageColor = (current: number, max: number) => {
+    const percentage = (current / max) * 100;
+    if (percentage >= 90) return 'text-red-600';
+    if (percentage >= 70) return 'text-yellow-600';
+    return 'text-green-600';
+  };
 
   const handleViewDetail = (tenant: Tenant) => {
     navigate(`/sa/tenants/${tenant.tenantId}`);
+  };
+
+  const handleViewAnalytics = (tenant: Tenant) => {
+    navigate(`/sa/analytics?tenantId=${tenant.tenantId}`);
   };
 
   const handleEdit = (tenant: Tenant) => {
@@ -296,16 +232,10 @@ export function TenantsPage() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="p-6">
-        <AdminPageHeader
-          title="테넌트 관리"
-          description="시스템에 등록된 테넌트를 관리합니다"
-        />
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
       </div>
     );
   }
@@ -313,138 +243,223 @@ export function TenantsPage() {
   // Error state
   if (isError) {
     return (
-      <div className="p-6">
-        <AdminPageHeader
-          title="테넌트 관리"
-          description="시스템에 등록된 테넌트를 관리합니다"
-        />
-        <div className="text-center py-12">
-          <p className="text-text-secondary">테넌트 목록을 불러오는데 실패했습니다.</p>
-          <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-            다시 시도
-          </Button>
-        </div>
+      <div className="text-center py-12">
+        <p className="text-text-secondary">테넌트 목록을 불러오는데 실패했습니다.</p>
+        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+          다시 시도
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <AdminPageHeader
-        title="테넌트 관리"
-        description="시스템에 등록된 테넌트를 관리합니다"
-        actions={
-          <Button onClick={handleCreateTenant}>
-            <Plus className="mr-2 h-4 w-4" />
-            테넌트 추가
-          </Button>
-        }
-      />
-
+    <div>
       {/* 전체 통계 카드 */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border rounded-lg p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm text-text-secondary">전체 테넌트</p>
-            <p className="text-xl font-semibold">{totalStats.totalTenants}개</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-            <Users className="w-5 h-5 text-green-600" />
-          </div>
-          <div>
-            <p className="text-sm text-text-secondary">전체 사용자</p>
-            <p className="text-xl font-semibold">{totalStats.totalUsers.toLocaleString()}명</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-purple-600" />
-          </div>
-          <div>
-            <p className="text-sm text-text-secondary">전체 강좌</p>
-            <p className="text-xl font-semibold">{totalStats.totalCourses}개</p>
-          </div>
-        </div>
-      </div>
+      <AdminStatsGrid columns={4} className="mb-6">
+        <AdminStatsCard
+          title="전체 테넌트"
+          value={totalStats.totalTenants}
+          icon={Building2}
+          variant="primary"
+        />
+        <AdminStatsCard
+          title="전체 사용자"
+          value={totalStats.totalUsers.toLocaleString()}
+          icon={Users}
+          variant="success"
+        />
+        <AdminStatsCard
+          title="전체 강좌"
+          value={totalStats.totalCourses}
+          icon={BookOpen}
+          variant="default"
+        />
+        <AdminStatsCard
+          title="전체 스토리지"
+          value={`${(totalStats.totalStorage / 1024).toFixed(1)} GB`}
+          icon={HardDrive}
+          variant="warning"
+        />
+      </AdminStatsGrid>
 
-      {/* 필터 영역 */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
-          <Input
-            placeholder="테넌트명 또는 코드 검색..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={statusFilter || 'all'} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="상태" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 상태</SelectItem>
-            <SelectItem value="ACTIVE">활성</SelectItem>
-            <SelectItem value="PENDING">대기</SelectItem>
-            <SelectItem value="SUSPENDED">정지</SelectItem>
-            <SelectItem value="TERMINATED">종료</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={planFilter || 'all'} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="플랜" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 플랜</SelectItem>
-            <SelectItem value="BASIC">Basic</SelectItem>
-            <SelectItem value="PRO">Pro</SelectItem>
-            <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* 테넌트 목록 */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>테넌트 목록</CardTitle>
+              <CardDescription>각 테넌트의 리소스 사용량을 확인합니다</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+                <Input
+                  placeholder="테넌트 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-64"
+                />
+              </div>
+              <Select value={statusFilter || 'all'} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="상태" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 상태</SelectItem>
+                  <SelectItem value="ACTIVE">활성</SelectItem>
+                  <SelectItem value="PENDING">대기</SelectItem>
+                  <SelectItem value="SUSPENDED">정지</SelectItem>
+                  <SelectItem value="TERMINATED">종료</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={planFilter || 'all'} onValueChange={setPlanFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="플랜" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 플랜</SelectItem>
+                  <SelectItem value="BASIC">Basic</SelectItem>
+                  <SelectItem value="PRO">Pro</SelectItem>
+                  <SelectItem value="ENTERPRISE">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={handleCreateTenant}>
+                <Plus className="mr-2 h-4 w-4" />
+                테넌트 추가
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {tenants.length === 0 ? (
+            <div className="text-center py-12 text-text-secondary">
+              <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>테넌트가 없습니다.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {tenants.map((tenant) => {
+                const limits = getPlanLimits(tenant.plan);
+                const userCount = tenant.userCount || 0;
+                const courseCount = tenant.courseCount || 0;
+                const storageUsed = tenant.storageUsed || 0;
 
-      {/* 테넌트 목록 테이블 */}
-      <DataTable
-        columns={columns}
-        data={tenants}
-        showColumnToggle={false}
-        labels={{
-          noResults: '테넌트가 없습니다.',
-          rowsSelected: '{selected}개 선택됨',
-          rowsPerPage: '페이지당 행',
-          pageOf: '{current} / {total} 페이지',
-        }}
-      />
+                return (
+                  <div key={tenant.tenantId} className="p-4 border rounded-lg hover:bg-bg-secondary transition-colors">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium">{tenant.name}</h3>
+                          </div>
+                          <p className="text-sm text-text-secondary">{tenant.code}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={tenant.status} />
+                        <PlanBadge plan={tenant.plan} />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewDetail(tenant)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              상세 보기
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewAnalytics(tenant)}>
+                              <BarChart3 className="mr-2 h-4 w-4" />
+                              활동 분석
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(tenant)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              수정
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setDeleteTarget(tenant)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
 
-      {/* 페이지네이션 */}
-      {tenantsData && tenantsData.totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            이전
-          </Button>
-          <span className="flex items-center px-4 text-sm text-text-secondary">
-            {page + 1} / {tenantsData.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= tenantsData.totalPages - 1}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            다음
-          </Button>
-        </div>
-      )}
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* Users */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-text-secondary">사용자</span>
+                          <span className={`text-sm font-medium ${getUsageColor(userCount, limits.users)}`}>
+                            {userCount} / {limits.users}
+                          </span>
+                        </div>
+                        <Progress value={(userCount / limits.users) * 100} />
+                      </div>
+
+                      {/* Courses */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-text-secondary">강좌</span>
+                          <span className={`text-sm font-medium ${getUsageColor(courseCount, limits.courses)}`}>
+                            {courseCount} / {limits.courses}
+                          </span>
+                        </div>
+                        <Progress value={(courseCount / limits.courses) * 100} />
+                      </div>
+
+                      {/* Storage */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-text-secondary">스토리지</span>
+                          <span className={`text-sm font-medium ${getUsageColor(storageUsed, limits.storage)}`}>
+                            {storageUsed} GB / {limits.storage} GB
+                          </span>
+                        </div>
+                        <Progress value={(storageUsed / limits.storage) * 100} />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-xs text-text-secondary">
+                      생성일: {new Date(tenant.createdAt).toLocaleDateString('ko-KR')}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 페이지네이션 */}
+          {tenantsData && tenantsData.totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                이전
+              </Button>
+              <span className="flex items-center px-4 text-sm text-text-secondary">
+                {page + 1} / {tenantsData.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= tenantsData.totalPages - 1}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                다음
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 테넌트 생성/수정 다이얼로그 */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -652,6 +667,21 @@ export function TenantsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// 기존 TenantsPage - 호환성 유지용 (독립 페이지로 사용 시)
+export function TenantsPage() {
+  return (
+    <div className="p-6">
+      <AdminPageHeader
+        title="테넌트 관리"
+        description="시스템에 등록된 테넌트를 관리합니다"
+      />
+      <div className="mt-6">
+        <TenantsContent />
+      </div>
     </div>
   );
 }

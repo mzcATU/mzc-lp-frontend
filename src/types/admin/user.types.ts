@@ -218,3 +218,36 @@ export interface UserRolesResponse {
   primaryRole: SystemRole;
   updatedAt: string;
 }
+
+// System Admin Users (SA 운영자 관리)
+export interface SystemAdminUser {
+  userId: number;
+  email: string;
+  name: string;
+  phone?: string;
+  profileImageUrl?: string;
+  department?: string;
+  position?: string;
+  role: SystemRole;
+  status: UserStatus;
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SystemAdminListResponse {
+  content: SystemAdminUser[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface CreateSystemAdminRequest {
+  email: string;
+  name: string;
+  password: string;
+  phone?: string;
+  department?: string;
+  position?: string;
+}

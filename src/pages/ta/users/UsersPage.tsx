@@ -117,7 +117,8 @@ interface AccountPreview {
   };
 }
 
-export function UsersPage() {
+// 탭용 콘텐츠 컴포넌트 (UserAndDepartmentPage에서 사용)
+export function UsersContent() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -594,16 +595,10 @@ export function UsersPage() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="p-6">
-        <AdminPageHeader
-          title="사용자 관리"
-          description="테넌트 내 사용자를 관리합니다"
-        />
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
       </div>
     );
   }
@@ -611,39 +606,28 @@ export function UsersPage() {
   // Error state
   if (isError) {
     return (
-      <div className="p-6">
-        <AdminPageHeader
-          title="사용자 관리"
-          description="테넌트 내 사용자를 관리합니다"
-        />
-        <div className="text-center py-12">
-          <p className="text-text-secondary">사용자 목록을 불러오는데 실패했습니다.</p>
-          <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-            다시 시도
-          </Button>
-        </div>
+      <div className="text-center py-12">
+        <p className="text-text-secondary">사용자 목록을 불러오는데 실패했습니다.</p>
+        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+          다시 시도
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <AdminPageHeader
-        title="사용자 관리"
-        description="테넌트 내 사용자를 관리합니다"
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsBulkCreateDialogOpen(true)}>
-              <Users className="mr-2 h-4 w-4" />
-              단체 계정 생성
-            </Button>
-            <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
-              <Mail className="mr-2 h-4 w-4" />
-              초대하기
-            </Button>
-          </div>
-        }
-      />
+    <div>
+      {/* 액션 버튼 */}
+      <div className="flex justify-end gap-2 mb-6">
+        <Button variant="outline" onClick={() => setIsBulkCreateDialogOpen(true)}>
+          <Users className="mr-2 h-4 w-4" />
+          단체 계정 생성
+        </Button>
+        <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)}>
+          <Mail className="mr-2 h-4 w-4" />
+          초대하기
+        </Button>
+      </div>
 
       {/* 역할별 탭 필터 */}
       <Tabs value={roleFilter} onValueChange={setRoleFilter} className="mb-6">
@@ -1415,6 +1399,21 @@ export function UsersPage() {
           </Tabs>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// 기존 UsersPage - 호환성 유지용 (독립 페이지로 사용 시)
+export function UsersPage() {
+  return (
+    <div className="p-6">
+      <AdminPageHeader
+        title="사용자 관리"
+        description="테넌트 내 사용자를 관리합니다"
+      />
+      <div className="mt-6">
+        <UsersContent />
+      </div>
     </div>
   );
 }

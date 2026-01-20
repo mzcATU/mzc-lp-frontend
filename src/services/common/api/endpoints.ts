@@ -43,6 +43,7 @@ export const API_ENDPOINTS = {
   TENANTS: {
     BASE: '/tenants',
     BY_ID: (id: number) => `/tenants/${id}`,
+    CUSTOM_DOMAIN: (id: number) => `/tenants/${id}/custom-domain`,
   },
 
   // SA Dashboard (SYSTEM_ADMIN)
@@ -50,9 +51,20 @@ export const API_ENDPOINTS = {
     BASE: '/sa/dashboard',
   },
 
+  // SA Users (SYSTEM_ADMIN)
+  SA_USERS: {
+    BASE: '/sa/users',
+  },
+
   // TA Dashboard (TENANT_ADMIN)
   TA_DASHBOARD: {
     KPI: '/admin/dashboard/kpi',
+  },
+
+  // TA Domain Settings (TENANT_ADMIN)
+  TA_DOMAIN_SETTINGS: {
+    BASE: '/ta/domain-settings',
+    CUSTOM: '/ta/domain-settings/custom',
   },
 
   // CO Dashboard (OPERATOR)
@@ -384,6 +396,9 @@ export const API_ENDPOINTS = {
     ACTIVE: '/departments/active',
     SEARCH: '/departments/search',
     BY_ID: (id: number) => `/departments/${id}`,
+    MEMBERS: (id: number) => `/departments/${id}/members`,
+    AVAILABLE_MEMBERS: (id: number) => `/departments/${id}/available-members`,
+    ADD_MEMBER: (departmentId: number, userId: number) => `/departments/${departmentId}/members/${userId}`,
   },
 
   // Member Pools (회원 풀) - TO 관리, TA 조회

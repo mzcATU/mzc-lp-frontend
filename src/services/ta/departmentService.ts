@@ -5,6 +5,7 @@ import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
 import type {
   DepartmentResponse,
+  DepartmentMemberResponse,
   CreateDepartmentRequest,
   UpdateDepartmentRequest,
 } from '@/types/ta/department.types';
@@ -76,5 +77,28 @@ export const departmentService = {
   /** 부서 삭제 */
   async delete(id: number): Promise<void> {
     await axiosInstance.delete(API_ENDPOINTS.DEPARTMENTS.BY_ID(id));
+  },
+
+  /** 부서 멤버 목록 조회 */
+  async getMembers(id: number): Promise<DepartmentMemberResponse[]> {
+    const { data } = await axiosInstance.get<DepartmentMemberResponse[]>(
+      API_ENDPOINTS.DEPARTMENTS.MEMBERS(id)
+    );
+    return data;
+  },
+
+  /** 부서에 추가 가능한 인원 목록 조회 */
+  async getAvailableMembers(id: number): Promise<DepartmentMemberResponse[]> {
+    const { data } = await axiosInstance.get<DepartmentMemberResponse[]>(
+      API_ENDPOINTS.DEPARTMENTS.AVAILABLE_MEMBERS(id)
+    );
+    return data;
+  },
+
+  /** 부서에 인원 추가 */
+  async addMember(departmentId: number, userId: number): Promise<void> {
+    await axiosInstance.post(
+      API_ENDPOINTS.DEPARTMENTS.ADD_MEMBER(departmentId, userId)
+    );
   },
 };

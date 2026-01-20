@@ -9,7 +9,7 @@ export { DomainSettingsPage } from './system';
 export { BrandingSettingsPage, LayoutSettingsPage, DesignSettingsPage } from './branding';
 
 // Analytics
-export { RealtimePage, ExportPage, LogsPage } from './analytics';
+export { DataAnalyticsPage, ExportPage } from './analytics';
 
 // Settings
 export { TenantSettingsPage, UserManagementSettingsPage } from './settings';
@@ -18,4 +18,4 @@ export { TenantSettingsPage, UserManagementSettingsPage } from './settings';
 export { FeatureSettingsPage, TenantCategoryPage } from './features';
 
 // Notices
-export { TenantNoticesPage, SystemNoticesPage, NoticeInboxPage, NoticeDistributionPage } from './notices';
+export { TenantNoticesPage, SystemNoticesPage, NoticeInboxPage, NoticeDistributionPage, NoticeAndNotificationPage } from './notices';

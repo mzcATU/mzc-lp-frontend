@@ -86,8 +86,14 @@ export interface Page<T> {
 // 요청 파라미터
 export interface ActivityLogsParams {
   type?: ActivityType;
+  tenantId?: number;
   page?: number;
   size?: number;
+}
+
+export interface ActivityStatsParams {
+  days?: number;
+  tenantId?: number;
 }
 
 export const saAnalyticsService = {
@@ -101,18 +107,19 @@ export const saAnalyticsService = {
   },
 
   /** 전체 시스템 활동 통계 조회 */
-  async getStats(days: number = 30): Promise<ActivityStatsResponse> {
+  async getStats(params?: ActivityStatsParams): Promise<ActivityStatsResponse> {
     const { data } = await axiosInstance.get<ActivityStatsResponse>(
       API_ENDPOINTS.ANALYTICS.SA_STATS,
-      { params: { days } }
+      { params }
     );
     return data;
   },
 
   /** 전체 시스템 최근 활동 목록 조회 */
-  async getRecentActivities(): Promise<ActivityLogResponse[]> {
+  async getRecentActivities(tenantId?: number): Promise<ActivityLogResponse[]> {
     const { data } = await axiosInstance.get<ActivityLogResponse[]>(
-      API_ENDPOINTS.ANALYTICS.SA_RECENT
+      API_ENDPOINTS.ANALYTICS.SA_RECENT,
+      { params: tenantId ? { tenantId } : undefined }
     );
     return data;
   },

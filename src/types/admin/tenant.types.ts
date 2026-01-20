@@ -19,6 +19,7 @@ export interface Tenant {
   primaryColor?: string;
   userCount?: number;
   courseCount?: number;
+  storageUsed?: number;
   createdAt: string;
   updatedAt: string;
 }
