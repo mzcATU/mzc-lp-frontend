@@ -154,17 +154,17 @@ export function AssignmentDetailPage({ language = 'ko' }: Readonly<AssignmentDet
                 <ArrowLeft size={16} />
                 {getText('backToList')}
               </Button>
+            </div>
+            <div className="flex items-center gap-3">
+              {currentAssignment && (
+                <InstructorRoleBadge role={currentAssignment.role} language={language} />
+              )}
               <Button
                 onClick={() => navigate(prefixPath(`/tu/b2b/times/${timeId}`))}
               >
                 <BookOpen size={16} />
                 강의실 입장
               </Button>
-            </div>
-            <div className="flex items-center gap-3">
-              {currentAssignment && (
-                <InstructorRoleBadge role={currentAssignment.role} language={language} />
-              )}
             </div>
           </div>
           <div>
