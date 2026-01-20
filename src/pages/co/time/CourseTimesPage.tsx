@@ -22,6 +22,8 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react';
+import { CloneCourseTimeDialog } from '@/components/domain/co';
+import { useTime } from '@/hooks/co/useTimeQueries';
 import { cn } from '@/utils/cn';
 import {
   Button,
@@ -162,6 +164,8 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const [selectedTimeId, setSelectedTimeId] = useState<number | null>(null);
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+  const [cloneTargetId, setCloneTargetId] = useState<number | null>(null);
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
@@ -177,6 +181,8 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
   const { data, isLoading, error } = useTimes(params);
   const deleteTime = useDeleteTime();
   const openTime = useOpenTime();
+  // 복제 대상 차수 상세 조회 (다이얼로그용)
+  const { data: cloneTargetTime } = useTime(cloneTargetId ?? 0);
 
   const times = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
@@ -274,7 +280,10 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
             <Eye size={14} />
             {getText('view')}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate(prefixPath(`/co/times/${item.id}/clone`))}>
+          <DropdownMenuItem onClick={() => {
+            setCloneTargetId(item.id);
+            setCloneDialogOpen(true);
+          }}>
             <Copy size={14} />
             {getText('clone')}
           </DropdownMenuItem>
@@ -674,6 +683,17 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
           )}
         </div>
       </div>
+
+      {/* Clone Course Time Dialog */}
+      <CloneCourseTimeDialog
+        open={cloneDialogOpen}
+        onOpenChange={(open) => {
+          setCloneDialogOpen(open);
+          if (!open) setCloneTargetId(null);
+        }}
+        courseTime={cloneTargetTime ?? null}
+        language={language}
+      />
     </div>
   );
 }

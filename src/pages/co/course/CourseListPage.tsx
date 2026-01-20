@@ -135,14 +135,9 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   // React Query 훅 사용 (승인된 과정만 조회)
   const { data, isLoading, error } = useRegisteredCourses(params);
 
-  // REGISTERED 상태의 과정만 필터링 (안전장치)
-  const registeredCourses = useMemo(() => {
-    return (data?.content ?? []).filter((course) => course.status === 'REGISTERED');
-  }, [data?.content]);
-
   // 검색 및 필터링 (클라이언트 사이드)
   const filteredCourses = useMemo(() => {
-    let result = registeredCourses;
+    let result = data?.content ?? [];
 
     // 텍스트 검색 (과정명 + 생성자)
     if (searchQuery) {
@@ -170,7 +165,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
     }
 
     return result;
-  }, [registeredCourses, searchQuery, selectedCategory, selectedLevel, selectedType]);
+  }, [data?.content, searchQuery, selectedCategory, selectedLevel, selectedType]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -415,7 +410,9 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           {/* Count */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
-              {filteredCourses.length}
+              {searchQuery || hasActiveFilters
+                ? filteredCourses.length
+                : (data?.totalElements ?? 0)}
               {getText('courseCount')}
             </p>
           </div>
@@ -429,7 +426,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           )}
 
           {/* Empty State - 데이터 자체가 없을 때 */}
-          {!isLoading && registeredCourses.length === 0 && !searchQuery && !hasActiveFilters && (
+          {!isLoading && (data?.content?.length ?? 0) === 0 && !searchQuery && !hasActiveFilters && (
             <div className="text-center py-12 text-text-secondary">
               <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p className="mb-1">{getText('noCourses')}</p>
