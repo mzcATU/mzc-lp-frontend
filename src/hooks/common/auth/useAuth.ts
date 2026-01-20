@@ -46,11 +46,11 @@ export const useLogin = () => {
       setAuth(user, tokenResponse.accessToken, tokenResponse.refreshToken, tokenResponse.expiresIn);
       toast.success(`${user.name}님, 환영합니다!`);
 
-      // 역할별 리다이렉트 경로
+      // 역할별 리다이렉트 경로 (각 역할별 대시보드로 이동)
       const roleBasePath: Record<string, string> = {
-        SYSTEM_ADMIN: '/sa',
-        TENANT_ADMIN: '/ta',
-        OPERATOR: '/co',
+        SYSTEM_ADMIN: '/sa/dashboard',
+        TENANT_ADMIN: '/ta/dashboard',
+        OPERATOR: '/co/dashboard',
         DESIGNER: '/tu/teaching',
         USER: '/tu/b2c',
       };
