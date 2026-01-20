@@ -38,9 +38,11 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
-    // 서브도메인 헤더 추가 (테넌트 식별용)
+    // 서브도메인 또는 커스텀 도메인 헤더 추가 (테넌트 식별용)
     const tenantIdentifier = extractTenantIdentifier();
-    if (tenantIdentifier?.type === 'subdomain') {
+    if (tenantIdentifier) {
+      // subdomain과 customDomain 모두 X-Subdomain 헤더로 전송
+      // 백엔드에서 알아서 subdomain 또는 customDomain으로 검색
       config.headers['X-Subdomain'] = tenantIdentifier.identifier;
     }
 

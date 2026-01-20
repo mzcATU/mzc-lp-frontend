@@ -1,4 +1,4 @@
-import { Route, Outlet } from 'react-router-dom';
+import { Route, Outlet, Navigate } from 'react-router-dom';
 import { SuperAdminLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import {
@@ -32,6 +32,7 @@ function SuperAdminWrapper() {
 
 export const saRoutes = (
   <Route path="/sa" element={<SuperAdminWrapper />}>
+    <Route index element={<Navigate to="/sa/dashboard" replace />} />
     <Route path="dashboard" element={<DashboardPage />} />
     {/* 테넌트 관리 (통합 페이지) */}
     <Route path="tenants" element={<TenantManagementPage />} />
