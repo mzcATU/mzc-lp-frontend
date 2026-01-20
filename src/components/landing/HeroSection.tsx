@@ -99,13 +99,13 @@ export function HeroSection() {
     return null;
   }
 
-  // 브랜딩 배너(이미지/코드)가 있는지 확인
-  const hasBrandingBanner = brandingBannerItems.length > 0;
+  // 브랜딩 배너 중 이미지 타입이 있는지 확인 (코드 타입만 있으면 배경 표시)
+  const hasImageBanner = brandingBannerItems.some(item => item.type === 'image' && item.imageUrl);
 
   return (
     <div className="w-full overflow-hidden relative">
-      {/* 브랜딩 배너가 없을 때만 기본 배경 표시 */}
-      {!hasBrandingBanner && (
+      {/* 이미지 배너가 없을 때 기본 배경 표시 (코드 타입이거나 배너가 없는 경우) */}
+      {!hasImageBanner && (
         <>
           <div className="absolute inset-0 animated-bg" />
           {/* Background decorative elements */}

@@ -17,6 +17,7 @@ import {
   PauseCircle,
   TrendingUp,
   Mail,
+  BookOpen,
 } from 'lucide-react';
 import { Button, Badge } from '@/components/common';
 import type { BadgeColor } from '@/components/common/Badge/Badge.types';
@@ -24,6 +25,7 @@ import { useCourseTimeEnrollments, useMyAssignments } from '@/hooks/tu';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import type { StudentEnrollmentStatus, CourseTimeEnrollmentItem } from '@/types/tu';
 import { STUDENT_ENROLLMENT_STATUS_LABELS } from '@/types/tu';
+import { InstructorRoleBadge } from '@/components/domain/tu/assignment';
 
 // 수강생 상태별 Badge 컬러
 const statusBadgeColor: Record<StudentEnrollmentStatus, BadgeColor> = {
@@ -141,22 +143,33 @@ export function AssignmentDetailPage({ language = 'ko' }: Readonly<AssignmentDet
       {/* Header */}
       <div className="border-b border-border bg-bg-default sticky top-0 z-10">
         <div className="p-6 px-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="border border-border"
-              onClick={() => navigate(prefixPath('/tu/teaching/assignments'))}
-            >
-              <ArrowLeft size={16} />
-              {getText('backToList')}
-            </Button>
-            <div>
-              <h1 className="text-text-primary text-xl mb-1">{getText('assignmentDetail')}</h1>
-              <p className="text-text-secondary text-sm">
-                {enrollmentData.programName} - {enrollmentData.timeName}
-              </p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="border border-border"
+                onClick={() => navigate(prefixPath('/tu/teaching/assignments'))}
+              >
+                <ArrowLeft size={16} />
+                {getText('backToList')}
+              </Button>
             </div>
+            <div className="flex items-center gap-3">
+              {currentAssignment && (
+                <InstructorRoleBadge role={currentAssignment.role} language={language} />
+              )}
+              <Button
+                onClick={() => navigate(prefixPath(`/tu/b2b/times/${timeId}`))}
+              >
+                <BookOpen size={16} />
+                강의실 입장
+              </Button>
+            </div>
+          </div>
+          <div>
+            <h1 className="text-text-primary text-xl mb-1">{enrollmentData.timeName}</h1>
+            <p className="text-text-secondary text-sm">{enrollmentData.programName}</p>
           </div>
         </div>
       </div>
@@ -275,16 +288,10 @@ export function AssignmentDetailPage({ language = 'ko' }: Readonly<AssignmentDet
                         {getText('email')}
                       </th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">
-                        {getText('status')}
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">
                         {getText('progress')}
                       </th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">
-                        {getText('enrolledAt')}
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">
-                        {getText('lastAccessedAt')}
+                        {getText('status')}
                       </th>
                     </tr>
                   </thead>
@@ -352,12 +359,6 @@ function StudentRow({ student, language }: Readonly<StudentRowProps>) {
         </span>
       </td>
       <td className="py-3 px-4">
-        <Badge variant={statusBadgeColor[student.status]}>
-          <StatusIcon size={12} className="mr-1" />
-          {STUDENT_ENROLLMENT_STATUS_LABELS[student.status][language]}
-        </Badge>
-      </td>
-      <td className="py-3 px-4">
         <div className="flex items-center gap-2">
           <div className="w-24 h-2 bg-bg-secondary rounded-full overflow-hidden">
             <div
@@ -369,12 +370,10 @@ function StudentRow({ student, language }: Readonly<StudentRowProps>) {
         </div>
       </td>
       <td className="py-3 px-4">
-        <span className="text-text-secondary text-sm">{formatDate(student.enrolledAt)}</span>
-      </td>
-      <td className="py-3 px-4">
-        <span className="text-text-secondary text-sm">
-          {student.lastAccessedAt ? formatDate(student.lastAccessedAt, true) : '-'}
-        </span>
+        <Badge variant={statusBadgeColor[student.status]}>
+          <StatusIcon size={12} className="mr-1" />
+          {STUDENT_ENROLLMENT_STATUS_LABELS[student.status][language]}
+        </Badge>
       </td>
     </tr>
   );

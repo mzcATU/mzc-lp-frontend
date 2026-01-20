@@ -171,7 +171,7 @@ function UserDetailSkeleton() {
           </div>
         </CardContent>
       </Card>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {[1, 2, 3, 4, 5].map((i) => (
           <Card key={i}>
             <CardContent className="pt-6 text-center">
@@ -395,7 +395,7 @@ export function UserDetailPage() {
       </Card>
 
       {/* 학습 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-3xl font-bold text-brand-primary">{formState.stats.totalCourses}</p>
