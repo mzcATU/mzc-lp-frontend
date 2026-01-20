@@ -88,6 +88,7 @@ export {
   useUpdateCourse,
   useDeleteCourse,
   useReadyCourse,
+  useRegisterCourse,
 } from './useCourseQueries';
 
 // Course Detail Hooks
