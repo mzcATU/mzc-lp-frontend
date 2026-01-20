@@ -5,6 +5,7 @@ import type {
   EnrollmentWithCurriculumResponse,
   EnrollmentPlayerData,
 } from '@/types/tu';
+import type { EnrollmentMethod } from '@/types/tu/courseTimeCatalog.types';
 
 /**
  * 수강 신청 상태
@@ -21,6 +22,7 @@ interface BackendEnrollmentResponse {
   enrolledAt: string;
   type: string;
   status: string;
+  enrollmentMethod?: EnrollmentMethod;
   progressPercent: number | null;
   score: number | null;
   completedAt: string | null;
@@ -52,6 +54,7 @@ export interface Enrollment {
   programTitle: string;
   courseTimeName: string;
   status: EnrollmentStatus;
+  enrollmentMethod?: EnrollmentMethod;
   enrolledAt: string;
   completedAt?: string;
   progress?: number;
@@ -124,6 +127,7 @@ const transformEnrollment = (
   programTitle: courseTimeInfo?.programName ?? '',
   courseTimeName: courseTimeInfo?.title ?? '',
   status: mapEnrollmentStatus(backend.status),
+  enrollmentMethod: backend.enrollmentMethod,
   enrolledAt: backend.enrolledAt,
   completedAt: backend.completedAt ?? undefined,
   progress: backend.progressPercent ?? 0,

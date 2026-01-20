@@ -87,6 +87,7 @@ export interface CourseTimeCatalogResponse {
   title: string;
   status: CourseTimeStatus;
   deliveryType: DeliveryType;
+  enrollmentMethod: EnrollmentMethod;
   isOnDemand: boolean;
   enrollStartDate: string;
   enrollEndDate: string;

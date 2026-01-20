@@ -282,6 +282,8 @@ export const API_ENDPOINTS = {
     MY: '/users/me/enrollments',
     BY_ID: (id: number) => `/enrollments/${id}`,
     CANCEL: (id: number) => `/enrollments/${id}/cancel`,
+    APPROVE: (id: number) => `/enrollments/${id}/approve`,
+    REJECT: (id: number) => `/enrollments/${id}/reject`,
     PROGRESS: (id: number) => `/enrollments/${id}/progress`,
     ITEMS_PROGRESS: (id: number) => `/enrollments/${id}/items/progress`,
     ITEM_PROGRESS: (id: number, itemId: number) => `/enrollments/${id}/items/${itemId}/progress`,

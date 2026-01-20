@@ -136,3 +136,36 @@ export const useAdminCancelEnrollment = () => {
     },
   });
 };
+
+/** 수강신청 승인 */
+export const useApproveEnrollment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => adminEnrollmentService.approveEnrollment(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: adminEnrollmentKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: adminEnrollmentKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: adminEnrollmentKeys.stats(data.courseTimeId),
+      });
+    },
+  });
+};
+
+/** 수강신청 거절 */
+export const useRejectEnrollment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason?: string }) =>
+      adminEnrollmentService.rejectEnrollment(id, reason),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: adminEnrollmentKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: adminEnrollmentKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: adminEnrollmentKeys.stats(data.courseTimeId),
+      });
+    },
+  });
+};
