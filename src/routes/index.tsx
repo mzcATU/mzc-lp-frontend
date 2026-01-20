@@ -6,6 +6,7 @@ import { coRoutes } from './co.routes';
 import { tuRoutes } from './tu.routes';
 import { authRoutes } from './auth.routes';
 import { UnauthorizedPage } from './pages';
+import { NotFoundPage } from '@/pages/common/NotFoundPage';
 
 export function AppRoutes() {
   return (
@@ -27,6 +28,9 @@ export function AppRoutes() {
 
       {/* 컴포넌트 쇼케이스 (개발용) */}
       <Route path="/showcase" element={<ComponentShowcase />} />
+
+      {/* 404 Not Found */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

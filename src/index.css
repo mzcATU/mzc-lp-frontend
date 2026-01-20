@@ -322,6 +322,16 @@
   animation: bg-gradient 15s ease infinite;
 }
 
+/* Loading bar animation */
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
 /* Dark theme scrollbar */
 .dark-scrollbar::-webkit-scrollbar {
   width: 8px;
