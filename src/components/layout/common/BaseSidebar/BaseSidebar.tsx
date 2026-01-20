@@ -111,7 +111,7 @@ export function BaseSidebar({
     SYSTEM_ADMIN: 'TA',
     TENANT_ADMIN: 'TA',
     OPERATOR: 'CO',
-    DESIGNER: 'DS',
+    DESIGNER: 'TU',
     INSTRUCTOR: 'TU',
     USER: 'USER',
   };

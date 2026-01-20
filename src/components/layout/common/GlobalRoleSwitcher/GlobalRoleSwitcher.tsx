@@ -33,7 +33,7 @@ const roleLabels: Record<GlobalRole, { ko: string; en: string }> = {
   TA: { ko: '관리자', en: 'Admin' },
   CO: { ko: '교육 운영자', en: 'Course Operator' },
   TU: { ko: '강사', en: 'Instructor' },
-  DS: { ko: '설계자', en: 'Designer' },
+  DS: { ko: '강사', en: 'Instructor' },
   USER: { ko: '학습자', en: 'Learner' },
 };
 
