@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/common/auth';
 import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
-import { Eye, EyeOff, Loader2, Check, X, UserPlus, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Check, X, Sun, Moon } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 
 interface FormErrors {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, LogIn, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Sun, Moon } from 'lucide-react';
 import { Checkbox } from '@/components/common/Checkbox';
 import { useLogin } from '@/hooks/common';
 import { useThemeStore } from '@/store/common/themeStore';
