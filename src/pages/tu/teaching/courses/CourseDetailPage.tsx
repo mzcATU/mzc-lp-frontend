@@ -14,7 +14,7 @@ import {
   useCourseItemsHierarchy,
   useDeleteCourse,
   useLearningObject,
-  useReadyCourse,
+  useRegisterCourse,
 } from '@/hooks/tu';
 import { ContentPreviewModal } from '@/components/domain/tu/content/ContentPreviewModal';
 import type { ContentType } from '@/types/tu';
@@ -68,7 +68,7 @@ export function CourseDetailPage() {
   const { data: course, isLoading, error } = useCourse(id);
   const { data: curriculum } = useCourseItemsHierarchy(id);
   const deleteCourseMutation = useDeleteCourse();
-  const readyCourseMutation = useReadyCourse();
+  const registerCourseMutation = useRegisterCourse();
 
   // 콘텐츠 미리보기 상태
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -152,9 +152,9 @@ export function CourseDetailPage() {
   // 과정 등록 핸들러
   const handleApply = async () => {
     try {
-      await readyCourseMutation.mutateAsync(id);
+      await registerCourseMutation.mutateAsync({ id });
       setApplyModalOpen(false);
-      alert('과정이 등록되었습니다. 운영자 검토 후 승인됩니다.');
+      alert('과정이 등록되었습니다. 운영자가 차수를 개설할 수 있습니다.');
       navigate(prefixPath('/tu/teaching/courses'));
     } catch (err) {
       console.error('Apply failed:', err);
@@ -284,7 +284,7 @@ export function CourseDetailPage() {
         curriculum={curriculum ?? []}
         categories={categories}
         onApply={handleApply}
-        isApplying={readyCourseMutation.isPending}
+        isApplying={registerCourseMutation.isPending}
       />
     </div>
   );

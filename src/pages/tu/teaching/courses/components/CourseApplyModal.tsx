@@ -380,10 +380,7 @@ export function CourseApplyModal({
             <AlertDialogTitle>과정을 등록하시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                등록하면 과정 상태가 <strong>DRAFT → READY</strong>로 변경됩니다.
-              </p>
-              <p className="text-text-secondary">
-                등록된 과정은 운영자(CO)의 검토 후 승인됩니다.
+                등록된 과정은 운영자가 차수를 개설할 수 있습니다.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
