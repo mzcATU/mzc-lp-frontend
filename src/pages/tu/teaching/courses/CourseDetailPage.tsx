@@ -24,7 +24,8 @@ import { categoryService } from '@/services/common';
 import { CourseInfoSection } from './components/CourseInfoSection';
 import { CourseCurriculumSection } from './components/CourseCurriculumSection';
 import { CourseApplyModal } from './components/CourseApplyModal';
-import type { CourseLevel, CourseType } from '@/types/common/course.types';
+import type { CourseLevel, CourseType, CourseStatus } from '@/types/common/course.types';
+import { COURSE_STATUS_LABELS } from '@/types/common/course.types';
 import type { CategoryResponse } from '@/types/common';
 import type { CourseFormData } from '@/types/co/course.types';
 import { convertHierarchyToCurriculumItems } from '@/types/tu/curriculum.types';
@@ -54,6 +55,13 @@ const TYPE_LABELS: Record<CourseType, string> = {
   ONLINE: '온라인',
   OFFLINE: '오프라인',
   BLENDED: '혼합',
+};
+
+// 상태별 Badge 컬러
+const statusBadgeColor: Record<CourseStatus, BadgeColor> = {
+  DRAFT: 'gray',
+  READY: 'blue',
+  REGISTERED: 'green',
 };
 
 export function CourseDetailPage() {
@@ -201,7 +209,12 @@ export function CourseDetailPage() {
         {/* Header Section - 목록 페이지와 동일한 스타일 */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-text-primary mb-2">{course.title}</h1>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant={statusBadgeColor[course.status]}>
+                {COURSE_STATUS_LABELS[course.status]}
+              </Badge>
+              <h1 className="text-text-primary">{course.title}</h1>
+            </div>
             <div className="flex items-center gap-2">
               {course.level && (
                 <Badge variant={levelBadgeColor[course.level]}>
