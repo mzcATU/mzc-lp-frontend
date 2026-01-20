@@ -297,7 +297,7 @@ export const EmployeeListPage = () => {
         </div>
 
         {/* 통계 카드 */}
-        <div className="grid grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">

@@ -206,7 +206,7 @@ export function LandingPage() {
   const recommendedCourses = featuredCourses.length > 0 ? featuredCourses : courses.slice(0, 5);
 
   return (
-    <div className={`min-h-screen dark-scrollbar ${isDark ? 'landing-dark' : 'landing-light'}`}>
+    <div className={`min-h-screen dark-scrollbar tu-landing ${isDark ? 'landing-dark' : 'landing-light'}`}>
       <LandingHeader />
 
       <main>

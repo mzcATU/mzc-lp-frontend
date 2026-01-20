@@ -75,6 +75,7 @@ import {
   useUpdateLayoutSettings,
   useUpdateExtendedBrandingSettings,
 } from '@/hooks/ta/useBrandingQueries';
+import { communityService } from '@/services/tu/communityService';
 import { myPageMenuData, courseOperatorMenuData } from '@/config/sidebar-menus';
 import type { UpdateTenantFeaturesRequest } from '@/services/ta/tenantFeaturesService';
 import type { MenuItem } from '@/types';
@@ -249,6 +250,365 @@ const mergeSidebarSettings = (
   };
 };
 
+// ============================================
+// 브랜딩 템플릿 정의
+// ============================================
+interface BrandingTemplate {
+  id: string;
+  name: string;
+  description: string;
+  preview: string; // 미리보기 이미지 URL 또는 그라디언트
+  colors: {
+    primary: string;
+    secondary: string;
+  };
+  fonts: {
+    heading: string;
+    body: string;
+  };
+  bannerType: 'image' | 'code';
+  bannerImage?: string;
+  bannerCode: string;
+}
+
+const brandingTemplates: BrandingTemplate[] = [
+  {
+    id: 'tech-neon',
+    name: '테크 네온',
+    description: '미래지향적 개발자/IT 교육 플랫폼',
+    preview: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=200&fit=crop',
+    colors: { primary: '#8B5CF6', secondary: '#6366F1' },
+    fonts: { heading: 'Pretendard', body: 'Pretendard' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1920&h=600&fit=crop" alt="Tech Banner" class="absolute inset-0 w-full h-full object-cover scale-105" />
+      <div class="absolute inset-0 bg-gradient-to-br from-violet-950/95 via-indigo-900/80 to-fuchsia-900/60"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-fuchsia-500/20 via-transparent to-transparent"></div>
+      <div class="relative flex items-center h-full px-8 md:px-16 z-10">
+        <div class="flex-1">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-violet-500/30 to-fuchsia-500/30 text-white border border-violet-400/30 backdrop-blur-sm mb-6">
+            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            NOW LIVE
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">Build The</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-transparent">Future</h2>
+          <p class="text-lg md:text-xl text-violet-100/80 mt-5 max-w-lg font-light">AI, 클라우드, 풀스택 개발까지<br/>실무 중심의 Tech 커리큘럼</p>
+          <div class="flex items-center gap-4 mt-8">
+            <button class="px-8 py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-violet-500/25">무료 체험</button>
+            <button class="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl backdrop-blur-sm border border-white/20 transition-all">둘러보기</button>
+          </div>
+        </div>
+        <div class="hidden lg:flex flex-col gap-3 mr-8">
+          <div class="px-5 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+            <div class="text-2xl font-bold text-white">500+</div>
+            <div class="text-xs text-violet-200">강의 콘텐츠</div>
+          </div>
+          <div class="px-5 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+            <div class="text-2xl font-bold text-white">50K+</div>
+            <div class="text-xs text-violet-200">수강생</div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  },
+  {
+    id: 'corp-blue',
+    name: '코퍼레이트 블루',
+    description: '기업 교육 및 B2B 전문 플랫폼',
+    preview: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop',
+    colors: { primary: '#1E40AF', secondary: '#1D4ED8' },
+    fonts: { heading: 'Noto Sans KR', body: 'Noto Sans KR' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&h=600&fit=crop" alt="Corporate Banner" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-blue-900/50"></div>
+      <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500"></div>
+      <div class="relative flex items-center h-full px-8 md:px-16 z-10">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="px-3 py-1 text-xs font-semibold bg-blue-500 text-white rounded">ENTERPRISE</span>
+            <span class="px-3 py-1 text-xs font-medium bg-white/10 text-blue-200 rounded border border-blue-400/30">ISO 27001</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">Transform Your</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300">Organization</h2>
+          <p class="text-lg md:text-xl text-blue-100/70 mt-5 max-w-lg">Fortune 500 기업이 선택한<br/>기업 맞춤형 교육 솔루션</p>
+          <div class="flex items-center gap-4 mt-8">
+            <button class="px-8 py-3.5 bg-white text-blue-900 hover:bg-blue-50 font-semibold rounded-lg transition-all">도입 문의</button>
+            <button class="px-8 py-3.5 text-white font-medium hover:text-blue-200 transition-all flex items-center gap-2">
+              데모 영상 보기 <span>→</span>
+            </button>
+          </div>
+        </div>
+        <div class="hidden lg:block">
+          <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 w-64">
+            <div class="text-sm text-blue-200 mb-4">신뢰받는 파트너</div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="h-8 bg-white/20 rounded flex items-center justify-center text-xs text-white/60">Partner 1</div>
+              <div class="h-8 bg-white/20 rounded flex items-center justify-center text-xs text-white/60">Partner 2</div>
+              <div class="h-8 bg-white/20 rounded flex items-center justify-center text-xs text-white/60">Partner 3</div>
+              <div class="h-8 bg-white/20 rounded flex items-center justify-center text-xs text-white/60">Partner 4</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  },
+  {
+    id: 'fresh-mint',
+    name: '프레시 민트',
+    description: '친환경/ESG/헬스케어 교육',
+    preview: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=200&fit=crop',
+    colors: { primary: '#059669', secondary: '#10B981' },
+    fonts: { heading: 'Pretendard', body: 'Pretendard' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=600&fit=crop" alt="Fresh Banner" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-br from-emerald-950/90 via-teal-900/70 to-cyan-800/50"></div>
+      <div class="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl"></div>
+      <div class="relative flex items-center h-full px-8 md:px-16 z-10">
+        <div class="flex-1">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 mb-6">
+            🌱 지속가능한 성장
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">Green</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300">Learning</h2>
+          <p class="text-lg md:text-xl text-emerald-100/80 mt-5 max-w-lg">ESG 경영, 친환경 비즈니스<br/>미래를 위한 교육의 시작</p>
+          <div class="flex items-center gap-4 mt-8">
+            <button class="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-500/25">시작하기</button>
+            <button class="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl backdrop-blur-sm transition-all">커리큘럼</button>
+          </div>
+        </div>
+        <div class="hidden lg:flex flex-col gap-4">
+          <div class="flex items-center gap-4 px-5 py-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+            <div class="w-12 h-12 bg-emerald-500/30 rounded-full flex items-center justify-center text-2xl">🎯</div>
+            <div>
+              <div class="text-white font-semibold">98%</div>
+              <div class="text-xs text-emerald-200">수료율</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 px-5 py-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+            <div class="w-12 h-12 bg-emerald-500/30 rounded-full flex items-center justify-center text-2xl">⭐</div>
+            <div>
+              <div class="text-white font-semibold">4.9</div>
+              <div class="text-xs text-emerald-200">평균 평점</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  },
+  {
+    id: 'creative-studio',
+    name: '크리에이티브 스튜디오',
+    description: '디자인/영상/콘텐츠 크리에이터',
+    preview: 'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=400&h=200&fit=crop',
+    colors: { primary: '#EC4899', secondary: '#F472B6' },
+    fonts: { heading: 'Spoqa Han Sans Neo', body: 'Spoqa Han Sans Neo' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1920&h=600&fit=crop" alt="Creative Banner" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-br from-fuchsia-950/90 via-pink-900/70 to-rose-800/50"></div>
+      <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-gradient-to-br from-pink-500/30 to-orange-500/20 rounded-full blur-3xl"></div>
+      <div class="absolute top-10 right-40 w-40 h-40 bg-violet-500/20 rounded-full blur-2xl"></div>
+      <div class="relative flex items-center h-full px-8 md:px-16 z-10">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-6">
+            <span class="px-4 py-1.5 text-xs font-bold bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full">HOT</span>
+            <span class="text-pink-200 text-sm">크리에이터 전용 과정 오픈</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight">Create</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-rose-300 to-orange-300">Without Limits</h2>
+          <p class="text-lg md:text-xl text-pink-100/80 mt-5 max-w-lg">UI/UX, 모션그래픽, 브랜딩까지<br/>크리에이티브 실무 마스터</p>
+          <div class="flex items-center gap-4 mt-8">
+            <button class="group px-8 py-3.5 bg-white text-pink-600 hover:bg-pink-50 font-bold rounded-xl transition-all flex items-center gap-2">
+              지금 시작 <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </button>
+            <button class="px-8 py-3.5 text-white/80 hover:text-white font-medium transition-all">포트폴리오 보기</button>
+          </div>
+        </div>
+        <div class="hidden lg:block relative">
+          <div class="w-48 h-48 bg-gradient-to-br from-pink-500/30 to-violet-500/30 rounded-3xl backdrop-blur-xl border border-white/20 p-4 rotate-6 hover:rotate-0 transition-transform">
+            <div class="w-full h-full bg-white/10 rounded-2xl flex items-center justify-center">
+              <span class="text-4xl">🎨</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  },
+  {
+    id: 'midnight-pro',
+    name: '미드나잇 프로',
+    description: '프리미엄/프로페셔널 교육',
+    preview: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=200&fit=crop',
+    colors: { primary: '#18181B', secondary: '#27272A' },
+    fonts: { heading: 'IBM Plex Sans KR', body: 'IBM Plex Sans KR' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&h=600&fit=crop" alt="Premium Banner" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-r from-black/95 via-zinc-950/90 to-zinc-900/70"></div>
+      <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+      <div class="relative flex items-center h-full px-8 md:px-16 z-10">
+        <div class="flex-1">
+          <div class="inline-flex items-center gap-3 mb-6">
+            <div class="flex items-center gap-1">
+              <span class="text-yellow-400">★</span><span class="text-yellow-400">★</span><span class="text-yellow-400">★</span><span class="text-yellow-400">★</span><span class="text-yellow-400">★</span>
+            </div>
+            <span class="text-zinc-400 text-sm">Premium Members Only</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-light text-white leading-tight tracking-tight">Excellence</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-light leading-tight tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-zinc-300 via-white to-zinc-400">Redefined</h2>
+          <p class="text-lg text-zinc-400 mt-5 max-w-lg font-light tracking-wide">업계 최고 전문가의 1:1 멘토링<br/>프리미엄 교육의 새로운 기준</p>
+          <div class="flex items-center gap-4 mt-8">
+            <button class="px-8 py-3.5 bg-white text-black hover:bg-zinc-100 font-medium rounded transition-all">멤버십 가입</button>
+            <button class="px-8 py-3.5 border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-white font-medium rounded transition-all">혜택 보기</button>
+          </div>
+        </div>
+        <div class="hidden lg:block">
+          <div class="text-right">
+            <div class="text-6xl font-thin text-white/10">PRO</div>
+            <div class="text-sm text-zinc-500 mt-2">Since 2024</div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  },
+  {
+    id: 'sunrise-warm',
+    name: '선라이즈 웜',
+    description: '자기계발/라이프스타일 교육',
+    preview: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=200&fit=crop',
+    colors: { primary: '#F59E0B', secondary: '#D97706' },
+    fonts: { heading: 'Wanted Sans', body: 'Wanted Sans' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&h=600&fit=crop" alt="Sunrise Banner" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-br from-orange-950/80 via-amber-900/60 to-yellow-800/40"></div>
+      <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-yellow-400/20 to-transparent rounded-full blur-3xl"></div>
+      <div class="relative flex items-center h-full px-8 md:px-16 z-10">
+        <div class="flex-1">
+          <div class="text-amber-300/80 text-sm font-medium mb-4 tracking-widest">YOUR JOURNEY STARTS HERE</div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">Rise &</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200">Shine</h2>
+          <p class="text-lg md:text-xl text-amber-100/80 mt-5 max-w-lg">매일 성장하는 나를 만나는 시간<br/>인생의 다음 챕터를 열어보세요</p>
+          <div class="flex items-center gap-4 mt-8">
+            <button class="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-semibold rounded-xl transition-all shadow-lg shadow-amber-500/30">오늘 시작하기</button>
+            <button class="px-6 py-3.5 text-amber-100 hover:text-white font-medium transition-all flex items-center gap-2">
+              <span class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">▶</span>
+              영상 보기
+            </button>
+          </div>
+        </div>
+        <div class="hidden lg:flex flex-col items-end gap-2 text-right">
+          <div class="text-7xl font-black text-white/10">24</div>
+          <div class="text-sm text-amber-200/60">새로운 시작</div>
+        </div>
+      </div>
+    </div>`,
+  },
+  {
+    id: 'ocean-deep',
+    name: '오션 딥',
+    description: '금융/데이터 분석 전문 교육',
+    preview: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=200&fit=crop',
+    colors: { primary: '#0369A1', secondary: '#0284C7' },
+    fonts: { heading: 'Noto Sans KR', body: 'Noto Sans KR' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&h=600&fit=crop" alt="Ocean Banner" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-br from-sky-950/95 via-blue-900/85 to-cyan-900/70"></div>
+      <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-sky-950 to-transparent"></div>
+      <div class="relative flex items-center h-full px-8 md:px-16 z-10">
+        <div class="flex-1">
+          <div class="flex items-center gap-3 mb-6">
+            <span class="px-4 py-1.5 text-xs font-semibold bg-sky-500/30 text-sky-200 rounded-full border border-sky-400/30 backdrop-blur-sm">DATA SCIENCE</span>
+            <span class="px-4 py-1.5 text-xs font-semibold bg-cyan-500/30 text-cyan-200 rounded-full border border-cyan-400/30 backdrop-blur-sm">FINANCE</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">Dive Into</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-300 to-teal-300">Data Ocean</h2>
+          <p class="text-lg md:text-xl text-sky-100/80 mt-5 max-w-lg">빅데이터, AI, 퀀트 금융<br/>데이터로 미래를 예측하세요</p>
+          <div class="flex items-center gap-4 mt-8">
+            <button class="px-8 py-3.5 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-400 hover:to-cyan-400 text-white font-semibold rounded-xl transition-all">무료 체험</button>
+            <button class="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl backdrop-blur-sm border border-white/20 transition-all">로드맵 보기</button>
+          </div>
+        </div>
+        <div class="hidden lg:grid grid-cols-2 gap-3">
+          <div class="px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-center">
+            <div class="text-xl font-bold text-white">Python</div>
+            <div class="text-[10px] text-sky-200 mt-1">기초~고급</div>
+          </div>
+          <div class="px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-center">
+            <div class="text-xl font-bold text-white">SQL</div>
+            <div class="text-[10px] text-sky-200 mt-1">데이터 분석</div>
+          </div>
+          <div class="px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-center">
+            <div class="text-xl font-bold text-white">ML/DL</div>
+            <div class="text-[10px] text-sky-200 mt-1">머신러닝</div>
+          </div>
+          <div class="px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-center">
+            <div class="text-xl font-bold text-white">Quant</div>
+            <div class="text-[10px] text-sky-200 mt-1">금융공학</div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  },
+  {
+    id: 'aurora-gradient',
+    name: '오로라 그라디언트',
+    description: '종합 온라인 교육 플랫폼',
+    preview: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400&h=200&fit=crop',
+    colors: { primary: '#7C3AED', secondary: '#2DD4BF' },
+    fonts: { heading: 'Pretendard', body: 'Pretendard' },
+    bannerType: 'image',
+    bannerImage: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&h=600&fit=crop',
+    bannerCode: `<div class="relative w-full h-full overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&h=600&fit=crop" alt="Aurora Banner" class="absolute inset-0 w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-br from-violet-950/90 via-indigo-900/70 to-teal-900/60"></div>
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl"></div>
+      <div class="relative flex items-center justify-center h-full px-8 md:px-16 z-10">
+        <div class="text-center max-w-3xl">
+          <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium bg-white/10 text-white/90 border border-white/20 backdrop-blur-sm mb-8">
+            ✨ 새로운 학습 경험
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-7xl font-black text-white leading-tight">Learn</h2>
+          <h2 class="text-4xl md:text-5xl lg:text-7xl font-black leading-tight text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-fuchsia-300 to-teal-300">Everything</h2>
+          <p class="text-lg md:text-xl text-white/70 mt-6 max-w-xl mx-auto">개발, 디자인, 비즈니스, 자기계발<br/>당신이 원하는 모든 것을 배우세요</p>
+          <div class="flex items-center justify-center gap-4 mt-10">
+            <button class="px-10 py-4 bg-white text-violet-900 hover:bg-violet-50 font-bold rounded-2xl transition-all shadow-xl shadow-white/20">무료로 시작하기</button>
+            <button class="px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-2xl backdrop-blur-sm border border-white/30 transition-all">강의 둘러보기</button>
+          </div>
+          <div class="flex items-center justify-center gap-8 mt-10">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white">1,000+</div>
+              <div class="text-xs text-white/50">강의</div>
+            </div>
+            <div class="w-px h-8 bg-white/20"></div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white">100K+</div>
+              <div class="text-xs text-white/50">수강생</div>
+            </div>
+            <div class="w-px h-8 bg-white/20"></div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white">4.9</div>
+              <div class="text-xs text-white/50">평점</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  },
+];
+
 // 브랜딩 설정 타입
 interface BrandingSettings {
   landingCategory: {
@@ -271,6 +631,10 @@ interface BrandingSettings {
   colors: {
     primary: string;
     secondary: string;
+  };
+  fonts: {
+    heading: string;
+    body: string;
   };
   header: {
     enabled: boolean;
@@ -359,6 +723,7 @@ const defaultBrandingSettings: BrandingSettings = {
   company: { name: 'MZC Learn Platform' },
   logo: { lightPreview: null, darkPreview: null, faviconPreview: null },
   colors: { primary: '#4C2D9A', secondary: '#3D2478' },
+  fonts: { heading: 'Pretendard', body: 'Pretendard' },
   header: {
     enabled: true,
     showLogo: true,
@@ -473,6 +838,7 @@ export function BrandingSettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingTab>('brand');
   const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
   const [previewPage, setPreviewPage] = useState<'tu-main' | 'tu-mypage' | 'to'>('tu-main');
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   // 드래그앤드롭 상태
   const [draggedBannerIndex, setDraggedBannerIndex] = useState<number | null>(null);
@@ -542,6 +908,10 @@ const getExpandableItemIds = () => {
           primary: tenantSettings.primaryColor || prev.colors.primary,
           secondary: tenantSettings.secondaryColor || prev.colors.secondary,
         },
+        fonts: {
+          heading: tenantSettings.headingFont || prev.fonts.heading,
+          body: tenantSettings.bodyFont || prev.fonts.body,
+        },
         // 확장 브랜딩 설정 (배너 설정이 있고 items가 있으면 사용, 없으면 기본값 유지)
         ...((tenantSettings.bannerSettings as { items?: unknown[] } | undefined)?.items?.length &&
           (tenantSettings.bannerSettings as { items?: unknown[] }).items!.length > 0 && {
@@ -603,6 +973,34 @@ const getExpandableItemIds = () => {
     setHasChanges(true);
   };
 
+  const updateFonts = (key: keyof BrandingSettings['fonts'], value: string) => {
+    setSettings(prev => ({ ...prev, fonts: { ...prev.fonts, [key]: value } }));
+    setHasChanges(true);
+  };
+
+  // 템플릿 적용 함수
+  const applyTemplate = (template: BrandingTemplate) => {
+    setSettings(prev => ({
+      ...prev,
+      colors: template.colors,
+      fonts: template.fonts,
+      banner: {
+        ...prev.banner,
+        items: [
+          {
+            id: `template-${template.id}`,
+            type: 'code' as const,
+            imagePreview: null,
+            code: template.bannerCode,
+            title: template.name,
+          },
+        ],
+      },
+    }));
+    setHasChanges(true);
+    setShowTemplateModal(false);
+  };
+
   const updateHeader = (key: keyof BrandingSettings['header'], value: unknown) => {
     setSettings(prev => ({ ...prev, header: { ...prev.header, [key]: value } }));
     setHasChanges(true);
@@ -638,32 +1036,39 @@ const getExpandableItemIds = () => {
     setHasChanges(true);
   };
 
-  // 파일 업로드
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'lightLogo' | 'darkLogo' | 'favicon') => {
+  // 파일 업로드 (서버에 업로드하여 URL 반환)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'lightLogo' | 'darkLogo' | 'favicon') => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (type === 'lightLogo') updateLogo('lightPreview', reader.result as string);
-        else if (type === 'darkLogo') updateLogo('darkPreview', reader.result as string);
-        else if (type === 'favicon') updateLogo('faviconPreview', reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // 서버에 파일 업로드
+        const imageUrl = await communityService.uploadImage(file);
+        if (type === 'lightLogo') updateLogo('lightPreview', imageUrl);
+        else if (type === 'darkLogo') updateLogo('darkPreview', imageUrl);
+        else if (type === 'favicon') updateLogo('faviconPreview', imageUrl);
+        setHasChanges(true);
+      } catch (error) {
+        console.error('파일 업로드 실패:', error);
+        alert('파일 업로드에 실패했습니다.');
+      }
     }
   };
 
   // 배너 관련 핸들러
-  const handleBannerFileUpload = (e: React.ChangeEvent<HTMLInputElement>, bannerId: string) => {
+  const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, bannerId: string) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      try {
+        // 서버에 파일 업로드
+        const imageUrl = await communityService.uploadImage(file);
         const newItems = settings.banner.items.map(item =>
-          item.id === bannerId ? { ...item, imagePreview: reader.result as string } : item
+          item.id === bannerId ? { ...item, imagePreview: imageUrl } : item
         );
         updateBanner('items', newItems);
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('배너 이미지 업로드 실패:', error);
+        alert('이미지 업로드에 실패했습니다.');
+      }
     }
   };
 
@@ -706,6 +1111,8 @@ const getExpandableItemIds = () => {
         faviconUrl: settings.logo.faviconPreview,
         primaryColor: settings.colors.primary,
         secondaryColor: settings.colors.secondary,
+        headingFont: settings.fonts.heading,
+        bodyFont: settings.fonts.body,
       });
 
       // 레이아웃 설정 저장
@@ -787,6 +1194,10 @@ const getExpandableItemIds = () => {
             <p className="text-sm text-text-secondary mt-1">테넌트의 브랜드 아이덴티티와 레이아웃을 설정합니다</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowTemplateModal(true)}>
+              <Layers className="mr-2 h-4 w-4" />
+              템플릿
+            </Button>
             <Button variant="outline" onClick={handleReset}>
               <RotateCcw className="mr-2 h-4 w-4" />
               초기화
@@ -798,6 +1209,91 @@ const getExpandableItemIds = () => {
           </div>
         </div>
       </div>
+
+      {/* 템플릿 선택 모달 */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-[900px] max-h-[85vh] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div>
+                <h2 className="text-xl font-bold">브랜딩 템플릿 선택</h2>
+                <p className="text-sm text-gray-500 mt-1">템플릿을 선택하면 색상, 폰트, 배너가 자동으로 적용됩니다</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowTemplateModal(false)}>
+                ✕
+              </Button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-120px)]">
+              <div className="grid grid-cols-2 gap-4">
+                {brandingTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="border rounded-lg overflow-hidden hover:border-brand-primary hover:shadow-md transition-all cursor-pointer group"
+                    onClick={() => applyTemplate(template)}
+                  >
+                    {/* 미리보기 */}
+                    <div className="h-36 relative overflow-hidden">
+                      {template.bannerType === 'image' && template.preview.startsWith('http') ? (
+                        <>
+                          <img
+                            src={template.preview}
+                            alt={template.name}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                          <div
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ background: `linear-gradient(135deg, ${template.colors.primary}90 0%, ${template.colors.secondary}70 100%)` }}
+                          >
+                            <div className="text-white text-center">
+                              <div className="text-2xl font-bold drop-shadow-lg" style={{ fontFamily: template.fonts.heading }}>
+                                {template.name}
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div
+                          className="h-full flex items-center justify-center"
+                          style={{ background: template.preview }}
+                        >
+                          <div className="text-white text-center">
+                            <div className="text-2xl font-bold" style={{ fontFamily: template.fonts.heading }}>
+                              {template.name}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* 정보 */}
+                    <div className="p-4 bg-white">
+                      <h3 className="font-semibold text-gray-900">{template.name}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{template.description}</p>
+                      <div className="flex items-center gap-2 mt-3">
+                        <div
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: template.colors.primary }}
+                        />
+                        <div
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: template.colors.secondary }}
+                        />
+                        <span className="text-xs text-gray-400 ml-2">{template.fonts.heading}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-3 group-hover:bg-brand-primary group-hover:text-white group-hover:border-brand-primary"
+                      >
+                        이 템플릿 적용
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 메인 컨텐츠: 좌우 분할 */}
       <div className="flex-1 flex overflow-hidden">
@@ -953,6 +1449,45 @@ const getExpandableItemIds = () => {
                           className="flex-1"
                         />
                       </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 폰트 */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">폰트</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <Label>제목 폰트</Label>
+                      <select
+                        value={settings.fonts.heading}
+                        onChange={(e) => updateFonts('heading', e.target.value)}
+                        className="w-full mt-1 h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      >
+                        <option value="Pretendard">Pretendard</option>
+                        <option value="Noto Sans KR">Noto Sans KR</option>
+                        <option value="Spoqa Han Sans Neo">Spoqa Han Sans Neo</option>
+                        <option value="IBM Plex Sans KR">IBM Plex Sans KR</option>
+                        <option value="Wanted Sans">Wanted Sans</option>
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <Label>본문 폰트</Label>
+                      <select
+                        value={settings.fonts.body}
+                        onChange={(e) => updateFonts('body', e.target.value)}
+                        className="w-full mt-1 h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      >
+                        <option value="Pretendard">Pretendard</option>
+                        <option value="Noto Sans KR">Noto Sans KR</option>
+                        <option value="Spoqa Han Sans Neo">Spoqa Han Sans Neo</option>
+                        <option value="IBM Plex Sans KR">IBM Plex Sans KR</option>
+                        <option value="Wanted Sans">Wanted Sans</option>
+                      </select>
                     </div>
                   </div>
                 </CardContent>

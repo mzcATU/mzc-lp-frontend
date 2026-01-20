@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/common/auth';
 import { ROLE_REDIRECT_PATH } from '@/types/common/auth.types';
-import { Eye, EyeOff, Loader2, Check, X, UserPlus, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Check, X, Sun, Moon } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
 
 interface FormErrors {
@@ -142,8 +142,8 @@ export function RegisterPage() {
       }`}>
         {/* 로고 영역 */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center bg-gradient-to-r from-[#6778ff] to-[#a855f7]">
-            <UserPlus className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-xl mx-auto mb-4 flex items-center justify-center bg-gradient-to-br from-[#6778ff] via-[#a855f7] to-[#6bc2f0] shadow-lg shadow-purple-500/20">
+            <span className="text-white font-bold text-xl">M</span>
           </div>
           <h1 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             회원가입

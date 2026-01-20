@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/common/Select';
 import { Progress } from '@/components/common/Progress';
-import { useSaActivityStats, useSaDashboard } from '@/hooks/sa';
+import { useSaActivityStats, useSaDashboard, useTenantUserStats } from '@/hooks/sa';
 
 interface UsageContentProps {
   tenantId: number | null;
@@ -36,17 +36,26 @@ export function UsageContent({ tenantId }: UsageContentProps) {
     tenantId: tenantId || undefined,
   });
 
-  // Dashboard 데이터 조회 (전체만, tenantId가 없을 때만)
+  // Dashboard 데이터 조회 (전체 통계)
   const { data: dashboard, isLoading: dashboardLoading } = useSaDashboard();
-  const isLoading = activityLoading || (tenantId === null && dashboardLoading);
+
+  // 테넌트별 사용자 수 조회
+  const { data: tenantUserStats, isLoading: tenantUserStatsLoading } = useTenantUserStats();
+
+  const isLoading = activityLoading || dashboardLoading || tenantUserStatsLoading;
 
   const handleViewTenantAnalytics = (tenantIdValue: number) => {
     navigate(`/sa/analytics?tenantId=${tenantIdValue}`);
   };
 
-  // 대시보드에서 통계 추출
-  const totalUsers = dashboard?.userStats?.total || 0;
-  const activeUsers = dashboard?.userStats?.active || 0;
+  // 테넌트가 선택된 경우 해당 테넌트의 사용자 수 조회
+  const selectedTenantUserCount = tenantId
+    ? tenantUserStats?.tenantUserCounts?.find((t) => t.tenantId === tenantId)?.userCount || 0
+    : 0;
+
+  // 대시보드에서 통계 추출 (테넌트 선택 여부에 따라 다른 값 표시)
+  const totalUsers = tenantId ? selectedTenantUserCount : (dashboard?.userStats?.total || 0);
+  const activeUsers = tenantId ? (activityStats?.activeUsers || 0) : (dashboard?.userStats?.active || 0);
   const totalTenants = dashboard?.tenantStats?.total || 0;
   const activeTenants = dashboard?.tenantStats?.active || 0;
 
@@ -77,7 +86,7 @@ export function UsageContent({ tenantId }: UsageContentProps) {
       ) : (
         <>
           {/* Overview Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
@@ -86,7 +95,9 @@ export function UsageContent({ tenantId }: UsageContentProps) {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{totalUsers.toLocaleString()}</p>
-                    <p className="text-sm text-text-secondary">전체 사용자</p>
+                    <p className="text-sm text-text-secondary">
+                      {tenantId ? '테넌트 사용자' : '전체 사용자'}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
@@ -95,23 +106,25 @@ export function UsageContent({ tenantId }: UsageContentProps) {
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Building2 className="h-5 w-5 text-blue-600" />
+            {!tenantId && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Building2 className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{totalTenants}</p>
+                      <p className="text-sm text-text-secondary">전체 테넌트</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totalTenants}</p>
-                    <p className="text-sm text-text-secondary">전체 테넌트</p>
+                  <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    활성: {activeTenants}
                   </div>
-                </div>
-                <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  활성: {activeTenants}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
@@ -146,89 +159,90 @@ export function UsageContent({ tenantId }: UsageContentProps) {
             </Card>
           </div>
 
-          {/* Tenant Stats by Plan */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>테넌트 상태별 현황</CardTitle>
-                <CardDescription>테넌트 상태 분포</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">활성</span>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={totalTenants > 0 ? (activeTenants / totalTenants) * 100 : 0}
-                        className="w-32 h-2"
-                      />
-                      <span className="text-sm font-medium w-8">{activeTenants}</span>
+          {/* Tenant Stats by Plan - 전체 보기일 때만 표시 */}
+          {!tenantId && (
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>테넌트 상태별 현황</CardTitle>
+                  <CardDescription>테넌트 상태 분포</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">활성</span>
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={totalTenants > 0 ? (activeTenants / totalTenants) * 100 : 0}
+                          className="w-32 h-2"
+                        />
+                        <span className="text-sm font-medium w-8">{activeTenants}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">대기</span>
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={totalTenants > 0 ? ((dashboard?.tenantStats?.pending || 0) / totalTenants) * 100 : 0}
+                          className="w-32 h-2"
+                        />
+                        <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.pending || 0}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">정지</span>
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={totalTenants > 0 ? ((dashboard?.tenantStats?.suspended || 0) / totalTenants) * 100 : 0}
+                          className="w-32 h-2"
+                        />
+                        <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.suspended || 0}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">종료</span>
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={totalTenants > 0 ? ((dashboard?.tenantStats?.terminated || 0) / totalTenants) * 100 : 0}
+                          className="w-32 h-2"
+                        />
+                        <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.terminated || 0}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">대기</span>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={totalTenants > 0 ? ((dashboard?.tenantStats?.pending || 0) / totalTenants) * 100 : 0}
-                        className="w-32 h-2"
-                      />
-                      <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.pending || 0}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">정지</span>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={totalTenants > 0 ? ((dashboard?.tenantStats?.suspended || 0) / totalTenants) * 100 : 0}
-                        className="w-32 h-2"
-                      />
-                      <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.suspended || 0}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">종료</span>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={totalTenants > 0 ? ((dashboard?.tenantStats?.terminated || 0) / totalTenants) * 100 : 0}
-                        className="w-32 h-2"
-                      />
-                      <span className="text-sm font-medium w-8">{dashboard?.tenantStats?.terminated || 0}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>사용자 상태별 분포</CardTitle>
-                <CardDescription>사용자 상태 현황</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">활성</span>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={totalUsers > 0 ? ((dashboard?.userStats?.active || 0) / totalUsers) * 100 : 0}
-                        className="w-32 h-2"
-                      />
-                      <span className="text-sm font-medium w-8">{dashboard?.userStats?.active || 0}</span>
+              <Card>
+                <CardHeader>
+                  <CardTitle>사용자 상태별 분포</CardTitle>
+                  <CardDescription>사용자 상태 현황</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">활성</span>
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={totalUsers > 0 ? ((dashboard?.userStats?.active || 0) / totalUsers) * 100 : 0}
+                          className="w-32 h-2"
+                        />
+                        <span className="text-sm font-medium w-8">{dashboard?.userStats?.active || 0}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">정지</span>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={totalUsers > 0 ? ((dashboard?.userStats?.suspended || 0) / totalUsers) * 100 : 0}
-                        className="w-32 h-2"
-                      />
-                      <span className="text-sm font-medium w-8">{dashboard?.userStats?.suspended || 0}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">정지</span>
+                      <div className="flex items-center gap-2">
+                        <Progress
+                          value={totalUsers > 0 ? ((dashboard?.userStats?.suspended || 0) / totalUsers) * 100 : 0}
+                          className="w-32 h-2"
+                        />
+                        <span className="text-sm font-medium w-8">{dashboard?.userStats?.suspended || 0}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">탈퇴</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">탈퇴</span>
+                      <div className="flex items-center gap-2">
                       <Progress
                         value={totalUsers > 0 ? ((dashboard?.userStats?.withdrawn || 0) / totalUsers) * 100 : 0}
                         className="w-32 h-2"
@@ -240,8 +254,10 @@ export function UsageContent({ tenantId }: UsageContentProps) {
               </CardContent>
             </Card>
           </div>
+          )}
 
-          {/* Recent Tenants */}
+          {/* Recent Tenants - 전체 보기일 때만 표시 */}
+          {!tenantId && (
           <Card>
             <CardHeader>
               <CardTitle>최근 등록 테넌트</CardTitle>
@@ -298,6 +314,7 @@ export function UsageContent({ tenantId }: UsageContentProps) {
               </div>
             </CardContent>
           </Card>
+          )}
         </>
       )}
     </div>

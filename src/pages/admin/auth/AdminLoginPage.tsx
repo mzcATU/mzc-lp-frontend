@@ -65,24 +65,19 @@ export const AdminLoginPage = () => {
       >
         {/* 로고 영역 */}
         <div className="text-center mb-8">
-          <div
-            className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center"
+          <Link
+            to="/"
+            className="w-12 h-12 rounded-lg mx-auto mb-4 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
             style={{ backgroundColor: designTokens.button.brand_default }}
           >
             <Shield className="w-6 h-6 text-white" />
-          </div>
+          </Link>
           <h1
             className="text-2xl font-semibold"
             style={{ color: designTokens.text.primary }}
           >
             관리자 로그인
           </h1>
-          <p
-            className="text-sm mt-2"
-            style={{ color: designTokens.text.secondary }}
-          >
-            Super Admin / Tenant Admin 전용 로그인
-          </p>
         </div>
 
         {/* 에러 메시지 */}

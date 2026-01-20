@@ -28,6 +28,7 @@ export function B2BLandingHeader() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const navigate = useNavigate();
   const { prefixPath } = useSubdomainPath();
   const { user, isAuthenticated, logout } = useAuth();
@@ -158,8 +159,10 @@ export function B2BLandingHeader() {
                     <img src={fullLogoUrl} alt={tenantName} className="h-8 object-contain" />
                   ) : (
                     <>
-                      <span className="text-2xl">M</span>
-                      <span className="gradient-text">{tenantName}</span>
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#6778ff] via-[#a855f7] to-[#6bc2f0] flex items-center justify-center shadow-lg shadow-purple-500/20">
+                        <span className="text-white font-bold text-lg">M</span>
+                      </div>
+                      <span className="gradient-text font-bold">{tenantName}</span>
                     </>
                   )}
                 </Link>
@@ -385,12 +388,104 @@ export function B2BLandingHeader() {
                   </>
                 )}
 
-                <button className={`p-2 md:hidden ${isDark ? 'text-gray-400' : 'text-gray-500'}`} aria-label={t.landing.openMenu}>
-                  <Menu className="h-6 w-6" />
+                <button
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  className={`p-2 md:hidden ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+                  aria-label={t.landing.openMenu}
+                >
+                  {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
               </div>
             </div>
           </div>
+
+          {/* Mobile Menu Drawer */}
+          {showMobileMenu && (
+            <div className={`md:hidden border-t ${isDark ? 'bg-[#0a0a0a] border-white/10' : 'bg-white border-gray-200'}`}>
+              <div className="px-4 py-3 space-y-1">
+                {/* 네비게이션 링크 */}
+                {navItems.map((item) => {
+                  const isExternal = item.path.startsWith('http');
+                  const linkPath = isExternal ? item.path : prefixPath(item.path);
+
+                  return isExternal ? (
+                    <a
+                      key={item.id}
+                      href={linkPath}
+                      target={item.target || '_blank'}
+                      rel="noopener noreferrer"
+                      onClick={() => setShowMobileMenu(false)}
+                      className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        isDark ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.id}
+                      to={linkPath}
+                      onClick={() => setShowMobileMenu(false)}
+                      className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        isDark ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+
+                {/* 검색창 (모바일) */}
+                {showSearch && (
+                  <form onSubmit={(e) => { handleSearch(e); setShowMobileMenu(false); }} className="pt-2">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={t.landing.searchPlaceholder}
+                        className={`w-full rounded-lg pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#6778ff] ${
+                          isDark
+                            ? 'bg-white/5 border border-white/10 text-white placeholder-gray-500'
+                            : 'border border-gray-300 text-gray-900 placeholder-gray-400'
+                        }`}
+                      />
+                      <button
+                        type="submit"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md bg-gradient-to-r from-[#6778ff] to-[#a855f7]"
+                      >
+                        <Search className="h-4 w-4 text-white" />
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* 로그인/회원가입 버튼 (모바일) */}
+                {!isAuthenticated && (
+                  <div className={`pt-3 mt-2 border-t space-y-2 ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                    <Link
+                      to="/login"
+                      onClick={() => setShowMobileMenu(false)}
+                      className={`block w-full text-center px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                        isDark
+                          ? 'bg-white/10 text-white hover:bg-white/20'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {t.common.login}
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setShowMobileMenu(false)}
+                      className="block w-full text-center px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#6778ff] to-[#a855f7] hover:opacity-90"
+                    >
+                      {t.common.signup}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </header>

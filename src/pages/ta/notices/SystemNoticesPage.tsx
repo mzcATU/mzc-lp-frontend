@@ -34,7 +34,8 @@ const typeConfig: Record<string, { label: string; color: string }> = {
   EVENT: { label: '이벤트', color: 'bg-purple-100 text-purple-700' },
 };
 
-export function SystemNoticesPage() {
+// 탭용 콘텐츠 컴포넌트 (NoticeAndNotificationPage에서 사용)
+export function SystemNoticesContent() {
   const [page, setPage] = useState(0);
   const [selectedNoticeId, setSelectedNoticeId] = useState<number | null>(null);
 
@@ -63,21 +64,15 @@ export function SystemNoticesPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+        <div className="h-64 bg-gray-200 rounded"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <AdminPageHeader
-        title="시스템 공지사항"
-        description="시스템 관리자가 배포한 공지사항입니다"
-      />
+    <>
 
       <Card>
         <CardHeader>
@@ -217,6 +212,21 @@ export function SystemNoticesPage() {
           )}
         </DialogContent>
       </Dialog>
+    </>
+  );
+}
+
+// 독립 페이지 컴포넌트
+export function SystemNoticesPage() {
+  return (
+    <div className="p-6">
+      <AdminPageHeader
+        title="시스템 공지사항"
+        description="시스템 관리자가 배포한 공지사항입니다"
+      />
+      <div className="mt-6">
+        <SystemNoticesContent />
+      </div>
     </div>
   );
 }
