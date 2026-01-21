@@ -310,6 +310,7 @@ type TranslationKeys = {
     minutes: string;
     enrollmentPeriod: string;
     enrolledDate: string;
+    pendingApproval: string;
   };
   // 학습 플레이어
   player: {
@@ -600,6 +601,7 @@ const ko: TranslationKeys = {
     minutes: '분',
     enrollmentPeriod: '수강 기간',
     enrolledDate: '신청일',
+    pendingApproval: '운영자 승인 대기 중입니다',
   },
   player: {
     backToCourse: '강의로 돌아가기',
@@ -889,6 +891,7 @@ const en: TranslationKeys = {
     minutes: 'min',
     enrollmentPeriod: 'Enrollment Period',
     enrolledDate: 'Enrolled Date',
+    pendingApproval: 'Awaiting operator approval',
   },
   player: {
     backToCourse: 'Back to Course',

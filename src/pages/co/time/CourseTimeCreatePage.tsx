@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Mail,
   Infinity,
+  Search,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { designTokens } from '@/styles/admin-design-tokens';
@@ -42,11 +43,21 @@ import {
   ToggleGroup,
   ToggleGroupItem,
   Combobox,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/common';
 import { useCreateTime } from '@/hooks/co/useTimeQueries';
 import { useRegisteredCourses } from '@/hooks/tu/useCourseQueries';
 import { useUsers } from '@/hooks/co/useUserQueries';
 import { instructorAssignmentService } from '@/services/co/instructorAssignmentService';
+import { useForceEnroll } from '@/hooks/co/useEnrollmentQueries';
 import type {
   CreateCourseTimeRequest,
   DeliveryType,
@@ -178,6 +189,25 @@ const t = {
   assistant: { ko: '조교', en: 'Assistant' },
   useOwnerAsInstructor: { ko: '과정 담당자를 주강사로 배정', en: 'Assign program owner as main instructor' },
   instructorAssignmentOptional: { ko: '(선택사항)', en: '(Optional)' },
+  // Step 5 - User Assignment (INVITE_ONLY)
+  step5: { ko: '수강생 선발', en: 'Select Users' },
+  userAssignment: { ko: '수강생 선발', en: 'Select Users' },
+  userAssignmentHint: { ko: '"선발" 방식으로 설정되었습니다. 지금 수강생을 등록하시겠습니까?', en: 'INVITE_ONLY mode selected. Would you like to enroll users now?' },
+  userAssignmentLater: { ko: '나중에 관리 페이지에서도 추가할 수 있습니다.', en: 'You can also add users later from the management page.' },
+  selectUsersToEnroll: { ko: '배정할 사용자 선택', en: 'Select users to enroll' },
+  searchUserPlaceholder: { ko: '이름, 이메일로 검색...', en: 'Search by name, email...' },
+  selectedUsersCount: { ko: '명 선택됨', en: ' selected' },
+  noUsersSelected: { ko: '선택된 사용자가 없습니다', en: 'No users selected' },
+  skip: { ko: '건너뛰기', en: 'Skip' },
+  userAssignmentOptional: { ko: '(선택사항)', en: '(Optional)' },
+  enrollReason: { ko: '배정 사유 (선택)', en: 'Enrollment Reason (Optional)' },
+  enrollReasonPlaceholder: { ko: '사유를 입력하세요...', en: 'Enter reason...' },
+  departmentFilter: { ko: '부서', en: 'Department' },
+  positionFilter: { ko: '직급', en: 'Position' },
+  allDepartments: { ko: '전체 부서', en: 'All Departments' },
+  allPositions: { ko: '전체 직급', en: 'All Positions' },
+  noDepartment: { ko: '부서 없음', en: 'No Department' },
+  noPosition: { ko: '직급 없음', en: 'No Position' },
   // Error messages
   errorInstructorConflict: { ko: '강사 일정 충돌', en: 'Instructor Schedule Conflict' },
   errorConflictingTimes: { ko: '충돌하는 차수', en: 'Conflicting course times' },
@@ -199,10 +229,20 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const [searchParams] = useSearchParams();
   const { prefixPath } = useSubdomainPath();
   const createTime = useCreateTime();
+  const forceEnroll = useForceEnroll();
   const { data: registeredCoursesData, isLoading: isLoadingCourses } = useRegisteredCourses({ size: 100 });
   const { data: usersData, isLoading: isLoadingUsers } = useUsers({ role: 'DESIGNER', size: 100 });
+  // 수강생 선발용 전체 사용자 목록
+  const { data: allUsersData, isLoading: isLoadingAllUsers } = useUsers({ size: 200 });
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const [totalSteps, setTotalSteps] = useState(4);
+
+  // 수강생 선발 상태 (INVITE_ONLY 선택 시 Step 5)
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [enrollReason, setEnrollReason] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [positionFilter, setPositionFilter] = useState<string>('all');
 
   // URL에서 courseId 쿼리 파라미터 읽기
   const initialCourseId = searchParams.get('courseId');
@@ -223,6 +263,47 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
   const availableInstructors = useMemo(() => {
     return usersData?.content ?? [];
   }, [usersData]);
+
+  // 부서/직급 목록 추출 (필터 옵션용)
+  const { departments, positions } = useMemo(() => {
+    const users = allUsersData?.content ?? [];
+    const deptSet = new Set<string>();
+    const posSet = new Set<string>();
+    users.forEach((u) => {
+      if (u.department) deptSet.add(u.department);
+      if (u.position) posSet.add(u.position);
+    });
+    return {
+      departments: Array.from(deptSet).sort(),
+      positions: Array.from(posSet).sort(),
+    };
+  }, [allUsersData]);
+
+  // 수강생 선발용 전체 사용자 목록 (검색 + 부서/직급 필터링 적용)
+  const availableUsers = useMemo(() => {
+    const users = allUsersData?.content ?? [];
+    return users.filter((u) => {
+      // 텍스트 검색 (이름, 이메일, 부서, 직급)
+      if (userSearchQuery.trim()) {
+        const query = userSearchQuery.toLowerCase();
+        const matchesSearch =
+          u.name?.toLowerCase().includes(query) ||
+          u.email?.toLowerCase().includes(query) ||
+          u.department?.toLowerCase().includes(query) ||
+          u.position?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      // 부서 필터
+      if (departmentFilter !== 'all' && u.department !== departmentFilter) {
+        return false;
+      }
+      // 직급 필터
+      if (positionFilter !== 'all' && u.position !== positionFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [allUsersData, userSearchQuery, departmentFilter, positionFilter]);
 
   // 선택된 과정 정보
   const [selectedCourse, setSelectedCourse] = useState<CourseRegistrationResponse | null>(null);
@@ -261,10 +342,27 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
 
   const [errors, setErrors] = useState<Partial<Record<keyof CreateCourseTimeRequest, string>>>({});
 
+  // INVITE_ONLY 선택 시 Step 5 활성화
+  useEffect(() => {
+    if (formData.enrollmentMethod === 'INVITE_ONLY') {
+      setTotalSteps(5);
+    } else {
+      setTotalSteps(4);
+      // 선발 방식이 아닌 경우 선택된 사용자 초기화
+      setSelectedUserIds([]);
+      setEnrollReason('');
+    }
+  }, [formData.enrollmentMethod]);
+
   // 강사 일정 충돌 정보
   const [conflictInfo, setConflictInfo] = useState<{
-    conflicts: Array<{ conflictingTimeTitle: string; classStartDate: string; classEndDate: string }>;
+    conflicts: Array<{ conflictingTimeTitle: string; classStartDate: string; classEndDate: string; instructorName?: string }>;
   } | null>(null);
+
+  // 학습 기간 카드 ref (충돌 시 자동 스크롤용)
+  const learningPeriodRef = useRef<HTMLDivElement>(null);
+  // 장소 입력 필드 ref (검증 실패 시 자동 스크롤용)
+  const locationInputRef = useRef<HTMLDivElement>(null);
 
   // 강사 배정 상태
   const [assignedInstructors, setAssignedInstructors] = useState<InstructorAssignment[]>([]);
@@ -292,6 +390,11 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       }
       if (formData.durationType === 'RELATIVE' && (!formData.durationDays || formData.durationDays <= 0)) {
         newErrors.durationDays = getText('required');
+      }
+
+      // 오프라인/블렌디드 진행 방식에서는 장소 필수
+      if ((formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && !formData.locationInfo?.trim()) {
+        newErrors.locationInfo = getText('required');
       }
 
       // 날짜 유효성 검사
@@ -334,6 +437,14 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
 
     setErrors(newErrors);
+
+    // 장소 에러 시 해당 필드로 스크롤
+    if (newErrors.locationInfo && locationInputRef.current) {
+      setTimeout(() => {
+        locationInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -496,23 +607,121 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       const isUnlimitedWithNoCapacity = formData.durationType === 'UNLIMITED' && !formData.capacity;
       const allowLateEnrollment = isUnlimitedWithNoCapacity ? true : (formData.allowLateEnrollment ?? false);
 
+      // durationType에 따라 불필요한 필드 정리
+      let classEndDate = formData.classEndDate;
+      let durationDays = formData.durationDays;
+
+      if (formData.durationType === 'FIXED') {
+        // FIXED: classEndDate 필수, durationDays 불필요
+        durationDays = null;
+      } else if (formData.durationType === 'RELATIVE') {
+        // RELATIVE: durationDays 필수, classEndDate 불필요
+        classEndDate = null;
+      } else if (formData.durationType === 'UNLIMITED') {
+        // UNLIMITED: 둘 다 불필요
+        classEndDate = null;
+        durationDays = null;
+      }
+
       const request: CreateCourseTimeRequest = {
         ...formData,
         enrollEndDate,
+        classEndDate,
+        durationDays,
         capacity: formData.capacity === 0 ? null : formData.capacity,
         price: priceNum.toString(),
         isFree: priceNum === 0,
-        locationInfo: formData.locationInfo?.trim() || undefined,
+        // 백엔드가 JSON 타입을 기대하므로 객체 형태로 변환
+        locationInfo: formData.locationInfo?.trim()
+          ? JSON.stringify({ address: formData.locationInfo.trim() })
+          : undefined,
         description: formData.description?.trim() || undefined,
         allowLateEnrollment,
+        assignDesignerAsMainInstructor: useOwnerAsInstructor, // DESIGNER 자동 배정 여부
       };
 
       console.log('[CourseTimeCreatePage] request:', request);
+
+      // 강사 가용성 체크 (차수 생성 전) - ONLINE 방식은 비동기이므로 충돌 검증 제외
+      const needsConflictCheck = formData.deliveryType !== 'ONLINE';
+      if (needsConflictCheck && assignedInstructors.length > 0 && request.classStartDate) {
+        // classEndDate가 없으면 (UNLIMITED) 시작일 + 1년으로 가정
+        const checkEndDate = request.classEndDate || (() => {
+          const d = new Date(request.classStartDate);
+          d.setFullYear(d.getFullYear() + 1);
+          return d.toISOString().split('T')[0];
+        })();
+
+        console.log('[CourseTimeCreatePage] Checking instructor availability:', {
+          userIds: assignedInstructors.map((i) => i.userId),
+          startDate: request.classStartDate,
+          endDate: checkEndDate,
+        });
+
+        try {
+          const availabilityResults = await instructorAssignmentService.checkAvailability({
+            userIds: assignedInstructors.map((i) => i.userId),
+            startDate: request.classStartDate,
+            endDate: checkEndDate,
+          });
+
+          console.log('[CourseTimeCreatePage] Availability results:', availabilityResults);
+
+          // 충돌 있는 강사 확인
+          const conflictingInstructors = availabilityResults.filter((r) => !r.available);
+          if (conflictingInstructors.length > 0) {
+            console.log('[CourseTimeCreatePage] Conflicts found:', conflictingInstructors);
+            // 충돌 정보 설정 및 Step 2로 이동
+            const conflicts = conflictingInstructors.flatMap((instructor) => {
+              const instructorName = assignedInstructors.find((i) => i.userId === instructor.userId)?.userName || '';
+              // conflictingAssignments 배열이 없으면 기본 충돌 정보 생성
+              if (!instructor.conflictingAssignments || instructor.conflictingAssignments.length === 0) {
+                return [{
+                  conflictingTimeTitle: language === 'ko' ? '기존 배정 차수' : 'Existing assignment',
+                  classStartDate: request.classStartDate,
+                  classEndDate: checkEndDate,
+                  instructorName,
+                }];
+              }
+              return instructor.conflictingAssignments.map((c) => ({
+                conflictingTimeTitle: c.timeName,
+                classStartDate: c.startDate,
+                classEndDate: c.endDate,
+                instructorName,
+              }));
+            });
+            setConflictInfo({ conflicts });
+            setCurrentStep(2);
+            toast.error(
+              language === 'ko'
+                ? `강사 일정이 ${conflicts.length}건 충돌합니다. 학습 기간을 조정해주세요.`
+                : `${conflicts.length} instructor schedule conflict(s) found. Please adjust the learning period.`
+            );
+            return;
+          }
+        } catch (availErr) {
+          console.error('Availability check failed:', availErr);
+          // 가용성 체크 실패 시 에러 표시하고 차수 생성 중단
+          toast.error(
+            language === 'ko'
+              ? '강사 일정 확인에 실패했습니다. 잠시 후 다시 시도해주세요.'
+              : 'Failed to check instructor availability. Please try again.'
+          );
+          return;
+        }
+      }
+
       const createdTime = await createTime.mutateAsync(request);
 
       // 강사 배정 처리
-      if (assignedInstructors.length > 0 && createdTime?.id) {
-        const assignmentPromises = assignedInstructors.map((instructor) =>
+      // useOwnerAsInstructor가 true면 백엔드에서 DESIGNER를 MAIN 강사로 자동 배정하므로 제외
+      // false면 모든 강사를 프론트엔드에서 배정
+      const instructorsToAssign = useOwnerAsInstructor
+        ? assignedInstructors.filter((instructor) => instructor.userId !== selectedCourse?.creatorId)
+        : assignedInstructors;
+
+      if (instructorsToAssign.length > 0 && createdTime?.id) {
+        const assignmentPromises = instructorsToAssign.map((instructor) =>
           instructorAssignmentService.assignInstructor(createdTime.id, {
             userId: instructor.userId,
             role: instructor.role,
@@ -534,10 +743,42 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         }
       }
 
+      // 수강생 강제 배정 처리 (INVITE_ONLY 선택 시)
+      if (selectedUserIds.length > 0 && createdTime?.id) {
+        try {
+          const result = await forceEnroll.mutateAsync({
+            courseTimeId: createdTime.id,
+            request: {
+              userIds: selectedUserIds,
+              ...(enrollReason && { reason: enrollReason }),
+            },
+          });
+          if (result.failCount > 0) {
+            toast.warning(
+              language === 'ko'
+                ? `${result.successCount}명 배정 완료, ${result.failCount}명 배정 실패`
+                : `${result.successCount} enrolled, ${result.failCount} failed`
+            );
+          }
+        } catch (enrollErr) {
+          console.error('User enrollment failed:', enrollErr);
+          toast.warning(
+            language === 'ko'
+              ? '차수가 생성되었으나 일부 수강생 배정에 실패했습니다.'
+              : 'Course time created but some user enrollments failed.'
+          );
+          navigate(prefixPath('/co/times'));
+          return;
+        }
+      }
+
       toast.success(getText('createSuccess'));
       navigate(prefixPath('/co/times'));
     } catch (err: unknown) {
       console.error('Create failed:', err);
+      // 상세 에러 응답 출력
+      const axiosError = err as { response?: { data?: unknown } };
+      console.error('Error response data:', axiosError?.response?.data);
 
       // 에러 응답 파싱
       const axiosErr = err as { response?: { data?: { error?: { code?: string; message?: string }; data?: Array<{ conflictingTimeTitle?: string; classStartDate?: string; classEndDate?: string }> } } };
@@ -558,8 +799,61 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
         // 모집 종료일 validation 에러
         toast.error(getText('errorEnrollEndBeforeClassStart'));
       } else if (errorCode === 'C001') {
-        // 일반 validation 에러
-        toast.error(errorData?.error?.message || getText('errorValidation'));
+        // 일반 validation 에러 - 제약 조건 메시지 매핑
+        const errorMessage = errorData?.error?.message || '';
+
+        // 제약 조건 키 추출 (예: "R10: constraint.deliveryType.locationRequired" → "constraint.deliveryType.locationRequired")
+        const constraintMatch = errorMessage.match(/constraint\.[\w.]+/);
+        const constraintKey = constraintMatch?.[0];
+
+        // 제약 조건별 사용자 친화적 메시지 매핑
+        const constraintMessages: Record<string, { ko: string; en: string }> = {
+          'constraint.deliveryType.locationRequired': {
+            ko: '오프라인/블렌디드 진행 방식에서는 장소 정보가 필수입니다.',
+            en: 'Location is required for offline or blended delivery types.',
+          },
+          'constraint.enrollment.capacityRequired': {
+            ko: '모집 인원은 필수 입력 항목입니다.',
+            en: 'Enrollment capacity is required.',
+          },
+          'constraint.enrollment.endDateRequired': {
+            ko: '모집 마감일은 필수 입력 항목입니다.',
+            en: 'Enrollment end date is required.',
+          },
+          'constraint.date.startBeforeEnd': {
+            ko: '시작일은 종료일보다 이전이어야 합니다.',
+            en: 'Start date must be before end date.',
+          },
+          'constraint.date.classStartRequired': {
+            ko: '교육 시작일은 필수 입력 항목입니다.',
+            en: 'Class start date is required.',
+          },
+          'constraint.date.classEndRequired': {
+            ko: '교육 종료일은 필수 입력 항목입니다.',
+            en: 'Class end date is required.',
+          },
+          'constraint.duration.daysRequired': {
+            ko: '수강 기간(일수)은 필수 입력 항목입니다.',
+            en: 'Duration days is required.',
+          },
+          'constraint.title.required': {
+            ko: '차수 제목은 필수 입력 항목입니다.',
+            en: 'Course time title is required.',
+          },
+        };
+
+        const friendlyMessage = constraintKey && constraintMessages[constraintKey]
+          ? constraintMessages[constraintKey][language]
+          : errorMessage || getText('errorValidation');
+
+        toast.error(friendlyMessage);
+      } else if (errorCode === 'C002') {
+        // 서버 내부 에러
+        toast.error(
+          language === 'ko'
+            ? '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+            : 'A server error occurred. Please try again later.'
+        );
       } else {
         // 기타 에러
         toast.error(errorData?.error?.message || getText('createError'));
@@ -637,32 +931,67 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
     }
   }, [initialCourseId, registeredCourses, selectedCourse]);
 
-  // Owner를 주강사로 자동 추가
+  // 과정 개설자를 주강사로 자동 추가
   const handleUseOwnerToggle = (checked: boolean) => {
     setUseOwnerAsInstructor(checked);
-    if (checked && selectedCourse?.ownerId) {
-      // Owner가 이미 목록에 있는지 확인
-      const ownerExists = assignedInstructors.some((i) => i.userId === selectedCourse.ownerId);
-      if (!ownerExists) {
+    if (checked && selectedCourse?.creatorId) {
+      // 개설자가 이미 목록에 있는지 확인
+      const creatorExists = assignedInstructors.some((i) => i.userId === selectedCourse.creatorId);
+      if (!creatorExists) {
         // MAIN이 이미 있으면 제거
         const withoutMain = assignedInstructors.filter((i) => i.role !== 'MAIN');
         setAssignedInstructors([
           ...withoutMain,
           {
-            userId: selectedCourse.ownerId,
-            userName: selectedCourse.ownerName || '',
-            userEmail: selectedCourse.ownerEmail || '',
+            userId: selectedCourse.creatorId,
+            userName: selectedCourse.creatorName || '',
+            userEmail: '',
             role: 'MAIN',
           },
         ]);
       }
-    } else if (!checked && selectedCourse?.ownerId) {
-      // Owner 제거
-      setAssignedInstructors((prev) => prev.filter((i) => i.userId !== selectedCourse.ownerId));
+    } else if (!checked && selectedCourse?.creatorId) {
+      // 개설자 제거
+      setAssignedInstructors((prev) => prev.filter((i) => i.userId !== selectedCourse.creatorId));
     }
   };
 
-  const stepLabels = [getText('step1'), getText('step2'), getText('step3'), getText('step4')];
+  // 과정 선택 시 개설자 자동 배정
+  useEffect(() => {
+    if (useOwnerAsInstructor && selectedCourse?.creatorId) {
+      const creatorExists = assignedInstructors.some((i) => i.userId === selectedCourse.creatorId);
+      if (!creatorExists) {
+        const withoutMain = assignedInstructors.filter((i) => i.role !== 'MAIN');
+        setAssignedInstructors([
+          ...withoutMain,
+          {
+            userId: selectedCourse.creatorId,
+            userName: selectedCourse.creatorName || '',
+            userEmail: '',
+            role: 'MAIN',
+          },
+        ]);
+      }
+    }
+  }, [selectedCourse?.creatorId]);
+
+  // 충돌 발생 시 학습 기간 카드로 자동 스크롤
+  useEffect(() => {
+    if (conflictInfo && currentStep === 2 && learningPeriodRef.current) {
+      // 약간의 딜레이 후 스크롤 (DOM 업데이트 대기)
+      setTimeout(() => {
+        learningPeriodRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [conflictInfo, currentStep]);
+
+  const stepLabels = useMemo(() => {
+    const labels = [getText('step1'), getText('step2'), getText('step3'), getText('step4')];
+    if (totalSteps === 5) {
+      labels.push(getText('step5'));
+    }
+    return labels;
+  }, [totalSteps, language]);
 
   return (
     <div className="bg-bg-app min-h-screen">
@@ -680,7 +1009,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
       <div className="bg-bg-default border-b border-border px-6 py-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2">
-            {[1, 2, 3, 4].map((step) => (
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
               <div key={step} className="flex-1 flex items-center gap-2">
                 <div
                   className={cn(
@@ -699,7 +1028,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 >
                   {stepLabels[step - 1]}
                 </span>
-                {step < 4 && (
+                {step < totalSteps && (
                   <div
                     className={cn('flex-1 h-0.5', currentStep > step ? 'bg-btn-neutral' : 'bg-border')}
                   />
@@ -802,11 +1131,11 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                             </span>
                           </div>
                         )}
-                        {/* Owner 정보 */}
+                        {/* 개설자 정보 */}
                         <div>
                           <span className="text-text-secondary">{getText('owner')}: </span>
                           <span className="text-text-primary">
-                            {selectedCourse.ownerName || getText('noOwner')}
+                            {selectedCourse.creatorName || getText('noOwner')}
                           </span>
                         </div>
                       </div>
@@ -918,17 +1247,21 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                     <p className="text-sm text-text-secondary">{getText('capacityHint')}</p>
                   </div>
 
-                  {/* 장소 (오프라인/블렌디드인 경우) */}
+                  {/* 장소 (오프라인/블렌디드인 경우 필수) */}
                   {(formData.deliveryType === 'OFFLINE' || formData.deliveryType === 'BLENDED') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="locationInfo">{getText('location')}</Label>
+                    <div ref={locationInputRef} className="space-y-2">
+                      <Label htmlFor="locationInfo">{getText('location')} *</Label>
                       <Input
                         id="locationInfo"
                         type="text"
                         placeholder={getText('locationPlaceholder')}
                         value={formData.locationInfo || ''}
                         onChange={(e) => handleInputChange('locationInfo', e.target.value)}
+                        className={errors.locationInfo ? 'border-status-error' : ''}
                       />
+                      {errors.locationInfo && (
+                        <p className="text-sm text-status-error">{errors.locationInfo}</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1063,11 +1396,53 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               </div>
 
               {/* 학습 기간 - Card로 그룹화, DurationType별 조건부 렌더링 */}
-              <div className="bg-bg-secondary rounded-lg p-5 border border-border">
+              <div
+                ref={learningPeriodRef}
+                className={cn(
+                  'bg-bg-secondary rounded-lg p-5 border',
+                  conflictInfo ? 'border-red-300 ring-2 ring-red-100' : 'border-border'
+                )}
+              >
                 <div className="flex items-center gap-2 text-text-primary mb-4">
                   <Clock size={20} />
                   <h3 className="font-medium m-0">{getText('learningPeriod')}</h3>
                 </div>
+
+                {/* 충돌 정보 인라인 표시 - 학습 기간 수정 위치에서 바로 확인 가능 */}
+                {conflictInfo && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 text-red-700 text-sm font-medium">
+                        <span className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-bold">!</span>
+                        </span>
+                        {getText('errorInstructorConflict')} ({conflictInfo.conflicts.length}건)
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setConflictInfo(null)}
+                        className="text-red-400 hover:text-red-600 p-0.5"
+                        title={language === 'ko' ? '닫기' : 'Close'}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <ul className="pl-6 space-y-1">
+                      {conflictInfo.conflicts.map((c, i) => (
+                        <li key={i} className="text-sm text-red-600">
+                          {c.instructorName && <span className="font-medium">[{c.instructorName}] </span>}
+                          <span className="font-medium">{c.conflictingTimeTitle}</span>
+                          <span className="text-red-500 ml-1">({c.classStartDate} ~ {c.classEndDate})</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs text-red-600 mt-2 pl-6">
+                      {language === 'ko'
+                        ? '위 기간과 겹치지 않도록 학습 기간을 수정해주세요.'
+                        : 'Please adjust the learning period to avoid overlapping with the above.'}
+                    </p>
+                  </div>
+                )}
 
                 {/* FIXED: 시작일 + 종료일 (총 일수 자동 계산) */}
                 {formData.durationType === 'FIXED' && (
@@ -1359,41 +1734,6 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 );
               })()}
 
-              {/* 강사 일정 충돌 경고 */}
-              {conflictInfo && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
-                      <span className="text-red-600 text-xs font-bold">!</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-red-800">{getText('errorInstructorConflict')}</p>
-                      <p className="text-sm text-red-600 mt-1">{getText('errorConflictingTimes')}:</p>
-                      <ul className="mt-2 space-y-1">
-                        {conflictInfo.conflicts.map((c, i) => (
-                          <li key={i} className="text-sm text-red-700 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                            <span className="font-medium">{c.conflictingTimeTitle}</span>
-                            <span className="text-red-500">({c.classStartDate} ~ {c.classEndDate})</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-sm text-red-600 mt-3">
-                        {language === 'ko'
-                          ? '위 기간과 겹치지 않도록 학습 기간을 조정해주세요.'
-                          : 'Please adjust the learning period to avoid conflicts.'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setConflictInfo(null)}
-                      className="text-red-400 hover:text-red-600"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -1558,8 +1898,8 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                 {getText('instructorAssignmentHint')}
               </p>
 
-              {/* Owner를 주강사로 배정 옵션 */}
-              {selectedCourse?.ownerId && (
+              {/* 과정 개설자를 주강사로 배정 옵션 */}
+              {selectedCourse?.creatorId && (
                 <div className="bg-bg-subtle rounded-lg p-4 border border-border">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1570,7 +1910,7 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
                       <div>
                         <span className="font-medium text-text-primary">{getText('useOwnerAsInstructor')}</span>
                         <p className="text-sm text-text-secondary mt-0.5">
-                          {selectedCourse.ownerName} ({selectedCourse.ownerEmail})
+                          {selectedCourse.creatorName}
                         </p>
                       </div>
                     </div>
@@ -1708,6 +2048,217 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
               </div>
             </div>
           )}
+
+          {/* Step 5: 수강생 선발 (INVITE_ONLY 선택 시만) */}
+          {currentStep === 5 && formData.enrollmentMethod === 'INVITE_ONLY' && (
+            <div className="flex flex-col gap-6">
+              {/* 헤더 */}
+              <div className="flex items-center gap-2">
+                <Users size={20} className="text-text-secondary" />
+                <h3 className="font-medium text-text-primary m-0">
+                  {getText('userAssignment')} {getText('userAssignmentOptional')}
+                </h3>
+              </div>
+
+              {/* 안내 메시지 + 건너뛰기 버튼 */}
+              <div className="bg-badge-purple-bg border border-badge-purple/30 rounded-lg p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <Info size={20} className="flex-shrink-0 text-badge-purple mt-0.5" />
+                    <div>
+                      <p className="font-medium text-text-primary">{getText('userAssignmentHint')}</p>
+                      <p className="text-sm text-text-secondary mt-1">{getText('userAssignmentLater')}</p>
+                    </div>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        disabled={createTime.isPending || forceEnroll.isPending}
+                        className="flex-shrink-0 bg-white border border-border text-text-primary hover:bg-bg-secondary"
+                      >
+                        {getText('skip')}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {language === 'ko' ? '수강생 배정을 건너뛰시겠습니까?' : 'Skip user assignment?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {language === 'ko'
+                            ? '수강생 배정 없이 차수가 생성됩니다. 나중에 차수 상세 페이지에서 수강생을 배정할 수 있습니다.'
+                            : 'The course time will be created without any user assignments. You can assign users later from the course time detail page.'}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>
+                          {language === 'ko' ? '취소' : 'Cancel'}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            setSelectedUserIds([]);
+                            setEnrollReason('');
+                            handleSubmit();
+                          }}
+                        >
+                          {language === 'ko' ? '건너뛰고 생성' : 'Skip and Create'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+
+              {/* 사용자 검색 및 필터 */}
+              <div className="space-y-3">
+                <Label>{getText('selectUsersToEnroll')}</Label>
+                <div className="flex gap-3">
+                  {/* 검색 */}
+                  <div className="relative flex-1">
+                    <Search
+                      size={18}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-text-placeholder"
+                    />
+                    <Input
+                      type="text"
+                      placeholder={getText('searchUserPlaceholder')}
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  {/* 부서 필터 - 데이터 있을 때만 표시 */}
+                  {departments.length > 0 && (
+                    <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                      <SelectTrigger size="sm" className="w-[120px]">
+                        <SelectValue placeholder={getText('allDepartments')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{getText('allDepartments')}</SelectItem>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {/* 직급 필터 - 데이터 있을 때만 표시 */}
+                  {positions.length > 0 && (
+                    <Select value={positionFilter} onValueChange={setPositionFilter}>
+                      <SelectTrigger size="sm" className="w-[100px]">
+                        <SelectValue placeholder={getText('allPositions')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{getText('allPositions')}</SelectItem>
+                        {positions.map((pos) => (
+                          <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+
+              {/* 사용자 목록 (체크박스) */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                {/* 리스트 헤더: 전체 선택/해제 + 선택 상태 */}
+                {!isLoadingAllUsers && availableUsers.length > 0 && (
+                  <div className="flex items-center justify-between px-3 py-2 bg-bg-secondary border-b border-border sticky top-0 z-10">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={availableUsers.length > 0 && selectedUserIds.length === availableUsers.length}
+                        ref={(el) => {
+                          if (el) {
+                            el.indeterminate = selectedUserIds.length > 0 && selectedUserIds.length < availableUsers.length;
+                          }
+                        }}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedUserIds(availableUsers.map((u) => u.id));
+                          } else {
+                            setSelectedUserIds([]);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-border accent-btn-brand"
+                      />
+                      <span className="text-sm font-medium text-text-primary">전체 선택</span>
+                    </label>
+                    <span className="text-sm text-text-secondary">
+                      <span className={cn(
+                        "font-medium",
+                        selectedUserIds.length > 0 ? "text-action-primary" : "text-text-placeholder"
+                      )}>
+                        {selectedUserIds.length}
+                      </span>
+                      <span className="text-text-placeholder"> / {availableUsers.length}명</span>
+                    </span>
+                  </div>
+                )}
+
+                {/* 사용자 목록 */}
+                <div className="max-h-[260px] overflow-auto">
+                  {isLoadingAllUsers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 size={24} className="animate-spin text-text-secondary" />
+                    </div>
+                  ) : availableUsers.length === 0 ? (
+                    <div className="text-center py-8 text-text-secondary">
+                      <Users size={32} className="mx-auto mb-2 text-text-placeholder" />
+                      <p className="text-sm">검색 결과가 없습니다</p>
+                    </div>
+                  ) : (
+                    availableUsers.map((user) => (
+                      <label
+                        key={user.id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 cursor-pointer border-b border-border last:border-0 transition-colors",
+                          selectedUserIds.includes(user.id)
+                            ? "bg-blue-50"
+                            : "hover:bg-bg-secondary"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedUserIds.includes(user.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUserIds([...selectedUserIds, user.id]);
+                            } else {
+                              setSelectedUserIds(selectedUserIds.filter((id) => id !== user.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-border accent-btn-brand"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
+                            {(user.department || user.position) && (
+                              <span className="text-xs text-text-placeholder">
+                                {[user.department, user.position].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-text-secondary truncate">{user.email}</p>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* 배정 사유 (선택) */}
+              <div className="space-y-2">
+                <Label>{getText('enrollReason')}</Label>
+                <Textarea
+                  value={enrollReason}
+                  onChange={(e) => setEnrollReason(e.target.value)}
+                  placeholder={getText('enrollReasonPlaceholder')}
+                  rows={2}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Navigation Buttons */}
@@ -1730,9 +2281,9 @@ export function CourseTimeCreatePage({ language = 'ko' }: Readonly<CourseTimeCre
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={createTime.isPending || !clientValidationResult.valid}
+                disabled={createTime.isPending || forceEnroll.isPending || !clientValidationResult.valid}
               >
-                {createTime.isPending ? (
+                {(createTime.isPending || forceEnroll.isPending) ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
                     {getText('saving')}

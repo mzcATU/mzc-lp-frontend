@@ -95,21 +95,19 @@ const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
 interface MemberPoolFormData {
   name: string;
   description: string;
-  condition: MemberPoolConditionDto;
-  isActive: boolean;
+  conditions: MemberPoolConditionDto;
   sortOrder: number;
 }
 
 const initialFormData: MemberPoolFormData = {
   name: '',
   description: '',
-  condition: {
-    departmentIds: [],
+  conditions: {
+    departments: [],
     positions: [],
     jobTitles: [],
     employeeStatuses: [],
   },
-  isActive: true,
   sortOrder: 0,
 };
 
@@ -186,11 +184,16 @@ export default function MemberPoolListPage() {
   // 풀 수정 모달 열기
   const openEditModal = (pool: MemberPoolResponse) => {
     setEditingPool(pool);
+    // 응답 데이터(departmentIds)를 폼 데이터(departments)로 변환
     setFormData({
       name: pool.name,
       description: pool.description || '',
-      condition: pool.condition,
-      isActive: pool.isActive,
+      conditions: {
+        departments: pool.conditions?.departmentIds ?? [],
+        positions: pool.conditions?.positions ?? [],
+        jobTitles: pool.conditions?.jobTitles ?? [],
+        employeeStatuses: (pool.conditions?.employeeStatuses ?? []) as EmployeeStatus[],
+      },
       sortOrder: pool.sortOrder,
     });
     setShowCreateModal(true);
@@ -206,8 +209,7 @@ export default function MemberPoolListPage() {
         const request: UpdateMemberPoolRequest = {
           name: formData.name,
           description: formData.description || undefined,
-          condition: formData.condition,
-          isActive: formData.isActive,
+          conditions: formData.conditions,
           sortOrder: formData.sortOrder,
         };
         await updateMemberPool.mutateAsync({ id: editingPool.id, ...request });
@@ -216,8 +218,7 @@ export default function MemberPoolListPage() {
         const request: CreateMemberPoolRequest = {
           name: formData.name,
           description: formData.description || undefined,
-          condition: formData.condition,
-          isActive: formData.isActive,
+          conditions: formData.conditions,
           sortOrder: formData.sortOrder,
         };
         await createMemberPool.mutateAsync(request);
@@ -788,60 +789,60 @@ export default function MemberPoolListPage() {
                               현재 설정된 조건
                             </h4>
                             <div className="space-y-3">
-                              {selectedPool.condition.departmentIds.length > 0 && (
+                              {(selectedPool.conditions?.departmentIds?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     부서
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.departmentIds.map((id) => (
+                                    {selectedPool.conditions?.departmentIds?.map((id) => (
                                       <Badge key={id} variant="blue">부서 ID: {id}</Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.positions.length > 0 && (
+                              {(selectedPool.conditions?.positions?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     직책
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.positions.map((pos) => (
+                                    {selectedPool.conditions?.positions?.map((pos) => (
                                       <Badge key={pos} variant="purple">{pos}</Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.jobTitles.length > 0 && (
+                              {(selectedPool.conditions?.jobTitles?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     직무
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.jobTitles.map((job) => (
+                                    {selectedPool.conditions?.jobTitles?.map((job) => (
                                       <Badge key={job} variant="orange">{job}</Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.employeeStatuses.length > 0 && (
+                              {(selectedPool.conditions?.employeeStatuses?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     직원 상태
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.employeeStatuses.map((status) => (
+                                    {selectedPool.conditions?.employeeStatuses?.map((status) => (
                                       <Badge key={status} variant="green">
-                                        {EMPLOYEE_STATUS_LABELS[status]}
+                                        {EMPLOYEE_STATUS_LABELS[status as EmployeeStatus]}
                                       </Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.departmentIds.length === 0 &&
-                                selectedPool.condition.positions.length === 0 &&
-                                selectedPool.condition.jobTitles.length === 0 &&
-                                selectedPool.condition.employeeStatuses.length === 0 && (
+                              {(selectedPool.conditions?.departmentIds?.length ?? 0) === 0 &&
+                                (selectedPool.conditions?.positions?.length ?? 0) === 0 &&
+                                (selectedPool.conditions?.jobTitles?.length ?? 0) === 0 &&
+                                (selectedPool.conditions?.employeeStatuses?.length ?? 0) === 0 && (
                                   <p className="text-sm" style={{ color: designTokens.text.placeholder }}>
                                     설정된 조건이 없습니다. (전체 대상)
                                   </p>
@@ -933,15 +934,15 @@ export default function MemberPoolListPage() {
                     {(['ACTIVE', 'ON_LEAVE', 'RESIGNED'] as EmployeeStatus[]).map((status) => (
                       <label key={status} className="flex items-center gap-2 cursor-pointer">
                         <Checkbox
-                          checked={formData.condition.employeeStatuses.includes(status)}
+                          checked={formData.conditions.employeeStatuses.includes(status)}
                           onCheckedChange={(checked) => {
                             setFormData({
                               ...formData,
-                              condition: {
-                                ...formData.condition,
+                              conditions: {
+                                ...formData.conditions,
                                 employeeStatuses: checked
-                                  ? [...formData.condition.employeeStatuses, status]
-                                  : formData.condition.employeeStatuses.filter((s) => s !== status),
+                                  ? [...formData.conditions.employeeStatuses, status]
+                                  : formData.conditions.employeeStatuses.filter((s: EmployeeStatus) => s !== status),
                               },
                             });
                           }}
@@ -957,7 +958,7 @@ export default function MemberPoolListPage() {
                   <Label className="text-sm mb-2 block">직책</Label>
                   <Input
                     placeholder="직책을 쉼표로 구분하여 입력 (예: 팀장, 파트장)"
-                    value={formData.condition.positions.join(', ')}
+                    value={formData.conditions.positions.join(', ')}
                     onChange={(e) => {
                       const positions = e.target.value
                         .split(',')
@@ -965,7 +966,7 @@ export default function MemberPoolListPage() {
                         .filter(Boolean);
                       setFormData({
                         ...formData,
-                        condition: { ...formData.condition, positions },
+                        conditions: { ...formData.conditions, positions },
                       });
                     }}
                   />
@@ -976,7 +977,7 @@ export default function MemberPoolListPage() {
                   <Label className="text-sm mb-2 block">직무</Label>
                   <Input
                     placeholder="직무를 쉼표로 구분하여 입력 (예: 개발자, 디자이너)"
-                    value={formData.condition.jobTitles.join(', ')}
+                    value={formData.conditions.jobTitles.join(', ')}
                     onChange={(e) => {
                       const jobTitles = e.target.value
                         .split(',')
@@ -984,30 +985,12 @@ export default function MemberPoolListPage() {
                         .filter(Boolean);
                       setFormData({
                         ...formData,
-                        condition: { ...formData.condition, jobTitles },
+                        conditions: { ...formData.conditions, jobTitles },
                       });
                     }}
                   />
                 </div>
               </div>
-            </div>
-
-            {/* 활성화 상태 */}
-            <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: designTokens.bg.secondary }}>
-              <div>
-                <p className="font-medium" style={{ color: designTokens.text.primary }}>
-                  활성화 상태
-                </p>
-                <p className="text-sm" style={{ color: designTokens.text.secondary }}>
-                  비활성화하면 일괄 입과 등에서 사용할 수 없습니다.
-                </p>
-              </div>
-              <Checkbox
-                checked={formData.isActive}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isActive: checked as boolean })
-                }
-              />
             </div>
           </div>
 

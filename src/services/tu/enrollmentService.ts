@@ -5,6 +5,7 @@ import type {
   EnrollmentWithCurriculumResponse,
   EnrollmentPlayerData,
 } from '@/types/tu';
+import type { EnrollmentMethod } from '@/types/tu/courseTimeCatalog.types';
 
 /**
  * 수강 신청 상태
@@ -21,6 +22,7 @@ interface BackendEnrollmentResponse {
   enrolledAt: string;
   type: string;
   status: string;
+  enrollmentMethod?: EnrollmentMethod;
   progressPercent: number | null;
   score: number | null;
   completedAt: string | null;
@@ -52,6 +54,7 @@ export interface Enrollment {
   programTitle: string;
   courseTimeName: string;
   status: EnrollmentStatus;
+  enrollmentMethod?: EnrollmentMethod;
   enrolledAt: string;
   completedAt?: string;
   progress?: number;
@@ -86,11 +89,13 @@ export interface PageResponse<T> {
  */
 const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
   const statusMap: Record<string, EnrollmentStatus> = {
+    PENDING: 'PENDING',
     ENROLLED: 'APPROVED',
     IN_PROGRESS: 'APPROVED',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'CANCELLED',
     DROPPED: 'CANCELLED',
+    REJECTED: 'REJECTED',
   };
   return statusMap[status] || 'PENDING';
 };
@@ -100,12 +105,12 @@ const mapEnrollmentStatus = (status: string): EnrollmentStatus => {
  */
 const mapStatusToBackend = (status: EnrollmentStatus): string | undefined => {
   const statusMap: Record<EnrollmentStatus, string> = {
+    PENDING: 'PENDING',
     APPROVED: 'ENROLLED',
     ENROLLED: 'ENROLLED',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'DROPPED',
-    PENDING: 'ENROLLED', // PENDING은 백엔드에 없으므로 ENROLLED로
-    REJECTED: 'DROPPED', // REJECTED도 백엔드에 없으므로 DROPPED로
+    REJECTED: 'REJECTED',
   };
   return statusMap[status];
 };
@@ -124,6 +129,7 @@ const transformEnrollment = (
   programTitle: courseTimeInfo?.programName ?? '',
   courseTimeName: courseTimeInfo?.title ?? '',
   status: mapEnrollmentStatus(backend.status),
+  enrollmentMethod: backend.enrollmentMethod,
   enrolledAt: backend.enrolledAt,
   completedAt: backend.completedAt ?? undefined,
   progress: backend.progressPercent ?? 0,

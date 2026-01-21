@@ -155,6 +155,7 @@ export interface CreateCourseTimeRequest {
   locationInfo?: string;
   allowLateEnrollment?: boolean;
   recurringSchedule?: RecurringSchedule | null; // 정기 수업 일정 (선택)
+  assignDesignerAsMainInstructor?: boolean; // DESIGNER를 MAIN 강사로 자동 배정 여부 (기본값: true)
 }
 
 /** 차수 수정 요청 */

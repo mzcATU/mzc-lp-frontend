@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useSubdomainPath } from '@/hooks/common';
 import {
   PlayCircle,
@@ -305,6 +306,11 @@ export function LearningDetailPage() {
   };
 
   const handleContinueLearning = () => {
+    // 학습 불가 조건 체크
+    if (isLearningDisabled) {
+      toast.error(getDisabledReason() ?? '학습할 수 없습니다');
+      return;
+    }
     // 플레이어 페이지로 이동 (첫 아이템 선택은 플레이어에서 자동 처리)
     navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}/player`));
   };
@@ -335,6 +341,25 @@ export function LearningDetailPage() {
 
   // 실제 enrollment 데이터에서 진도율 가져오기 (API 데이터 우선)
   const progressPercent = enrollment.progress ?? 0;
+
+  // 수강 기간 체크
+  const now = new Date();
+  const startDate = enrollment.startDate ? new Date(enrollment.startDate) : null;
+  const endDate = enrollment.endDate ? new Date(enrollment.endDate) : null;
+  const isBeforeClassStart = startDate ? now < startDate : false;
+  const isAfterClassEnd = endDate ? now > endDate : false;
+  const isPending = enrollment.status === 'PENDING';
+
+  // 학습 버튼 비활성화 조건
+  const isLearningDisabled = isPending || isBeforeClassStart || isAfterClassEnd;
+
+  // 비활성화 사유 메시지
+  const getDisabledReason = () => {
+    if (isPending) return t.learning.pendingApproval ?? '운영자 승인 대기 중입니다';
+    if (isBeforeClassStart) return `수강 기간: ${formatDate(enrollment.startDate)} 시작`;
+    if (isAfterClassEnd) return '수강 기간이 종료되었습니다';
+    return null;
+  };
 
   return (
     <div className={`min-h-full p-6 sm:p-10 ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-50'}`}>
@@ -419,14 +444,31 @@ export function LearningDetailPage() {
 
               {/* Continue Button */}
               {(enrollment.status === 'APPROVED' || enrollment.status === 'ENROLLED') && (
-                <Button
-                  variant="brand"
-                  className="w-full mt-4"
-                  onClick={handleContinueLearning}
-                >
-                  <PlayCircle className="w-4 h-4 mr-2" />
-                  {t.learning.continueLearning}
-                </Button>
+                <>
+                  <Button
+                    variant="brand"
+                    className="w-full mt-4"
+                    onClick={handleContinueLearning}
+                    disabled={isLearningDisabled}
+                  >
+                    <PlayCircle className="w-4 h-4 mr-2" />
+                    {t.learning.continueLearning}
+                  </Button>
+                  {/* 비활성화 사유 메시지 */}
+                  {isLearningDisabled && (
+                    <p className={`text-center text-xs mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {getDisabledReason()}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {/* PENDING 상태 안내 */}
+              {isPending && (
+                <div className={`mt-4 p-3 rounded-lg text-center text-sm ${isDark ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
+                  <AlertCircle className="w-4 h-4 inline-block mr-1" />
+                  {t.learning.pendingApproval ?? '운영자 승인 대기 중입니다'}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -451,7 +493,13 @@ export function LearningDetailPage() {
                     key={item.itemId}
                     item={item}
                     isDark={isDark}
-                    onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}/player/${item.itemId}`))}
+                    onClick={() => {
+                      if (isLearningDisabled) {
+                        toast.error(getDisabledReason() ?? '학습할 수 없습니다');
+                        return;
+                      }
+                      navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}/player/${item.itemId}`));
+                    }}
                   />
                 ))}
               </div>

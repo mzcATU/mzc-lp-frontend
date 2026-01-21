@@ -104,4 +104,21 @@ export const adminEnrollmentService = {
   async cancelEnrollment(id: number): Promise<void> {
     await axiosInstance.delete(API_ENDPOINTS.ENROLLMENTS.BY_ID(id));
   },
+
+  /** 수강신청 승인 */
+  async approveEnrollment(id: number): Promise<EnrollmentDetailResponse> {
+    const { data } = await axiosInstance.patch<EnrollmentDetailResponse>(
+      API_ENDPOINTS.ENROLLMENTS.APPROVE(id)
+    );
+    return data;
+  },
+
+  /** 수강신청 거절 */
+  async rejectEnrollment(id: number, reason?: string): Promise<EnrollmentDetailResponse> {
+    const { data } = await axiosInstance.patch<EnrollmentDetailResponse>(
+      API_ENDPOINTS.ENROLLMENTS.REJECT(id),
+      { reason }
+    );
+    return data;
+  },
 };

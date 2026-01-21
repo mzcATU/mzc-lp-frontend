@@ -536,49 +536,49 @@ export const MemberPoolPage = () => {
                               현재 설정된 조건
                             </h4>
                             <div className="space-y-3">
-                              {selectedPool.condition.departmentIds.length > 0 && (
+                              {(selectedPool.conditions?.departmentIds?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     부서
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.departmentIds.map((id) => (
+                                    {selectedPool.conditions?.departmentIds?.map((id: number) => (
                                       <Badge key={id} variant="blue">부서 ID: {id}</Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.positions.length > 0 && (
+                              {(selectedPool.conditions?.positions?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     직책
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.positions.map((pos) => (
+                                    {selectedPool.conditions?.positions?.map((pos: string) => (
                                       <Badge key={pos} variant="purple">{pos}</Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.jobTitles.length > 0 && (
+                              {(selectedPool.conditions?.jobTitles?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     직무
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.jobTitles.map((job) => (
+                                    {selectedPool.conditions?.jobTitles?.map((job: string) => (
                                       <Badge key={job} variant="orange">{job}</Badge>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.employeeStatuses.length > 0 && (
+                              {(selectedPool.conditions?.employeeStatuses?.length ?? 0) > 0 && (
                                 <div>
                                   <p className="text-sm font-medium" style={{ color: designTokens.text.secondary }}>
                                     직원 상태
                                   </p>
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {selectedPool.condition.employeeStatuses.map((status) => (
+                                    {selectedPool.conditions?.employeeStatuses?.map((status: EmployeeStatus) => (
                                       <Badge key={status} variant="green">
                                         {EMPLOYEE_STATUS_LABELS[status]}
                                       </Badge>
@@ -586,10 +586,10 @@ export const MemberPoolPage = () => {
                                   </div>
                                 </div>
                               )}
-                              {selectedPool.condition.departmentIds.length === 0 &&
-                                selectedPool.condition.positions.length === 0 &&
-                                selectedPool.condition.jobTitles.length === 0 &&
-                                selectedPool.condition.employeeStatuses.length === 0 && (
+                              {(selectedPool.conditions?.departmentIds?.length ?? 0) === 0 &&
+                                (selectedPool.conditions?.positions?.length ?? 0) === 0 &&
+                                (selectedPool.conditions?.jobTitles?.length ?? 0) === 0 &&
+                                (selectedPool.conditions?.employeeStatuses?.length ?? 0) === 0 && (
                                   <p className="text-sm" style={{ color: designTokens.text.placeholder }}>
                                     설정된 조건이 없습니다. (전체 대상)
                                   </p>

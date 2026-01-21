@@ -181,6 +181,20 @@ export function CourseDetailPage() {
   );
   const isAlreadyEnrolled = !!existingEnrollment;
 
+  // PENDING 상태 확인 (승인 대기 중)
+  const isPendingEnrollment = existingEnrollment?.status === 'PENDING';
+
+  // EnrollmentMethod별 처리
+  const isInviteOnly = courseTime?.enrollmentMethod === 'INVITE_ONLY';
+  const isApproval = courseTime?.enrollmentMethod === 'APPROVAL';
+
+  // 수강 기간 체크
+  const now = new Date();
+  const classStartDate = courseTime?.classStartDate ? new Date(courseTime.classStartDate) : null;
+  const classEndDate = courseTime?.classEndDate ? new Date(courseTime.classEndDate) : null;
+  const isBeforeClassStart = classStartDate && now < classStartDate;
+  const isAfterClassEnd = classEndDate && now > classEndDate;
+
   // 찜 상태 확인 및 토글
   const { data: isWishlisted = false, isLoading: isWishlistChecking } = useCheckWishlistStatus(
     courseTimeId,
@@ -304,13 +318,41 @@ export function CourseDetailPage() {
     // 수강 신청 API 호출
     enrollMutation.mutate(courseTimeId, {
       onSuccess: () => {
-        toast.success('수강 신청이 완료되었습니다.');
-        // 내 학습 페이지로 이동
-        navigate(prefixPath('/tu/b2c/mypage/learning'));
+        if (isApproval) {
+          // 승인제: 승인 대기 안내 메시지, 페이지 이동 없음
+          toast.success('신청이 완료되었습니다. 운영자 승인 후 수강 가능합니다.');
+        } else {
+          // 선착순: 바로 수강 가능
+          toast.success('수강 신청이 완료되었습니다.');
+          navigate(prefixPath('/tu/b2c/mypage/learning'));
+        }
       },
-      onError: (error: Error & { response?: { data?: { error?: { message?: string } } } }) => {
-        const message = error.response?.data?.error?.message || '수강 신청에 실패했습니다.';
-        toast.error(message);
+      onError: (error: Error & { response?: { data?: { error?: { code?: string; message?: string } } } }) => {
+        const errorCode = error.response?.data?.error?.code;
+        const errorMessage = error.response?.data?.error?.message ?? '';
+
+        // 에러 코드별 사용자 친화적 메시지
+        const errorMessages: Record<string, string> = {
+          'SIS007': '선발제 과정입니다. 운영자의 배정이 필요합니다.',
+          'SIS008': '승인 대기 중입니다. 승인 후 학습할 수 있습니다.',
+        };
+
+        // 에러 메시지 패턴 매칭 (영문 메시지 → 한글 변환)
+        const getLocalizedMessage = (message: string): string | null => {
+          if (message.includes('Enrollment period is closed')) {
+            return '수강 신청 기간이 종료되었습니다.';
+          }
+          if (message.includes('already enrolled')) {
+            return '이미 수강 신청된 강의입니다.';
+          }
+          if (message.includes('No available seats')) {
+            return '정원이 마감되었습니다.';
+          }
+          return null;
+        };
+
+        const localizedMessage = errorMessages[errorCode ?? ''] || getLocalizedMessage(errorMessage);
+        toast.error(localizedMessage || '수강 신청에 실패했습니다.');
       },
     });
   };
@@ -416,6 +458,13 @@ export function CourseDetailPage() {
                 >
                   {COURSE_TIME_STATUS_LABELS[courseTime.status]}
                 </span>
+
+                {/* 선발 태그 (INVITE_ONLY) - 배정된 사용자에게만 표시됨 */}
+                {isInviteOnly && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-[#a855f7] to-[#6778ff] text-white">
+                    선발
+                  </span>
+                )}
 
                 {/* 상시모집 태그 */}
                 {courseTime.isOnDemand && (
@@ -641,7 +690,47 @@ export function CourseDetailPage() {
 
                   {/* Buttons */}
                   <div className="space-y-3">
-                    {isAlreadyEnrolled ? (
+                    {/* 우선순위 1: PENDING 상태 (승인 대기 중) */}
+                    {isPendingEnrollment ? (
+                      <>
+                        <button
+                          disabled
+                          className="w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed"
+                        >
+                          승인 대기 중
+                        </button>
+                        <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          운영자 승인 후 수강할 수 있습니다
+                        </p>
+                      </>
+                    ) : /* 우선순위 2: 이미 수강 중이지만 수강 기간 전 */
+                    isAlreadyEnrolled && isBeforeClassStart ? (
+                      <>
+                        <button
+                          disabled
+                          className="w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed"
+                        >
+                          수강 기간 전
+                        </button>
+                        <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          수강 기간: {formatDate(courseTime.classStartDate)} 시작
+                        </p>
+                      </>
+                    ) : /* 우선순위 3: 이미 수강 중이지만 수강 기간 종료 */
+                    isAlreadyEnrolled && isAfterClassEnd ? (
+                      <>
+                        <button
+                          disabled
+                          className="w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed"
+                        >
+                          수강 기간 종료
+                        </button>
+                        <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          수강 기간이 종료되었습니다
+                        </p>
+                      </>
+                    ) : /* 우선순위 4: 이미 수강 중 → 학습 계속하기 */
+                    isAlreadyEnrolled ? (
                       <>
                         <button
                           onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${existingEnrollment?.id}`))}
@@ -654,7 +743,21 @@ export function CourseDetailPage() {
                           이미 수강 신청된 강의입니다
                         </p>
                       </>
-                    ) : canEnroll ? (
+                    ) : /* 우선순위 5: INVITE_ONLY → 배정 필요 */
+                    isInviteOnly ? (
+                      <>
+                        <button
+                          disabled
+                          className="w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed"
+                        >
+                          선발제 과정
+                        </button>
+                        <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                          운영자의 배정이 필요합니다
+                        </p>
+                      </>
+                    ) : /* 우선순위 6-7: 수강 신청 가능 (APPROVAL, FIRST_COME) */
+                    canEnroll ? (
                       <>
                         <button
                           onClick={handleEnroll}
@@ -670,6 +773,12 @@ export function CourseDetailPage() {
                             '수강 신청'
                           )}
                         </button>
+                        {/* 승인제 안내 메시지 */}
+                        {isApproval && (
+                          <p className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            승인제 과정입니다. 신청 후 운영자 승인이 필요합니다.
+                          </p>
+                        )}
                         {/* 장바구니 버튼 (유료 모드 + 장바구니 기능 활성화시만 표시) */}
                         {paidModeEnabled && cartEnabled && (
                           <button
@@ -692,7 +801,8 @@ export function CourseDetailPage() {
                           </button>
                         )}
                       </>
-                    ) : (
+                    ) : /* 우선순위 8: 수강 신청 불가 */
+                    (
                       <button
                         disabled
                         className="w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed"

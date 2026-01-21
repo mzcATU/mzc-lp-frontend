@@ -108,6 +108,10 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
 
   // 태그 생성 (무료 태그 제거, 유료는 금액 표시)
   const tags: string[] = [];
+  // 선발제 태그 (INVITE_ONLY)
+  if (courseTime.enrollmentMethod === 'INVITE_ONLY') {
+    tags.push('선발');
+  }
   if (courseTime.isOnDemand) {
     tags.push('상시모집');
   } else if (courseTime.status === 'RECRUITING') {
@@ -157,11 +161,13 @@ function CourseTimeCard({ courseTime, isDark }: CourseTimeCardProps) {
                 <span
                   key={tag}
                   className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg ${
-                    tag === '상시모집'
-                      ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
-                      : tag === '모집중'
-                        ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
-                        : 'bg-gray-500'
+                    tag === '선발'
+                      ? 'bg-gradient-to-r from-[#a855f7] to-[#6778ff]'
+                      : tag === '상시모집'
+                        ? 'bg-gradient-to-r from-[#70f2a0] to-[#6bc2f0]'
+                        : tag === '모집중'
+                          ? 'bg-gradient-to-r from-[#6778ff] to-[#a855f7]'
+                          : 'bg-gray-500'
                   }`}
                 >
                   {tag}

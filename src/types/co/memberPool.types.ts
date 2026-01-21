@@ -16,7 +16,7 @@ export type EmployeeStatus = 'ACTIVE' | 'ON_LEAVE' | 'RESIGNED';
 
 /** 회원 풀 조건 DTO */
 export interface MemberPoolConditionDto {
-  departmentIds: number[]; // 부서 ID 목록
+  departments: number[]; // 부서 ID 목록
   positions: string[]; // 직책 목록
   jobTitles: string[]; // 직무 목록
   employeeStatuses: EmployeeStatus[]; // 직원 상태 목록
@@ -26,8 +26,7 @@ export interface MemberPoolConditionDto {
 export interface CreateMemberPoolRequest {
   name: string; // 회원 풀 이름 (max 200자)
   description?: string; // 설명 (max 500자)
-  condition: MemberPoolConditionDto; // 조건
-  isActive: boolean; // 활성화 상태
+  conditions: MemberPoolConditionDto; // 조건
   sortOrder?: number; // 정렬 순서 (기본값: 0)
 }
 
@@ -35,8 +34,7 @@ export interface CreateMemberPoolRequest {
 export interface UpdateMemberPoolRequest {
   name?: string;
   description?: string;
-  condition?: MemberPoolConditionDto;
-  isActive?: boolean;
+  conditions?: MemberPoolConditionDto;
   sortOrder?: number;
 }
 
@@ -51,12 +49,20 @@ export interface PreviewMembersRequest {
 // Response Types
 // ============================================
 
+/** 회원 풀 조건 응답 DTO (응답용 - departmentIds 사용) */
+export interface MemberPoolConditionResponse {
+  departmentIds: number[]; // 부서 ID 목록
+  positions: string[]; // 직책 목록
+  jobTitles: string[]; // 직무 목록
+  employeeStatuses: EmployeeStatus[]; // 직원 상태 목록
+}
+
 /** 회원 풀 기본 응답 (목록용) */
 export interface MemberPoolResponse {
   id: number;
   name: string;
   description: string;
-  condition: MemberPoolConditionDto;
+  conditions: MemberPoolConditionResponse | null; // 백엔드에서 conditions로 반환
   memberCount: number; // 매칭된 멤버 수
   isActive: boolean;
   sortOrder: number;

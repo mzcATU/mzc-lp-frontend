@@ -29,6 +29,7 @@ import { InstructorRoleBadge } from '@/components/domain/tu/assignment';
 
 // 수강생 상태별 Badge 컬러
 const statusBadgeColor: Record<StudentEnrollmentStatus, BadgeColor> = {
+  PENDING: 'yellow',
   ENROLLED: 'blue',
   IN_PROGRESS: 'indigo',
   COMPLETED: 'green',
@@ -37,6 +38,7 @@ const statusBadgeColor: Record<StudentEnrollmentStatus, BadgeColor> = {
 
 // 수강생 상태별 아이콘
 const statusIcon: Record<StudentEnrollmentStatus, React.ElementType> = {
+  PENDING: Clock,
   ENROLLED: PauseCircle,
   IN_PROGRESS: PlayCircle,
   COMPLETED: CheckCircle,

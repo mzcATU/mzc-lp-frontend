@@ -90,6 +90,25 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
     COMPLETED: t.learning.statusCompleted,
   };
 
+  // 수강 기간 체크
+  const now = new Date();
+  const startDate = enrollment.startDate ? new Date(enrollment.startDate) : null;
+  const endDate = enrollment.endDate ? new Date(enrollment.endDate) : null;
+  const isBeforeClassStart = startDate ? now < startDate : false;
+  const isAfterClassEnd = endDate ? now > endDate : false;
+  const isPending = enrollment.status === 'PENDING';
+
+  // 학습하기 버튼 비활성화 조건
+  const isLearningDisabled = isPending || isBeforeClassStart || isAfterClassEnd;
+
+  // 비활성화 사유 메시지
+  const getDisabledMessage = () => {
+    if (isPending) return t.learning.pendingApproval ?? '승인 대기 중입니다';
+    if (isBeforeClassStart) return `수강 기간: ${formatDate(enrollment.startDate)} 시작`;
+    if (isAfterClassEnd) return '수강 기간이 종료되었습니다';
+    return null;
+  };
+
   return (
     <Card
       className={`cursor-pointer transition-all hover:shadow-md ${
@@ -98,12 +117,20 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
       onClick={onClick}
     >
       <CardContent className="p-5">
-        {/* Header: Status Badge */}
+        {/* Header: Status Badge + 선발 Badge */}
         <div className="flex items-center justify-between mb-3">
-          <Badge variant={statusColors[enrollment.status]} className="text-xs flex items-center gap-1">
-            {statusIcons[enrollment.status]}
-            {statusLabels[enrollment.status]}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <Badge variant={statusColors[enrollment.status]} className="text-xs flex items-center gap-1">
+              {statusIcons[enrollment.status]}
+              {statusLabels[enrollment.status]}
+            </Badge>
+            {/* 선발제 뱃지 (INVITE_ONLY) */}
+            {enrollment.enrollmentMethod === 'INVITE_ONLY' && (
+              <span className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#a855f7] to-[#6778ff]">
+                선발
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Program Title */}
@@ -116,8 +143,8 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
           {enrollment.courseTimeName}
         </p>
 
-        {/* Progress Bar (only for APPROVED status) */}
-        {enrollment.status === 'APPROVED' && enrollment.progress !== undefined && (
+        {/* Progress Bar (only for APPROVED/ENROLLED status, not PENDING) */}
+        {(enrollment.status === 'APPROVED' || enrollment.status === 'ENROLLED') && enrollment.progress !== undefined && (
           <div className="mb-3">
             <div className={`flex items-center justify-between text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               <span>{t.learning.progress}</span>
@@ -133,20 +160,39 @@ function EnrollmentCard({ enrollment, onClick, onContinueLearning, t, isDark }: 
           <span>{formatDate(enrollment.startDate)} ~ {formatDate(enrollment.endDate)}</span>
         </div>
 
-        {/* Continue Learning Button (only for APPROVED) */}
-        {enrollment.status === 'APPROVED' && (
-          <Button
-            variant="brand"
-            className="w-full mt-4"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onContinueLearning();
-            }}
-          >
-            <PlayCircle className="w-4 h-4 mr-2" />
-            {t.learning.continueLearning}
-          </Button>
+        {/* Continue Learning Button (for APPROVED/ENROLLED) */}
+        {(enrollment.status === 'APPROVED' || enrollment.status === 'ENROLLED') && (
+          <>
+            <Button
+              variant="brand"
+              className="w-full mt-4"
+              size="sm"
+              disabled={isLearningDisabled}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isLearningDisabled) {
+                  onContinueLearning();
+                }
+              }}
+            >
+              <PlayCircle className="w-4 h-4 mr-2" />
+              {t.learning.continueLearning}
+            </Button>
+            {/* 비활성화 사유 메시지 */}
+            {isLearningDisabled && (
+              <p className={`text-center text-xs mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                {getDisabledMessage()}
+              </p>
+            )}
+          </>
+        )}
+
+        {/* PENDING 상태 안내 */}
+        {isPending && (
+          <div className={`mt-4 p-3 rounded-lg text-center text-sm ${isDark ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
+            <AlertCircle className="w-4 h-4 inline-block mr-1" />
+            {t.learning.pendingApproval ?? '운영자 승인 대기 중입니다'}
+          </div>
         )}
       </CardContent>
     </Card>
@@ -173,21 +219,30 @@ export function MyLearningPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
 
-  // API 파라미터 - "수강 중인 강의" 페이지이므로 APPROVED 상태만 조회
-  // 필터에서 다른 상태를 선택하면 해당 상태로 조회
+  // API 파라미터 - 전체 선택 시 status 파라미터 생략하여 모든 상태 조회
   const params: EnrollmentFilterParams = {
     page,
     size: 12,
-    status: statusFilter !== 'all' ? statusFilter : 'APPROVED',
+    status: statusFilter !== 'all' ? statusFilter : undefined,
   };
 
   const { data, isLoading, isError } = useMyEnrollments(params);
 
-  // 검색 필터링 (클라이언트 사이드)
-  const filteredContent = data?.content.filter((enrollment) =>
-    enrollment.programTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    enrollment.courseTimeName.toLowerCase().includes(searchQuery.toLowerCase())
-  ) ?? [];
+  // 검색 필터링 + 상태 필터링 (클라이언트 사이드)
+  // "전체" 선택 시 COMPLETED는 제외 (수강 중인 강의 페이지이므로)
+  const filteredContent = data?.content.filter((enrollment) => {
+    // 검색어 필터
+    const matchesSearch =
+      enrollment.programTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      enrollment.courseTimeName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // "전체" 선택 시 COMPLETED 제외 (수강 중 + 승인 대기만 표시)
+    const matchesStatus = statusFilter === 'all'
+      ? enrollment.status !== 'COMPLETED'
+      : true;
+
+    return matchesSearch && matchesStatus;
+  }) ?? [];
 
   const handleEnrollmentClick = (enrollmentId: number) => {
     navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));

@@ -94,3 +94,31 @@ export interface InstructorAssignmentListResponse {
   assignedAt: string;
   createdAt: string;
 }
+
+// ============================================
+// 강사 가용성 체크 Types
+// ============================================
+
+/** 강사 가용성 체크 요청 (벌크) */
+export interface InstructorAvailabilityCheckRequest {
+  userIds: number[];
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+}
+
+/** 충돌 배정 정보 */
+export interface ConflictingAssignment {
+  timeId: number;
+  courseName: string;
+  timeName: string;
+  startDate: string;
+  endDate: string;
+  role: import('@/types/tu/instructorAssignment.types').InstructorRole;
+}
+
+/** 강사 가용성 체크 응답 */
+export interface InstructorAvailabilityResponse {
+  userId: number;
+  available: boolean;
+  conflictingAssignments: ConflictingAssignment[];
+}

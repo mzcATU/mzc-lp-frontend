@@ -10,6 +10,7 @@ import type {
   CourseTimeCatalogParams,
 } from '@/types/tu/courseTimeCatalog.types';
 import type { ApiResponse, PageResponse } from '@/types/common';
+import { useAuthStore } from '@/store/common/authStore';
 
 /**
  * URL에서 서브도메인 추출
@@ -25,19 +26,26 @@ function getSubdomainFromUrl(): string | null {
   return null;
 }
 
-// Public API용 axios 인스턴스 (인증 토큰 불필요)
+// Public API용 axios 인스턴스
 // VITE_API_BASE_URL이 이미 /api를 포함하므로 BASE_URL에서 /api 제거
 const publicAxios = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
   timeout: 10000,
 });
 
-// 요청 인터셉터: X-Subdomain 헤더 추가
+// 요청 인터셉터: X-Subdomain 헤더 + 인증 토큰 추가 (INVITE_ONLY 필터링용)
 publicAxios.interceptors.request.use((config) => {
   const subdomain = getSubdomainFromUrl();
   if (subdomain) {
     config.headers['X-Subdomain'] = subdomain;
   }
+
+  // 로그인한 사용자의 경우 인증 토큰 추가 (INVITE_ONLY 과정 필터링용)
+  const accessToken = useAuthStore.getState().accessToken;
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+
   return config;
 });
 

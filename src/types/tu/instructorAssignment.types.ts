@@ -83,7 +83,7 @@ export const ASSIGNMENT_STATUS_LABELS: Record<AssignmentStatus, { ko: string; en
 /**
  * 수강생 상태
  */
-export type StudentEnrollmentStatus = 'ENROLLED' | 'IN_PROGRESS' | 'COMPLETED' | 'DROPPED';
+export type StudentEnrollmentStatus = 'PENDING' | 'ENROLLED' | 'IN_PROGRESS' | 'COMPLETED' | 'DROPPED';
 
 /**
  * 차수 수강생 목록 아이템
@@ -130,6 +130,7 @@ export interface CourseTimeEnrollmentsResponse {
  * 수강생 상태 라벨
  */
 export const STUDENT_ENROLLMENT_STATUS_LABELS: Record<StudentEnrollmentStatus, { ko: string; en: string }> = {
+  PENDING: { ko: '승인 대기', en: 'Pending' },
   ENROLLED: { ko: '수강 대기', en: 'Enrolled' },
   IN_PROGRESS: { ko: '수강 중', en: 'In Progress' },
   COMPLETED: { ko: '수료', en: 'Completed' },

@@ -42,6 +42,8 @@ import {
   useCompleteEnrollment,
   useUpdateEnrollmentStatus,
   useAdminCancelEnrollment,
+  useApproveEnrollment,
+  useRejectEnrollment,
 } from '@/hooks/co/useEnrollmentQueries';
 import { useUsers } from '@/hooks/co/useUserQueries';
 import type {
@@ -104,13 +106,22 @@ const t = {
   forceEnrollSuccess: { ko: '명 배정 완료', en: ' enrolled successfully' },
   forceEnrollFail: { ko: '명 배정 실패', en: ' failed to enroll' },
   courseTimeNotFound: { ko: '차수를 찾을 수 없습니다.', en: 'Course time not found.' },
+  approve: { ko: '승인', en: 'Approve' },
+  reject: { ko: '거절', en: 'Reject' },
+  confirmApprove: { ko: '수강신청을 승인하시겠습니까?', en: 'Approve this enrollment request?' },
+  confirmReject: { ko: '거절 사유를 입력하세요.', en: 'Enter rejection reason.' },
+  approving: { ko: '승인 중...', en: 'Approving...' },
+  rejecting: { ko: '거절 중...', en: 'Rejecting...' },
+  pendingApproval: { ko: '승인 대기', en: 'Pending Approval' },
 };
 
 const statusBadgeVariant: Record<EnrollmentStatus, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
+  PENDING: 'secondary',
   ENROLLED: 'warning',
   COMPLETED: 'success',
   DROPPED: 'destructive',
   FAILED: 'default',
+  REJECTED: 'destructive',
 };
 
 // 아이콘 색상별 스타일 (디자인 토큰 기반)
@@ -164,8 +175,10 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showDropModal, setShowDropModal] = useState(false);
   const [showForceEnrollModal, setShowForceEnrollModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [completeScore, setCompleteScore] = useState('');
   const [dropReason, setDropReason] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [forceEnrollReason, setForceEnrollReason] = useState('');
 
@@ -189,6 +202,8 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
   const completeEnrollment = useCompleteEnrollment();
   const updateStatus = useUpdateEnrollmentStatus();
   const cancelEnrollment = useAdminCancelEnrollment();
+  const approveEnrollment = useApproveEnrollment();
+  const rejectEnrollment = useRejectEnrollment();
 
   const enrollments = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
@@ -278,6 +293,34 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
     }
   };
 
+  const handleApprove = async (enrollment: EnrollmentResponse) => {
+    if (!confirm(getText('confirmApprove'))) return;
+    try {
+      await approveEnrollment.mutateAsync(enrollment.id);
+    } catch (err) {
+      console.error('Approve failed:', err);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedEnrollment) return;
+    if (!rejectReason.trim()) {
+      alert(getText('reasonRequired'));
+      return;
+    }
+    try {
+      await rejectEnrollment.mutateAsync({
+        id: selectedEnrollment.id,
+        reason: rejectReason,
+      });
+      setShowRejectModal(false);
+      setSelectedEnrollment(null);
+      setRejectReason('');
+    } catch (err) {
+      console.error('Reject failed:', err);
+    }
+  };
+
   // 더보기 메뉴 렌더링
   const renderMoreMenu = (item: EnrollmentResponse) => {
     return (
@@ -291,6 +334,26 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
+          {/* PENDING 상태: 승인/거절 */}
+          {item.status === 'PENDING' && (
+            <>
+              <DropdownMenuItem onClick={() => handleApprove(item)}>
+                <CheckCircle size={14} />
+                {getText('approve')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedEnrollment(item);
+                  setShowRejectModal(true);
+                }}
+                variant="destructive"
+              >
+                <XCircle size={14} />
+                {getText('reject')}
+              </DropdownMenuItem>
+            </>
+          )}
+          {/* ENROLLED 상태: 수료/중도탈락/취소 */}
           {item.status === 'ENROLLED' && (
             <>
               <DropdownMenuItem
@@ -413,6 +476,19 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
               className="flex items-center justify-end gap-1"
               onClick={(e) => e.stopPropagation()}
             >
+              {item.status === 'PENDING' && (
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleApprove(item);
+                  }}
+                  className="h-8"
+                >
+                  <CheckCircle size={14} />
+                  {getText('approve')}
+                </Button>
+              )}
               {item.status === 'ENROLLED' && (
                 <Button
                   size="sm"
@@ -531,7 +607,7 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
                 {getText('status')}
               </label>
               <div className="flex flex-wrap gap-2">
-                {(['all', 'ENROLLED', 'COMPLETED', 'DROPPED', 'FAILED'] as const).map(
+                {(['all', 'PENDING', 'ENROLLED', 'COMPLETED', 'DROPPED', 'FAILED'] as const).map(
                   (status) => (
                     <button
                       key={status}
@@ -724,6 +800,49 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
                 className="bg-status-error hover:bg-status-error/90 text-white"
               >
                 {updateStatus.isPending ? getText('completing') : getText('confirm')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && selectedEnrollment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-bg-default rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <h3 className="text-lg font-medium text-text-primary mb-2 flex items-center gap-2">
+              <XCircle size={20} className="text-status-error" />
+              {getText('confirmReject')}
+            </h3>
+            <p className="text-sm text-text-secondary mb-4">
+              {selectedEnrollment.userName || `User ${selectedEnrollment.userId}`}
+            </p>
+            <div className="mb-4">
+              <Label className="text-text-secondary mb-2">{getText('reason')} *</Label>
+              <Textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder={getText('reasonPlaceholder')}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setSelectedEnrollment(null);
+                  setRejectReason('');
+                }}
+              >
+                {getText('cancel')}
+              </Button>
+              <Button
+                onClick={handleReject}
+                disabled={rejectEnrollment.isPending || !rejectReason.trim()}
+                className="bg-status-error hover:bg-status-error/90 text-white"
+              >
+                {rejectEnrollment.isPending ? getText('rejecting') : getText('confirm')}
               </Button>
             </div>
           </div>

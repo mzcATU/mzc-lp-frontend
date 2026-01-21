@@ -434,20 +434,39 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
       {
         id: 'capacity',
         header: getText('columnCapacity'),
-        cell: ({ row }) => (
-          <div
-            className="flex items-center gap-1.5 cursor-pointer hover:text-action-primary transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(prefixPath(`/co/users?courseTimeId=${row.original.id}`));
-            }}
-          >
-            <Users size={14} className="text-text-secondary" />
-            <span className="text-sm text-text-primary hover:underline">
-              {formatCapacity(row.original.capacity, row.original.currentEnrollment)}
-            </span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isInviteOnlyNoUsers =
+            row.original.enrollmentMethod === 'INVITE_ONLY' &&
+            row.original.currentEnrollment === 0 &&
+            row.original.status !== 'CLOSED' &&
+            row.original.status !== 'ARCHIVED';
+
+          return (
+            <div
+              className="flex items-center gap-1.5 cursor-pointer hover:text-action-primary transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isInviteOnlyNoUsers) {
+                  // 배정 필요한 경우: 전체 사용자 목록 + 배정 대상 차수 ID 전달
+                  navigate(prefixPath(`/co/users?assignToTimeId=${row.original.id}`));
+                } else {
+                  // 일반 경우: 해당 차수의 수강생 목록
+                  navigate(prefixPath(`/co/users?courseTimeId=${row.original.id}`));
+                }
+              }}
+            >
+              <Users size={14} className={isInviteOnlyNoUsers ? 'text-status-warning' : 'text-text-secondary'} />
+              <span className="text-sm text-text-primary hover:underline">
+                {formatCapacity(row.original.capacity, row.original.currentEnrollment)}
+              </span>
+              {isInviteOnlyNoUsers && (
+                <span className="text-xs text-status-warning font-medium">
+                  {language === 'ko' ? '배정 필요' : 'Assign'}
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: 'instructor',
