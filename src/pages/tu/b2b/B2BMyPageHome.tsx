@@ -378,7 +378,7 @@ export function B2BMyPageHome() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/learning'))}
               className={isDark ? 'text-gray-400 hover:text-white' : ''}
             >
               {t.mypage.viewAll}
@@ -400,7 +400,7 @@ export function B2BMyPageHome() {
                       ? 'bg-white/5 border-white/10 hover:bg-white/10'
                       : 'bg-white hover:shadow-md'
                   }`}
-                  onClick={() => navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollment.id}`))}
+                  onClick={() => navigate(prefixPath(`/tu/b2b/mypage/learning/${enrollment.id}`))}
                 >
                   <CardContent className="p-5">
                     <Badge variant={statusColors[enrollment.status]} className="text-xs mb-3">
@@ -462,7 +462,7 @@ export function B2BMyPageHome() {
               <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {t.mypage.noEnrolledCoursesDesc}
               </p>
-              <Button onClick={() => navigate(prefixPath('/tu/b2c/courses'))}>{t.mypage.browseCourses}</Button>
+              <Button onClick={() => navigate(prefixPath('/tu/b2b'))}>{t.mypage.browseCourses}</Button>
             </div>
           )}
         </section>
@@ -477,42 +477,42 @@ export function B2BMyPageHome() {
               icon={<BookOpen className="w-5 h-5" />}
               title={t.mypage.myLearning}
               description={t.mypage.myLearningDesc}
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/learning'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Award className="w-5 h-5" />}
               title={t.mypage.certificates}
               description={t.mypage.certificatesDesc}
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/certificates'))}
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/certificates'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Shield className="w-5 h-5" />}
               title={t.mypage.profileAndSecurity}
               description={t.mypage.profileSecurityDesc}
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/profile'))}
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/profile'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Bell className="w-5 h-5" />}
               title={t.mypage.notifications}
               description={t.mypage.notificationsDesc}
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/notifications'))}
+              onClick={() => navigate(prefixPath('/tu/b2b/notifications'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<Globe className="w-5 h-5" />}
               title={t.mypage.languageRegion}
               description={t.mypage.languageRegionDesc}
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/language'))}
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/settings'))}
               isDark={isDark}
             />
             <QuickMenuItem
               icon={<TrendingUp className="w-5 h-5" />}
               title={t.mypage.learningProgress}
               description={t.mypage.learningProgressDesc}
-              onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}
+              onClick={() => navigate(prefixPath('/tu/b2b/mypage/learning'))}
               isDark={isDark}
             />
           </div>

@@ -140,7 +140,7 @@ export function B2BCourseDetailPage() {
     enrollMutation.mutate(courseTimeId, {
       onSuccess: () => {
         toast.success('수강 신청이 완료되었습니다.');
-        navigate(prefixPath('/tu/b2c/mypage/learning'));
+        navigate(prefixPath('/tu/b2b/mypage/learning'));
       },
       onError: (error: Error & { response?: { data?: { error?: { message?: string } } } }) => {
         const message = error.response?.data?.error?.message || '수강 신청에 실패했습니다.';
