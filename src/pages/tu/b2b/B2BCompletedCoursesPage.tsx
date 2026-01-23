@@ -173,7 +173,7 @@ export function B2BCompletedCoursesPage() {
   const issueMutation = useIssueCertificate();
 
   const handleCourseClick = (enrollmentId: number) => {
-    navigate(prefixPath(`/tu/b2c/mypage/learning/${enrollmentId}`));
+    navigate(prefixPath(`/tu/b2b/mypage/learning/${enrollmentId}`));
   };
 
   const handleViewCertificate = (enrollmentId: number) => {
@@ -284,7 +284,7 @@ export function B2BCompletedCoursesPage() {
                 ? '강의를 완료하면 여기에 표시됩니다.'
                 : 'Completed courses will appear here.'}
             </p>
-            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2c/mypage/learning'))}>
+            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2b/mypage/learning'))}>
               {language === 'ko' ? '학습 중인 강의 보기' : 'View Current Courses'}
             </Button>
           </div>

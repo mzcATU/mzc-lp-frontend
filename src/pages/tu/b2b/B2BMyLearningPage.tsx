@@ -318,7 +318,7 @@ export function B2BMyLearningPage() {
             <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               {t.learning.noEnrollmentsDesc}
             </p>
-            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2c/courses'))}>
+            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2b'))}>
               {t.learning.browseCourses}
             </Button>
           </div>
