@@ -2,19 +2,19 @@
  * 나의 교수 관리 페이지 (TU - 강사 본인용)
  * 리스트형/카드형 뷰 전환 가능
  */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, CalendarDays, FileText, BookOpen, Users, Filter } from 'lucide-react';
-import { Button } from '@/components/common';
+import { Button, DataTable, Badge } from '@/components/common';
 import { ViewToggle } from '@/components/common/ViewToggle/ViewToggle';
 import { useMyAssignments, useMyInstructorStatistics } from '@/hooks/tu';
 import {
   AssignmentCard,
 } from '@/components/domain/tu/assignment';
 import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
-import { designTokens } from '@/styles/admin-design-tokens';
 import { cn } from '@/utils/cn';
 import type { InstructorAssignmentResponse } from '@/types/tu';
+import type { ColumnDef } from '@tanstack/react-table';
 
 interface MyAssignmentsPageProps {
   language?: 'ko' | 'en';
@@ -22,21 +22,21 @@ interface MyAssignmentsPageProps {
 
 const t = {
   title: { ko: '내 교수 관리', en: 'My Teaching' },
-  subtitle: { ko: '주강사·보조강사로 진행 중인 강의와 수강생 현황을 확인하세요', en: 'View courses you are teaching and student progress' },
+  subtitle: { ko: '주강사·보조강사로 진행 중인 과정과 수강생 현황을 확인하세요', en: 'View courses you are teaching and student progress' },
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
-  noAssignments: { ko: '진행 중인 강의가 없습니다', en: 'No active courses found' },
+  noAssignments: { ko: '진행 중인 과정이 없습니다', en: 'No active courses found' },
   noAssignmentsDesc: { ko: '승인된 과정에 강사로 배정되면 여기에 표시됩니다', en: 'Courses will appear here when you are assigned as an instructor' },
   goToCourseDesign: { ko: '과정 설계로 이동', en: 'Go to Course Design' },
   myAssignments: { ko: '나의 강의', en: 'My Courses' },
   assignmentCount: { ko: '건', en: ' items' },
-  activeCourses: { ko: '진행 중인 강의', en: 'Active Courses' },
+  activeCourses: { ko: '진행 중인 과정', en: 'Active Courses' },
   totalStudents: { ko: '총 수강생', en: 'Total Students' },
   mainInstructor: { ko: '주강사', en: 'Main Instructor' },
   subInstructor: { ko: '보조강사', en: 'Sub Instructor' },
   cardView: { ko: '카드형', en: 'Card View' },
   listView: { ko: '리스트형', en: 'List View' },
-  courseName: { ko: '강의명', en: 'Course Name' },
+  courseName: { ko: '과정명', en: 'Course Name' },
   timeNumber: { ko: '차수', en: 'Session' },
   role: { ko: '역할', en: 'Role' },
   students: { ko: '수강생', en: 'Students' },
@@ -47,7 +47,14 @@ const t = {
   ended: { ko: '종료', en: 'Ended' },
   latest: { ko: '최신순', en: 'Latest' },
   oldest: { ko: '오래된순', en: 'Oldest' },
+  assignedDate: { ko: '배정일', en: 'Assigned Date' },
 };
+
+// 테이블 데이터 타입 (통계 정보 포함)
+interface AssignmentTableData extends InstructorAssignmentResponse {
+  courseName: string;
+  studentCount: number;
+}
 
 export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPageProps>) {
   const navigate = useNavigate();
@@ -107,6 +114,16 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
     return sortOrder === 'latest' ? dateB - dateA : dateA - dateB;
   });
 
+  // 테이블 데이터 변환 (통계 정보 포함)
+  const tableData: AssignmentTableData[] = sortedAssignments.map((assignment) => {
+    const stats = timeStatsMap.get(assignment.timeId);
+    return {
+      ...assignment,
+      courseName: stats?.courseName || String(assignment.timeId),
+      studentCount: stats?.totalStudents ?? 0,
+    };
+  });
+
   // 각 상태별 카운트
   const statusCounts = {
     all: allAssignments.length,
@@ -122,24 +139,60 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
     return sum + (stat.totalStudents ?? 0);
   }, 0) ?? 0;
 
+  // DataTable 컬럼 정의
+  const columns: ColumnDef<AssignmentTableData>[] = useMemo(() => [
+    {
+      accessorKey: 'courseName',
+      header: () => <span className="text-text-secondary">{getText('courseName')}</span>,
+      cell: ({ row }) => (
+        <span className="font-medium text-text-primary">{row.original.courseName}</span>
+      ),
+    },
+    {
+      accessorKey: 'role',
+      header: () => <span className="text-text-secondary">{getText('role')}</span>,
+      cell: ({ row }) => (
+        <Badge variant={row.original.role === 'MAIN' ? 'warning' : 'success'}>
+          {row.original.role === 'MAIN' ? getText('mainInstructor') : getText('subInstructor')}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'studentCount',
+      header: () => <span className="text-text-secondary">{getText('students')}</span>,
+      cell: ({ row }) => (
+        <span className="text-text-primary">{row.original.studentCount}명</span>
+      ),
+    },
+    {
+      accessorKey: 'assignedAt',
+      header: () => <span className="text-text-secondary">{getText('assignedDate')}</span>,
+      cell: ({ row }) => (
+        <span className="text-sm text-text-secondary">
+          {new Date(row.original.assignedAt).toLocaleDateString('ko-KR')}
+        </span>
+      ),
+    },
+  ], [language]);
+
   // 에러 상태
   if (error) {
     return (
-      <div className="h-full flex items-center justify-center" style={{ backgroundColor: designTokens.bg.app_default }}>
+      <div className="h-full flex items-center justify-center bg-bg-app_default">
         <div className="text-center">
-          <FileText size={48} className="mx-auto mb-3" style={{ color: designTokens.text.placeholder }} />
-          <p style={{ color: designTokens.text.secondary }}>{getText('error')}</p>
+          <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
+          <p className="text-text-secondary">{getText('error')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 min-h-screen" style={{ backgroundColor: designTokens.bg.app_default }}>
+    <div className="p-8 min-h-screen bg-bg-app_default">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="mb-2" style={{ color: designTokens.text.primary }}>{getText('title')}</h1>
-        <p className="m-0" style={{ color: designTokens.text.secondary }}>{getText('subtitle')}</p>
+        <h1 className="mb-2 text-text-primary">{getText('title')}</h1>
+        <p className="m-0 text-text-secondary">{getText('subtitle')}</p>
       </div>
 
       {/* 통계 카드 - 상단 */}
@@ -147,20 +200,14 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
         <div className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 진행 중인 강의 */}
-            <div
-              className="p-5 rounded-lg border"
-              style={{
-                backgroundColor: designTokens.bg.default,
-                borderColor: designTokens.bg.border,
-              }}
-            >
+            <div className="p-5 rounded-lg border bg-bg-default border-border">
               <div className="flex items-start gap-3">
-                <BookOpen size={20} style={{ color: '#5E35B1', marginTop: '2px' }} />
+                <BookOpen size={20} className="text-[#5E35B1] mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm m-0 mb-2" style={{ color: designTokens.text.secondary }}>
+                  <p className="text-sm m-0 mb-2 text-text-secondary">
                     {getText('activeCourses')}
                   </p>
-                  <p className="text-3xl font-semibold m-0" style={{ color: designTokens.text.primary }}>
+                  <p className="text-3xl font-semibold m-0 text-text-primary">
                     {activeAssignmentCount}
                   </p>
                 </div>
@@ -168,20 +215,14 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
             </div>
 
             {/* 총 수강생 (진행 중인 강의 기준) */}
-            <div
-              className="p-5 rounded-lg border"
-              style={{
-                backgroundColor: designTokens.bg.default,
-                borderColor: designTokens.bg.border,
-              }}
-            >
+            <div className="p-5 rounded-lg border bg-bg-default border-border">
               <div className="flex items-start gap-3">
-                <Users size={20} style={{ color: '#43A047', marginTop: '2px' }} />
+                <Users size={20} className="text-status-success mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm m-0 mb-2" style={{ color: designTokens.text.secondary }}>
+                  <p className="text-sm m-0 mb-2 text-text-secondary">
                     {getText('totalStudents')}
                   </p>
-                  <p className="text-3xl font-semibold m-0" style={{ color: designTokens.text.primary }}>
+                  <p className="text-3xl font-semibold m-0 text-text-primary">
                     {totalStudents}
                   </p>
                 </div>
@@ -196,8 +237,8 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
         {/* 로딩 상태 */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={32} className="animate-spin" style={{ color: designTokens.text.secondary }} />
-            <span className="ml-2" style={{ color: designTokens.text.secondary }}>{getText('loading')}</span>
+            <Loader2 size={32} className="animate-spin text-text-secondary" />
+            <span className="ml-2 text-text-secondary">{getText('loading')}</span>
           </div>
         )}
 
@@ -257,9 +298,9 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
             {/* 빈 상태 */}
             {filteredAssignments.length === 0 && (
               <div className="text-center py-12">
-                <CalendarDays size={48} className="mx-auto mb-3" style={{ color: designTokens.text.placeholder }} />
-                <p className="mb-1" style={{ color: designTokens.text.secondary }}>{getText('noAssignments')}</p>
-                <p className="text-sm mb-4" style={{ color: designTokens.text.placeholder }}>{getText('noAssignmentsDesc')}</p>
+                <CalendarDays size={48} className="mx-auto mb-3 text-text-placeholder" />
+                <p className="mb-1 text-text-secondary">{getText('noAssignments')}</p>
+                <p className="text-sm mb-4 text-text-placeholder">{getText('noAssignmentsDesc')}</p>
                 <Button
                   variant="outline"
                   onClick={() => navigate(prefixPath('/tu/teaching/courses'))}
@@ -285,80 +326,18 @@ export function MyAssignmentsPage({ language = 'ko' }: Readonly<MyAssignmentsPag
               </div>
             )}
 
-            {/* 리스트형 뷰 */}
+            {/* 리스트형 뷰 - DataTable 사용 */}
             {filteredAssignments.length > 0 && viewType === 'list' && (
-              <div
-                className="rounded-lg border overflow-hidden"
-                style={{
-                  backgroundColor: designTokens.bg.default,
-                  borderColor: designTokens.bg.border,
+              <DataTable
+                columns={columns}
+                data={tableData}
+                showColumnToggle={false}
+                showPagination={false}
+                onRowClick={(row) => navigate(prefixPath(`/tu/teaching/assignments/${row.id}`))}
+                labels={{
+                  noResults: getText('noAssignments'),
                 }}
-              >
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr
-                      className="border-b"
-                      style={{
-                        backgroundColor: designTokens.bg.secondary,
-                        borderBottomColor: designTokens.bg.border,
-                      }}
-                    >
-                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
-                        {getText('courseName')}
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
-                        {getText('role')}
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
-                        {getText('students')}
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium" style={{ color: designTokens.text.secondary }}>
-                        배정일
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedAssignments.map((assignment: InstructorAssignmentResponse) => {
-                      const stats = timeStatsMap.get(assignment.timeId);
-                      return (
-                        <tr
-                          key={assignment.id}
-                          onClick={() => navigate(prefixPath(`/tu/teaching/assignments/${assignment.id}`))}
-                          className="border-b cursor-pointer transition-colors"
-                          style={{ borderBottomColor: designTokens.bg.border }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = designTokens.bg.secondary;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                          }}
-                        >
-                          <td className="px-4 py-4 font-medium" style={{ color: designTokens.text.primary }}>
-                            {stats?.courseName || String(assignment.timeId)}
-                          </td>
-                          <td className="px-4 py-4">
-                            <span
-                              className="px-2 py-1 rounded text-xs font-medium whitespace-nowrap"
-                              style={{
-                                backgroundColor: assignment.role === 'MAIN' ? '#FFF3E0' : '#E8F5E9',
-                                color: assignment.role === 'MAIN' ? '#F57C00' : '#43A047',
-                              }}
-                            >
-                              {assignment.role === 'MAIN' ? getText('mainInstructor') : getText('subInstructor')}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4" style={{ color: designTokens.text.primary }}>
-                            {stats?.totalStudents ?? 0}명
-                          </td>
-                          <td className="px-4 py-4 text-sm" style={{ color: designTokens.text.secondary }}>
-                            {new Date(assignment.assignedAt).toLocaleDateString('ko-KR')}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              />
             )}
           </>
         )}

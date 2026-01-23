@@ -86,7 +86,7 @@ const t = {
   loading: { ko: '로딩 중...', en: 'Loading...' },
   error: { ko: '오류가 발생했습니다.', en: 'An error occurred.' },
   confirmDelete: { ko: '정말 삭제하시겠습니까?', en: 'Are you sure you want to delete?' },
-  deleteFailedInUse: { ko: '이 콘텐츠는 강의에 포함되어 있어 삭제할 수 없습니다.', en: 'This content cannot be deleted because it is included in a course.' },
+  deleteFailedInUse: { ko: '이 콘텐츠는 과정에 포함되어 있어 삭제할 수 없습니다.', en: 'This content cannot be deleted because it is included in a course.' },
   prev: { ko: '이전', en: 'Prev' },
   next: { ko: '다음', en: 'Next' },
   contentCount: { ko: '개의 콘텐츠', en: ' contents' },

@@ -16,27 +16,27 @@ interface TUDashboardPageProps {
 
 const t = {
   title: { ko: '대시보드', en: 'Dashboard' },
-  subtitle: { ko: '강의 관리와 운영 현황을 확인하세요', en: 'Manage and monitor your courses' },
+  subtitle: { ko: '과정 관리와 운영 현황을 확인하세요', en: 'Manage and monitor your courses' },
 
   // 통계
-  statDraft: { ko: '작성중 강의', en: 'Draft Courses' },
-  statActive: { ko: '운영중 강의', en: 'Active Courses' },
+  statDraft: { ko: '작성중 과정', en: 'Draft Courses' },
+  statActive: { ko: '운영중 과정', en: 'Active Courses' },
 
-  // 작성중인 강의
-  draftSectionTitle: { ko: '작성중인 강의', en: 'Draft Courses' },
-  draftSectionSubtitle: { ko: '완료되지 않은 강의를 이어서 작성하세요', en: 'Continue working on incomplete courses' },
+  // 작성중인 과정
+  draftSectionTitle: { ko: '작성중인 과정', en: 'Draft Courses' },
+  draftSectionSubtitle: { ko: '완료되지 않은 과정을 이어서 작성하세요', en: 'Continue working on incomplete courses' },
   lastEdited: { ko: '마지막 수정', en: 'Last edited' },
   continueButton: { ko: '이어서 작성', en: 'Continue' },
-  emptyDraft: { ko: '작성중인 강의가 없습니다', en: 'No draft courses' },
+  emptyDraft: { ko: '작성중인 과정이 없습니다', en: 'No draft courses' },
   viewAll: { ko: '전체 보기', en: 'View All' },
 
 
-  // 운영중인 강의
-  activeSectionTitle: { ko: '운영중인 강의', en: 'Active Courses' },
-  activeSectionSubtitle: { ko: '현재 진행중인 강의와 수강생 현황', en: 'Current courses and student statistics' },
+  // 운영중인 과정
+  activeSectionTitle: { ko: '운영중인 과정', en: 'Active Courses' },
+  activeSectionSubtitle: { ko: '현재 진행중인 과정과 수강생 현황', en: 'Current courses and student statistics' },
   students: { ko: '수강생', en: 'Students' },
   completion: { ko: '완료율', en: 'Completion' },
-  emptyActive: { ko: '운영중인 강의가 없습니다', en: 'No active courses' },
+  emptyActive: { ko: '운영중인 과정이 없습니다', en: 'No active courses' },
 
   // 로딩
   loading: { ko: '데이터를 불러오는 중...', en: 'Loading data...' },

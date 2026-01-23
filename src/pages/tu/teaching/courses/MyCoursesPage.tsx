@@ -68,14 +68,14 @@ const t = {
   avgCompletion: { ko: '평균 완료율', en: 'Avg. Completion' },
   students: { ko: '수강생', en: 'Students' },
   courseCompletion: { ko: '콘텐츠 완성도', en: 'Course Completion' },
-  lessons: { ko: '차시', en: 'Lessons' },
+  lessons: { ko: '커리큘럼', en: 'Curriculum' },
   manageCourse: { ko: '과정 설계', en: 'Course Design' },
   editCourse: { ko: '수정', en: 'Edit' },
   noCourses: { ko: '작성한 과정 설계가 없습니다', en: 'No course plans yet' },
   noCoursesDesc: { ko: '새로운 과정 설계를 시작하여 학습 여정을 구성하세요', en: 'Design a new course plan to structure the learning journey' },
   createNewCourse: { ko: '과정 설계 만들기', en: 'Create Course Plan' },
-  loading: { ko: '강의 목록을 불러오는 중...', en: 'Loading courses...' },
-  error: { ko: '강의 목록을 불러오는데 실패했습니다', en: 'Failed to load courses' },
+  loading: { ko: '과정 목록을 불러오는 중...', en: 'Loading courses...' },
+  error: { ko: '과정 목록을 불러오는데 실패했습니다', en: 'Failed to load courses' },
   retry: { ko: '다시 시도', en: 'Retry' },
   applyProgram: { ko: '과정 신청', en: 'Apply Program' },
   applySelected: { ko: '선택 항목 일괄 신청', en: 'Apply Selected' },
@@ -91,7 +91,7 @@ const t = {
   columnTitle: { ko: '과정명', en: 'Course Title' },
   columnCategory: { ko: '카테고리', en: 'Category' },
   columnStatus: { ko: '상태', en: 'Status' },
-  columnLessons: { ko: '차시', en: 'Lessons' },
+  columnLessons: { ko: '커리큘럼', en: 'Curriculum' },
   columnUpdated: { ko: '수정일', en: 'Updated' },
   columnActions: { ko: '액션', en: 'Actions' },
   courseCount: { ko: '개의 과정', en: ' courses' },
@@ -318,11 +318,11 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
   // 일괄 신청
   const handleApplyBulk = async () => {
     if (selectedCourseIds.size === 0) {
-      alert('신청할 강의를 선택해주세요.');
+      alert('신청할 과정을 선택해주세요.');
       return;
     }
 
-    if (!confirm(`${selectedCourseIds.size}개의 강의를 과정으로 일괄 신청하시겠습니까?`)) return;
+    if (!confirm(`${selectedCourseIds.size}개의 과정을 일괄 신청하시겠습니까?`)) return;
 
     const selectedResponses = (coursesData?.content || []).filter((c) =>
       selectedCourseIds.has(String(c.courseId))
@@ -344,7 +344,7 @@ export function MyCoursesPage({ language = 'ko' }: Readonly<MyCoursesPageProps>)
           .map((r) => r.courseTitle)
           .join(', ');
         alert(
-          `${successCount}개 성공, ${failCount}개 실패\n실패한 강의: ${failedTitles}`
+          `${successCount}개 성공, ${failCount}개 실패\n실패한 과정: ${failedTitles}`
         );
       }
 
