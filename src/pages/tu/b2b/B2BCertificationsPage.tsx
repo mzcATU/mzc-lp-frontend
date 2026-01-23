@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Award, Loader2 } from 'lucide-react';
 import { useThemeStore } from '@/store/common/themeStore';
+import { useSubdomainPath } from '@/hooks/common/useSubdomainPath';
 import { useTranslation, useLanguageStore } from '@/store/common/languageStore';
 import { useAuthStore } from '@/store/common/authStore';
 import { useMyCertificates, useDownloadCertificate } from '@/hooks/tu';
@@ -17,6 +19,8 @@ import { CertificateCard, CertificatePreviewModal } from '@/components/domain/tu
 import type { CertificateResponse } from '@/types/tu';
 
 export function B2BCertificationsPage() {
+  const navigate = useNavigate();
+  const { prefixPath } = useSubdomainPath();
   const { theme } = useThemeStore();
   const { language } = useLanguageStore();
   const { t } = useTranslation();
@@ -159,7 +163,7 @@ export function B2BCertificationsPage() {
                 ? '강의를 수료하면 수료증이 여기에 표시됩니다.'
                 : 'Certificates will appear here when you complete courses.'}
             </p>
-            <Button variant="brand" onClick={() => window.location.href = '/tu/b2c/mypage/learning'}>
+            <Button variant="brand" onClick={() => navigate(prefixPath('/tu/b2b/mypage/learning'))}>
               {language === 'ko' ? '학습 중인 강의 보기' : 'View Current Courses'}
             </Button>
           </div>
