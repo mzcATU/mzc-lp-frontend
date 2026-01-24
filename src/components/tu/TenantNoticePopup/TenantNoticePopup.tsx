@@ -69,9 +69,9 @@ export function TenantNoticePopup() {
 
     const dismissedData = getDismissedData();
 
-    // 사용자에게 보여줄 공지 필터링 (USER 대상만, 이미 본 공지 제외)
+    // 사용자에게 보여줄 공지 필터링 (이미 본 공지 제외)
+    // 백엔드에서 이미 사용자 역할에 맞는 공지만 반환하므로 별도 필터링 불필요
     const userNotices = noticesData.content
-      .filter((notice) => notice.targetAudience === 'USER')
       .filter((notice) => !dismissedData.noticeIds.includes(notice.id));
 
     // 고정된 공지 먼저, 그 다음 최신순

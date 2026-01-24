@@ -18,6 +18,41 @@ import { useSubdomainPath } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
 import { authService } from '@/services/common/authService';
 import type { TenantRole } from '@/types/common/auth.types';
+import { useVisibleTenantNotices } from '@/hooks/ta/useTenantNoticeQueries';
+import { useSystemNotices } from '@/hooks/ta/useSystemNoticeQueries';
+
+// localStorage 키
+const TENANT_NOTICE_STORAGE_KEY = 'tenant-notice-dismissed';
+const SYSTEM_NOTICE_STORAGE_KEY = 'dismissed_system_notices';
+
+// 안읽은 공지 수를 계산하기 위한 유틸리티 함수
+function getTenantDismissedIds(): number[] {
+  try {
+    const stored = localStorage.getItem(TENANT_NOTICE_STORAGE_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.dismissedUntil && data.dismissedUntil < Date.now()) {
+        return [];
+      }
+      return data.noticeIds || [];
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function getSystemDismissedIds(): number[] {
+  try {
+    const stored = localStorage.getItem(SYSTEM_NOTICE_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored) as number[];
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
 
 // 역할 타입
 type RoleType = 'sa' | 'ta' | 'co' | 'tu';
@@ -110,6 +145,35 @@ export function BaseSidebar({
   const logout = useAuthStore((state) => state.logout);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const userSubdomain = useAuthStore((state) => state.user?.tenantSubdomain);
+
+  // 안읽은 공지 수 계산을 위한 데이터 조회
+  const { data: systemNoticesData } = useSystemNotices(
+    roleType === 'ta' ? { size: 100 } : undefined
+  );
+  const { data: tenantNoticesData } = useVisibleTenantNotices(
+    (roleType === 'co' || roleType === 'tu') ? { size: 100 } : undefined
+  );
+
+  // 안읽은 공지 수 계산
+  const unreadNoticeCount = useMemo(() => {
+    if (roleType === 'ta') {
+      if (!systemNoticesData?.content) return 0;
+      const dismissedIds = getSystemDismissedIds();
+      return systemNoticesData.content.filter(
+        (notice) => !dismissedIds.includes(notice.id)
+      ).length;
+    } else if (roleType === 'co' || roleType === 'tu') {
+      if (!tenantNoticesData?.content) return 0;
+      const dismissedIds = getTenantDismissedIds();
+      return tenantNoticesData.content.filter(
+        (notice) => !dismissedIds.includes(notice.id)
+      ).length;
+    }
+    return 0;
+  }, [roleType, systemNoticesData, tenantNoticesData]);
+
+  // 공지 메뉴 ID (역할별로 다름)
+  const noticeMenuIds = ['notice-management', 'global-notice'];
 
   // 로그아웃 처리
   const handleLogout = async () => {
@@ -321,6 +385,8 @@ export function BaseSidebar({
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isExpandedItem = expandedItems.includes(item.id);
             const isActive = activeItem === item.id;
+            const isNoticeMenu = noticeMenuIds.includes(item.id);
+            const showBadge = isNoticeMenu && unreadNoticeCount > 0;
 
             return (
               <div key={item.id} className="mb-1">
@@ -353,19 +419,33 @@ export function BaseSidebar({
                   }}
                   title={!isExpanded ? item.label[language] : ''}
                 >
-                  <Icon
-                    className="w-5 h-5 flex-shrink-0"
-                    style={{
-                      color:
-                        isActive && !hasSubItems
-                          ? colors.activeText
-                          : colors.textSecondary,
-                    }}
-                  />
+                  <div className="relative">
+                    <Icon
+                      className="w-5 h-5 flex-shrink-0"
+                      style={{
+                        color:
+                          isActive && !hasSubItems
+                            ? colors.activeText
+                            : colors.textSecondary,
+                      }}
+                    />
+                    {/* 접힌 상태에서 안읽은 공지 배지 */}
+                    {!isExpanded && showBadge && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full text-[10px] font-medium bg-red-500 text-white px-0.5">
+                        {unreadNoticeCount > 99 ? '99+' : unreadNoticeCount}
+                      </span>
+                    )}
+                  </div>
                   {isExpanded && (
                     <>
                       <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
                         {item.label[language]}
+                        {/* 펼친 상태에서 안읽은 공지 수 */}
+                        {showBadge && (
+                          <span className="ml-2 text-red-500 font-semibold">
+                            ({unreadNoticeCount})
+                          </span>
+                        )}
                       </span>
                       {hasSubItems && (
                         <span style={{ color: colors.textSecondary }}>
