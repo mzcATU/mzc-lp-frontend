@@ -7,6 +7,7 @@ import {
   PanelLeft,
   GraduationCap,
   ArrowLeft,
+  LogOut,
 } from 'lucide-react';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
@@ -15,6 +16,7 @@ import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { GlobalRoleSwitcher, type GlobalRole } from '../GlobalRoleSwitcher';
 import { useSubdomainPath } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
+import { authService } from '@/services/common/authService';
 import type { TenantRole } from '@/types/common/auth.types';
 
 // 역할 타입
@@ -105,6 +107,27 @@ export function BaseSidebar({
   // authStore에서 현재 역할 가져오기
   const storeCurrentRole = useAuthStore((state) => state.currentRole);
   const userRole = useAuthStore((state) => state.user?.role);
+  const logout = useAuthStore((state) => state.logout);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
+  const userSubdomain = useAuthStore((state) => state.user?.tenantSubdomain);
+
+  // 로그아웃 처리
+  const handleLogout = async () => {
+    if (window.confirm(language === 'ko' ? '로그아웃 하시겠습니까?' : 'Are you sure you want to logout?')) {
+      try {
+        if (refreshToken) {
+          await authService.logout(refreshToken);
+        }
+      } catch (error) {
+        console.error('Logout API failed:', error);
+      }
+      logout();
+      // 로그인 페이지로 이동
+      const isDefaultSubdomain = !userSubdomain || userSubdomain === 'default' || userSubdomain === 'www';
+      const loginPath = isDefaultSubdomain ? '/login' : `/${userSubdomain}/login`;
+      navigate(loginPath);
+    }
+  };
 
   // TenantRole → GlobalRole 매핑
   const tenantRoleToGlobalRole: Record<TenantRole, GlobalRole> = {
@@ -531,6 +554,39 @@ export function BaseSidebar({
               )}
             </button>
           )}
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+            style={{
+              width: isExpanded ? '100%' : '44px',
+              height: '44px',
+              padding: isExpanded ? '0 16px' : '0',
+              justifyContent: 'center',
+              color: colors.textPrimary,
+              margin: isExpanded ? '0' : '0 auto',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)';
+              e.currentTarget.style.color = '#EF4444';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = colors.textPrimary;
+            }}
+            title={language === 'ko' ? '로그아웃' : 'Logout'}
+          >
+            <LogOut
+              className="w-5 h-5 flex-shrink-0"
+              style={{ color: colors.textSecondary }}
+            />
+            {isExpanded && (
+              <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
+                {language === 'ko' ? '로그아웃' : 'Logout'}
+              </span>
+            )}
+          </button>
 
           {/* Collapse Toggle */}
           <button
