@@ -97,6 +97,7 @@ export const useLogin = () => {
         TENANT_ADMIN: '/ta',
         OPERATOR: '/co',
         DESIGNER: '/tu/teaching',
+        INSTRUCTOR: '/tu/teaching',
         USER: '/tu/b2c',
       };
       const basePath = roleBasePath[user.role] || '/tu/b2c';

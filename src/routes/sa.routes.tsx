@@ -13,7 +13,6 @@ import {
   TenantDetailPage,
   DomainSettingsPage,
   OperatorsPage,
-  BrandingSettingsPage,
   NoticesPage,
   AnalyticsPage,
   SystemSettingsPage,
@@ -40,7 +39,6 @@ export const saRoutes = (
     {/* 시스템 환경 관리 */}
     <Route path="system/domain" element={<DomainSettingsPage />} />
     <Route path="system/operators" element={<OperatorsPage />} />
-    <Route path="system/branding" element={<BrandingSettingsPage />} />
     {/* 글로벌 공지 관리 */}
     <Route path="notices" element={<NoticesPage />} />
     {/* 데이터 및 로그 분석 */}

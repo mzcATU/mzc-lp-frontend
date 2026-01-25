@@ -1,4 +1,4 @@
-import { Route, Outlet } from 'react-router-dom';
+import { Route, Outlet, Navigate } from 'react-router-dom';
 import { TenantUserLayout } from '@/components/layout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import { ProfileRequiredRoute } from '@/components/common/ProfileRequiredRoute';
@@ -58,6 +58,7 @@ export const tuTeachingRoutes = (
 
   <Route path="/:subdomain/tu" element={<TenantUserWrapper />}>
     <Route path="dashboard" element={<TUDashboardPage />} />
+    <Route path="teaching" element={<Navigate to="courses" replace />} />
     <Route path="teaching/courses" element={<MyCoursesPage />} />
     <Route path="teaching/courses/create" element={<CourseCreatePage />} />
     <Route path="teaching/courses/:courseId" element={<TeachingCourseDetailPage />} />
@@ -76,6 +77,9 @@ export const tuTeachingRoutes = (
   </Route>
   <Route path="/tu" element={<TenantUserWrapper />}>
     <Route path="dashboard" element={<TUDashboardPage />} />
+
+    {/* Teaching 인덱스 - courses로 리다이렉트 */}
+    <Route path="teaching" element={<Navigate to="courses" replace />} />
 
     {/* 내 강의계획 */}
     <Route path="teaching/courses" element={<MyCoursesPage />} />

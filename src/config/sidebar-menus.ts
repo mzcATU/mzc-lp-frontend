@@ -61,7 +61,6 @@ export const superAdminMenuData: MenuItem[] = [
     subItems: [
       { id: 'domain-management', label: { ko: '도메인 관리', en: 'Domain Management' }, icon: Globe, path: '/sa/system/domain' },
       { id: 'operator-mgmt', label: { ko: '운영자 관리', en: 'Operator Management' }, icon: UserCog, path: '/sa/system/operators' },
-      { id: 'global-branding', label: { ko: '브랜딩 설정', en: 'Branding Settings' }, icon: Palette, path: '/sa/system/branding' },
     ],
   },
   {

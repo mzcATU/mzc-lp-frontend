@@ -7,6 +7,7 @@ import {
   PanelLeft,
   GraduationCap,
   ArrowLeft,
+  LogOut,
 } from 'lucide-react';
 import type { BaseSidebarProps, SidebarColors } from '@/types';
 import { designTokens } from '@/styles/admin-design-tokens';
@@ -15,7 +16,43 @@ import { useTenantBranding } from '@/contexts/TenantBrandingContext';
 import { GlobalRoleSwitcher, type GlobalRole } from '../GlobalRoleSwitcher';
 import { useSubdomainPath } from '@/hooks/common';
 import { useAuthStore } from '@/store/common/authStore';
+import { authService } from '@/services/common/authService';
 import type { TenantRole } from '@/types/common/auth.types';
+import { useVisibleTenantNotices } from '@/hooks/ta/useTenantNoticeQueries';
+import { useSystemNotices } from '@/hooks/ta/useSystemNoticeQueries';
+
+// localStorage 키
+const TENANT_NOTICE_STORAGE_KEY = 'tenant-notice-dismissed';
+const SYSTEM_NOTICE_STORAGE_KEY = 'dismissed_system_notices';
+
+// 안읽은 공지 수를 계산하기 위한 유틸리티 함수
+function getTenantDismissedIds(): number[] {
+  try {
+    const stored = localStorage.getItem(TENANT_NOTICE_STORAGE_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.dismissedUntil && data.dismissedUntil < Date.now()) {
+        return [];
+      }
+      return data.noticeIds || [];
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function getSystemDismissedIds(): number[] {
+  try {
+    const stored = localStorage.getItem(SYSTEM_NOTICE_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored) as number[];
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
 
 // 역할 타입
 type RoleType = 'sa' | 'ta' | 'co' | 'tu';
@@ -105,6 +142,56 @@ export function BaseSidebar({
   // authStore에서 현재 역할 가져오기
   const storeCurrentRole = useAuthStore((state) => state.currentRole);
   const userRole = useAuthStore((state) => state.user?.role);
+  const logout = useAuthStore((state) => state.logout);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
+  const userSubdomain = useAuthStore((state) => state.user?.tenantSubdomain);
+
+  // 안읽은 공지 수 계산을 위한 데이터 조회
+  const { data: systemNoticesData } = useSystemNotices(
+    roleType === 'ta' ? { size: 100 } : undefined
+  );
+  const { data: tenantNoticesData } = useVisibleTenantNotices(
+    (roleType === 'co' || roleType === 'tu') ? { size: 100 } : undefined
+  );
+
+  // 안읽은 공지 수 계산
+  const unreadNoticeCount = useMemo(() => {
+    if (roleType === 'ta') {
+      if (!systemNoticesData?.content) return 0;
+      const dismissedIds = getSystemDismissedIds();
+      return systemNoticesData.content.filter(
+        (notice) => !dismissedIds.includes(notice.id)
+      ).length;
+    } else if (roleType === 'co' || roleType === 'tu') {
+      if (!tenantNoticesData?.content) return 0;
+      const dismissedIds = getTenantDismissedIds();
+      return tenantNoticesData.content.filter(
+        (notice) => !dismissedIds.includes(notice.id)
+      ).length;
+    }
+    return 0;
+  }, [roleType, systemNoticesData, tenantNoticesData]);
+
+  // 공지 메뉴 ID (역할별로 다름)
+  const noticeMenuIds = ['notice-management', 'global-notice'];
+
+  // 로그아웃 처리
+  const handleLogout = async () => {
+    if (window.confirm(language === 'ko' ? '로그아웃 하시겠습니까?' : 'Are you sure you want to logout?')) {
+      try {
+        if (refreshToken) {
+          await authService.logout(refreshToken);
+        }
+      } catch (error) {
+        console.error('Logout API failed:', error);
+      }
+      logout();
+      // 로그인 페이지로 이동
+      const isDefaultSubdomain = !userSubdomain || userSubdomain === 'default' || userSubdomain === 'www';
+      const loginPath = isDefaultSubdomain ? '/login' : `/${userSubdomain}/login`;
+      navigate(loginPath);
+    }
+  };
 
   // TenantRole → GlobalRole 매핑
   const tenantRoleToGlobalRole: Record<TenantRole, GlobalRole> = {
@@ -298,6 +385,8 @@ export function BaseSidebar({
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isExpandedItem = expandedItems.includes(item.id);
             const isActive = activeItem === item.id;
+            const isNoticeMenu = noticeMenuIds.includes(item.id);
+            const showBadge = isNoticeMenu && unreadNoticeCount > 0;
 
             return (
               <div key={item.id} className="mb-1">
@@ -330,19 +419,33 @@ export function BaseSidebar({
                   }}
                   title={!isExpanded ? item.label[language] : ''}
                 >
-                  <Icon
-                    className="w-5 h-5 flex-shrink-0"
-                    style={{
-                      color:
-                        isActive && !hasSubItems
-                          ? colors.activeText
-                          : colors.textSecondary,
-                    }}
-                  />
+                  <div className="relative">
+                    <Icon
+                      className="w-5 h-5 flex-shrink-0"
+                      style={{
+                        color:
+                          isActive && !hasSubItems
+                            ? colors.activeText
+                            : colors.textSecondary,
+                      }}
+                    />
+                    {/* 접힌 상태에서 안읽은 공지 배지 */}
+                    {!isExpanded && showBadge && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center rounded-full text-[10px] font-medium bg-red-500 text-white px-0.5">
+                        {unreadNoticeCount > 99 ? '99+' : unreadNoticeCount}
+                      </span>
+                    )}
+                  </div>
                   {isExpanded && (
                     <>
                       <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
                         {item.label[language]}
+                        {/* 펼친 상태에서 안읽은 공지 수 */}
+                        {showBadge && (
+                          <span className="ml-2 text-red-500 font-semibold">
+                            ({unreadNoticeCount})
+                          </span>
+                        )}
                       </span>
                       {hasSubItems && (
                         <span style={{ color: colors.textSecondary }}>
@@ -531,6 +634,39 @@ export function BaseSidebar({
               )}
             </button>
           )}
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center rounded-xl transition-all duration-300 overflow-hidden"
+            style={{
+              width: isExpanded ? '100%' : '44px',
+              height: '44px',
+              padding: isExpanded ? '0 16px' : '0',
+              justifyContent: 'center',
+              color: colors.textPrimary,
+              margin: isExpanded ? '0' : '0 auto',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)';
+              e.currentTarget.style.color = '#EF4444';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = colors.textPrimary;
+            }}
+            title={language === 'ko' ? '로그아웃' : 'Logout'}
+          >
+            <LogOut
+              className="w-5 h-5 flex-shrink-0"
+              style={{ color: colors.textSecondary }}
+            />
+            {isExpanded && (
+              <span className="flex-1 text-left text-sm font-medium whitespace-nowrap ml-3">
+                {language === 'ko' ? '로그아웃' : 'Logout'}
+              </span>
+            )}
+          </button>
 
           {/* Collapse Toggle */}
           <button
