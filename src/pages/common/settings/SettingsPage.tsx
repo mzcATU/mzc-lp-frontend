@@ -66,23 +66,17 @@ const getRoleFromPath = (pathname: string): UserRole => {
 
 // 역할별 base path (subdomain 지원)
 const getBasePath = (pathname: string): string => {
-  // /sa 또는 /:subdomain/sa
-  const saMatch = pathname.match(/^(\/[^/]+)?\/sa/);
-  if (saMatch) return saMatch[0];
+  // 경로를 세그먼트로 분리
+  const segments = pathname.split('/').filter(Boolean);
 
-  // /ta 또는 /:subdomain/ta
-  const taMatch = pathname.match(/^(\/[^/]+)?\/ta/);
-  if (taMatch) return taMatch[0];
+  // 역할 세그먼트 찾기 (sa, ta, co, tu)
+  const roleSegments = ['sa', 'ta', 'co', 'tu'];
+  const roleIndex = segments.findIndex(s => roleSegments.includes(s));
 
-  // /co 또는 /:subdomain/co
-  const coMatch = pathname.match(/^(\/[^/]+)?\/co/);
-  if (coMatch) return coMatch[0];
+  if (roleIndex === -1) return '/tu';
 
-  // /tu 또는 /:subdomain/tu
-  const tuMatch = pathname.match(/^(\/[^/]+)?\/tu/);
-  if (tuMatch) return tuMatch[0];
-
-  return '/tu';
+  // 역할까지의 경로 구성 (서브도메인 포함)
+  return '/' + segments.slice(0, roleIndex + 1).join('/');
 };
 
 export function SettingsPage({ userRole }: SettingsPageProps) {
