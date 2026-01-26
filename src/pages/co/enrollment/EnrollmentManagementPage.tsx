@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -187,10 +187,16 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
   // 차수 정보 조회
   const { data: courseTime, isLoading: isTimeLoading } = useTime(courseTimeId);
 
+  // 검색어/필터 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, statusFilter]);
+
   // API 파라미터 구성
   const params: EnrollmentFilterParams = {
     page,
     size: 10,
+    keyword: searchQuery || undefined,
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
 
@@ -208,17 +214,6 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
   const enrollments = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
   const users = usersData?.content ?? [];
-
-  // 검색 필터링 (클라이언트 사이드)
-  const filteredEnrollments = useMemo(() => {
-    if (!searchQuery) return enrollments;
-    const query = searchQuery.toLowerCase();
-    return enrollments.filter(
-      (e) =>
-        e.userName?.toLowerCase().includes(query) ||
-        e.userEmail?.toLowerCase().includes(query)
-    );
-  }, [enrollments, searchQuery]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -666,7 +661,7 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
           {/* Count */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
-              {filteredEnrollments.length}
+              {totalElements}
               {getText('enrollmentCount')}
             </p>
           </div>
@@ -689,7 +684,7 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
           )}
 
           {/* Empty Search Results */}
-          {!isLoading && filteredEnrollments.length === 0 && (searchQuery || statusFilter !== 'all') && (
+          {!isLoading && enrollments.length === 0 && (searchQuery || statusFilter !== 'all') && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -697,10 +692,10 @@ export function EnrollmentManagementPage({ language = 'ko' }: Readonly<Enrollmen
           )}
 
           {/* Data Table */}
-          {!isLoading && filteredEnrollments.length > 0 && (
+          {!isLoading && enrollments.length > 0 && (
             <DataTable
               columns={columns}
-              data={filteredEnrollments}
+              data={enrollments}
               showColumnToggle={false}
               showPagination={true}
               manualPagination={true}

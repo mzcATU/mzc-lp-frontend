@@ -54,6 +54,7 @@ export interface InstructorAssignmentFilterParams {
   courseTimeId?: number;
   role?: import('@/types/tu/instructorAssignment.types').InstructorRole;
   status?: import('@/types/tu/instructorAssignment.types').AssignmentStatus;
+  keyword?: string; // 강사명, 차수명으로 검색
   page?: number;
   size?: number;
 }

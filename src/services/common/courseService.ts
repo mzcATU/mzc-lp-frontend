@@ -22,6 +22,9 @@ import type {
   CourseRegistrationDetailResponse,
   ReadyCourseResponse,
   RegisterCourseRequest,
+  // 필터용 타입
+  CourseLevel,
+  CourseType,
 } from '@/types/common/course.types';
 
 // Spring Page 응답 타입
@@ -46,6 +49,9 @@ export interface CourseFilterParams {
 export interface CourseRegistrationFilterParams {
   keyword?: string;
   status?: CourseRegistrationStatus;
+  categoryId?: number;
+  level?: CourseLevel;
+  type?: CourseType;
   page?: number;
   size?: number;
   sort?: string;

@@ -67,6 +67,9 @@ export interface AutoEnrollmentRuleResponse {
 
 /** 자동 입과 규칙 목록 조회 파라미터 */
 export interface AutoEnrollmentRuleQueryParams {
+  keyword?: string; // 규칙명으로 검색
   isActive?: boolean;
   trigger?: AutoEnrollmentTrigger;
+  page?: number;
+  size?: number;
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   Search,
   Loader2,
@@ -70,10 +70,11 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   const { prefixPath } = useSubdomainPath();
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   // 필터 상태
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<CourseLevel | ''>('');
   const [selectedType, setSelectedType] = useState<CourseType | ''>('');
 
@@ -95,7 +96,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   // 카테고리 옵션 (Combobox용)
   const categoryOptions = useMemo(() => {
     return categories.map((cat) => ({
-      value: cat.name,
+      value: String(cat.id),
       label: cat.name,
     }));
   }, [categories]);
@@ -117,55 +118,48 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
   }, []);
 
   // 필터 활성화 여부
-  const hasActiveFilters = selectedCategory || selectedLevel || selectedType;
+  const hasActiveFilters = selectedCategoryId || selectedLevel || selectedType;
 
   // 필터 초기화
   const clearFilters = () => {
-    setSelectedCategory('');
+    setSelectedCategoryId(null);
     setSelectedLevel('');
     setSelectedType('');
+    setPage(0);
   };
 
-  // API 파라미터 구성 (REGISTERED 상태만 조회)
+  // 검색어 또는 필터 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, selectedCategoryId, selectedLevel, selectedType]);
+
+  // 정렬 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [sorting]);
+
+  // SortingState를 Spring sort 파라미터로 변환
+  const sortParam = useMemo(() => {
+    if (sorting.length === 0) return undefined;
+    return sorting.map((s) => `${s.id},${s.desc ? 'desc' : 'asc'}`).join(',');
+  }, [sorting]);
+
+  // API 파라미터 구성 (REGISTERED 상태만 조회, 서버 사이드 필터링)
   const params: Omit<CourseRegistrationFilterParams, 'status'> = {
     page,
     size: 10,
+    keyword: searchQuery || undefined,
+    categoryId: selectedCategoryId || undefined,
+    level: selectedLevel || undefined,
+    type: selectedType || undefined,
+    sort: sortParam,
   };
 
   // React Query 훅 사용 (승인된 과정만 조회)
   const { data, isLoading, error } = useRegisteredCourses(params);
 
-  // 검색 및 필터링 (클라이언트 사이드)
-  const filteredCourses = useMemo(() => {
-    let result = data?.content ?? [];
-
-    // 텍스트 검색 (과정명 + 생성자)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (course) =>
-          course.title.toLowerCase().includes(query) ||
-          (course.creatorName && course.creatorName.toLowerCase().includes(query))
-      );
-    }
-
-    // 카테고리 필터
-    if (selectedCategory) {
-      result = result.filter((course) => course.categoryName === selectedCategory);
-    }
-
-    // 레벨 필터
-    if (selectedLevel) {
-      result = result.filter((course) => course.level === selectedLevel);
-    }
-
-    // 타입 필터
-    if (selectedType) {
-      result = result.filter((course) => course.type === selectedType);
-    }
-
-    return result;
-  }, [data?.content, searchQuery, selectedCategory, selectedLevel, selectedType]);
+  // 서버에서 필터링된 데이터 직접 사용
+  const courses = data?.content ?? [];
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
@@ -196,6 +190,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
       },
       {
         id: 'category',
+        enableSorting: false,
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={getText('columnCategory')} />
         ),
@@ -232,6 +227,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
       },
       {
         accessorKey: 'creatorName',
+        enableSorting: false,
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={getText('columnCreator')} />
         ),
@@ -254,6 +250,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
       },
       {
         id: 'timeCount',
+        enableSorting: false,
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={getText('columnTimeCount')} />
         ),
@@ -346,13 +343,13 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
               {/* 카테고리 필터 (Combobox) */}
               <Combobox
                 options={categoryOptions}
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
+                value={selectedCategoryId ? String(selectedCategoryId) : ''}
+                onValueChange={(value) => setSelectedCategoryId(value ? Number(value) : null)}
                 placeholder={getText('allCategories')}
                 emptyMessage={language === 'ko' ? '카테고리 없음' : 'No category found'}
                 hideSearch
                 className={`h-10 min-w-[140px] ${
-                  selectedCategory
+                  selectedCategoryId
                     ? 'bg-primary/10 border-primary/30 text-primary'
                     : 'bg-bg-default border-border text-text-primary'
                 }`}
@@ -410,9 +407,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           {/* Count */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
-              {searchQuery || hasActiveFilters
-                ? filteredCourses.length
-                : (data?.totalElements ?? 0)}
+              {data?.totalElements ?? 0}
               {getText('courseCount')}
             </p>
           </div>
@@ -426,7 +421,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           )}
 
           {/* Empty State - 데이터 자체가 없을 때 */}
-          {!isLoading && (data?.content?.length ?? 0) === 0 && !searchQuery && !hasActiveFilters && (
+          {!isLoading && courses.length === 0 && !searchQuery && !hasActiveFilters && (
             <div className="text-center py-12 text-text-secondary">
               <FileText size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p className="mb-1">{getText('noCourses')}</p>
@@ -435,7 +430,7 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           )}
 
           {/* Empty Search/Filter Results - 검색 또는 필터 결과가 없을 때 */}
-          {!isLoading && filteredCourses.length === 0 && (searchQuery || hasActiveFilters) && (
+          {!isLoading && courses.length === 0 && (searchQuery || hasActiveFilters) && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -443,10 +438,10 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
           )}
 
           {/* Data Table */}
-          {!isLoading && filteredCourses.length > 0 && (
+          {!isLoading && courses.length > 0 && (
             <DataTable
               columns={columns}
-              data={filteredCourses}
+              data={courses}
               showColumnToggle={false}
               showPagination={true}
               manualPagination={true}
@@ -454,6 +449,9 @@ export function CourseListPage({ language = 'ko' }: Readonly<CourseListPageProps
               pageIndex={page}
               pageSize={10}
               onPageChange={setPage}
+              manualSorting={true}
+              sorting={sorting}
+              onSortingChange={setSorting}
               onRowClick={(item) => navigate(prefixPath(`/co/courses/${item.courseId}`))}
               labels={{
                 noResults: getText('noResults'),

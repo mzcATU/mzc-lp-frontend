@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -126,20 +126,22 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
+  // 검색어 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery]);
+
   // React Query 훅 사용 - READY 상태만 조회
-  const { data, isLoading, error } = useReadyCourses({ page, size: 10 });
+  const { data, isLoading, error } = useReadyCourses({
+    page,
+    size: 10,
+    keyword: searchQuery || undefined,
+  });
   const registerCourse = useRegisterCourse();
   const unreadyCourse = useUnreadyCourse();
 
   const courses = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
-
-  // 검색 필터링 (클라이언트 사이드)
-  const filteredCourses = useMemo(() => {
-    if (!searchQuery) return courses;
-    const query = searchQuery.toLowerCase();
-    return courses.filter((course) => course.title.toLowerCase().includes(query));
-  }, [courses, searchQuery]);
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '-';
@@ -397,7 +399,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
               <Badge variant="warning" className="mr-2">검토 대기</Badge>
-              {filteredCourses.length}
+              {totalElements}
               {getText('courseCount')}
             </p>
           </div>
@@ -420,7 +422,7 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
           )}
 
           {/* Empty Search Results */}
-          {!isLoading && filteredCourses.length === 0 && searchQuery && (
+          {!isLoading && courses.length === 0 && searchQuery && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -428,10 +430,10 @@ export function CoursePendingPage({ language = 'ko' }: Readonly<CoursePendingPag
           )}
 
           {/* Data Table */}
-          {!isLoading && filteredCourses.length > 0 && (
+          {!isLoading && courses.length > 0 && (
             <DataTable
               columns={columns}
-              data={filteredCourses}
+              data={courses}
               showColumnToggle={false}
               showPagination={true}
               manualPagination={true}
