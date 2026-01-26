@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   Search,
@@ -111,6 +111,7 @@ export default function AutoEnrollmentRulesPage() {
   // 검색 및 필터 상태
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTrigger, setFilterTrigger] = useState<AutoEnrollmentTrigger | 'all'>('all');
+  const [page, setPage] = useState(0);
 
   // 모달 상태
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -121,36 +122,33 @@ export default function AutoEnrollmentRulesPage() {
   // 폼 상태
   const [formData, setFormData] = useState<RuleFormData>(initialFormData);
 
+  // 검색/필터 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, filterTrigger]);
+
   // API 훅
-  const { data: rules, isLoading, error } = useAutoEnrollmentRules();
+  const { data, isLoading, error } = useAutoEnrollmentRules({
+    keyword: searchTerm || undefined,
+    trigger: filterTrigger !== 'all' ? filterTrigger : undefined,
+    page,
+    size: 20,
+  });
   const createRule = useCreateAutoEnrollmentRule();
   const updateRule = useUpdateAutoEnrollmentRule();
   const deleteRule = useDeleteAutoEnrollmentRule();
   const activateRule = useActivateAutoEnrollmentRule();
   const deactivateRule = useDeactivateAutoEnrollmentRule();
 
-  // 필터링된 규칙 목록
-  const filteredRules = useMemo(() => {
-    if (!rules) return [];
+  const rules = data?.content ?? [];
+  const totalElements = data?.totalElements ?? 0;
 
-    return rules.filter((rule) => {
-      const matchesSearch =
-        searchTerm === '' ||
-        rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (rule.description && rule.description.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      const matchesTrigger = filterTrigger === 'all' || rule.trigger === filterTrigger;
-
-      return matchesSearch && matchesTrigger;
-    });
-  }, [rules, searchTerm, filterTrigger]);
-
-  // 통계 계산
+  // 통계 계산 - 전체 데이터 통계는 별도 API가 필요하거나 현재 페이지 기준
   const stats = useMemo(() => ({
-    total: rules?.length || 0,
-    active: rules?.filter((r) => r.isActive).length || 0,
-    inactive: rules?.filter((r) => !r.isActive).length || 0,
-  }), [rules]);
+    total: totalElements,
+    active: rules.filter((r) => r.isActive).length,
+    inactive: rules.filter((r) => !r.isActive).length,
+  }), [rules, totalElements]);
 
   // 새 규칙 생성 모달 열기
   const openCreateModal = () => {
@@ -450,11 +448,11 @@ export default function AutoEnrollmentRulesPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>규칙 목록</CardTitle>
-              <Badge variant="gray">{filteredRules.length}개</Badge>
+              <Badge variant="gray">{totalElements}개</Badge>
             </div>
           </CardHeader>
           <CardContent>
-            {filteredRules.length === 0 ? (
+            {rules.length === 0 ? (
               <EmptyState
                 icon={Zap}
                 title="등록된 규칙이 없습니다"
@@ -475,7 +473,7 @@ export default function AutoEnrollmentRulesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRules.map((rule) => (
+                  {rules.map((rule) => (
                     <TableRow key={rule.id}>
                       <TableCell>
                         <div>
