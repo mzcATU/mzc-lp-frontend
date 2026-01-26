@@ -111,6 +111,7 @@ export interface UpdateEnrollmentStatusRequest {
 /** 수강 목록 조회 파라미터 */
 export interface EnrollmentFilterParams {
   status?: EnrollmentStatus;
+  keyword?: string; // 수강생 이름, 이메일로 검색
   page?: number;
   size?: number;
   sort?: string;

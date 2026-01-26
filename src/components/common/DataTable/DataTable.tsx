@@ -356,7 +356,19 @@ function DataTableColumnHeader({
   className,
 }: DataTableColumnHeaderProps) {
   const sorted = column.getIsSorted();
+  // @ts-expect-error - columnDef may not have enableSorting property
+  const canSort = column.columnDef.enableSorting !== false;
 
+  // 정렬 불가능한 컬럼은 일반 텍스트로 표시
+  if (!canSort) {
+    return (
+      <div className={cn("flex items-center h-8 -ml-3 px-3", className)}>
+        {title}
+      </div>
+    );
+  }
+
+  // 정렬 가능한 컬럼은 버튼과 아이콘으로 표시
   return (
     <Button
       variant="ghost"

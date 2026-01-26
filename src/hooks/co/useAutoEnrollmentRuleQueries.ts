@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/common/authStore';
 import { autoEnrollmentRuleService } from '@/services/co/autoEnrollmentRuleService';
 import type {
   AutoEnrollmentTrigger,
+  AutoEnrollmentRuleQueryParams,
   CreateAutoEnrollmentRuleRequest,
   UpdateAutoEnrollmentRuleRequest,
 } from '@/types/co/autoEnrollmentRule.types';
@@ -17,7 +18,7 @@ import type {
 export const autoEnrollmentRuleKeys = {
   all: ['autoEnrollmentRules'] as const,
   lists: () => [...autoEnrollmentRuleKeys.all, 'list'] as const,
-  list: () => [...autoEnrollmentRuleKeys.lists()] as const,
+  list: (params?: AutoEnrollmentRuleQueryParams) => [...autoEnrollmentRuleKeys.lists(), params] as const,
   active: () => [...autoEnrollmentRuleKeys.all, 'active'] as const,
   byTrigger: (trigger: AutoEnrollmentTrigger) =>
     [...autoEnrollmentRuleKeys.all, 'trigger', trigger] as const,
@@ -30,14 +31,14 @@ export const autoEnrollmentRuleKeys = {
 // ============================================
 
 /**
- * 자동 입과 규칙 목록 조회
+ * 자동 입과 규칙 목록 조회 (페이지네이션)
  */
-export const useAutoEnrollmentRules = () => {
+export const useAutoEnrollmentRules = (params?: AutoEnrollmentRuleQueryParams) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return useQuery({
-    queryKey: autoEnrollmentRuleKeys.list(),
-    queryFn: () => autoEnrollmentRuleService.getAll(),
+    queryKey: autoEnrollmentRuleKeys.list(params),
+    queryFn: () => autoEnrollmentRuleService.getAll(params),
     enabled: isAuthenticated,
   });
 };

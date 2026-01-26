@@ -3,9 +3,11 @@
  */
 import axiosInstance from '@/services/common/api/axiosInstance';
 import { API_ENDPOINTS } from '@/services/common/api/endpoints';
+import type { PageResponse } from '@/types/common';
 import type {
   AutoEnrollmentRuleResponse,
   AutoEnrollmentTrigger,
+  AutoEnrollmentRuleQueryParams,
   CreateAutoEnrollmentRuleRequest,
   UpdateAutoEnrollmentRuleRequest,
 } from '@/types/co/autoEnrollmentRule.types';
@@ -15,10 +17,11 @@ export const autoEnrollmentRuleService = {
   // Auto Enrollment Rule CRUD
   // ============================================
 
-  /** 자동 입과 규칙 목록 조회 */
-  async getAll(): Promise<AutoEnrollmentRuleResponse[]> {
-    const { data } = await axiosInstance.get<AutoEnrollmentRuleResponse[]>(
-      API_ENDPOINTS.AUTO_ENROLLMENT_RULES.BASE
+  /** 자동 입과 규칙 목록 조회 (페이지네이션) */
+  async getAll(params?: AutoEnrollmentRuleQueryParams): Promise<PageResponse<AutoEnrollmentRuleResponse>> {
+    const { data } = await axiosInstance.get<PageResponse<AutoEnrollmentRuleResponse>>(
+      API_ENDPOINTS.AUTO_ENROLLMENT_RULES.BASE,
+      { params }
     );
     return data;
   },

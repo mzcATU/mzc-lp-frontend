@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -191,10 +191,16 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
   const getStatusLabel = (status: AssignmentStatus) =>
     language === 'ko' ? ASSIGNMENT_STATUS_LABELS[status].ko : ASSIGNMENT_STATUS_LABELS[status].en;
 
+  // 검색어/필터 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, roleFilter, statusFilter]);
+
   // API 파라미터 구성
   const params: InstructorAssignmentFilterParams = {
     page,
     size: 10,
+    keyword: searchQuery || undefined,
     ...(roleFilter !== 'all' && { role: roleFilter }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
@@ -226,19 +232,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
   const assignments = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
 
-  // 클라이언트 사이드 검색 필터링
-  const filteredAssignments = useMemo(() => {
-    if (!searchQuery) return assignments;
-    const query = searchQuery.toLowerCase();
-    return assignments.filter(
-      (item) =>
-        (item.instructor?.name?.toLowerCase().includes(query) ?? false) ||
-        (item.courseTime?.title?.toLowerCase().includes(query) ?? false) ||
-        (item.program?.title?.toLowerCase().includes(query) ?? false)
-    );
-  }, [assignments, searchQuery]);
-
-  // 통계 계산
+  // 통계: 전체 개수만 정확, 나머지는 현재 페이지 기준 (백엔드에서 통계 API 제공 시 교체 필요)
   const stats = useMemo(() => ({
     total: totalElements,
     main: assignments.filter((a) => a.role === 'MAIN').length,
@@ -659,7 +653,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
 
           {/* Count */}
           <p className="text-sm text-text-secondary mb-4">
-            {filteredAssignments.length}
+            {totalElements}
             {getText('assignmentCount')}
           </p>
 
@@ -681,7 +675,7 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
           )}
 
           {/* Empty Search Results */}
-          {!isLoading && filteredAssignments.length === 0 && (searchQuery || roleFilter !== 'all' || statusFilter !== 'all') && (
+          {!isLoading && assignments.length === 0 && (searchQuery || roleFilter !== 'all' || statusFilter !== 'all') && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -689,10 +683,10 @@ export function InstructorAssignmentsPage({ language = 'ko' }: Readonly<Instruct
           )}
 
           {/* Data Table */}
-          {!isLoading && filteredAssignments.length > 0 && (
+          {!isLoading && assignments.length > 0 && (
             <DataTable
               columns={columns}
-              data={filteredAssignments}
+              data={assignments}
               showColumnToggle={false}
               showPagination={true}
               manualPagination={true}

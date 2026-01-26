@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubdomainPath } from '@/hooks/common';
 import { toast } from 'sonner';
@@ -169,11 +169,17 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
 
   const getText = (key: keyof typeof t) => (language === 'ko' ? t[key].ko : t[key].en);
 
+  // 검색어/필터 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, statusFilter]);
+
   // API 파라미터 구성
   const params: CourseTimeFilterParams = {
     page,
     size: 10,
     sort: 'createdAt,desc', // 최신 생성순 정렬
+    keyword: searchQuery || undefined,
     ...(statusFilter !== 'all' && { status: statusFilter }),
   };
 
@@ -187,17 +193,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
   const times = data?.content ?? [];
   const totalElements = data?.totalElements ?? 0;
 
-  // 최신 생성순 정렬 (ID 기준 내림차순) + 검색 필터링 (클라이언트 사이드)
-  const filteredTimes = useMemo(() => {
-    // ID 기준 내림차순 정렬 (ID가 높을수록 최신)
-    const sorted = [...times].sort((a, b) => b.id - a.id);
-
-    if (!searchQuery) return sorted;
-    const query = searchQuery.toLowerCase();
-    return sorted.filter((time) => time.title.toLowerCase().includes(query));
-  }, [times, searchQuery]);
-
-  // 통계 계산
+  // 통계 계산: 전체 개수만 정확, 나머지는 현재 페이지 기준 (백엔드에서 통계 API 제공 시 교체 필요)
   const timeStats = useMemo(() => ({
     total: totalElements,
     recruiting: times.filter((t) => t.status === 'RECRUITING').length,
@@ -639,7 +635,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
           {/* Count and Actions */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-text-secondary">
-              {filteredTimes.length}
+              {totalElements}
               {getText('timeCount')}
             </p>
             <Button
@@ -672,7 +668,7 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
           )}
 
           {/* Empty Search Results */}
-          {!isLoading && filteredTimes.length === 0 && (searchQuery || statusFilter !== 'all') && (
+          {!isLoading && times.length === 0 && (searchQuery || statusFilter !== 'all') && (
             <div className="text-center py-12 text-text-secondary">
               <Search size={48} className="mx-auto mb-3 text-text-placeholder" />
               <p>{getText('noResults')}</p>
@@ -680,10 +676,10 @@ export function CourseTimesPage({ language = 'ko' }: Readonly<CourseTimesPagePro
           )}
 
           {/* Data Table */}
-          {!isLoading && filteredTimes.length > 0 && (
+          {!isLoading && times.length > 0 && (
             <DataTable
               columns={columns}
-              data={filteredTimes}
+              data={times}
               showColumnToggle={false}
               showPagination={true}
               manualPagination={true}

@@ -232,6 +232,7 @@ export interface CourseTimeValidationResult {
 export interface CourseTimeFilterParams {
   courseId?: number; // Phase 3: programId → courseId
   status?: CourseTimeStatus;
+  keyword?: string; // 차수명, 과정명으로 검색
   page?: number;
   size?: number;
   sort?: string;

@@ -288,6 +288,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage] = useState(0);
   const [selectedUserForDetail, setSelectedUserForDetail] = useState<UserListResponse | null>(null);
 
   // 새로운 필터 상태
@@ -339,10 +340,15 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
   // 뷰 모드 결정: 차수가 선택되면 학습 관리 뷰
   const isLearningView = selectedTimeId !== null;
 
-  // API 파라미터 구성 - 전체 데이터를 가져와서 클라이언트에서 필터링
+  // 검색어/필터 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, statusFilter]);
+
+  // API 파라미터 구성
   const params: UserFilterParams = {
-    page: 0,
-    size: 1000, // 충분히 큰 값으로 전체 조회
+    page,
+    size: 20,
     ...(statusFilter !== 'all' && { status: statusFilter }),
     ...(searchQuery && { keyword: searchQuery }),
   };
@@ -489,12 +495,12 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     return result;
   }, [enrollmentsData?.content, completionFilter, searchQuery, isLearningView]);
 
-  // 전체 필터링된 사용자 수
-  const totalElements = isLearningView ? filteredEnrollments.length : filteredUsers.length;
+  // 전체 필터링된 사용자 수 (서버에서 제공)
+  const totalElements = isLearningView ? filteredEnrollments.length : (data?.totalElements ?? 0);
 
-  // 통계 계산 (전체 필터링된 데이터 기준)
+  // 통계 계산: 학습 뷰는 클라이언트 기준, 사용자 뷰는 현재 페이지 기준
   const userStats = useMemo(() => ({
-    total: isLearningView ? (enrollmentsData?.content?.length ?? 0) : filteredUsers.length,
+    total: isLearningView ? (enrollmentsData?.content?.length ?? 0) : (data?.totalElements ?? 0),
     active: isLearningView
       ? (enrollmentsData?.content?.filter((e) => e.status === 'ENROLLED').length ?? 0)
       : filteredUsers.filter((u) => u.status === 'ACTIVE').length,
@@ -504,7 +510,7 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
     suspended: isLearningView
       ? (enrollmentsData?.content?.filter((e) => e.status === 'DROPPED' || e.status === 'FAILED').length ?? 0)
       : filteredUsers.filter((u) => u.status === 'SUSPENDED').length,
-  }), [filteredUsers, enrollmentsData?.content, isLearningView]);
+  }), [filteredUsers, enrollmentsData?.content, isLearningView, data?.totalElements]);
 
   // 과정 옵션
   const courseOptions = useMemo(() => {
@@ -1459,7 +1465,11 @@ export function UserManagementPage({ language = 'ko' }: Readonly<UserManagementP
               data={filteredUsers}
               showColumnToggle={false}
               showPagination={true}
-              pageSize={PAGE_SIZE}
+              manualPagination={true}
+              pageCount={data?.totalPages ?? 0}
+              pageIndex={page}
+              pageSize={20}
+              onPageChange={setPage}
               onRowClick={(user) => setSelectedUserForDetail(user)}
               labels={{
                 noResults: getText('noResults'),
